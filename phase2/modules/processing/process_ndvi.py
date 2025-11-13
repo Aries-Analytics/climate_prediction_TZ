@@ -3,8 +3,10 @@ NDVI Vegetation Index Data Processing - Phase 2
 """
 
 import pandas as pd
-from utils.validator import validate_dataframe
+
 from utils.config import get_output_path
+from utils.validator import validate_dataframe
+
 
 def process(data):
     """
@@ -12,11 +14,7 @@ def process(data):
     """
     print("[PROCESS] Running NDVI data transformation (dry run)...")
 
-    df = pd.DataFrame({
-        "latitude": [0.0],
-        "longitude": [0.0],
-        "ndvi": [0.68]
-    })
+    df = pd.DataFrame({"latitude": [0.0], "longitude": [0.0], "ndvi": [0.68]})
 
     validate_dataframe(df, expected_columns=["latitude", "longitude", "ndvi"])
 
@@ -25,5 +23,3 @@ def process(data):
     print(f"[SAVE] Processed output saved to {output_path}")
     print("[PROCESS] NDVI data processed successfully (dry run).")
     return df
-
-

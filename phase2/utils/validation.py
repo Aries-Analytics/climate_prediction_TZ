@@ -3,9 +3,11 @@ Validation and summary utilities for Phase 2 pipeline.
 """
 
 import pandas as pd
+
 from utils.logger import get_logger
 
 logger = get_logger(__name__)
+
 
 def validate_dataframe(df, name: str) -> bool:
     """Validate that the input is a non-empty pandas DataFrame."""

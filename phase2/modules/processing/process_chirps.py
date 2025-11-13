@@ -3,8 +3,10 @@ CHIRPS Rainfall Data Processing - Phase 2
 """
 
 import pandas as pd
-from utils.validator import validate_dataframe
+
 from utils.config import get_output_path
+from utils.validator import validate_dataframe
+
 
 def process(data):
     """
@@ -12,11 +14,7 @@ def process(data):
     """
     print("[PROCESS] Running CHIRPS rainfall data transformation (dry run)...")
 
-    df = pd.DataFrame({
-        "latitude": [0.0],
-        "longitude": [0.0],
-        "rainfall_mm": [12.5]
-    })
+    df = pd.DataFrame({"latitude": [0.0], "longitude": [0.0], "rainfall_mm": [12.5]})
 
     validate_dataframe(df, expected_columns=["latitude", "longitude", "rainfall_mm"])
 

@@ -3,9 +3,11 @@ NASA POWER Ingestion - Phase 2 (dry-run compatible)
 """
 
 import pandas as pd
-from utils.logger import log_info, log_error
-from utils.validator import validate_dataframe
+
 from utils.config import get_data_path
+from utils.logger import log_error, log_info
+from utils.validator import validate_dataframe
+
 
 def fetch_nasa_power_data(dry_run=False, *args, **kwargs):
     """
@@ -14,11 +16,7 @@ def fetch_nasa_power_data(dry_run=False, *args, **kwargs):
     """
     log_info("Fetching NASA POWER data... (dry run)" if dry_run else "Fetching NASA POWER data...")
     if dry_run:
-        df = pd.DataFrame({
-            "YEAR": [2020, 2021],
-            "TEMP": [24.5, 25.0],
-            "RADIATION": [200, 210]
-        })
+        df = pd.DataFrame({"YEAR": [2020, 2021], "TEMP": [24.5, 25.0], "RADIATION": [200, 210]})
     else:
         # Real ingestion logic will go here later; keep placeholder DataFrame for now
         df = pd.DataFrame()
@@ -37,7 +35,7 @@ def fetch_nasa_power_data(dry_run=False, *args, **kwargs):
 
     return df
 
+
 # compatibility wrapper expected by run_pipeline
 def fetch_data(*args, **kwargs):
     return fetch_nasa_power_data(*args, **kwargs)
-

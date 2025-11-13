@@ -19,6 +19,7 @@ from logging.handlers import RotatingFileHandler
 
 LOG_DIR = "logs"
 
+
 def setup_logging(level=logging.INFO, retention_days: int = 7):
     """
     Configure project-wide logging (console + rotating timestamped file).
@@ -50,9 +51,7 @@ def setup_logging(level=logging.INFO, retention_days: int = 7):
     log_file = os.path.join(LOG_DIR, f"pipeline_{timestamp}.log")
 
     # Create handlers
-    rotating_handler = RotatingFileHandler(
-        log_file, maxBytes=5 * 1024 * 1024, backupCount=3, encoding="utf-8"
-    )
+    rotating_handler = RotatingFileHandler(log_file, maxBytes=5 * 1024 * 1024, backupCount=3, encoding="utf-8")
     console_handler = logging.StreamHandler(sys.stdout)
 
     # Formatter
@@ -83,12 +82,6 @@ def get_logger(name=__name__):
 def log_info(msg: str):
     logging.getLogger().info(msg)
 
+
 def log_error(msg: str):
     logging.getLogger().error(msg)
-
-
-
-
-
-
-

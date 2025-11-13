@@ -10,9 +10,11 @@ Provides:
 - save helper (save_processed_output)
 - a small environment validator (validate_environment)
 """
-from pathlib import Path
-from dotenv import load_dotenv
+
 import os
+from pathlib import Path
+
+from dotenv import load_dotenv
 
 # Load .env (if present)
 load_dotenv()
@@ -20,7 +22,7 @@ load_dotenv()
 # ---------------------------------------------------------------------
 # Base paths
 # ---------------------------------------------------------------------
-BASE_DIR = Path(__file__).resolve().parents[1]   # points to the phase2 folder
+BASE_DIR = Path(__file__).resolve().parents[1]  # points to the phase2 folder
 DATA_DIR = BASE_DIR / "data"
 OUTPUT_DIR = BASE_DIR / "outputs"
 
@@ -35,32 +37,24 @@ OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 # Data source endpoints / keys (placeholders or loaded from env)
 # Only the five sources used in Phase 2 are included.
 # ---------------------------------------------------------------------
-NASA_API_URL = os.getenv(
-    "NASA_API_URL",
-    "https://power.larc.nasa.gov/api/temporal/monthly/point"
-)
+NASA_API_URL = os.getenv("NASA_API_URL", "https://power.larc.nasa.gov/api/temporal/monthly/point")
 
 ERA5_API_KEY = os.getenv("ERA5_API_KEY", None)
 
-CHIRPS_BASE_URL = os.getenv(
-    "CHIRPS_BASE_URL",
-    "https://data.chc.ucsb.edu/products/CHIRPS-2.0"
-)
+CHIRPS_BASE_URL = os.getenv("CHIRPS_BASE_URL", "https://data.chc.ucsb.edu/products/CHIRPS-2.0")
 
 # NDVI source placeholder (empty by default; configure if/when needed)
 NDVI_SOURCE = os.getenv("NDVI_SOURCE", "")
 
 # Oceanic / atmospheric indices source (ENSO, IOD, etc.)
-OCEAN_INDICES_SOURCE = os.getenv(
-    "OCEAN_INDICES_SOURCE",
-    "https://psl.noaa.gov/data/climateindices/list/"
-)
+OCEAN_INDICES_SOURCE = os.getenv("OCEAN_INDICES_SOURCE", "https://psl.noaa.gov/data/climateindices/list/")
 
 # ---------------------------------------------------------------------
 # Project-wide constants
 # ---------------------------------------------------------------------
 DEFAULT_REGION = os.getenv("DEFAULT_REGION", "Tanzania")
 DEFAULT_CRS = os.getenv("DEFAULT_CRS", "EPSG:4326")
+
 
 # ---------------------------------------------------------------------
 # Path helpers
@@ -74,6 +68,7 @@ def get_data_path(*subpaths) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
     return path
 
+
 def get_output_path(*subpaths) -> Path:
     """
     Return a full Path inside the outputs directory.
@@ -82,6 +77,7 @@ def get_output_path(*subpaths) -> Path:
     path = OUTPUT_DIR.joinpath(*subpaths)
     path.parent.mkdir(parents=True, exist_ok=True)
     return path
+
 
 # ---------------------------------------------------------------------
 # Save helper
@@ -105,6 +101,7 @@ def save_processed_output(df, filename: str):
         print(f"[ERROR] Failed to save processed output '{filename}': {e}")
         raise
 
+
 # ---------------------------------------------------------------------
 # Environment validation
 # ---------------------------------------------------------------------
@@ -114,8 +111,14 @@ def validate_environment():
     Call this at the start of a pipeline run.
     """
     # ensure directories
-    for p in (DATA_DIR, DATA_DIR / "raw", DATA_DIR / "processed", DATA_DIR / "external",
-              OUTPUT_DIR, OUTPUT_DIR / "processed"):
+    for p in (
+        DATA_DIR,
+        DATA_DIR / "raw",
+        DATA_DIR / "processed",
+        DATA_DIR / "external",
+        OUTPUT_DIR,
+        OUTPUT_DIR / "processed",
+    ):
         p.mkdir(parents=True, exist_ok=True)
         print(f"[CONFIG] Verified directory: {p}")
 

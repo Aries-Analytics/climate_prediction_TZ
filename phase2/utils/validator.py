@@ -11,7 +11,8 @@ is integrated beyond the dry-run stage.
 """
 
 import pandas as pd
-from utils.logger import log_info, log_error
+
+from utils.logger import log_error, log_info
 
 
 def validate_dataframe(df: pd.DataFrame, expected_columns: list = None, dataset_name: str = "Dataset") -> bool:
@@ -58,8 +59,9 @@ def validate_dataframe(df: pd.DataFrame, expected_columns: list = None, dataset_
     if len(df) > 0:
         null_summary = df.isnull().sum()
         if null_summary.sum() > 0:
-            log_info(f"[WARNING] {dataset_name} contains missing values in: "
-                     f"{list(null_summary[null_summary > 0].index)}")
+            log_info(
+                f"[WARNING] {dataset_name} contains missing values in: " f"{list(null_summary[null_summary > 0].index)}"
+            )
 
     log_info(f"[VALIDATION] {dataset_name} passed validation with {len(df)} rows and columns: {list(df.columns)}")
     return True

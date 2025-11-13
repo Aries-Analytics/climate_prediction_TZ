@@ -1,8 +1,11 @@
+from pathlib import Path
+
 import pytest
+
+import run_pipeline
 from modules.processing import merge_processed
 from utils.config import get_output_path
-from pathlib import Path
-import run_pipeline
+
 
 def test_merge_creates_master(tmp_path):
     """
@@ -11,7 +14,7 @@ def test_merge_creates_master(tmp_path):
     """
     # run pipeline first to create processed files
     run_pipeline.run_pipeline(debug=True)
-    
+
     # run merge
     merged = merge_processed.merge_all()
     assert merged is not None

@@ -7,22 +7,25 @@ Saves:
  - outputs/processed/master_dataset.parquet
 """
 
-import pandas as pd
 from pathlib import Path
+
+import pandas as pd
+
 from utils.config import get_output_path
+from utils.logger import log_error, log_info
 from utils.validator import validate_dataframe
-from utils.logger import log_info, log_error
 
 PROC_DIR = get_output_path("processed")  # outputs/processed directory as Path
 
 # mapping of expected files -> expected columns (used for lightweight checks)
 SOURCE_FILES = {
-    "nasa_power_processed.csv": None,   # None means accept whatever columns exist
+    "nasa_power_processed.csv": None,  # None means accept whatever columns exist
     "era5_processed.csv": None,
     "chirps_processed.csv": None,
     "ndvi_processed.csv": None,
     "ocean_indices_processed.csv": None,
 }
+
 
 def _load_if_exists(fname: str):
     p = PROC_DIR / fname
@@ -39,6 +42,7 @@ def _load_if_exists(fname: str):
     else:
         log_info(f"Processed file not found (skipping): {fname}")
         return None
+
 
 def merge_all():
     """
@@ -86,7 +90,9 @@ def merge_all():
                     provenance.append(fname)
                 else:
                     if {"latitude", "longitude"}.issubset(set(df.columns)):
-                        merged = pd.merge(merged, df, on=["latitude", "longitude"], how="outer", suffixes=("_left", "_right"))
+                        merged = pd.merge(
+                            merged, df, on=["latitude", "longitude"], how="outer", suffixes=("_left", "_right")
+                        )
                         provenance.append(fname)
                     else:
                         # concat columns (keep rows) - align by index

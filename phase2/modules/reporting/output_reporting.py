@@ -5,13 +5,16 @@ Handles final reporting, saving results, and generating summaries
 after the data processing pipeline completes.
 """
 
-import os
 import json
-import pandas as pd
-from utils.config import get_data_path
 import logging
+import os
+
+import pandas as pd
+
+from utils.config import get_data_path
 
 logger = logging.getLogger(__name__)
+
 
 def save_summary_report(summary_dict: dict, filename: str = "summary_report.json"):
     """
@@ -48,7 +51,7 @@ def generate_report_summary():
         "timestamp": pd.Timestamp.now().isoformat(),
         "status": "success",
         "records_processed": 0,
-        "notes": "Dry run summary — replace with real metrics later"
+        "notes": "Dry run summary - replace with real metrics later",
     }
 
     save_summary_report(summary)
