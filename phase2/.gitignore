@@ -5,10 +5,19 @@
 !.env.template
 
 # ===============================================================
-# Generated Output Files (test/pipeline outputs)
+# Data Files (raw, processed, outputs)
 # ===============================================================
-outputs/processed/*.csv
-outputs/processed/*.parquet
+data/
+outputs/
+
+# ===============================================================
+# Raw Data Files (do not commit large data files)
+# ======================================================
+data/raw/*.csv
+data/raw/*.parquet
+data/raw/*.nc
+data/raw/*.tif
+data/raw/*.json
 
 # ===============================================================
 # Python Cache and Logs
