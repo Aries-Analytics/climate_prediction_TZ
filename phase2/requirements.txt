@@ -1,0 +1,26 @@
+# Core data processing
+pandas>=2.0.0
+numpy>=1.24.0
+
+# Environment and configuration
+python-dotenv>=1.0.0
+
+# Parquet file support
+pyarrow>=12.0.0
+
+# Testing
+pytest>=7.4.0
+pytest-cov>=4.1.0
+
+# Logging (standard library, but listed for reference)
+# logging - built-in
+
+# Path handling (standard library)
+# pathlib - built-in
+
+# Optional: For future API integrations
+requests>=2.31.0
+
+# Optional: For geospatial data processing (if needed later)
+# geopandas>=0.13.0
+# rasterio>=1.3.0
