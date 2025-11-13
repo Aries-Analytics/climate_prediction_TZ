@@ -1,86 +1,278 @@
-[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/t9jXgJYS)
-﻿# Project: **Climate Change Analysis in Tanzania**
+# Tanzania Climate Prediction - Phase 2
 
-## Objective:
-- Analyzing historical climate data to understand trends and predict future climate patterns in Tanzania.
+A comprehensive data pipeline for ingesting, processing, and analyzing climate data from multiple sources to support climate prediction modeling for Tanzania.
 
-### Tools and Libraries:
-- Python (Pandas, NumPy, Matplotlib, Seaborn)
+## Overview
 
-- Scikit-learn (for Machine Learning)
+Phase 2 focuses on building a robust data pipeline that:
+- Ingests climate data from 5 major sources (NASA POWER, ERA5, CHIRPS, NDVI, Ocean Indices)
+- Processes and validates data with comprehensive error handling
+- Merges datasets into a unified master dataset
+- Provides a testing framework to ensure data quality
 
-- Streamlit (for deployment)
+## Project Structure
 
-## Project Structure:
-### 1. Data Collection:
-- *Source*: Use publicly available climate datasets (e.g., NOAA, World Bank Climate Data) that include historical weather patterns in Tanzania.
+```
+phase2/
+├── modules/
+│   ├── ingestion/          # Data ingestion modules
+│   │   ├── nasa_power_ingestion.py
+│   │   ├── era5_ingestion.py
+│   │   ├── chirps_ingestion.py
+│   │   ├── ndvi_ingestion.py
+│   │   └── ocean_indices_ingestion.py
+│   └── processing/         # Data processing modules
+│       ├── process_nasa_power.py
+│       ├── process_era5.py
+│       ├── process_chirps.py
+│       ├── process_ndvi.py
+│       ├── process_ocean_indices.py
+│       └── merge_processed.py
+├── utils/
+│   ├── config.py          # Configuration and path management
+│   ├── logger.py          # Logging utilities
+│   ├── validator.py       # Data validation functions
+│   └── validation.py      # Additional validation helpers
+├── tests/
+│   ├── test_pipeline.py   # Pipeline integration tests
+│   └── test_merge_processed.py  # Merge functionality tests
+├── data/
+│   ├── raw/              # Raw ingested data
+│   ├── processed/        # Processed data
+│   └── external/         # External data sources
+├── outputs/
+│   └── processed/        # Final processed outputs
+├── run_pipeline.py       # Main pipeline execution script
+├── requirements.txt      # Python dependencies
+└── pytest.ini           # Pytest configuration
+```
 
-- Download and integrate the data to a csv file that you can use further for the analysis.
+## Data Sources
 
-- Data Format: CSV or Excel files are commonly available formats.
+### 1. NASA POWER
+- **Source**: NASA Prediction of Worldwide Energy Resources
+- **Data**: Temperature, solar radiation
+- **API**: https://power.larc.nasa.gov/api/temporal/monthly/point
 
-- Output: Downloaded dataset in a structured format ready for preprocessing.
+### 2. ERA5
+- **Source**: ECMWF Reanalysis v5
+- **Data**: Temperature, humidity, atmospheric variables
+- **Access**: Requires API key
 
-### 2. Data Preprocessing:
-Tasks:
+### 3. CHIRPS
+- **Source**: Climate Hazards Group InfraRed Precipitation with Station data
+- **Data**: Rainfall measurements
+- **URL**: https://data.chc.ucsb.edu/products/CHIRPS-2.0
 
-- Handle missing values (if any).
+### 4. NDVI
+- **Source**: Normalized Difference Vegetation Index
+- **Data**: Vegetation health indicators
+- **Format**: Satellite imagery data
 
-- Convert data types as necessary (e.g., datetime conversion).
+### 5. Ocean Indices
+- **Source**: NOAA Climate Indices
+- **Data**: ENSO, IOD (Indian Ocean Dipole)
+- **URL**: https://psl.noaa.gov/data/climateindices/list/
 
-- Feature engineering: Extract relevant features such as seasonal trends, average temperatures, precipitation levels.
+## Installation
 
-- Encoding categorical variables (if applicable).
+### Prerequisites
+- Python 3.8+
+- pip package manager
 
-- Output: Cleaned dataset ready for exploratory data analysis (EDA) and modeling.
+### Setup
 
-### 3. Exploratory Data Analysis (EDA):
-Tasks:
+1. Clone the repository:
+```bash
+git clone https://github.com/lordwalt/climate_prediction_TZ.git
+cd climate_prediction_TZ/phase2
+```
 
-- Statistical summaries: Descriptive statistics (mean, median, variance).
+2. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
 
-- Data visualization: Plot time series of temperature trends, precipitation levels over the years.
+3. Configure environment variables:
+```bash
+cp .env.template .env
+# Edit .env with your API keys and configuration
+```
 
-- Identify correlations: Heatmaps, scatter plots to understand relationships between variables.
+## Usage
 
-- Seasonal decomposition: Identify seasonal patterns using decomposition techniques (e.g., using seasonal_decompose from statsmodels).
+### Running the Pipeline
 
-- Output: Visualizations (line plots, histograms, heatmaps) depicting historical climate trends and patterns.
+**Dry-run mode (with mock data):**
+```bash
+python run_pipeline.py --debug
+```
 
-### 4. Machine Learning Model Development:
-##### Objective: Predict future climate conditions based on historical data.
+**Production mode (with real data):**
+```bash
+python run_pipeline.py
+```
 
-Tasks:
+### Running Tests
 
-- Split data into training and testing sets.
+**Run all tests:**
+```bash
+pytest -v
+```
 
-- Select appropriate ML model(s) (e.g., Linear Regression, Random Forest) for prediction.
+**Run specific test suite:**
+```bash
+pytest tests/test_pipeline.py -v
+pytest tests/test_merge_processed.py -v
+```
 
-- Train the model on historical data.
+**Run with coverage:**
+```bash
+pytest --cov=modules --cov=utils -v
+```
 
-- Evaluate model performance using metrics like RMSE (Root Mean Square Error), MAE (Mean Absolute Error).
+## Configuration
 
-- Output: Trained model capable of predicting future climate conditions in Tanzania.
+### Environment Variables
 
-### 5. Streamlit Deployment:
-#### Objective: Create an interactive web application to showcase climate predictions.
+Create a `.env` file based on `.env.template`:
 
-Tasks:
+```env
+# NASA POWER API
+NASA_API_URL=https://power.larc.nasa.gov/api/temporal/monthly/point
 
-- Develop a Streamlit app with user-friendly interface.
+# ERA5 API
+ERA5_API_KEY=your_api_key_here
 
-- Incorporate visualizations (e.g., plots from EDA, predicted climate trends).
+# CHIRPS Data
+CHIRPS_BASE_URL=https://data.chc.ucsb.edu/products/CHIRPS-2.0
 
-- Allow users to input parameters (if applicable) and see model predictions in real-time.
+# NDVI Source
+NDVI_SOURCE=your_ndvi_source
 
-- Output: Deployed Streamlit web application accessible for users to explore climate predictions.
+# Ocean Indices
+OCEAN_INDICES_SOURCE=https://psl.noaa.gov/data/climateindices/list/
 
-## Project Deliverables:
-- Final Report: Document summarizing the project objectives, methodology, findings from EDA, and model performance. This will be a blog outlining what you have learnt in the course - You can further post it in social media to higlight what you have done.
+# Project Settings
+DEFAULT_REGION=Tanzania
+DEFAULT_CRS=EPSG:4326
+```
 
-- Code: Python scripts for data preprocessing, EDA, model development, and Streamlit app deployment.
+## Pipeline Workflow
 
-- Streamlit Web App: Live deployment link for interactive exploration of climate predictions.
+1. **Ingestion**: Fetch raw data from all sources
+2. **Validation**: Validate data structure and content
+3. **Processing**: Transform and clean data
+4. **Merging**: Combine all processed datasets
+5. **Output**: Save master dataset in CSV and Parquet formats
 
-## Conclusion:
-This project will equip you with essential skills in data preprocessing, exploratory data analysis, machine learning modeling, and deploying a web application using Streamlit. It leverages freely available climate data to gain insights into climate change patterns specific to Tanzania. Adjustments can be made based on specific datasets you find during your exploration.
+## Data Validation
+
+The pipeline includes comprehensive validation:
+- **Structure checks**: Ensures data is in DataFrame format
+- **Column validation**: Verifies expected columns exist
+- **Empty data detection**: Catches empty datasets
+- **Missing value warnings**: Logs columns with null values
+
+## Output Files
+
+Processed data is saved in `outputs/processed/`:
+- `nasa_power_processed.csv`
+- `era5_processed.csv`
+- `chirps_processed.csv`
+- `ndvi_processed.csv`
+- `ocean_indices_processed.csv`
+- `master_dataset.csv` - Combined dataset
+- `master_dataset.parquet` - Optimized format
+
+## Testing
+
+The project includes comprehensive tests:
+
+### Test Coverage
+- Pipeline integration tests (dry-run mode)
+- Data merge functionality tests
+- Validation utility tests
+
+### Test Markers
+```bash
+# Run only pipeline tests
+pytest -m pipeline
+
+# Run with verbose output
+pytest -v
+
+# Run with debug logging
+pytest -s
+```
+
+## Logging
+
+Logs are stored in `logs/` directory:
+- Pipeline execution logs
+- Validation results
+- Error traces
+- Data processing summaries
+
+## Development
+
+### Adding New Data Sources
+
+1. Create ingestion module in `modules/ingestion/`
+2. Create processing module in `modules/processing/`
+3. Add to pipeline in `run_pipeline.py`
+4. Update tests
+
+### Code Style
+- Follow PEP 8 guidelines
+- Use type hints where applicable
+- Document functions with docstrings
+- Keep functions focused and modular
+
+## Troubleshooting
+
+### Common Issues
+
+**Import errors:**
+```bash
+# Ensure you're in the phase2 directory
+cd phase2
+python run_pipeline.py
+```
+
+**Missing dependencies:**
+```bash
+pip install -r requirements.txt
+```
+
+**API authentication errors:**
+- Check your `.env` file has correct API keys
+- Verify API endpoints are accessible
+
+**Empty DataFrame errors:**
+- Run in debug mode first: `python run_pipeline.py --debug`
+- Check data source availability
+- Review logs in `logs/` directory
+
+## Contributing
+
+1. Create a feature branch
+2. Make your changes
+3. Run tests: `pytest -v`
+4. Commit with descriptive messages
+5. Push and create a pull request
+
+## License
+
+This project is part of the Tanzania Climate Prediction initiative.
+
+## Contact
+
+For questions or issues, please open an issue on GitHub.
+
+## Acknowledgments
+
+- NASA POWER for climate data
+- ECMWF for ERA5 reanalysis data
+- Climate Hazards Group for CHIRPS rainfall data
+- NOAA for ocean indices data
