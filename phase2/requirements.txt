@@ -18,8 +18,13 @@ pytest-cov>=4.1.0
 # Path handling (standard library)
 # pathlib - built-in
 
-# Optional: For future API integrations
+# API integrations
 requests>=2.31.0
+
+# Climate data APIs
+cdsapi>=0.6.1  # For ERA5 data from Copernicus Climate Data Store
+xarray>=2023.1.0  # For processing NetCDF files
+netCDF4>=1.6.0  # NetCDF file support
 
 # Optional: For geospatial data processing (if needed later)
 # geopandas>=0.13.0
