@@ -3,9 +3,9 @@ import sys
 
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
-import pytest
+import pytest  # noqa: E402
 
-import run_pipeline
+import run_pipeline  # noqa: E402
 
 
 @pytest.mark.pipeline

@@ -7,8 +7,6 @@ Saves:
  - outputs/processed/master_dataset.parquet
 """
 
-from pathlib import Path
-
 import pandas as pd
 
 from utils.config import get_output_path

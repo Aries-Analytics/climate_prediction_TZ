@@ -1,7 +1,5 @@
 from pathlib import Path
 
-import pytest
-
 import run_pipeline
 from modules.processing import merge_processed
 from utils.config import get_output_path
