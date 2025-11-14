@@ -30,6 +30,9 @@ netCDF4>=1.6.0  # NetCDF file support
 matplotlib>=3.7.0
 seaborn>=0.12.0
 
+# Task scheduling
+schedule>=1.2.0
+
 # Optional: For geospatial data processing (if needed later)
 # geopandas>=0.13.0
 # rasterio>=1.3.0
