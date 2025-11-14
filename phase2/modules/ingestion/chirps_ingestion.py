@@ -1,6 +1,7 @@
 """
 CHIRPS Ingestion - Phase 2
-Fetches rainfall data from Climate Hazards Group InfraRed Precipitation with Station data
+Fetches rainfall data from Climate Hazards Group InfraRed Precipitation with Station data.
+Data source: UCSB Climate Hazards Center
 """
 
 import os
