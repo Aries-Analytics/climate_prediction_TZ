@@ -33,16 +33,74 @@ def fetch_nasa_power_data(
     """
     Fetch NASA POWER climate data for specified location and time range.
 
-    Args:
-        dry_run: If True, return placeholder data without API call
-        latitude: Latitude coordinate (default: Tanzania center)
-        longitude: Longitude coordinate (default: Tanzania center)
-        start_year: Start year for data retrieval
-        end_year: End year for data retrieval
-        parameters: List of climate parameters to fetch (default: temperature and radiation)
+    Retrieves daily climate data from NASA POWER API and aggregates to monthly values.
+    Data includes temperature, precipitation, humidity, and solar radiation.
 
-    Returns:
-        pandas DataFrame with climate data
+    Parameters
+    ----------
+    dry_run : bool, optional
+        If True, return placeholder data without making API call. Default is False.
+    latitude : float, optional
+        Latitude coordinate for data retrieval. Default is Tanzania center (-6.369028).
+    longitude : float, optional
+        Longitude coordinate for data retrieval. Default is Tanzania center (34.888822).
+    start_year : int, optional
+        Start year for data retrieval (inclusive). Default is 2010.
+    end_year : int, optional
+        End year for data retrieval (inclusive). Default is 2023.
+    parameters : list of str, optional
+        List of NASA POWER parameter codes to fetch. If None, fetches default parameters:
+        ['T2M', 'T2M_MAX', 'T2M_MIN', 'PRECTOTCORR', 'RH2M', 'ALLSKY_SFC_SW_DWN'].
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame with monthly aggregated climate data containing columns:
+        - year (int): Year of observation
+        - month (int): Month of observation (1-12)
+        - latitude (float): Latitude coordinate
+        - longitude (float): Longitude coordinate
+        - t2m (float): Mean temperature at 2m (°C)
+        - t2m_max (float): Mean maximum temperature (°C)
+        - t2m_min (float): Mean minimum temperature (°C)
+        - prectotcorr (float): Total monthly precipitation (mm)
+        - rh2m (float): Mean relative humidity (%)
+        - allsky_sfc_sw_dwn (float): Mean solar radiation (W/m²)
+
+    Raises
+    ------
+    requests.exceptions.RequestException
+        If API request fails (network error, timeout, HTTP error).
+    ValueError
+        If API returns unexpected response structure or empty dataset.
+
+    Notes
+    -----
+    - NASA POWER data is derived from satellite observations and climate models
+    - Data has 0.5° x 0.5° spatial resolution
+    - Missing data (flagged as -999 in API) is converted to None/NaN
+    - Temperature variables are averaged over the month
+    - Precipitation is summed over the month
+    - Raw data is saved to data/raw/nasa_power_raw.csv
+
+    Examples
+    --------
+    >>> from modules.ingestion.nasa_power_ingestion import fetch_nasa_power_data
+    >>>
+    >>> # Fetch data for Tanzania (default location)
+    >>> df = fetch_nasa_power_data(start_year=2020, end_year=2023)
+    >>> print(f"Fetched {len(df)} monthly records")
+    >>>
+    >>> # Fetch data for custom location
+    >>> df = fetch_nasa_power_data(
+    ...     latitude=-6.8,
+    ...     longitude=39.3,  # Dar es Salaam
+    ...     start_year=2020,
+    ...     end_year=2023
+    ... )
+    >>>
+    >>> # Dry-run mode for testing
+    >>> df = fetch_nasa_power_data(dry_run=True)
     """
     log_info(f"Fetching NASA POWER data... (dry run: {dry_run})")
 

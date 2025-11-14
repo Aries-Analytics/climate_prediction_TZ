@@ -32,19 +32,96 @@ def fetch_era5_data(
     """
     Fetch ERA5 reanalysis data from Copernicus Climate Data Store.
 
-    Args:
-        dry_run: If True, return placeholder data without API call
-        start_year: Start year for data retrieval
-        end_year: End year for data retrieval
-        bounds: Geographic bounds dict with north, south, west, east keys
-        variables: List of ERA5 variables to fetch
+    Downloads monthly averaged ERA5 reanalysis data as NetCDF files and processes
+    them into pandas DataFrame with spatial mean over specified region.
 
-    Returns:
-        pandas DataFrame with climate data
+    Parameters
+    ----------
+    dry_run : bool, optional
+        If True, return placeholder data without making API call. Default is False.
+    start_year : int, optional
+        Start year for data retrieval (inclusive). Default is 2010.
+    end_year : int, optional
+        End year for data retrieval (inclusive). Default is 2023.
+    bounds : dict, optional
+        Geographic bounding box with keys: 'north', 'south', 'west', 'east' (degrees).
+        If None, uses Tanzania bounds: {north: -0.99, south: -11.75, west: 29.34, east: 40.44}.
+    variables : list of str, optional
+        List of ERA5 variable names to fetch. If None, fetches default variables:
+        ['2m_temperature', '2m_dewpoint_temperature', 'total_precipitation',
+         'surface_pressure', '10m_u_component_of_wind', '10m_v_component_of_wind'].
 
-    Note:
-        Requires cdsapi package and valid CDS API credentials in ~/.cdsapirc
-        To set up: https://cds.climate.copernicus.eu/api-how-to
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame with monthly climate data containing columns:
+        - year (int): Year of observation
+        - month (int): Month of observation (1-12)
+        - temp_2m (float): Mean temperature at 2m (K)
+        - dewpoint_2m (float): Mean dewpoint temperature (K)
+        - total_precip (float): Total precipitation (m)
+        - surface_pressure (float): Mean surface pressure (Pa)
+        - wind_u_10m (float): Mean U-component of wind (m/s)
+        - wind_v_10m (float): Mean V-component of wind (m/s)
+
+    Raises
+    ------
+    ImportError
+        If cdsapi or xarray packages are not installed.
+    Exception
+        If CDS API request fails (authentication error, network error, invalid parameters).
+
+    Notes
+    -----
+    **Prerequisites:**
+
+    1. Install required packages:
+       ``pip install cdsapi xarray netCDF4``
+
+    2. Configure CDS API credentials in ~/.cdsapirc:
+
+       .. code-block:: text
+
+           url: https://cds.climate.copernicus.eu/api/v2
+           key: {UID}:{API-KEY}
+
+    3. Get credentials from: https://cds.climate.copernicus.eu/user
+
+    **Data Processing:**
+
+    - Downloads NetCDF file to data/raw/era5_raw.nc
+    - Calculates spatial mean over specified geographic region
+    - Saves processed data to data/raw/era5_raw.csv
+    - Temperature values are in Kelvin (convert to Celsius: K - 273.15)
+    - Precipitation is in meters (convert to mm: m × 1000)
+
+    **Performance:**
+
+    - Requests can take several minutes as CDS queues large downloads
+    - Downloaded NetCDF files can be tens to hundreds of MB
+
+    Examples
+    --------
+    >>> from modules.ingestion.era5_ingestion import fetch_era5_data
+    >>>
+    >>> # Fetch data for Tanzania (default bounds)
+    >>> df = fetch_era5_data(start_year=2020, end_year=2023)
+    >>>
+    >>> # Fetch data for custom region
+    >>> custom_bounds = {
+    ...     'north': -5.0,
+    ...     'south': -8.0,
+    ...     'west': 33.0,
+    ...     'east': 36.0
+    ... }
+    >>> df = fetch_era5_data(bounds=custom_bounds, start_year=2020, end_year=2023)
+    >>>
+    >>> # Fetch specific variables only
+    >>> df = fetch_era5_data(
+    ...     variables=['2m_temperature', 'total_precipitation'],
+    ...     start_year=2020,
+    ...     end_year=2023
+    ... )
     """
     log_info(f"Fetching ERA5 data... (dry run: {dry_run})")
 

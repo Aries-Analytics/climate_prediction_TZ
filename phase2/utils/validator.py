@@ -17,21 +17,70 @@ from utils.logger import log_error, log_info
 
 def validate_dataframe(df: pd.DataFrame, expected_columns: list = None, dataset_name: str = "Dataset") -> bool:
     """
-    Validates that a given DataFrame contains all expected columns and no unexpected null structure.
+    Validate DataFrame structure, columns, and data integrity.
+
+    Performs comprehensive validation checks on pandas DataFrames to ensure data quality
+    and consistency across the pipeline.
 
     Parameters
     ----------
     df : pd.DataFrame
         The DataFrame to validate.
-    expected_columns : list, optional
+    expected_columns : list of str, optional
         List of column names expected in the DataFrame. If None, skips column validation.
-    dataset_name : str
-        Optional; the friendly name of the dataset being validated (for clearer logging).
+    dataset_name : str, optional
+        Friendly name of the dataset for logging purposes. Default is "Dataset".
 
     Returns
     -------
     bool
-        True if validation passes, raises ValueError otherwise.
+        True if validation passes.
+
+    Raises
+    ------
+    ValueError
+        If validation fails with detailed error message indicating the issue:
+        - Not a valid pandas DataFrame
+        - Missing expected columns
+        - DataFrame is empty
+
+    Notes
+    -----
+    **Validation Checks:**
+
+    1. **Structure Check**: Verifies input is a pandas DataFrame
+    2. **Column Check**: Ensures all expected columns exist (if specified)
+    3. **Empty Check**: Verifies DataFrame has at least one row
+    4. **Missing Values**: Logs warning if missing values detected (does not fail)
+
+    **Logging:**
+
+    - Logs validation start and completion
+    - Logs warnings for missing values
+    - Logs errors for validation failures
+    - Includes row count and column list in success message
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from utils.validator import validate_dataframe
+    >>>
+    >>> # Basic validation
+    >>> df = pd.DataFrame({'year': [2020, 2021], 'temp': [25.3, 26.1]})
+    >>> validate_dataframe(df, dataset_name="Temperature Data")
+    True
+    >>>
+    >>> # Validation with expected columns
+    >>> validate_dataframe(
+    ...     df,
+    ...     expected_columns=['year', 'temp'],
+    ...     dataset_name="Temperature Data"
+    ... )
+    True
+    >>>
+    >>> # Validation failure example
+    >>> empty_df = pd.DataFrame()
+    >>> validate_dataframe(empty_df)  # Raises ValueError
     """
     log_info(f"[VALIDATION] Starting validation for {dataset_name}...")
 

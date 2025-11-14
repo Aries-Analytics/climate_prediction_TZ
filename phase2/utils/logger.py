@@ -22,11 +22,59 @@ LOG_DIR = "logs"
 
 def setup_logging(level=logging.INFO, retention_days: int = 7):
     """
-    Configure project-wide logging (console + rotating timestamped file).
+    Configure project-wide logging with console and file output.
 
-    Args:
-        level: logging level (e.g., logging.INFO or logging.DEBUG)
-        retention_days: delete log files older than this many days
+    Sets up centralized logging for the entire pipeline with timestamped daily log files,
+    automatic rotation, and cleanup of old logs.
+
+    Parameters
+    ----------
+    level : int, optional
+        Logging level (e.g., logging.INFO, logging.DEBUG, logging.WARNING).
+        Default is logging.INFO.
+    retention_days : int, optional
+        Number of days to retain log files. Files older than this are automatically deleted.
+        Default is 7 days.
+
+    Returns
+    -------
+    logging.Logger
+        Configured root logger instance.
+
+    Notes
+    -----
+    **Log File Management:**
+
+    - Creates timestamped log files: logs/pipeline_YYYY-MM-DD.log
+    - Rotating file handler with 5MB max size and 3 backups
+    - Automatic cleanup of logs older than retention_days
+    - Console output to stdout
+
+    **Log Format:**
+
+    .. code-block:: text
+
+        YYYY-MM-DD HH:MM:SS | LEVEL | module_name | Message
+
+    **Directory Structure:**
+
+    - Log directory: logs/
+    - Log files: pipeline_YYYY-MM-DD.log
+    - Backup files: pipeline_YYYY-MM-DD.log.1, .2, .3
+
+    Examples
+    --------
+    >>> import logging
+    >>> from utils.logger import setup_logging
+    >>>
+    >>> # Setup with INFO level (default)
+    >>> logger = setup_logging()
+    >>>
+    >>> # Setup with DEBUG level for verbose output
+    >>> logger = setup_logging(level=logging.DEBUG)
+    >>>
+    >>> # Setup with custom retention period
+    >>> logger = setup_logging(level=logging.INFO, retention_days=30)
     """
     os.makedirs(LOG_DIR, exist_ok=True)
 
@@ -81,6 +129,10 @@ def get_logger(name=__name__):
 # convenience wrappers used across the codebase
 def log_info(msg: str):
     logging.getLogger().info(msg)
+
+
+def log_warning(msg: str):
+    logging.getLogger().warning(msg)
 
 
 def log_error(msg: str):

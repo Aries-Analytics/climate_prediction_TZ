@@ -29,27 +29,93 @@ def fetch_ocean_indices_data(
     """
     Fetch ocean climate indices data from NOAA.
 
-    Fetches:
-    - ONI (Oceanic Niño Index) - primary ENSO indicator
-    - IOD (Indian Ocean Dipole) - influences East African rainfall
+    Downloads and parses ONI (Oceanic Niño Index) and IOD (Indian Ocean Dipole) data
+    from NOAA servers. These indices are key predictors for East African climate variability.
 
-    Args:
-        dry_run: If True, return placeholder data without downloading
-        start_year: Start year for data retrieval
-        end_year: End year for data retrieval
+    Parameters
+    ----------
+    dry_run : bool, optional
+        If True, return placeholder data without downloading. Default is False.
+    start_year : int, optional
+        Start year for data retrieval (inclusive). Default is 2010.
+    end_year : int, optional
+        End year for data retrieval (inclusive). Default is 2023.
 
-    Returns:
-        pandas DataFrame with ocean indices data
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame with monthly ocean indices data containing columns:
+        - year (int): Year of observation
+        - month (int): Month of observation (1-12)
+        - oni (float): Oceanic Niño Index value (°C)
+        - enso_phase (str): ENSO phase classification ("El Niño", "La Niña", or "Neutral")
+        - iod (float): Indian Ocean Dipole index value (°C)
 
-    Note:
-        Data is freely available from NOAA without authentication.
-        ENSO and IOD indices are key predictors for East African climate.
+    Notes
+    -----
+    **Index Interpretations:**
+
+    ONI (Oceanic Niño Index):
+        - ONI ≥ +0.5°C: El Niño conditions (warmer than average Pacific)
+        - -0.5°C to +0.5°C: Neutral conditions
+        - ONI ≤ -0.5°C: La Niña conditions (cooler than average Pacific)
+
+    IOD (Indian Ocean Dipole):
+        - Positive IOD (> +0.4°C): Western Indian Ocean warmer - typically increases East African rainfall
+        - Neutral IOD (-0.4°C to +0.4°C): Normal conditions
+        - Negative IOD (< -0.4°C): Eastern Indian Ocean warmer - typically decreases East African rainfall
+
+    **Climate Impacts on Tanzania:**
+
+    - El Niño + Positive IOD: Significantly increased rainfall, potential flooding
+    - La Niña + Negative IOD: Reduced rainfall, drought risk
+    - El Niño alone: Moderately increased rainfall during short rains (Oct-Dec)
+    - Positive IOD alone: Increased rainfall during short rains
+
+    **Data Sources:**
+
+    1. ONI Data: NOAA Climate Prediction Center
+       - URL: https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt
+       - Based on 3-month running mean of SST anomalies in Niño 3.4 region
+
+    2. IOD Data: NOAA Physical Sciences Laboratory
+       - URL: https://psl.noaa.gov/gcos_wgsp/Timeseries/Data/dmi.had.long.data
+       - Dipole Mode Index (DMI) based on SST difference
+
+    **Data Processing:**
+
+    - Downloads and parses ASCII text files from NOAA
+    - Merges ONI and IOD data by year and month
+    - Classifies ENSO phase based on ONI threshold values
+    - Filters out missing/invalid values (-999 flags)
+    - Saves processed data to data/raw/ocean_indices_raw.csv
+
+    **Resilience:**
+
+    - If one index fails, returns data for the successful index
+    - Uses outer join to preserve all available data
+    - Logs detailed error messages for failed indices
+
+    Examples
+    --------
+    >>> from modules.ingestion.ocean_indices_ingestion import fetch_ocean_indices_data
+    >>>
+    >>> # Fetch ocean indices data
+    >>> df = fetch_ocean_indices_data(start_year=2020, end_year=2023)
+    >>> print(f"Fetched {len(df)} monthly records")
+    >>>
+    >>> # Analyze ENSO phases
+    >>> print(df['enso_phase'].value_counts())
+    >>>
+    >>> # Identify strong El Niño events
+    >>> strong_el_nino = df[df['oni'] >= 1.5]
+    >>> print(f"Strong El Niño months: {len(strong_el_nino)}")
     """
     log_info(f"Fetching ocean indices data... (dry run: {dry_run})")
 
     if dry_run:
         # Return placeholder data for testing
-        df = pd.DataFrame({"YEAR": [2020, 2021], "ENSO_INDEX": [1.1, -0.3]})
+        df = pd.DataFrame({"year": [2020, 2021], "month": [1, 1], "ENSO_INDEX": [1.1, -0.3]})
         log_info("Dry run mode: returning placeholder data")
         return df
 

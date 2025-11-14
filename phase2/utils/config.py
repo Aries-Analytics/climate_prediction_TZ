@@ -62,7 +62,37 @@ DEFAULT_CRS = os.getenv("DEFAULT_CRS", "EPSG:4326")
 def get_data_path(*subpaths) -> Path:
     """
     Return a full Path inside the data directory.
-    Example: get_data_path('raw', 'nasa_power.csv')
+
+    Constructs absolute path to files in the data/ directory and creates parent
+    directories if they don't exist.
+
+    Parameters
+    ----------
+    *subpaths : str
+        Variable number of path components to join (e.g., 'raw', 'nasa_power.csv').
+
+    Returns
+    -------
+    pathlib.Path
+        Absolute path to the specified location in data/ directory.
+
+    Notes
+    -----
+    - Automatically creates parent directories if they don't exist
+    - Returns Path object (not string) for better path manipulation
+    - Base directory is phase2/data/
+
+    Examples
+    --------
+    >>> from utils.config import get_data_path
+    >>>
+    >>> # Get path to raw NASA POWER data
+    >>> path = get_data_path('raw', 'nasa_power.csv')
+    >>> # Returns: /path/to/phase2/data/raw/nasa_power.csv
+    >>>
+    >>> # Get path to processed data directory
+    >>> path = get_data_path('processed')
+    >>> # Returns: /path/to/phase2/data/processed/
     """
     path = DATA_DIR.joinpath(*subpaths)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -72,7 +102,37 @@ def get_data_path(*subpaths) -> Path:
 def get_output_path(*subpaths) -> Path:
     """
     Return a full Path inside the outputs directory.
-    Example: get_output_path('processed', 'nasa_power_processed.csv')
+
+    Constructs absolute path to files in the outputs/ directory and creates parent
+    directories if they don't exist.
+
+    Parameters
+    ----------
+    *subpaths : str
+        Variable number of path components to join (e.g., 'processed', 'nasa_power_processed.csv').
+
+    Returns
+    -------
+    pathlib.Path
+        Absolute path to the specified location in outputs/ directory.
+
+    Notes
+    -----
+    - Automatically creates parent directories if they don't exist
+    - Returns Path object (not string) for better path manipulation
+    - Base directory is phase2/outputs/
+
+    Examples
+    --------
+    >>> from utils.config import get_output_path
+    >>>
+    >>> # Get path for processed output
+    >>> path = get_output_path('processed', 'nasa_power_processed.csv')
+    >>> # Returns: /path/to/phase2/outputs/processed/nasa_power_processed.csv
+    >>>
+    >>> # Get path to processed directory
+    >>> path = get_output_path('processed')
+    >>> # Returns: /path/to/phase2/outputs/processed/
     """
     path = OUTPUT_DIR.joinpath(*subpaths)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -107,8 +167,42 @@ def save_processed_output(df, filename: str):
 # ---------------------------------------------------------------------
 def validate_environment():
     """
-    Ensure critical directories exist and warn if core env keys are missing.
-    Call this at the start of a pipeline run.
+    Validate environment setup and ensure required directories exist.
+
+    Checks that all critical directories are present and warns about missing
+    environment variables. Should be called at the start of pipeline execution.
+
+    Notes
+    -----
+    **Directories Created:**
+
+    - data/
+    - data/raw/
+    - data/processed/
+    - data/external/
+    - outputs/
+    - outputs/processed/
+
+    **Environment Variables Checked:**
+
+    - NASA_API_URL: NASA POWER API endpoint
+    - CHIRPS_BASE_URL: CHIRPS data portal URL
+    - ERA5_API_KEY: Not checked (optional, only needed for ERA5)
+
+    **Logging:**
+
+    - Logs verification message for each directory created
+    - Logs warnings for missing environment variables
+
+    Examples
+    --------
+    >>> from utils.config import validate_environment
+    >>>
+    >>> # Validate environment at pipeline start
+    >>> validate_environment()
+    [CONFIG] Verified directory: /path/to/phase2/data
+    [CONFIG] Verified directory: /path/to/phase2/data/raw
+    ...
     """
     # ensure directories
     for p in (

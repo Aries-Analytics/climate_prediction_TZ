@@ -15,14 +15,7 @@ Each processing module implements a process() function that:
 4. Returns the processed DataFrame
 """
 
-from . import (
-    merge_processed,
-    process_chirps,
-    process_era5,
-    process_nasa_power,
-    process_ndvi,
-    process_ocean_indices,
-)
+from . import merge_processed, process_chirps, process_era5, process_nasa_power, process_ndvi, process_ocean_indices
 
 __all__ = [
     "merge_processed",

@@ -7,12 +7,7 @@ import time
 
 import pandas as pd
 
-from utils.performance import (
-    DataFrameOptimizer,
-    PerformanceBenchmark,
-    PerformanceMonitor,
-    timer,
-)
+from utils.performance import DataFrameOptimizer, PerformanceBenchmark, PerformanceMonitor, timer
 
 
 def test_performance_monitor():

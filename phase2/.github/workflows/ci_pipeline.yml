@@ -73,14 +73,11 @@ jobs:
     - name: Run flake8
       run: |
         flake8 modules/ utils/ tests/ --max-line-length=120 --extend-ignore=E203,W503
-      continue-on-error: true
     
     - name: Check code formatting with black
       run: |
         black --check modules/ utils/ tests/ --line-length=120
-      continue-on-error: true
     
     - name: Check import sorting with isort
       run: |
         isort --check-only modules/ utils/ tests/ --profile black
-      continue-on-error: true
