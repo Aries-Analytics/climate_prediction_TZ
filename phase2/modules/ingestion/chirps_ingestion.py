@@ -5,9 +5,7 @@ Fetches rainfall data from Climate Hazards Group InfraRed Precipitation with Sta
 
 import os
 import tempfile
-from io import BytesIO
 
-import numpy as np
 import pandas as pd
 import requests
 
