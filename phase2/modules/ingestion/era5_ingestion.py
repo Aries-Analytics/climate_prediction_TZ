@@ -192,31 +192,92 @@ def fetch_era5_data(
 
         log_info(f"ERA5 data downloaded to: {nc_file}")
 
-        # Convert NetCDF to DataFrame
+        # Check if file is a ZIP archive and extract if needed
+        import zipfile
+        
+        if zipfile.is_zipfile(nc_file):
+            log_info("Downloaded file is a ZIP archive, extracting...")
+            with zipfile.ZipFile(nc_file, 'r') as zip_ref:
+                # Extract all files
+                zip_ref.extractall(os.path.dirname(nc_file))
+                # Get the first .nc or .grib file
+                extracted_files = [f for f in zip_ref.namelist() if f.endswith(('.nc', '.grib', '.grib2'))]
+                if extracted_files:
+                    nc_file = os.path.join(os.path.dirname(nc_file), extracted_files[0])
+                    log_info(f"Extracted file: {nc_file}")
+                else:
+                    raise ValueError("No NetCDF or GRIB files found in ZIP archive")
+
+        # Convert NetCDF/GRIB to DataFrame
         try:
             import xarray as xr
 
-            ds = xr.open_dataset(nc_file)
+            # Try to open with different engines
+            ds = None
+            engines_to_try = ['netcdf4', 'h5netcdf', 'scipy']
+            
+            for engine in engines_to_try:
+                try:
+                    log_info(f"Trying to open with engine: {engine}")
+                    ds = xr.open_dataset(nc_file, engine=engine)
+                    log_info(f"Successfully opened with {engine} engine")
+                    break
+                except Exception as e:
+                    log_info(f"Failed with {engine}: {str(e)[:100]}")
+                    continue
+            
+            if ds is None:
+                # Try cfgrib as last resort
+                try:
+                    log_info("Trying cfgrib engine...")
+                    ds = xr.open_dataset(nc_file, engine='cfgrib', backend_kwargs={'errors': 'ignore'})
+                    log_info("Successfully opened with cfgrib engine")
+                except Exception as e:
+                    raise ValueError(f"Could not open file with any engine. Last error: {e}")
+            
+            if ds is None:
+                raise ValueError("Failed to open ERA5 data file with any available engine")
 
-            # Extract data and convert to DataFrame
-            records = []
-            for time_idx in range(len(ds.time)):
-                time_val = pd.Timestamp(ds.time.values[time_idx])
-                year = time_val.year
-                month = time_val.month
+            # Check available dimensions and coordinates
+            log_info(f"Dataset dimensions: {list(ds.dims.keys())}")
+            log_info(f"Dataset coordinates: {list(ds.coords.keys())}")
+            log_info(f"Dataset variables: {list(ds.data_vars.keys())}")
+            
+            # Find time dimension (might be 'time', 'valid_time', or other)
+            time_dim = None
+            for dim in ['time', 'valid_time', 'forecast_reference_time']:
+                if dim in ds.dims or dim in ds.coords:
+                    time_dim = dim
+                    break
+            
+            if time_dim is None:
+                log_error("No time dimension found in ERA5 dataset")
+                log_info("Falling back to synthetic ERA5 data")
+                df = _generate_sample_era5_data(start_year, end_year, bounds)
+            else:
+                # Extract data and convert to DataFrame
+                records = []
+                for time_idx in range(len(ds[time_dim])):
+                    time_val = pd.Timestamp(ds[time_dim].values[time_idx])
+                    year = time_val.year
+                    month = time_val.month
 
-                # Get spatial mean for each variable
-                record = {"year": year, "month": month}
+                    # Get spatial mean for each variable
+                    record = {"year": year, "month": month}
 
-                for var in ds.data_vars:
-                    # Calculate spatial mean (average over lat/lon)
-                    var_data = ds[var].isel(time=time_idx)
-                    mean_val = float(var_data.mean().values)
-                    record[var] = mean_val
+                    for var in ds.data_vars:
+                        try:
+                            # Calculate spatial mean (average over lat/lon)
+                            var_data = ds[var].isel({time_dim: time_idx})
+                            mean_val = float(var_data.mean().values)
+                            record[var] = mean_val
+                        except Exception as e:
+                            log_error(f"Error processing variable {var}: {e}")
+                            continue
 
-                records.append(record)
+                    records.append(record)
 
-            df = pd.DataFrame(records)
+                df = pd.DataFrame(records)
 
             # Rename columns to more readable names
             column_mapping = {

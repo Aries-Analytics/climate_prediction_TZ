@@ -15,7 +15,6 @@ from utils.validator import validate_dataframe
 
 # NOAA Climate Prediction Center URLs
 ENSO_ONI_URL = "https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt"
-ENSO_MEI_URL = "https://psl.noaa.gov/enso/mei/data/meiv2.data"
 IOD_URL = "https://psl.noaa.gov/gcos_wgsp/Timeseries/Data/dmi.had.long.data"
 
 
@@ -82,20 +81,6 @@ def fetch_ocean_indices_data(
        - URL: https://psl.noaa.gov/gcos_wgsp/Timeseries/Data/dmi.had.long.data
        - Dipole Mode Index (DMI) based on SST difference
 
-    **Data Processing:**
-
-    - Downloads and parses ASCII text files from NOAA
-    - Merges ONI and IOD data by year and month
-    - Classifies ENSO phase based on ONI threshold values
-    - Filters out missing/invalid values (-999 flags)
-    - Saves processed data to data/raw/ocean_indices_raw.csv
-
-    **Resilience:**
-
-    - If one index fails, returns data for the successful index
-    - Uses outer join to preserve all available data
-    - Logs detailed error messages for failed indices
-
     Examples
     --------
     >>> from modules.ingestion.ocean_indices_ingestion import fetch_ocean_indices_data
@@ -106,48 +91,55 @@ def fetch_ocean_indices_data(
     >>>
     >>> # Analyze ENSO phases
     >>> print(df['enso_phase'].value_counts())
-    >>>
-    >>> # Identify strong El Niño events
-    >>> strong_el_nino = df[df['oni'] >= 1.5]
-    >>> print(f"Strong El Niño months: {len(strong_el_nino)}")
     """
     log_info(f"Fetching ocean indices data... (dry run: {dry_run})")
 
     if dry_run:
         # Return placeholder data for testing
-        df = pd.DataFrame({"year": [2020, 2021], "month": [1, 1], "ENSO_INDEX": [1.1, -0.3]})
+        df = pd.DataFrame({
+            "year": [2020, 2020, 2021, 2021],
+            "month": [1, 6, 1, 6],
+            "oni": [0.5, -0.3, 1.1, -0.8],
+            "enso_phase": ["El Niño", "Neutral", "El Niño", "La Niña"],
+            "iod": [0.2, -0.1, 0.5, -0.3]
+        })
         log_info("Dry run mode: returning placeholder data")
         return df
 
     try:
-        all_data = []
-
         # Fetch ONI (Oceanic Niño Index) - ENSO indicator
         log_info("Fetching ONI (ENSO) data from NOAA...")
+        oni_df = None
         try:
             oni_data = _fetch_oni_data(start_year, end_year)
-            all_data.extend(oni_data)
-            log_info(f"Successfully fetched {len(oni_data)} ONI records")
+            if oni_data:
+                oni_df = pd.DataFrame(oni_data)
+                log_info(f"Successfully fetched {len(oni_data)} ONI records")
         except Exception as e:
             log_error(f"Failed to fetch ONI data: {e}")
 
         # Fetch IOD (Indian Ocean Dipole) data
         log_info("Fetching IOD data from NOAA...")
+        iod_df = None
         try:
             iod_data = _fetch_iod_data(start_year, end_year)
-            # Merge IOD data with ONI data
-            if all_data and iod_data:
-                all_data = _merge_indices(all_data, iod_data)
-            log_info("Successfully fetched IOD data")
+            if iod_data:
+                iod_df = pd.DataFrame(iod_data)
+                log_info(f"Successfully fetched {len(iod_data)} IOD records")
         except Exception as e:
             log_error(f"Failed to fetch IOD data: {e}")
 
-        if not all_data:
+        # Merge the datasets
+        if oni_df is not None and iod_df is not None:
+            df = pd.merge(oni_df, iod_df, on=["year", "month"], how="outer")
+        elif oni_df is not None:
+            df = oni_df
+        elif iod_df is not None:
+            df = iod_df
+        else:
             log_error("No ocean indices data was successfully downloaded")
             raise ValueError("Failed to fetch any ocean indices data")
 
-        # Create DataFrame
-        df = pd.DataFrame(all_data)
         df = df.sort_values(["year", "month"]).reset_index(drop=True)
 
         log_info(f"Successfully fetched {len(df)} ocean indices records")
@@ -174,35 +166,43 @@ def _fetch_oni_data(start_year, end_year):
     response = requests.get(ENSO_ONI_URL, timeout=30)
     response.raise_for_status()
 
-    # Parse the fixed-width format file
+    # Parse the ONI file format
+    # Format: SEAS YR TOTAL ANOM
+    # Example: DJF 1950 24.73 -1.53
     lines = response.text.strip().split("\n")
     data = []
+    
+    # Map season codes to middle month
+    season_to_month = {
+        'DJF': 1, 'JFM': 2, 'FMA': 3, 'MAM': 4, 'AMJ': 5, 'MJJ': 6,
+        'JJA': 7, 'JAS': 8, 'ASO': 9, 'SON': 10, 'OND': 11, 'NDJ': 12
+    }
 
     for line in lines:
-        # Skip header lines
-        if line.startswith("Year") or not line.strip():
+        # Skip header lines and empty lines
+        if not line.strip() or 'SEAS' in line or 'Year' in line:
             continue
 
         parts = line.split()
-        if len(parts) < 2:
+        if len(parts) < 4:
             continue
 
         try:
-            year = int(parts[0])
+            season = parts[0]
+            year = int(parts[1])
+            oni_value = float(parts[3])  # ANOM column
+            
             if year < start_year or year > end_year:
                 continue
-
-            # ONI file has seasonal values (DJF, JFM, FMA, etc.)
-            # We'll extract the monthly values
-            for month in range(1, 13):
-                if month < len(parts):
-                    try:
-                        oni_value = float(parts[month])
-                        data.append(
-                            {"year": year, "month": month, "oni": oni_value, "enso_phase": _classify_enso(oni_value)}
-                        )
-                    except (ValueError, IndexError):
-                        continue
+            
+            if season in season_to_month:
+                month = season_to_month[season]
+                data.append({
+                    "year": year,
+                    "month": month,
+                    "oni": round(oni_value, 3),
+                    "enso_phase": _classify_enso(oni_value)
+                })
         except (ValueError, IndexError):
             continue
 
@@ -219,7 +219,7 @@ def _fetch_iod_data(start_year, end_year):
 
     for line in lines:
         # Skip header/comment lines
-        if not line.strip() or line.strip().startswith("#"):
+        if not line.strip() or line.strip().startswith("#") or 'Year' in line:
             continue
 
         parts = line.split()
@@ -227,35 +227,27 @@ def _fetch_iod_data(start_year, end_year):
             continue
 
         try:
-            year = int(parts[0])
+            year = int(float(parts[0]))  # Handle potential decimal years
             if year < start_year or year > end_year:
                 continue
 
             # Monthly values are in columns 1-12
-            for month in range(1, 13):
+            for month_idx in range(1, 13):
                 try:
-                    iod_value = float(parts[month])
+                    iod_value = float(parts[month_idx])
                     # Filter out missing data (usually -999 or similar)
-                    if iod_value > -99:
-                        data.append({"year": year, "month": month, "iod": iod_value})
+                    if iod_value > -90:  # More lenient threshold
+                        data.append({
+                            "year": year,
+                            "month": month_idx,
+                            "iod": round(iod_value, 3)
+                        })
                 except (ValueError, IndexError):
                     continue
         except (ValueError, IndexError):
             continue
 
     return data
-
-
-def _merge_indices(oni_data, iod_data):
-    """Merge ONI and IOD data by year and month."""
-    # Convert to DataFrames for easier merging
-    oni_df = pd.DataFrame(oni_data)
-    iod_df = pd.DataFrame(iod_data)
-
-    # Merge on year and month
-    merged = pd.merge(oni_df, iod_df, on=["year", "month"], how="outer")
-
-    return merged.to_dict("records")
 
 
 def _classify_enso(oni_value):

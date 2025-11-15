@@ -100,6 +100,11 @@ def setup_logging(level=logging.INFO, retention_days: int = 7):
 
     # Create handlers
     rotating_handler = RotatingFileHandler(log_file, maxBytes=5 * 1024 * 1024, backupCount=3, encoding="utf-8")
+    
+    # Set console encoding to UTF-8 for Windows compatibility
+    if sys.stdout.encoding != 'utf-8':
+        import io
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
     console_handler = logging.StreamHandler(sys.stdout)
 
     # Formatter

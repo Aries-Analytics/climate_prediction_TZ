@@ -23,7 +23,7 @@ from modules.processing import (
 )
 from modules.processing.merge_processed import merge_all  # <- added import
 
-def run_pipeline(debug=False):
+def run_pipeline(debug=False, start_year=2000, end_year=2023):
     start_time = time.time()
     setup_logging(logging.DEBUG if debug else logging.INFO)
     logger = logging.getLogger(__name__)
@@ -33,6 +33,7 @@ def run_pipeline(debug=False):
 
     validate_environment()
     logger.info("Starting Phase 2 pipeline...")
+    logger.info(f"Data range: {start_year}-{end_year} ({end_year - start_year + 1} years)")
 
     # === INGESTION ===
     stages = [
@@ -48,10 +49,13 @@ def run_pipeline(debug=False):
         t0 = time.time()
         logger.info(f"Ingesting {name} data...")
         try:
-            ingested[name] = func(dry_run=dry_run)
+            ingested[name] = func(dry_run=dry_run, start_year=start_year, end_year=end_year)
         except TypeError:
-            # backward compatibility: some fetch_data() may not accept dry_run kw
-            ingested[name] = func()
+            # backward compatibility: some fetch_data() may not accept these kwargs
+            try:
+                ingested[name] = func(dry_run=dry_run)
+            except TypeError:
+                ingested[name] = func()
         logger.info(f"{name} ingestion completed in {time.time() - t0:.2f}s")
 
     # === PROCESSING ===
@@ -87,6 +91,8 @@ def run_pipeline(debug=False):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--debug", action="store_true", help="Enable debug logging (also sets dry-run for ingestion)")
+    parser.add_argument("--start-year", type=int, default=2000, help="Start year for data ingestion (default: 2000)")
+    parser.add_argument("--end-year", type=int, default=2023, help="End year for data ingestion (default: 2023)")
     args = parser.parse_args()
-    run_pipeline(debug=args.debug)
+    run_pipeline(debug=args.debug, start_year=args.start_year, end_year=args.end_year)
 
