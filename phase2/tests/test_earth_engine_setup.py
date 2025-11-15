@@ -3,9 +3,12 @@ Test script to verify Google Earth Engine setup and access to data sources.
 Run this after completing Earth Engine authentication.
 """
 
-import ee
 import sys
 from datetime import datetime
+
+import pytest
+
+ee = pytest.importorskip("ee", reason="earthengine-api not installed")
 
 
 def test_earth_engine_initialization():

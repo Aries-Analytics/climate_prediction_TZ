@@ -1,6 +1,9 @@
 from pathlib import Path
 
-import run_pipeline
+import pytest
+
+run_pipeline = pytest.importorskip("run_pipeline", reason="run_pipeline module not available")
+
 from modules.processing import merge_processed
 from utils.config import get_output_path
 

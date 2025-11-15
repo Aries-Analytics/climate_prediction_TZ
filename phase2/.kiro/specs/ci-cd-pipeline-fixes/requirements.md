@@ -1,10 +1,10 @@
 # Requirements Document
 
-## Status: ✅ COMPLETED
+## Status: 🔄 IN PROGRESS - New Issues Identified
 
 ## Introduction
 
-This feature addressed the failing CI/CD pipeline by resolving linting errors and test failures across Python versions 3.9, 3.10, and 3.11. The system had 8+ linting errors and test failures that prevented successful builds. The goal was to establish a stable, passing CI/CD pipeline with proper code quality checks and reliable test execution
+This feature addresses the failing CI/CD pipeline by resolving import errors and test collection failures across Python versions 3.9, 3.10, and 3.11. The system currently has module import errors preventing test execution. The goal is to establish a stable, passing CI/CD pipeline with proper dependency management and reliable test execution
 
 ## Glossary
 
@@ -74,3 +74,15 @@ This feature addressed the failing CI/CD pipeline by resolving linting errors an
 3. THE CI_Pipeline SHALL generate both XML and terminal coverage report formats
 4. WHEN coverage upload fails, THE CI_Pipeline SHALL continue without failing the build
 5. THE Test_Suite SHALL measure coverage with a minimum threshold to ensure adequate testing
+
+### Requirement 6
+
+**User Story:** As a developer, I want all required dependencies to be properly declared, so that tests can import necessary modules
+
+#### Acceptance Criteria
+
+1. WHEN the Test_Suite imports the ee module, THE CI_Pipeline SHALL have earthengine-api installed as a dependency
+2. WHEN test files import run_pipeline module, THE Test_Suite SHALL either have the module available or skip tests that require it
+3. THE CI_Pipeline SHALL collect and execute all valid test files without import errors
+4. WHEN a test requires an optional dependency, THE Test_Suite SHALL skip the test gracefully with appropriate markers
+5. THE CI_Pipeline SHALL report which tests were skipped and why
