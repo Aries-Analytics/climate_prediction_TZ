@@ -5,6 +5,7 @@ Tests for data caching utility
 import tempfile
 
 import pandas as pd
+
 from utils.cache import DataCache
 
 

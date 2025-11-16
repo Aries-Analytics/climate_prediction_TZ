@@ -8,6 +8,7 @@ import os
 
 import pandas as pd
 import requests
+
 from utils.config import get_data_path
 from utils.logger import log_error, log_info
 from utils.validator import validate_dataframe

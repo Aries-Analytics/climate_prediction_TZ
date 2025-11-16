@@ -4,9 +4,8 @@ import pytest
 
 run_pipeline = pytest.importorskip("run_pipeline", reason="run_pipeline module not available")
 
-from utils.config import get_output_path  # noqa: E402
-
 from modules.processing import merge_processed  # noqa: E402
+from utils.config import get_output_path  # noqa: E402
 
 
 def test_merge_creates_master(tmp_path):

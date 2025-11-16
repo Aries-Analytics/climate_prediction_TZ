@@ -8,6 +8,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
+
 from utils.config import get_data_path
 from utils.logger import log_error, log_info
 

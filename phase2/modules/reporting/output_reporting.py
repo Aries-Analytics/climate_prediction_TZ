@@ -10,6 +10,7 @@ import logging
 import os
 
 import pandas as pd
+
 from utils.config import get_data_path
 
 logger = logging.getLogger(__name__)

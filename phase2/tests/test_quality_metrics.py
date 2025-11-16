@@ -5,6 +5,7 @@ Tests for data quality metrics
 import tempfile
 
 import pandas as pd
+
 from utils.quality_metrics import DataQualityMetrics
 
 
