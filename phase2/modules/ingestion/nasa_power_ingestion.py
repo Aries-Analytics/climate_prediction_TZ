@@ -140,11 +140,11 @@ def fetch_nasa_power_data(
 
     try:
         log_info(f"Requesting NASA POWER data for lat={latitude}, lon={longitude}, years={start_year}-{end_year}")
-        
+
         # Add retry logic with exponential backoff
         max_retries = 3
         retry_delay = 2
-        
+
         for attempt in range(max_retries):
             try:
                 response = requests.get(url, params=params, timeout=90)
