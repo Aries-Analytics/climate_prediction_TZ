@@ -9,7 +9,6 @@ climatological data for testing purposes.
 import os
 
 import pandas as pd
-
 from utils.config import get_data_path
 from utils.logger import log_error, log_info, log_warning
 from utils.validator import validate_dataframe
@@ -44,10 +43,12 @@ def _initialize_gee():
 
     try:
         import os
+
         from dotenv import load_dotenv
+
         load_dotenv()
-        
-        project_id = os.getenv('GOOGLE_CLOUD_PROJECT', 'climate-prediction-using-ml')
+
+        project_id = os.getenv("GOOGLE_CLOUD_PROJECT", "climate-prediction-using-ml")
         ee.Initialize(project=project_id)
         log_info(f"Google Earth Engine initialized with project: {project_id}")
         return True
@@ -394,16 +395,18 @@ def fetch_ndvi_data(
         if cached_file.exists():
             try:
                 df = pd.read_csv(cached_file)
-                
+
                 # Check if cached data covers the requested date range
-                cached_years = set(df['year'].unique())
+                cached_years = set(df["year"].unique())
                 requested_years = set(range(start_year, end_year + 1))
-                
+
                 if requested_years.issubset(cached_years):
                     # Filter to requested date range
-                    df = df[(df['year'] >= start_year) & (df['year'] <= end_year)]
+                    df = df[(df["year"] >= start_year) & (df["year"] <= end_year)]
                     log_info(f"✓ Using cached NDVI data from: {cached_file}")
-                    log_info(f"  Data source: {df['data_source'].iloc[0] if 'data_source' in df.columns else 'unknown'}")
+                    log_info(
+                        f"  Data source: {df['data_source'].iloc[0] if 'data_source' in df.columns else 'unknown'}"
+                    )
                     return df
                 else:
                     missing_years = requested_years - cached_years
@@ -438,19 +441,21 @@ def fetch_ndvi_data(
 
     except Exception as e:
         log_error(f"All NDVI data fetch strategies failed: {e}")
-        
+
         # TIER 4: Last resort - minimal dummy data for testing
         log_warning("Returning minimal dummy data as last resort")
-        df = pd.DataFrame({
-            "year": [start_year],
-            "month": [1],
-            "ndvi": [0.65],
-            "lat_min": [bounds['lat_min']],
-            "lat_max": [bounds['lat_max']],
-            "lon_min": [bounds['lon_min']],
-            "lon_max": [bounds['lon_max']],
-            "data_source": ["dummy_fallback"]
-        })
+        df = pd.DataFrame(
+            {
+                "year": [start_year],
+                "month": [1],
+                "ndvi": [0.65],
+                "lat_min": [bounds["lat_min"]],
+                "lat_max": [bounds["lat_max"]],
+                "lon_min": [bounds["lon_min"]],
+                "lon_max": [bounds["lon_max"]],
+                "data_source": ["dummy_fallback"],
+            }
+        )
         return df
 
 

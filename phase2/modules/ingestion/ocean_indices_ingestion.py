@@ -8,7 +8,6 @@ import os
 
 import pandas as pd
 import requests
-
 from utils.config import get_data_path
 from utils.logger import log_error, log_info
 from utils.validator import validate_dataframe
@@ -96,13 +95,15 @@ def fetch_ocean_indices_data(
 
     if dry_run:
         # Return placeholder data for testing
-        df = pd.DataFrame({
-            "year": [2020, 2020, 2021, 2021],
-            "month": [1, 6, 1, 6],
-            "oni": [0.5, -0.3, 1.1, -0.8],
-            "enso_phase": ["El Niño", "Neutral", "El Niño", "La Niña"],
-            "iod": [0.2, -0.1, 0.5, -0.3]
-        })
+        df = pd.DataFrame(
+            {
+                "year": [2020, 2020, 2021, 2021],
+                "month": [1, 6, 1, 6],
+                "oni": [0.5, -0.3, 1.1, -0.8],
+                "enso_phase": ["El Niño", "Neutral", "El Niño", "La Niña"],
+                "iod": [0.2, -0.1, 0.5, -0.3],
+            }
+        )
         log_info("Dry run mode: returning placeholder data")
         return df
 
@@ -171,16 +172,26 @@ def _fetch_oni_data(start_year, end_year):
     # Example: DJF 1950 24.73 -1.53
     lines = response.text.strip().split("\n")
     data = []
-    
+
     # Map season codes to middle month
     season_to_month = {
-        'DJF': 1, 'JFM': 2, 'FMA': 3, 'MAM': 4, 'AMJ': 5, 'MJJ': 6,
-        'JJA': 7, 'JAS': 8, 'ASO': 9, 'SON': 10, 'OND': 11, 'NDJ': 12
+        "DJF": 1,
+        "JFM": 2,
+        "FMA": 3,
+        "MAM": 4,
+        "AMJ": 5,
+        "MJJ": 6,
+        "JJA": 7,
+        "JAS": 8,
+        "ASO": 9,
+        "SON": 10,
+        "OND": 11,
+        "NDJ": 12,
     }
 
     for line in lines:
         # Skip header lines and empty lines
-        if not line.strip() or 'SEAS' in line or 'Year' in line:
+        if not line.strip() or "SEAS" in line or "Year" in line:
             continue
 
         parts = line.split()
@@ -191,18 +202,15 @@ def _fetch_oni_data(start_year, end_year):
             season = parts[0]
             year = int(parts[1])
             oni_value = float(parts[3])  # ANOM column
-            
+
             if year < start_year or year > end_year:
                 continue
-            
+
             if season in season_to_month:
                 month = season_to_month[season]
-                data.append({
-                    "year": year,
-                    "month": month,
-                    "oni": round(oni_value, 3),
-                    "enso_phase": _classify_enso(oni_value)
-                })
+                data.append(
+                    {"year": year, "month": month, "oni": round(oni_value, 3), "enso_phase": _classify_enso(oni_value)}
+                )
         except (ValueError, IndexError):
             continue
 
@@ -219,7 +227,7 @@ def _fetch_iod_data(start_year, end_year):
 
     for line in lines:
         # Skip header/comment lines
-        if not line.strip() or line.strip().startswith("#") or 'Year' in line:
+        if not line.strip() or line.strip().startswith("#") or "Year" in line:
             continue
 
         parts = line.split()
@@ -237,11 +245,7 @@ def _fetch_iod_data(start_year, end_year):
                     iod_value = float(parts[month_idx])
                     # Filter out missing data (usually -999 or similar)
                     if iod_value > -90:  # More lenient threshold
-                        data.append({
-                            "year": year,
-                            "month": month_idx,
-                            "iod": round(iod_value, 3)
-                        })
+                        data.append({"year": year, "month": month_idx, "iod": round(iod_value, 3)})
                 except (ValueError, IndexError):
                     continue
         except (ValueError, IndexError):

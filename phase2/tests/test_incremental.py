@@ -6,7 +6,6 @@ import tempfile
 from pathlib import Path
 
 import pandas as pd
-
 from utils.incremental import IncrementalUpdateTracker
 
 

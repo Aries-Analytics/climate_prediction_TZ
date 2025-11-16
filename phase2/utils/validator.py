@@ -11,7 +11,6 @@ is integrated beyond the dry-run stage.
 """
 
 import pandas as pd
-
 from utils.logger import log_error, log_info
 
 

@@ -7,7 +7,6 @@ Data source: Google Earth Engine (UCSB-CHG/CHIRPS/DAILY)
 import os
 
 import pandas as pd
-
 from utils.config import get_data_path
 from utils.logger import log_error, log_info, log_warning
 from utils.validator import validate_dataframe
@@ -23,6 +22,7 @@ TANZANIA_BOUNDS = {
 # Try to import Google Earth Engine
 try:
     import ee
+
     GEE_AVAILABLE = True
 except ImportError:
     GEE_AVAILABLE = False
@@ -33,13 +33,15 @@ def _initialize_gee():
     """Initialize Google Earth Engine with project ID from environment."""
     if not GEE_AVAILABLE:
         return False
-    
+
     try:
         import os
+
         from dotenv import load_dotenv
+
         load_dotenv()
-        
-        project_id = os.getenv('GOOGLE_CLOUD_PROJECT', 'climate-prediction-using-ml')
+
+        project_id = os.getenv("GOOGLE_CLOUD_PROJECT", "climate-prediction-using-ml")
         ee.Initialize(project=project_id)
         log_info(f"Google Earth Engine initialized with project: {project_id}")
         return True
@@ -51,68 +53,69 @@ def _initialize_gee():
 def _fetch_gee_chirps(start_year, end_year, bounds):
     """
     Fetch CHIRPS data from Google Earth Engine.
-    
+
     Uses daily CHIRPS data, aggregates to monthly totals, and calculates spatial mean.
     """
     log_info("Fetching CHIRPS from Google Earth Engine")
-    
+
     # Define region of interest
-    region = ee.Geometry.Rectangle([
-        bounds["lon_min"], bounds["lat_min"],
-        bounds["lon_max"], bounds["lat_max"]
-    ])
-    
+    region = ee.Geometry.Rectangle([bounds["lon_min"], bounds["lat_min"], bounds["lon_max"], bounds["lat_max"]])
+
     # Get CHIRPS daily collection
-    chirps = ee.ImageCollection('UCSB-CHG/CHIRPS/DAILY') \
-        .filterDate(f'{start_year}-01-01', f'{end_year}-12-31') \
-        .filterBounds(region) \
-        .select('precipitation')
-    
+    chirps = (
+        ee.ImageCollection("UCSB-CHG/CHIRPS/DAILY")
+        .filterDate(f"{start_year}-01-01", f"{end_year}-12-31")
+        .filterBounds(region)
+        .select("precipitation")
+    )
+
     # Function to aggregate to monthly and extract data
     records = []
-    
+
     for year in range(start_year, end_year + 1):
         for month in range(1, 13):
             # Get data for this month
-            start_date = f'{year}-{month:02d}-01'
-            
+            start_date = f"{year}-{month:02d}-01"
+
             # Calculate end date (last day of month)
             if month == 12:
-                end_date = f'{year + 1}-01-01'
+                end_date = f"{year + 1}-01-01"
             else:
-                end_date = f'{year}-{month + 1:02d}-01'
-            
+                end_date = f"{year}-{month + 1:02d}-01"
+
             # Filter to this month and sum daily values
             monthly = chirps.filterDate(start_date, end_date).sum()
-            
+
             # Calculate mean over region
             stats = monthly.reduceRegion(
                 reducer=ee.Reducer.mean(),
                 geometry=region,
                 scale=5000,  # 5km resolution (CHIRPS native is ~5.5km)
-                maxPixels=1e9
+                maxPixels=1e9,
             )
-            
+
             # Get the value
-            rainfall = stats.get('precipitation').getInfo()
-            
+            rainfall = stats.get("precipitation").getInfo()
+
             if rainfall is not None:
-                records.append({
-                    'year': year,
-                    'month': month,
-                    'rainfall_mm': round(rainfall, 2),
-                    'lat_min': bounds['lat_min'],
-                    'lat_max': bounds['lat_max'],
-                    'lon_min': bounds['lon_min'],
-                    'lon_max': bounds['lon_max'],
-                    'data_source': 'CHIRPS_GEE'
-                })
-                
+                records.append(
+                    {
+                        "year": year,
+                        "month": month,
+                        "rainfall_mm": round(rainfall, 2),
+                        "lat_min": bounds["lat_min"],
+                        "lat_max": bounds["lat_max"],
+                        "lon_min": bounds["lon_min"],
+                        "lon_max": bounds["lon_max"],
+                        "data_source": "CHIRPS_GEE",
+                    }
+                )
+
                 log_info(f"Retrieved CHIRPS data for {year}-{month:02d}: {rainfall:.2f} mm")
-    
+
     df = pd.DataFrame(records)
     log_info(f"Retrieved {len(df)} monthly CHIRPS records from GEE")
-    
+
     return df
 
 
@@ -264,16 +267,18 @@ def fetch_chirps_data(
         if cached_file.exists():
             try:
                 df = pd.read_csv(cached_file)
-                
+
                 # Check if cached data covers the requested date range
-                cached_years = set(df['year'].unique())
+                cached_years = set(df["year"].unique())
                 requested_years = set(range(start_year, end_year + 1))
-                
+
                 if requested_years.issubset(cached_years):
                     # Filter to requested date range
-                    df = df[(df['year'] >= start_year) & (df['year'] <= end_year)]
+                    df = df[(df["year"] >= start_year) & (df["year"] <= end_year)]
                     log_info(f"✓ Using cached CHIRPS data from: {cached_file}")
-                    log_info(f"  Data source: {df['data_source'].iloc[0] if 'data_source' in df.columns else 'unknown'}")
+                    log_info(
+                        f"  Data source: {df['data_source'].iloc[0] if 'data_source' in df.columns else 'unknown'}"
+                    )
                     return df
                 else:
                     missing_years = requested_years - cached_years
@@ -308,19 +313,21 @@ def fetch_chirps_data(
 
     except Exception as e:
         log_error(f"All CHIRPS data fetch strategies failed: {e}")
-        
+
         # TIER 4: Last resort - minimal dummy data for testing
         log_warning("Returning minimal dummy data as last resort")
-        df = pd.DataFrame({
-            "year": [start_year],
-            "month": [1],
-            "rainfall_mm": [100.0],
-            "lat_min": [bounds['lat_min']],
-            "lat_max": [bounds['lat_max']],
-            "lon_min": [bounds['lon_min']],
-            "lon_max": [bounds['lon_max']],
-            "data_source": ["dummy_fallback"]
-        })
+        df = pd.DataFrame(
+            {
+                "year": [start_year],
+                "month": [1],
+                "rainfall_mm": [100.0],
+                "lat_min": [bounds["lat_min"]],
+                "lat_max": [bounds["lat_max"]],
+                "lon_min": [bounds["lon_min"]],
+                "lon_max": [bounds["lon_max"]],
+                "data_source": ["dummy_fallback"],
+            }
+        )
         return df
 
 

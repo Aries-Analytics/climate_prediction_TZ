@@ -9,7 +9,6 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 import pandas as pd
-
 from utils.config import get_data_path
 from utils.logger import log_error, log_info
 
