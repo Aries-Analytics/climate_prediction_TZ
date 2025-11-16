@@ -253,7 +253,8 @@
     - Generate comparison summary report
     - _Requirements: 7.3, 7.4, 7.5_
 
-- [ ] 11. Create main training pipeline script for a multi model pipeline
+- [x] 11. Create main training pipeline script for a multi model pipeline
+
 
   - Create `model_development_pipeline.py` or update existing file
   - Orchestrate: preprocessing → training → evaluation → experiment logging
@@ -283,11 +284,13 @@
     - Verify all output files are created
 
 - [ ]* 13. Create documentation
-  - [ ]* 13.1 Update README with model development instructions
+  - [x]* 13.1 Update README with model development instructions
+
     - Add section on running model training
     - Document output files and their locations
   
-  - [ ]* 13.2 Create model development guide
+  - [x]* 13.2 Create model development guide
+
     - Document how to add new models
     - Document how to tune hyperparameters
     - Document how to interpret results
