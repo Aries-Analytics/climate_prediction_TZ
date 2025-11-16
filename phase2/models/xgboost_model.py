@@ -112,11 +112,41 @@ class XGBoostModel(SklearnBaseModel):
 
         # Fit the model
         if eval_set:
-            self.model.fit(
-                X_train, y_train, eval_set=eval_set, early_stopping_rounds=early_stopping_rounds, verbose=False
-            )
-            self.best_iteration_ = self.model.best_iteration
-            logger.info(f"Best iteration: {self.best_iteration_}")
+            # XGBoost API changed between versions - try both approaches
+            try:
+                # Try older XGBoost API first (< 2.0)
+                self.model.fit(
+                    X_train,
+                    y_train,
+                    eval_set=eval_set,
+                    early_stopping_rounds=early_stopping_rounds,
+                    verbose=False,
+                )
+                logger.info(f"Using XGBoost < 2.0 API with early_stopping_rounds parameter")
+            except TypeError as e:
+                # If that fails, try XGBoost 2.0+ API with callbacks
+                if "early_stopping_rounds" in str(e) or "callbacks" in str(e):
+                    try:
+                        from xgboost.callback import EarlyStopping
+                        
+                        self.model.fit(
+                            X_train,
+                            y_train,
+                            eval_set=eval_set,
+                            callbacks=[EarlyStopping(rounds=early_stopping_rounds)],
+                            verbose=False,
+                        )
+                        logger.info(f"Using XGBoost 2.0+ API with EarlyStopping callback")
+                    except Exception as callback_error:
+                        logger.warning(f"Early stopping failed: {callback_error}. Training without early stopping.")
+                        self.model.fit(X_train, y_train, verbose=False)
+                else:
+                    raise
+            
+            # Get best iteration if available
+            if hasattr(self.model, 'best_iteration'):
+                self.best_iteration_ = self.model.best_iteration
+                logger.info(f"Best iteration: {self.best_iteration_}")
         else:
             self.model.fit(X_train, y_train)
 

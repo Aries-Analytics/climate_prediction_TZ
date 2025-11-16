@@ -4,7 +4,14 @@ Main entry point for Phase 2 pipeline - Tanzania Climate Prediction.
 
 import argparse
 import logging
+import sys
 import time
+from pathlib import Path
+
+# Add project root to Python path to enable imports when running this script directly
+project_root = Path(__file__).resolve().parent.parent
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
 
 from utils.config import validate_environment
 from utils.logger import setup_logging

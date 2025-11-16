@@ -26,13 +26,19 @@ def calculate_metrics(y_true: np.ndarray, y_pred: np.ndarray) -> Dict[str, float
     from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
     # Calculate metrics
-    r2 = r2_score(y_true, y_pred)
+    # R² requires at least 2 samples to calculate variance
+    if len(y_true) >= 2:
+        r2 = r2_score(y_true, y_pred)
+    else:
+        r2 = None  # Use None instead of NaN for better JSON serialization
+        logger.warning(f"Cannot calculate R² with only {len(y_true)} sample(s). Need at least 2 samples.")
+
     rmse = np.sqrt(mean_squared_error(y_true, y_pred))
     mae = mean_absolute_error(y_true, y_pred)
 
     # Calculate MAPE (avoiding division by zero)
     mask = y_true != 0
-    mape = np.mean(np.abs((y_true[mask] - y_pred[mask]) / y_true[mask])) * 100 if mask.any() else np.nan
+    mape = np.mean(np.abs((y_true[mask] - y_pred[mask]) / y_true[mask])) * 100 if mask.any() else None
 
     return {"r2_score": r2, "rmse": rmse, "mae": mae, "mape": mape}
 
@@ -94,6 +100,12 @@ def evaluate_by_season(
             logger.warning(f"No data found for season: {season}")
             continue
 
+        if len(season_data) < 2:
+            logger.warning(
+                f"Only {len(season_data)} sample(s) for {season}. "
+                f"R² cannot be calculated. Consider using more test data."
+            )
+
         metrics = calculate_metrics(season_data["actual"].values, season_data["predicted"].values)
 
         results.append(
@@ -107,8 +119,10 @@ def evaluate_by_season(
             }
         )
 
+        # Format R² display
+        r2_str = f"{metrics['r2_score']:.3f}" if metrics["r2_score"] is not None else "N/A"
         logger.info(
-            f"  {season}: R²={metrics['r2_score']:.3f}, RMSE={metrics['rmse']:.3f}, "
+            f"  {season}: R²={r2_str}, RMSE={metrics['rmse']:.3f}, "
             f"MAE={metrics['mae']:.3f}, n={len(season_data)}"
         )
 

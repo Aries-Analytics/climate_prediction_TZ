@@ -53,7 +53,7 @@ MODEL_CONFIG = {
         "learning_rate": 0.001,
         "patience": 10,
         "validation_split": 0.15,
-        "sequence_length": 12,
+        "sequence_length": 6,  # Reduced from 12 to 6 for smaller datasets
         "verbose": 1,
     },
     "ensemble": {"weights": {"rf": 0.3, "xgb": 0.4, "lstm": 0.3}, "method": "weighted_average"},

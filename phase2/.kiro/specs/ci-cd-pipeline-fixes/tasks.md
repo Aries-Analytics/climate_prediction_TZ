@@ -63,13 +63,17 @@
 
 
 
+  - [x] 8.1 Add pytest.importorskip for Earth Engine test to skip when ee module not available
+
+
+  - [x] 8.2 Add pytest.importorskip for tests requiring run_pipeline module
 
 
 
 
-  - [ ] 8.1 Add pytest.importorskip for Earth Engine test to skip when ee module not available
-  - [ ] 8.2 Add pytest.importorskip for tests requiring run_pipeline module
-  - [ ] 8.3 Verify tests can be collected without import errors
+  - [x] 8.3 Verify tests can be collected without import errors
+
+
   - _Requirements: 6.1, 6.2, 6.3, 6.4_
 
 - [x] 9. Verify CI/CD pipeline passes

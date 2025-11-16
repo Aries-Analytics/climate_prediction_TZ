@@ -4,6 +4,7 @@ Fetches climate data from NASA POWER API for Tanzania region
 """
 
 import os
+import time
 
 import pandas as pd
 import requests
@@ -139,10 +140,25 @@ def fetch_nasa_power_data(
 
     try:
         log_info(f"Requesting NASA POWER data for lat={latitude}, lon={longitude}, years={start_year}-{end_year}")
-        response = requests.get(url, params=params, timeout=60)
-        response.raise_for_status()
-
-        data = response.json()
+        
+        # Add retry logic with exponential backoff
+        max_retries = 3
+        retry_delay = 2
+        
+        for attempt in range(max_retries):
+            try:
+                response = requests.get(url, params=params, timeout=90)
+                response.raise_for_status()
+                data = response.json()
+                break  # Success, exit retry loop
+            except (requests.exceptions.ConnectionError, requests.exceptions.Timeout) as e:
+                if attempt < max_retries - 1:
+                    log_info(f"Connection error (attempt {attempt + 1}/{max_retries}), retrying in {retry_delay}s...")
+                    time.sleep(retry_delay)
+                    retry_delay *= 2  # Exponential backoff
+                else:
+                    log_error(f"Failed after {max_retries} attempts: {e}")
+                    raise
 
         # Extract parameter data from response
         if "properties" not in data or "parameter" not in data["properties"]:
