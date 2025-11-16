@@ -291,6 +291,7 @@
   
   - [x]* 13.2 Create model development guide
 
+
     - Document how to add new models
     - Document how to tune hyperparameters
     - Document how to interpret results
