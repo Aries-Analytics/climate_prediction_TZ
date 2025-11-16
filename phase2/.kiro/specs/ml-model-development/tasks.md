@@ -235,12 +235,21 @@
     - _Requirements: 7.1, 7.2_
   
 
-  - [ ] 10.2 Create experiment comparison functions
+  - [x] 10.2 Create experiment comparison functions
+
+
+
+
 
 
     - Implement `load_experiments()` to read log
     - Implement `compare_experiments()` to rank by metrics
     - Implement `get_best_model()` to retrieve top performer
+
+
+
+
+
     - Generate comparison summary report
     - _Requirements: 7.3, 7.4, 7.5_
 

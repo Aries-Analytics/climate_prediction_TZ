@@ -1,13 +1,36 @@
 """
-Comprehensive Model Development Pipeline - Tanzania Climate Prediction
+Quick Model Pipeline - Tanzania Climate Prediction
 
-This script orchestrates the complete ML model development workflow:
-1. Preprocessing and feature engineering
-2. Model training (RF, XGBoost, LSTM, Ensemble)
-3. Model evaluation
-4. Experiment tracking
+PURPOSE: Fast prototyping and testing without full feature engineering.
+USE CASE: Quick experiments, debugging, baseline testing, rapid iteration.
 
-Requirements: All requirements (1.1-7.5)
+This is a SIMPLIFIED pipeline for rapid prototyping:
+- Loads master_dataset.csv directly (no preprocessing/feature engineering)
+- Trains models with basic configuration
+- Quick evaluation and visualization
+- Minimal setup required
+- Fast execution (~2-5 minutes)
+
+For PRODUCTION/SPEC-COMPLIANT work, use: model_development_pipeline.py
+
+What this does:
+1. Load master_dataset.csv directly
+2. Train baseline + RF + XGBoost + LSTM
+3. Basic evaluation (plots, seasonal analysis)
+4. Simple experiment logging
+
+What this DOESN'T do:
+- No lag features, rolling stats, or interaction features
+- No comprehensive preprocessing pipeline
+- Limited configuration options
+- Simplified experiment tracking
+
+When to use this vs model_development_pipeline.py:
+- Use THIS for: Quick tests, debugging, baseline comparisons, prototyping
+- Use THAT for: Production models, full experiments, spec compliance, comprehensive evaluation
+
+Usage:
+    python pipelines/quick_model_pipeline.py
 """
 
 import argparse
