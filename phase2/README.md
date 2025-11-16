@@ -76,8 +76,20 @@ phase2/
 ├── docs/                       # Documentation
 │   ├── README.md
 │   ├── MODEL_DEVELOPMENT_GUIDE.md
+│   ├── BUSINESS_REPORTS_GUIDE.md
 │   ├── pipeline_overview.md
 │   └── IMPLEMENTATION_STATUS.md
+│
+├── scripts/                    # Utility scripts
+│   ├── analysis/              # EDA and visualization scripts
+│   ├── demos/                 # Demo scripts for testing
+│   ├── reporting/             # Business report generation
+│   │   └── generate_business_reports.py
+│   └── verification/          # Testing and verification utilities
+│
+├── reporting/                  # Report generation modules
+│   ├── business_metrics.py    # Business metrics engine
+│   └── visualize_business_metrics.py  # Visualization generator
 │
 ├── outputs/                    # Generated outputs
 │   ├── processed/             # Processed datasets
@@ -189,7 +201,29 @@ python model_development_pipeline.py --config configs/custom.json
 
 See `docs/MODEL_DEVELOPMENT_GUIDE.md` for detailed ML pipeline documentation.
 
-### 3. Running Tests
+### 3. Business Reports
+
+**Generate all business metrics reports:**
+```bash
+python scripts/reporting/generate_business_reports.py
+```
+
+**With custom data source:**
+```bash
+python scripts/reporting/generate_business_reports.py --data path/to/data.csv
+```
+
+**Outputs** (saved to `outputs/business_reports/`):
+- Executive summary with key metrics
+- Insurance trigger events timeline
+- Drought/flood/crop failure alerts
+- Financial impact analysis and payout estimates
+- Risk assessment dashboard
+- Visualizations (charts and heatmaps)
+
+See `docs/BUSINESS_REPORTS_GUIDE.md` for detailed documentation.
+
+### 4. Running Tests
 
 **Run all tests:**
 ```bash

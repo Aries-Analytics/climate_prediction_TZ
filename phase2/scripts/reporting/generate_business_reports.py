@@ -12,8 +12,8 @@ Usage:
 import sys
 from pathlib import Path
 
-# Add current directory to path
-sys.path.insert(0, str(Path(__file__).parent))
+# Add project root to path (go up 2 levels from scripts/reporting/)
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from reporting.business_metrics import BusinessMetricsReporter
 from reporting.visualize_business_metrics import BusinessMetricsVisualizer
