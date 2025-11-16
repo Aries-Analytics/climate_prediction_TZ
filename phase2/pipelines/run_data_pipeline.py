@@ -2,26 +2,23 @@
 Main entry point for Phase 2 pipeline - Tanzania Climate Prediction.
 """
 
-import time
-import logging
 import argparse
-from utils.logger import setup_logging
+import logging
+import time
+
 from utils.config import validate_environment
+from utils.logger import setup_logging
+
 from modules.ingestion import (
-    nasa_power_ingestion,
-    era5_ingestion,
     chirps_ingestion,
+    era5_ingestion,
+    nasa_power_ingestion,
     ndvi_ingestion,
-    ocean_indices_ingestion
+    ocean_indices_ingestion,
 )
-from modules.processing import (
-    process_nasa_power,
-    process_era5,
-    process_chirps,
-    process_ndvi,
-    process_ocean_indices
-)
+from modules.processing import process_chirps, process_era5, process_nasa_power, process_ndvi, process_ocean_indices
 from modules.processing.merge_processed import merge_all  # <- added import
+
 
 def run_pipeline(debug=False, start_year=2000, end_year=2023):
     start_time = time.time()
@@ -41,7 +38,7 @@ def run_pipeline(debug=False, start_year=2000, end_year=2023):
         ("ERA5", era5_ingestion.fetch_data),
         ("CHIRPS", chirps_ingestion.fetch_data),
         ("NDVI", ndvi_ingestion.fetch_data),
-        ("Ocean Indices", ocean_indices_ingestion.fetch_data)
+        ("Ocean Indices", ocean_indices_ingestion.fetch_data),
     ]
 
     ingested = {}
@@ -64,7 +61,7 @@ def run_pipeline(debug=False, start_year=2000, end_year=2023):
         ("ERA5", process_era5.process, ingested.get("ERA5")),
         ("CHIRPS", process_chirps.process, ingested.get("CHIRPS")),
         ("NDVI", process_ndvi.process, ingested.get("NDVI")),
-        ("Ocean Indices", process_ocean_indices.process, ingested.get("Ocean Indices"))
+        ("Ocean Indices", process_ocean_indices.process, ingested.get("Ocean Indices")),
     ]
 
     for name, func, data in processing_stages:
@@ -88,6 +85,7 @@ def run_pipeline(debug=False, start_year=2000, end_year=2023):
 
     logger.info(f"Phase 2 pipeline completed successfully in {time.time() - start_time:.2f}s!")
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--debug", action="store_true", help="Enable debug logging (also sets dry-run for ingestion)")
@@ -95,4 +93,3 @@ if __name__ == "__main__":
     parser.add_argument("--end-year", type=int, default=2023, help="End year for data ingestion (default: 2023)")
     args = parser.parse_args()
     run_pipeline(debug=args.debug, start_year=args.start_year, end_year=args.end_year)
-

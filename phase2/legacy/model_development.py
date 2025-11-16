@@ -3,32 +3,48 @@ Model Development Pipeline - Tanzania Climate Prediction
 Trains multiple models for drought/flood prediction and rainfall forecasting
 """
 
-import sys
 import io
+import sys
 
 # Ensure UTF-8 encoding for console output (Windows compatibility)
-if sys.stdout.encoding != 'utf-8':
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-if sys.stderr.encoding != 'utf-8':
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+if sys.stdout.encoding != "utf-8":
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+if sys.stderr.encoding != "utf-8":
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
 
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
-from pathlib import Path
 import warnings
-warnings.filterwarnings('ignore')
+from pathlib import Path
 
-from sklearn.model_selection import train_test_split, TimeSeriesSplit, cross_val_score
-from sklearn.preprocessing import StandardScaler
-from sklearn.linear_model import LogisticRegression, Ridge
-from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor, GradientBoostingClassifier, GradientBoostingRegressor
-from sklearn.metrics import (
-    accuracy_score, precision_score, recall_score, f1_score, roc_auc_score, roc_curve,
-    confusion_matrix, classification_report, mean_squared_error, mean_absolute_error, r2_score
-)
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import seaborn as sns
+
+warnings.filterwarnings("ignore")
+
 import joblib
+from sklearn.ensemble import (
+    GradientBoostingClassifier,
+    GradientBoostingRegressor,
+    RandomForestClassifier,
+    RandomForestRegressor,
+)
+from sklearn.linear_model import LogisticRegression, Ridge
+from sklearn.metrics import (
+    accuracy_score,
+    classification_report,
+    confusion_matrix,
+    f1_score,
+    mean_absolute_error,
+    mean_squared_error,
+    precision_score,
+    r2_score,
+    recall_score,
+    roc_auc_score,
+    roc_curve,
+)
+from sklearn.model_selection import TimeSeriesSplit, cross_val_score, train_test_split
+from sklearn.preprocessing import StandardScaler
 
 # Create output directories
 MODEL_DIR = Path("outputs/models")
@@ -49,11 +65,11 @@ print(f"  Date range: {df['date'].min()} to {df['date'].max()}")
 
 # Prepare data
 print("\n[2/8] Preparing data for modeling...")
-df['date'] = pd.to_datetime(df['date'])
-df = df.sort_values('date').reset_index(drop=True)
+df["date"] = pd.to_datetime(df["date"])
+df = df.sort_values("date").reset_index(drop=True)
 
 # Define features and targets
-feature_cols = [col for col in df.columns if col not in ['date', 'drought_risk', 'flood_risk', 'rainfall_next_month']]
+feature_cols = [col for col in df.columns if col not in ["date", "drought_risk", "flood_risk", "rainfall_next_month"]]
 print(f"✓ Using {len(feature_cols)} features")
 
 # Split data chronologically (80% train, 20% test)
@@ -68,9 +84,9 @@ print(f"✓ Train set: {len(train_df)} samples | Test set: {len(test_df)} sample
 print("\n[3/8] Training Drought Risk Classification Model...")
 
 X_train_drought = train_df[feature_cols].fillna(0)
-y_train_drought = train_df['drought_risk']
+y_train_drought = train_df["drought_risk"]
 X_test_drought = test_df[feature_cols].fillna(0)
-y_test_drought = test_df['drought_risk']
+y_test_drought = test_df["drought_risk"]
 
 # Scale features
 scaler_drought = StandardScaler()
@@ -78,13 +94,7 @@ X_train_drought_scaled = scaler_drought.fit_transform(X_train_drought)
 X_test_drought_scaled = scaler_drought.transform(X_test_drought)
 
 # Train Random Forest Classifier
-rf_drought = RandomForestClassifier(
-    n_estimators=200,
-    max_depth=15,
-    min_samples_split=5,
-    random_state=42,
-    n_jobs=-1
-)
+rf_drought = RandomForestClassifier(n_estimators=200, max_depth=15, min_samples_split=5, random_state=42, n_jobs=-1)
 rf_drought.fit(X_train_drought_scaled, y_train_drought)
 
 # Predictions
@@ -114,9 +124,9 @@ print(f"✓ Saved model to {MODEL_DIR / 'drought_classifier.pkl'}")
 print("\n[4/8] Training Flood Risk Classification Model...")
 
 X_train_flood = train_df[feature_cols].fillna(0)
-y_train_flood = train_df['flood_risk']
+y_train_flood = train_df["flood_risk"]
 X_test_flood = test_df[feature_cols].fillna(0)
-y_test_flood = test_df['flood_risk']
+y_test_flood = test_df["flood_risk"]
 
 # Scale features
 scaler_flood = StandardScaler()
@@ -124,13 +134,7 @@ X_train_flood_scaled = scaler_flood.fit_transform(X_train_flood)
 X_test_flood_scaled = scaler_flood.transform(X_test_flood)
 
 # Train Random Forest Classifier
-rf_flood = RandomForestClassifier(
-    n_estimators=200,
-    max_depth=15,
-    min_samples_split=5,
-    random_state=42,
-    n_jobs=-1
-)
+rf_flood = RandomForestClassifier(n_estimators=200, max_depth=15, min_samples_split=5, random_state=42, n_jobs=-1)
 rf_flood.fit(X_train_flood_scaled, y_train_flood)
 
 # Predictions
@@ -160,9 +164,9 @@ print(f"✓ Saved model to {MODEL_DIR / 'flood_classifier.pkl'}")
 print("\n[5/8] Training Rainfall Forecasting Model...")
 
 X_train_rainfall = train_df[feature_cols].fillna(0)
-y_train_rainfall = train_df['rainfall_next_month']
+y_train_rainfall = train_df["rainfall_next_month"]
 X_test_rainfall = test_df[feature_cols].fillna(0)
-y_test_rainfall = test_df['rainfall_next_month']
+y_test_rainfall = test_df["rainfall_next_month"]
 
 # Scale features
 scaler_rainfall = StandardScaler()
@@ -170,13 +174,7 @@ X_train_rainfall_scaled = scaler_rainfall.fit_transform(X_train_rainfall)
 X_test_rainfall_scaled = scaler_rainfall.transform(X_test_rainfall)
 
 # Train Random Forest Regressor
-rf_rainfall = RandomForestRegressor(
-    n_estimators=200,
-    max_depth=15,
-    min_samples_split=5,
-    random_state=42,
-    n_jobs=-1
-)
+rf_rainfall = RandomForestRegressor(n_estimators=200, max_depth=15, min_samples_split=5, random_state=42, n_jobs=-1)
 rf_rainfall.fit(X_train_rainfall_scaled, y_train_rainfall)
 
 # Predictions
@@ -203,10 +201,9 @@ print(f"✓ Saved model to {MODEL_DIR / 'rainfall_regressor.pkl'}")
 print("\n[6/8] Analyzing feature importance...")
 
 # Get feature importance from drought model
-feature_importance = pd.DataFrame({
-    'feature': feature_cols,
-    'importance': rf_drought.feature_importances_
-}).sort_values('importance', ascending=False)
+feature_importance = pd.DataFrame({"feature": feature_cols, "importance": rf_drought.feature_importances_}).sort_values(
+    "importance", ascending=False
+)
 
 print("\nTop 10 Most Important Features:")
 for idx, row in feature_importance.head(10).iterrows():
@@ -224,46 +221,46 @@ print("\n[7/8] Creating visualizations...")
 fig, axes = plt.subplots(1, 2, figsize=(14, 5))
 
 cm_drought = confusion_matrix(y_test_drought, y_pred_drought)
-sns.heatmap(cm_drought, annot=True, fmt='d', cmap='Blues', ax=axes[0])
-axes[0].set_title('Drought Risk - Confusion Matrix')
-axes[0].set_xlabel('Predicted')
-axes[0].set_ylabel('Actual')
+sns.heatmap(cm_drought, annot=True, fmt="d", cmap="Blues", ax=axes[0])
+axes[0].set_title("Drought Risk - Confusion Matrix")
+axes[0].set_xlabel("Predicted")
+axes[0].set_ylabel("Actual")
 
 # 2. Confusion Matrix for Flood
 cm_flood = confusion_matrix(y_test_flood, y_pred_flood)
-sns.heatmap(cm_flood, annot=True, fmt='d', cmap='Oranges', ax=axes[1])
-axes[1].set_title('Flood Risk - Confusion Matrix')
-axes[1].set_xlabel('Predicted')
-axes[1].set_ylabel('Actual')
+sns.heatmap(cm_flood, annot=True, fmt="d", cmap="Oranges", ax=axes[1])
+axes[1].set_title("Flood Risk - Confusion Matrix")
+axes[1].set_xlabel("Predicted")
+axes[1].set_ylabel("Actual")
 
 plt.tight_layout()
-plt.savefig(VIZ_DIR / "confusion_matrices.png", dpi=300, bbox_inches='tight')
+plt.savefig(VIZ_DIR / "confusion_matrices.png", dpi=300, bbox_inches="tight")
 plt.close()
 print(f"✓ Saved confusion matrices to {VIZ_DIR / 'confusion_matrices.png'}")
 
 # 3. Feature Importance Plot
 plt.figure(figsize=(10, 8))
 top_features = feature_importance.head(15)
-plt.barh(range(len(top_features)), top_features['importance'])
-plt.yticks(range(len(top_features)), top_features['feature'])
-plt.xlabel('Importance')
-plt.title('Top 15 Feature Importance (Drought Model)')
+plt.barh(range(len(top_features)), top_features["importance"])
+plt.yticks(range(len(top_features)), top_features["feature"])
+plt.xlabel("Importance")
+plt.title("Top 15 Feature Importance (Drought Model)")
 plt.tight_layout()
-plt.savefig(VIZ_DIR / "feature_importance.png", dpi=300, bbox_inches='tight')
+plt.savefig(VIZ_DIR / "feature_importance.png", dpi=300, bbox_inches="tight")
 plt.close()
 print(f"✓ Saved feature importance to {VIZ_DIR / 'feature_importance.png'}")
 
 # 4. Rainfall Prediction vs Actual
 plt.figure(figsize=(12, 6))
-plt.plot(y_test_rainfall.values[:100], label='Actual', marker='o', alpha=0.7)
-plt.plot(y_pred_rainfall[:100], label='Predicted', marker='s', alpha=0.7)
-plt.xlabel('Sample Index')
-plt.ylabel('Rainfall (mm)')
-plt.title('Rainfall Forecast: Actual vs Predicted (First 100 Test Samples)')
+plt.plot(y_test_rainfall.values[:100], label="Actual", marker="o", alpha=0.7)
+plt.plot(y_pred_rainfall[:100], label="Predicted", marker="s", alpha=0.7)
+plt.xlabel("Sample Index")
+plt.ylabel("Rainfall (mm)")
+plt.title("Rainfall Forecast: Actual vs Predicted (First 100 Test Samples)")
 plt.legend()
 plt.grid(True, alpha=0.3)
 plt.tight_layout()
-plt.savefig(VIZ_DIR / "rainfall_predictions.png", dpi=300, bbox_inches='tight')
+plt.savefig(VIZ_DIR / "rainfall_predictions.png", dpi=300, bbox_inches="tight")
 plt.close()
 print(f"✓ Saved rainfall predictions to {VIZ_DIR / 'rainfall_predictions.png'}")
 
@@ -327,7 +324,7 @@ SAVED VISUALIZATIONS:
 print(summary)
 
 # Save summary to file
-with open(MODEL_DIR / "model_summary.txt", "w", encoding='utf-8') as f:
+with open(MODEL_DIR / "model_summary.txt", "w", encoding="utf-8") as f:
     f.write(summary)
 
 print(f"\n✓ Model development pipeline completed successfully!")

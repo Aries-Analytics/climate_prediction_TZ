@@ -5,38 +5,34 @@ Safely reorganizes the project structure without breaking anything
 
 import os
 import shutil
-from pathlib import Path
 import sys
+from pathlib import Path
+
 
 def create_directory_structure():
     """Create the new directory structure"""
-    
+
     directories = [
         # Source code
         "src/ingestion",
-        "src/processing", 
+        "src/processing",
         "src/features",
         "src/models",
         "src/evaluation",
         "src/utils",
-        
         # Pipelines
         "pipelines",
-        
         # Scripts
         "scripts/demos",
         "scripts/analysis",
         "scripts/verification",
-        
         # Documentation
         "docs/guides",
         "docs/reports",
         "docs/specs",
         "docs/api",
-        
         # Configs
         "configs",
-        
         # Organized outputs
         "outputs/data/raw",
         "outputs/data/processed",
@@ -45,27 +41,26 @@ def create_directory_structure():
         "outputs/visualizations/eda",
         "outputs/visualizations/models",
     ]
-    
+
     print("Creating new directory structure...")
     for directory in directories:
         Path(directory).mkdir(parents=True, exist_ok=True)
         print(f"  ✓ Created {directory}/")
-    
+
     print("\n✓ Directory structure created successfully!")
 
 
 def move_documentation():
     """Move all markdown documentation files to docs/"""
-    
+
     print("\nMoving documentation files...")
-    
+
     # Documentation files to move
     doc_files = {
         # Guides
         "QUICK_START_PROCESSING.md": "docs/guides/",
         "MODEL_PIPELINE_README.md": "docs/guides/",
         "VIEW_EVALUATION_REPORTS.md": "docs/guides/",
-        
         # Reports
         "PIPELINE_STATUS_REPORT.md": "docs/reports/",
         "MODEL_DEVELOPMENT_STATUS.md": "docs/reports/",
@@ -80,21 +75,21 @@ def move_documentation():
         "MULTI_MODEL_PIPELINE_REPORT.md": "docs/reports/",
         "LSTM_ENSEMBLE_FIXED_SUMMARY.md": "docs/reports/",
     }
-    
+
     for source, dest_dir in doc_files.items():
         if Path(source).exists():
             dest = Path(dest_dir) / source
             shutil.copy2(source, dest)
             print(f"  ✓ Copied {source} → {dest}")
-    
+
     print("\n✓ Documentation files organized!")
 
 
 def move_scripts():
     """Move demo, analysis, and verification scripts"""
-    
+
     print("\nMoving scripts...")
-    
+
     # Demo scripts
     demo_scripts = [
         "demo_chirps_processing.py",
@@ -102,13 +97,13 @@ def move_scripts():
         "demo_ndvi_synthetic.py",
         "demo_ocean_indices_synthetic.py",
     ]
-    
+
     for script in demo_scripts:
         if Path(script).exists():
             dest = Path("scripts/demos") / script
             shutil.copy2(script, dest)
             print(f"  ✓ Copied {script} → scripts/demos/")
-    
+
     # Analysis scripts
     analysis_scripts = [
         "eda_analysis.py",
@@ -116,13 +111,13 @@ def move_scripts():
         "run_eda.py",
         "generate_visualizations.py",
     ]
-    
+
     for script in analysis_scripts:
         if Path(script).exists():
             dest = Path("scripts/analysis") / script
             shutil.copy2(script, dest)
             print(f"  ✓ Copied {script} → scripts/analysis/")
-    
+
     # Verification scripts
     verification_scripts = [
         "check_era5.py",
@@ -130,36 +125,36 @@ def move_scripts():
         "verify_model_save_load.py",
         "fetch_real_data.py",
     ]
-    
+
     for script in verification_scripts:
         if Path(script).exists():
             dest = Path("scripts/verification") / script
             shutil.copy2(script, dest)
             print(f"  ✓ Copied {script} → scripts/verification/")
-    
+
     print("\n✓ Scripts organized!")
 
 
 def create_pipeline_entry_points():
     """Create clean pipeline entry points"""
-    
+
     print("\nCreating pipeline entry points...")
-    
+
     # Copy and rename main pipelines
     if Path("run_pipeline.py").exists():
         shutil.copy2("run_pipeline.py", "pipelines/run_data_pipeline.py")
         print("  ✓ Created pipelines/run_data_pipeline.py")
-    
+
     if Path("model_development_pipeline.py").exists():
         shutil.copy2("model_development_pipeline.py", "pipelines/run_model_pipeline.py")
         print("  ✓ Created pipelines/run_model_pipeline.py")
-    
+
     print("\n✓ Pipeline entry points created!")
 
 
 def create_master_readme():
     """Create a master README for the docs folder"""
-    
+
     readme_content = """# Tanzania Climate Prediction - Documentation
 
 ## 📚 Documentation Index
@@ -219,16 +214,16 @@ python pipelines/run_model_pipeline.py
 
 For more information, see the main [README.md](../README.md)
 """
-    
+
     with open("docs/README.md", "w") as f:
         f.write(readme_content)
-    
+
     print("\n✓ Created docs/README.md")
 
 
 def create_summary_report():
     """Create a summary of what was done"""
-    
+
     summary = """# Project Reorganization Summary
 
 ## ✅ Completed Actions
@@ -336,16 +331,16 @@ python scripts/verification/check_era5.py
 
 **Status: Phase 1 Complete - Ready for Testing** ✅
 """
-    
+
     with open("REORGANIZATION_SUMMARY.md", "w") as f:
         f.write(summary)
-    
+
     print("\n✓ Created REORGANIZATION_SUMMARY.md")
 
 
 def main():
     """Main reorganization function"""
-    
+
     print("=" * 80)
     print("PROJECT REORGANIZATION SCRIPT")
     print("=" * 80)
@@ -355,13 +350,13 @@ def main():
     print("3. Keep original files intact for safety")
     print("\n⚠️  Original files will NOT be deleted - you can do that after testing")
     print("=" * 80)
-    
+
     response = input("\nProceed with reorganization? (yes/no): ")
-    
-    if response.lower() not in ['yes', 'y']:
+
+    if response.lower() not in ["yes", "y"]:
         print("\nReorganization cancelled.")
         return
-    
+
     try:
         # Execute reorganization steps
         create_directory_structure()
@@ -370,7 +365,7 @@ def main():
         create_pipeline_entry_points()
         create_master_readme()
         create_summary_report()
-        
+
         print("\n" + "=" * 80)
         print("✅ REORGANIZATION COMPLETE!")
         print("=" * 80)
@@ -382,12 +377,12 @@ def main():
         print("4. After testing, you can delete old files from root")
         print("\n⚠️  Original files are still in place - test before deleting!")
         print("=" * 80)
-        
+
     except Exception as e:
         print(f"\n✗ Error during reorganization: {e}")
         print("Please check the error and try again.")
         return 1
-    
+
     return 0
 
 
