@@ -12,9 +12,9 @@ import pytest
 @pytest.fixture
 def trained_ensemble_models():
     """Create trained models for testing."""
+    from models.lstm_model import LSTMModel
     from models.random_forest_model import RandomForestModel
     from models.xgboost_model import XGBoostModel
-    from models.lstm_model import LSTMModel
 
     np.random.seed(42)
     n_samples = 100
@@ -38,11 +38,7 @@ def trained_ensemble_models():
 
 def test_end_to_end_uncertainty_quantification(trained_ensemble_models):
     """Test complete uncertainty quantification workflow."""
-    from evaluation.evaluate import (
-        calculate_quantile_predictions,
-        validate_prediction_intervals,
-        calculate_metrics
-    )
+    from evaluation.evaluate import calculate_metrics, calculate_quantile_predictions, validate_prediction_intervals
 
     rf_model, xgb_model, lstm_model, X_train, y_train = trained_ensemble_models
 
@@ -59,8 +55,7 @@ def test_end_to_end_uncertainty_quantification(trained_ensemble_models):
     # Step 2: Calculate quantile predictions for uncertainty
     # Use only RF and XGB to avoid LSTM NaN issues in small test dataset
     quantiles = calculate_quantile_predictions(
-        [rf_pred, xgb_pred],
-        quantiles=[0.025, 0.5, 0.975]  # 95% prediction interval
+        [rf_pred, xgb_pred], quantiles=[0.025, 0.5, 0.975]  # 95% prediction interval
     )
 
     # Verify quantiles were calculated
@@ -69,12 +64,7 @@ def test_end_to_end_uncertainty_quantification(trained_ensemble_models):
     assert "q97.5" in quantiles
 
     # Step 3: Validate prediction interval coverage
-    validation = validate_prediction_intervals(
-        y_test,
-        quantiles["q2.5"],
-        quantiles["q97.5"],
-        confidence_level=0.95
-    )
+    validation = validate_prediction_intervals(y_test, quantiles["q2.5"], quantiles["q97.5"], confidence_level=0.95)
 
     # Check validation metrics
     assert "coverage" in validation
@@ -103,35 +93,20 @@ def test_uncertainty_quantification_with_different_confidence_levels():
 
     # Create synthetic predictions
     true_values = np.random.randn(n_samples)
-    predictions = [
-        true_values + np.random.randn(n_samples) * 0.2
-        for _ in range(5)
-    ]
+    predictions = [true_values + np.random.randn(n_samples) * 0.2 for _ in range(5)]
 
     # Test 90% confidence interval
-    quantiles_90 = calculate_quantile_predictions(
-        predictions,
-        quantiles=[0.05, 0.5, 0.95]
-    )
+    quantiles_90 = calculate_quantile_predictions(predictions, quantiles=[0.05, 0.5, 0.95])
 
     validation_90 = validate_prediction_intervals(
-        true_values,
-        quantiles_90["q5"],
-        quantiles_90["q95"],
-        confidence_level=0.90
+        true_values, quantiles_90["q5"], quantiles_90["q95"], confidence_level=0.90
     )
 
     # Test 95% confidence interval
-    quantiles_95 = calculate_quantile_predictions(
-        predictions,
-        quantiles=[0.025, 0.5, 0.975]
-    )
+    quantiles_95 = calculate_quantile_predictions(predictions, quantiles=[0.025, 0.5, 0.975])
 
     validation_95 = validate_prediction_intervals(
-        true_values,
-        quantiles_95["q2.5"],
-        quantiles_95["q97.5"],
-        confidence_level=0.95
+        true_values, quantiles_95["q2.5"], quantiles_95["q97.5"], confidence_level=0.95
     )
 
     # 95% interval should be wider than 90% interval
@@ -147,8 +122,8 @@ def test_uncertainty_quantification_with_different_confidence_levels():
 
 def test_uncertainty_quantification_saves_to_dataframe():
     """Test that uncertainty quantification results can be saved to DataFrame."""
-    from evaluation.evaluate import calculate_quantile_predictions
     import pandas as pd
+    from evaluation.evaluate import calculate_quantile_predictions
 
     np.random.seed(42)
     n_samples = 50
@@ -160,12 +135,14 @@ def test_uncertainty_quantification_saves_to_dataframe():
     quantiles = calculate_quantile_predictions(predictions)
 
     # Create DataFrame with predictions and intervals
-    results_df = pd.DataFrame({
-        "prediction": quantiles["q50"],
-        "lower_95": quantiles["q2.5"],
-        "upper_95": quantiles["q97.5"],
-        "interval_width": quantiles["q97.5"] - quantiles["q2.5"]
-    })
+    results_df = pd.DataFrame(
+        {
+            "prediction": quantiles["q50"],
+            "lower_95": quantiles["q2.5"],
+            "upper_95": quantiles["q97.5"],
+            "interval_width": quantiles["q97.5"] - quantiles["q2.5"],
+        }
+    )
 
     # Verify DataFrame structure
     assert len(results_df) == n_samples
@@ -191,8 +168,7 @@ def test_uncertainty_quantification_with_single_model():
 
     # Create bootstrap predictions with noise
     bootstrap_predictions = [
-        base_prediction + np.random.randn(n_samples) * 0.5
-        for _ in range(20)  # 20 bootstrap samples
+        base_prediction + np.random.randn(n_samples) * 0.5 for _ in range(20)  # 20 bootstrap samples
     ]
 
     # Calculate quantiles
@@ -222,11 +198,7 @@ def test_uncertainty_quantification_edge_cases():
     np.testing.assert_array_almost_equal(quantiles["q50"], quantiles["q97.5"])
 
     # Test with very different predictions (high uncertainty)
-    diverse_preds = [
-        np.array([1.0, 2.0, 3.0]),
-        np.array([10.0, 20.0, 30.0]),
-        np.array([100.0, 200.0, 300.0])
-    ]
+    diverse_preds = [np.array([1.0, 2.0, 3.0]), np.array([10.0, 20.0, 30.0]), np.array([100.0, 200.0, 300.0])]
     quantiles_diverse = calculate_quantile_predictions(diverse_preds)
 
     # Interval width should be large

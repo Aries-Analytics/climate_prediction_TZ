@@ -75,17 +75,14 @@ def test_preprocessing_pipeline_end_to_end(sample_master_dataset, tmp_path):
 
 def test_model_training_pipeline_end_to_end(sample_master_dataset, tmp_path):
     """Test complete model training pipeline."""
-    from preprocessing.preprocess import preprocess_pipeline
-    from models.random_forest_model import RandomForestModel
     from evaluation.evaluate import calculate_metrics
+    from models.random_forest_model import RandomForestModel
+    from preprocessing.preprocess import preprocess_pipeline
 
     # Step 1: Preprocess data
     processed_dir = tmp_path / "processed"
     preprocess_pipeline(
-        input_path=sample_master_dataset,
-        output_dir=str(processed_dir),
-        lag_periods=[1],
-        rolling_windows=[3]
+        input_path=sample_master_dataset, output_dir=str(processed_dir), lag_periods=[1], rolling_windows=[3]
     )
 
     # Step 2: Load preprocessed data
@@ -144,10 +141,7 @@ def test_output_files_have_correct_structure(sample_master_dataset, tmp_path):
     output_dir = tmp_path / "processed"
 
     # Run pipeline
-    preprocess_pipeline(
-        input_path=sample_master_dataset,
-        output_dir=str(output_dir)
-    )
+    preprocess_pipeline(input_path=sample_master_dataset, output_dir=str(output_dir))
 
     # Check CSV files
     for filename in ["features_train.csv", "features_val.csv", "features_test.csv"]:
@@ -190,10 +184,7 @@ def test_pipeline_handles_small_dataset(tmp_path):
     output_dir = tmp_path / "processed"
 
     metadata = preprocess_pipeline(
-        input_path=str(dataset_path),
-        output_dir=str(output_dir),
-        lag_periods=[1],
-        rolling_windows=[3]
+        input_path=str(dataset_path), output_dir=str(output_dir), lag_periods=[1], rolling_windows=[3]
     )
 
     # Should complete without errors

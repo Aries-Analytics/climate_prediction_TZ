@@ -109,11 +109,7 @@ def test_calculate_quantile_predictions_basic():
 
     # Create ensemble predictions (3 models × 100 samples)
     np.random.seed(42)
-    predictions = [
-        np.random.randn(100) + 50,
-        np.random.randn(100) + 50,
-        np.random.randn(100) + 50
-    ]
+    predictions = [np.random.randn(100) + 50, np.random.randn(100) + 50, np.random.randn(100) + 50]
 
     quantiles = calculate_quantile_predictions(predictions, quantiles=[0.1, 0.5, 0.9])
 
@@ -192,20 +188,14 @@ def test_validate_prediction_intervals_coverage():
     true_values = np.random.randn(n_samples)
 
     # Create predictions with some noise
-    predictions = [
-        true_values + np.random.randn(n_samples) * 0.1
-        for _ in range(10)
-    ]
+    predictions = [true_values + np.random.randn(n_samples) * 0.1 for _ in range(10)]
 
     # Calculate 95% prediction intervals
     quantiles = calculate_quantile_predictions(predictions, quantiles=[0.025, 0.975])
 
     # Validate coverage
     validation = validate_prediction_intervals(
-        true_values,
-        quantiles["q2.5"],
-        quantiles["q97.5"],
-        confidence_level=0.95
+        true_values, quantiles["q2.5"], quantiles["q97.5"], confidence_level=0.95
     )
 
     # Check validation results
@@ -241,19 +231,12 @@ def test_validate_prediction_intervals_validates_inputs():
 
     # Mismatched lengths should raise error
     with pytest.raises(ValueError, match="same length"):
-        validate_prediction_intervals(
-            np.array([1, 2, 3]),
-            np.array([0, 1]),
-            np.array([2, 3, 4])
-        )
+        validate_prediction_intervals(np.array([1, 2, 3]), np.array([0, 1]), np.array([2, 3, 4]))
 
     # Invalid confidence level should raise error
     with pytest.raises(ValueError, match="between 0 and 1"):
         validate_prediction_intervals(
-            np.array([1, 2, 3]),
-            np.array([0, 1, 2]),
-            np.array([2, 3, 4]),
-            confidence_level=1.5
+            np.array([1, 2, 3]), np.array([0, 1, 2]), np.array([2, 3, 4]), confidence_level=1.5
         )
 
 

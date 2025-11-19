@@ -8,17 +8,18 @@ Tests cover:
 - Trigger rate simulation
 """
 
-import pytest
-import pandas as pd
-import numpy as np
-from pathlib import Path
-import yaml
-import tempfile
 import os
+import tempfile
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+import pytest
+import yaml
 
 from modules.calibration.analyze_thresholds import (
-    analyze_rainfall_distribution,
     analyze_drought_indicators,
+    analyze_rainfall_distribution,
     analyze_vegetation_stress,
 )
 from modules.calibration.config_loader import load_trigger_config, validate_trigger_config
