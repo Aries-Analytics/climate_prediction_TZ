@@ -1,0 +1,54 @@
+# Financial Parameters Configuration
+# Tanzania Parametric Insurance System
+# Last Updated: 2025-11-19
+
+# Premium Structure
+premiums:
+  per_entity_annual_usd: 2400
+  currency: "USD"
+  
+# Payout Rates (base amounts per trigger event in USD)
+payout_rates:
+  drought_trigger: 500
+  flood_trigger: 750
+  crop_failure_trigger: 1000
+  severe_stress_trigger: 300
+
+# Severity Adjustment
+# Final payout = base_payout × (min_multiplier + severity × (max_multiplier - min_multiplier))
+severity:
+  min_multiplier: 0.5  # Applied when severity = 0
+  max_multiplier: 1.5  # Applied when severity = 1
+
+# Confidence Adjustment
+# Payouts are multiplied by confidence score (0.0 to 1.0)
+confidence:
+  min_threshold: 0.0  # Minimum confidence to trigger payout
+  adjustment_enabled: true
+
+# Reinsurance Structure
+reinsurance:
+  enabled: true
+  primary_retention_usd: 1000000    # Primary insurer keeps first $1M
+  attachment_point_usd: 1000000     # Reinsurance starts at $1M
+  coverage_limit_usd: 10000000      # Reinsurance covers up to $10M
+  total_capacity_usd: 11000000      # Primary + Reinsurance
+  reinsurance_premium_rate: 0.15    # 15% of ceded premium
+
+# Sustainability Thresholds
+sustainability:
+  target_loss_ratio_max: 0.80       # 80% maximum for sustainability
+  warning_loss_ratio: 0.70          # 70% triggers warning
+  optimal_loss_ratio_min: 0.50      # 50% minimum for optimal range
+  optimal_loss_ratio_max: 0.65      # 65% maximum for optimal range
+
+# Portfolio Assumptions
+portfolio:
+  default_entity_count: 417         # Based on $1M premium pool ÷ $2,400/entity
+  entity_count_calculation: "premium_pool / per_entity_premium"
+  
+# Notes:
+# - All monetary values in USD
+# - Payout rates based on actuarial analysis of historical trigger data
+# - Loss ratio targets based on industry standards for parametric insurance
+# - Reinsurance structure provides catastrophic loss protection

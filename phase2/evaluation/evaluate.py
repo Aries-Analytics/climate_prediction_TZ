@@ -43,6 +43,147 @@ def calculate_metrics(y_true: np.ndarray, y_pred: np.ndarray) -> Dict[str, float
     return {"r2_score": r2, "rmse": rmse, "mae": mae, "mape": mape}
 
 
+def calculate_quantile_predictions(
+    predictions_list: list,
+    quantiles: Optional[list] = None
+) -> Dict[str, np.ndarray]:
+    """
+    Calculate quantile predictions for uncertainty quantification.
+    
+    This function takes predictions from multiple models or bootstrap samples
+    and calculates specified quantiles to create prediction intervals.
+    
+    Args:
+        predictions_list: List of prediction arrays from different models/samples
+                         Each array should have shape (n_samples,)
+        quantiles: List of quantiles to calculate (default: [0.025, 0.5, 0.975] for 95% CI)
+    
+    Returns:
+        Dictionary mapping quantile names to prediction arrays
+        Example: {'q2.5': array([...]), 'q50': array([...]), 'q97.5': array([...])}
+    
+    Example:
+        >>> rf_pred = model_rf.predict(X_test)
+        >>> xgb_pred = model_xgb.predict(X_test)
+        >>> lstm_pred = model_lstm.predict(X_test)
+        >>> quantiles = calculate_quantile_predictions([rf_pred, xgb_pred, lstm_pred])
+        >>> # Now you have 95% prediction intervals
+        >>> lower_bound = quantiles['q2.5']
+        >>> median = quantiles['q50']
+        >>> upper_bound = quantiles['q97.5']
+    """
+    if quantiles is None:
+        quantiles = [0.025, 0.5, 0.975]  # 95% prediction interval + median
+    
+    # Validate inputs
+    if not predictions_list:
+        raise ValueError("predictions_list cannot be empty")
+    
+    if not all(isinstance(pred, np.ndarray) for pred in predictions_list):
+        raise TypeError("All predictions must be numpy arrays")
+    
+    # Check all predictions have same length
+    n_samples = len(predictions_list[0])
+    if not all(len(pred) == n_samples for pred in predictions_list):
+        raise ValueError("All prediction arrays must have the same length")
+    
+    # Stack predictions: shape (n_models, n_samples)
+    predictions_array = np.stack(predictions_list, axis=0)
+    
+    # Calculate quantiles along model axis (axis=0)
+    quantile_results = {}
+    
+    for q in quantiles:
+        if not 0 <= q <= 1:
+            raise ValueError(f"Quantile {q} must be between 0 and 1")
+        
+        # Calculate quantile across models for each sample
+        quantile_pred = np.quantile(predictions_array, q, axis=0)
+        
+        # Create key name (e.g., 0.025 -> 'q2.5', 0.5 -> 'q50')
+        if q == 0.5:
+            key = "q50"
+        else:
+            key = f"q{q*100:.1f}".replace('.0', '')
+        
+        quantile_results[key] = quantile_pred
+    
+    logger.info(f"Calculated {len(quantiles)} quantiles for {n_samples} samples from {len(predictions_list)} models")
+    
+    return quantile_results
+
+
+def validate_prediction_intervals(
+    y_true: np.ndarray,
+    lower_bound: np.ndarray,
+    upper_bound: np.ndarray,
+    confidence_level: float = 0.95
+) -> Dict[str, float]:
+    """
+    Validate prediction interval coverage.
+    
+    Checks if the actual coverage of prediction intervals matches the expected
+    confidence level. For a 95% interval, approximately 95% of true values
+    should fall within the interval.
+    
+    Args:
+        y_true: Actual values
+        lower_bound: Lower bound of prediction interval
+        upper_bound: Upper bound of prediction interval
+        confidence_level: Expected confidence level (default: 0.95)
+    
+    Returns:
+        Dictionary with validation metrics:
+        - coverage: Actual proportion of values within interval
+        - expected_coverage: Expected confidence level
+        - coverage_error: Difference between actual and expected
+        - n_samples: Number of samples
+        - n_within_interval: Number of samples within interval
+    
+    Example:
+        >>> quantiles = calculate_quantile_predictions([pred1, pred2, pred3])
+        >>> validation = validate_prediction_intervals(
+        ...     y_true, quantiles['q2.5'], quantiles['q97.5'], confidence_level=0.95
+        ... )
+        >>> print(f"Coverage: {validation['coverage']:.2%}")
+    """
+    # Validate inputs
+    if len(y_true) != len(lower_bound) or len(y_true) != len(upper_bound):
+        raise ValueError("All arrays must have the same length")
+    
+    if not 0 < confidence_level < 1:
+        raise ValueError("confidence_level must be between 0 and 1")
+    
+    # Check if values fall within interval
+    within_interval = (y_true >= lower_bound) & (y_true <= upper_bound)
+    
+    # Calculate coverage
+    n_within = np.sum(within_interval)
+    n_total = len(y_true)
+    actual_coverage = n_within / n_total
+    
+    # Calculate error
+    coverage_error = actual_coverage - confidence_level
+    
+    results = {
+        "coverage": float(actual_coverage),
+        "expected_coverage": float(confidence_level),
+        "coverage_error": float(coverage_error),
+        "n_samples": int(n_total),
+        "n_within_interval": int(n_within),
+        "interval_width_mean": float(np.mean(upper_bound - lower_bound)),
+        "interval_width_std": float(np.std(upper_bound - lower_bound))
+    }
+    
+    logger.info(
+        f"Prediction interval validation: "
+        f"Coverage={actual_coverage:.2%} (expected={confidence_level:.2%}), "
+        f"Error={coverage_error:+.2%}"
+    )
+    
+    return results
+
+
 def evaluate_by_season(
     y_true: np.ndarray, y_pred: np.ndarray, dates: pd.Series, target_name: str = "target"
 ) -> pd.DataFrame:

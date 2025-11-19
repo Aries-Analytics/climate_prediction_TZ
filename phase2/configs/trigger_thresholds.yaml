@@ -1,0 +1,83 @@
+version: '1.0.0'
+calibration_date: '2025-11-19'
+data_period: '2018-01-01 to 2023-12-31'
+
+target_trigger_rates:
+  flood: 0.10
+  drought: 0.12
+  crop_failure: 0.06
+
+flood_triggers:
+  daily_rainfall_mm:
+    threshold: 201.42
+    rationale: 'Calibrated to 95th percentile of daily rainfall to achieve 10% trigger rate'
+    data_source: 'CHIRPS 2018-2023'
+    calibration_date: '2025-11-19'
+  
+  rainfall_7day_mm:
+    threshold: 976.57
+    rationale: 'Calibrated to 95th percentile of 7-day cumulative rainfall'
+    data_source: 'CHIRPS 2018-2023'
+    calibration_date: '2025-11-19'
+  
+  heavy_rain_days_7day:
+    threshold: 5
+    heavy_rain_definition_mm: 214.99
+    rationale: 'Multiple heavy rain days in 7-day window indicate flood risk. Heavy rain day defined as >215.0mm'
+    data_source: 'CHIRPS 2018-2023'
+    calibration_date: '2025-11-18'
+  
+  rainfall_percentile:
+    threshold: 99
+    rationale: 'Extreme rainfall events (top 1%)'
+    data_source: 'CHIRPS 2018-2023'
+
+drought_triggers:
+  spi_30day:
+    threshold: -0.40
+    rationale: 'Calibrated to 12th percentile of SPI to achieve 12% trigger rate. Indicates moderate to severe drought.'
+    data_source: 'Calculated from CHIRPS 2018-2023'
+    calibration_date: '2025-11-19'
+  
+  consecutive_dry_days:
+    wet_season_threshold: 28
+    dry_season_threshold: 28
+    dry_day_definition_mm: 1.0
+    rationale: 'Extended dry periods during growing season (kept for compatibility with daily data)'
+    calibration_date: '2025-11-19'
+  
+  rainfall_deficit_pct:
+    threshold: 50
+    rationale: 'Significant deficit from climatological normal'
+    data_source: 'CHIRPS 2018-2023'
+
+crop_failure_triggers:
+  vci_threshold:
+    critical: 2.9
+    severe: 35
+    duration_days: 30
+    rationale: 'Calibrated to 5th percentile of VCI to achieve 6% trigger rate. Indicates severe vegetation stress.'
+    data_source: 'MODIS NDVI 2018-2023'
+    calibration_date: '2025-11-19'
+  
+  ndvi_anomaly_std:
+    threshold: -1.72
+    duration_days: 21
+    rationale: 'Calibrated to 5th percentile of NDVI anomaly. Indicates significant vegetation stress.'
+    data_source: 'MODIS NDVI 2018-2023'
+    calibration_date: '2025-11-19'
+  
+  crop_failure_risk_score:
+    threshold: 75
+    rationale: 'High probability of crop failure based on combined indicators'
+    data_source: 'MODIS NDVI 2018-2023'
+
+regional_adjustments:
+  enabled: false
+  regions:
+    coastal:
+      flood_multiplier: 1.2
+    highland:
+      drought_multiplier: 0.8
+    lowland:
+      flood_multiplier: 1.1
