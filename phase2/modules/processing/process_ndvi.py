@@ -324,30 +324,32 @@ def _add_insurance_triggers(df):
 
     These are the key features for parametric crop insurance payouts.
     Uses calibrated thresholds from configuration file.
-    
+
     Requirements: 4.1, 4.2, 4.3, 4.5
     """
     # Load trigger configuration
     config = _get_trigger_config()
-    crop_cfg = config.get('crop_failure_triggers', {}) if config else {}
-    
+    crop_cfg = config.get("crop_failure_triggers", {}) if config else {}
+
     # Extract thresholds from configuration with scientifically-justified defaults
     # VCI threshold and duration (Requirements 4.1, 4.2)
-    vci_critical = float(crop_cfg.get('vci_threshold', {}).get('critical', 20))
-    vci_severe = float(crop_cfg.get('vci_threshold', {}).get('severe', 35))
-    vci_duration = int(crop_cfg.get('vci_threshold', {}).get('duration_days', 30))
-    
+    vci_critical = float(crop_cfg.get("vci_threshold", {}).get("critical", 20))
+    vci_severe = float(crop_cfg.get("vci_threshold", {}).get("severe", 35))
+    vci_duration = int(crop_cfg.get("vci_threshold", {}).get("duration_days", 30))
+
     # NDVI anomaly threshold and duration (Requirements 4.1, 4.3)
-    ndvi_anomaly_threshold = float(crop_cfg.get('ndvi_anomaly_std', {}).get('threshold', -2.0))
-    ndvi_anomaly_duration = int(crop_cfg.get('ndvi_anomaly_std', {}).get('duration_days', 21))
-    
+    ndvi_anomaly_threshold = float(crop_cfg.get("ndvi_anomaly_std", {}).get("threshold", -2.0))
+    ndvi_anomaly_duration = int(crop_cfg.get("ndvi_anomaly_std", {}).get("duration_days", 21))
+
     # Crop failure risk score threshold (Requirement 4.4)
-    risk_score_threshold = float(crop_cfg.get('crop_failure_risk_score', {}).get('threshold', 75))
-    
-    log_info(f"Using crop failure thresholds: VCI={vci_critical}, VCI_duration={vci_duration}d, "
-             f"NDVI_anomaly={ndvi_anomaly_threshold}std, NDVI_duration={ndvi_anomaly_duration}d, "
-             f"Risk_score={risk_score_threshold}")
-    
+    risk_score_threshold = float(crop_cfg.get("crop_failure_risk_score", {}).get("threshold", 75))
+
+    log_info(
+        f"Using crop failure thresholds: VCI={vci_critical}, VCI_duration={vci_duration}d, "
+        f"NDVI_anomaly={ndvi_anomaly_threshold}std, NDVI_duration={ndvi_anomaly_duration}d, "
+        f"Risk_score={risk_score_threshold}"
+    )
+
     # CROP FAILURE TRIGGER (Requirements 4.1, 4.2, 4.3)
     # For monthly data, use thresholds without duration requirements
     # (Duration requirements are more meaningful for daily data)
@@ -355,51 +357,48 @@ def _add_insurance_triggers(df):
     # 1. VCI below critical threshold, OR
     # 2. NDVI anomaly below threshold
     df["crop_failure_trigger"] = (
-        (df["vci"] < vci_critical)
-        | (df["ndvi_anomaly_std"] < ndvi_anomaly_threshold)
+        (df["vci"] < vci_critical) | (df["ndvi_anomaly_std"] < ndvi_anomaly_threshold)
     ).astype(int)
-    
+
     # CROP FAILURE TRIGGER CONFIDENCE (Requirement 4.5)
     # Weighted combination of multiple indicators
     # Calculate individual signal strengths
     vci_signal = ((df["vci"] < vci_critical) & (df["stress_duration"] >= vci_duration)).astype(float)
-    ndvi_signal = ((df["ndvi_anomaly_std"] < ndvi_anomaly_threshold) & (df["stress_duration"] >= ndvi_anomaly_duration)).astype(float)
+    ndvi_signal = (
+        (df["ndvi_anomaly_std"] < ndvi_anomaly_threshold) & (df["stress_duration"] >= ndvi_anomaly_duration)
+    ).astype(float)
     risk_signal = (df["crop_failure_risk"] > risk_score_threshold).astype(float)
     percentile_signal = (df["ndvi_percentile"] < 10).astype(float)
-    
+
     # Weighted average: VCI (30%), NDVI anomaly (30%), Risk score (25%), Percentile (15%)
     df["crop_failure_trigger_confidence"] = (
-        vci_signal * 0.30 +
-        ndvi_signal * 0.30 +
-        risk_signal * 0.25 +
-        percentile_signal * 0.15
+        vci_signal * 0.30 + ndvi_signal * 0.30 + risk_signal * 0.25 + percentile_signal * 0.15
     )
-    
+
     # MODERATE STRESS TRIGGER (early warning) (Requirements 4.1, 4.2)
     # Trigger if: VCI < severe threshold for 21+ days OR NDVI anomaly indicates stress
     moderate_stress_duration = 21
     moderate_ndvi_threshold = -1.5
-    
+
     df["moderate_stress_trigger"] = (
         ((df["vci"] < vci_severe) & (df["stress_duration"] >= moderate_stress_duration))
         | (df["ndvi_anomaly_std"] < moderate_ndvi_threshold)
     ).astype(int)
-    
+
     # SEVERE STRESS TRIGGER (Requirements 4.1, 4.2)
     # Trigger if: VCI < critical threshold OR severe stress for 14+ days
     severe_stress_duration = 14
-    
+
     df["severe_stress_trigger"] = (
-        (df["vci"] < vci_critical)
-        | (df["severe_stress_duration"] >= severe_stress_duration)
+        (df["vci"] < vci_critical) | (df["severe_stress_duration"] >= severe_stress_duration)
     ).astype(int)
-    
+
     # Trigger severity (for payout calculation, 0-1 scale)
     df["trigger_severity"] = df["crop_failure_risk"] / 100
-    
+
     # Days since last trigger (for tracking recovery)
     df["days_since_trigger"] = _calculate_days_since_trigger(df["crop_failure_trigger"])
-    
+
     return df
 
 

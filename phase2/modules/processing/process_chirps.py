@@ -29,7 +29,7 @@ def _get_trigger_config():
     """Load and cache the trigger configuration. Returns a dict (may be defaults).
 
     Cached to avoid repeated disk IO during processing.
-    
+
     Requirements: 7.2, 7.3
     """
     global _TRIGGER_CONFIG
@@ -39,26 +39,28 @@ def _get_trigger_config():
     try:
         _TRIGGER_CONFIG = load_trigger_config()
         log_info("✓ Loaded trigger configuration for CHIRPS processing")
-        
+
         # Log loaded threshold values for transparency (Requirement 7.2)
         if _TRIGGER_CONFIG:
-            flood_cfg = _TRIGGER_CONFIG.get('flood_triggers', {})
-            drought_cfg = _TRIGGER_CONFIG.get('drought_triggers', {})
-            
+            flood_cfg = _TRIGGER_CONFIG.get("flood_triggers", {})
+            drought_cfg = _TRIGGER_CONFIG.get("drought_triggers", {})
+
             # Log flood thresholds
             if flood_cfg:
-                daily_thresh = flood_cfg.get('daily_rainfall_mm', {}).get('threshold', 'N/A')
-                day7_thresh = flood_cfg.get('rainfall_7day_mm', {}).get('threshold', 'N/A')
-                heavy_days = flood_cfg.get('heavy_rain_days_7day', {}).get('threshold', 'N/A')
+                daily_thresh = flood_cfg.get("daily_rainfall_mm", {}).get("threshold", "N/A")
+                day7_thresh = flood_cfg.get("rainfall_7day_mm", {}).get("threshold", "N/A")
+                heavy_days = flood_cfg.get("heavy_rain_days_7day", {}).get("threshold", "N/A")
                 log_info(f"  Flood thresholds: daily={daily_thresh}mm, 7-day={day7_thresh}mm, heavy_days={heavy_days}")
-            
+
             # Log drought thresholds
             if drought_cfg:
-                spi_thresh = drought_cfg.get('spi_30day', {}).get('threshold', 'N/A')
-                wet_days = drought_cfg.get('consecutive_dry_days', {}).get('wet_season_threshold', 'N/A')
-                dry_days = drought_cfg.get('consecutive_dry_days', {}).get('dry_season_threshold', 'N/A')
-                log_info(f"  Drought thresholds: SPI={spi_thresh}, wet_season_days={wet_days}, dry_season_days={dry_days}")
-        
+                spi_thresh = drought_cfg.get("spi_30day", {}).get("threshold", "N/A")
+                wet_days = drought_cfg.get("consecutive_dry_days", {}).get("wet_season_threshold", "N/A")
+                dry_days = drought_cfg.get("consecutive_dry_days", {}).get("dry_season_threshold", "N/A")
+                log_info(
+                    f"  Drought thresholds: SPI={spi_thresh}, wet_season_days={wet_days}, dry_season_days={dry_days}"
+                )
+
     except Exception as e:
         # Handle configuration errors gracefully (Requirement 7.3)
         log_warning(f"Failed to load trigger configuration: {e}")
@@ -229,11 +231,11 @@ def _add_flood_indicators(df):
     """
     # Load trigger configuration to get heavy rain threshold
     config = _get_trigger_config()
-    flood_cfg = config.get('flood_triggers', {}) if config else {}
-    
+    flood_cfg = config.get("flood_triggers", {}) if config else {}
+
     # Get heavy rain definition from config (default to 95th percentile ~215mm)
-    heavy_rain_thresh = flood_cfg.get('heavy_rain_days_7day', {}).get('heavy_rain_definition_mm', 215.0)
-    
+    heavy_rain_thresh = flood_cfg.get("heavy_rain_days_7day", {}).get("heavy_rain_definition_mm", 215.0)
+
     # Heavy rainfall event (using configured threshold)
     df["heavy_rain_event"] = (df["rainfall_mm"] > heavy_rain_thresh).astype(int)
 
@@ -312,39 +314,37 @@ def _add_insurance_triggers(df):
 
     # DROUGHT TRIGGER
     # Load configured drought thresholds (Requirements: 3.1, 3.2, 3.3)
-    drought_cfg = config.get('drought_triggers', {}) if config else {}
-    
+    drought_cfg = config.get("drought_triggers", {}) if config else {}
+
     # Extract SPI threshold (Requirement 3.1)
-    spi_thresh = _get(drought_cfg, 'spi_30day', 'threshold', default=-1.5)
-    
+    spi_thresh = _get(drought_cfg, "spi_30day", "threshold", default=-1.5)
+
     # Extract seasonal consecutive dry day thresholds (Requirement 3.2, 3.3)
-    cons_wet = _get(drought_cfg, 'consecutive_dry_days', 'wet_season_threshold', default=35)
-    cons_dry = _get(drought_cfg, 'consecutive_dry_days', 'dry_season_threshold', default=45)
-    
+    cons_wet = _get(drought_cfg, "consecutive_dry_days", "wet_season_threshold", default=35)
+    cons_dry = _get(drought_cfg, "consecutive_dry_days", "dry_season_threshold", default=45)
+
     # Ensure thresholds are integers
     cons_wet = int(cons_wet)
     cons_dry = int(cons_dry)
-    
+
     # Determine season for each month (Requirement 3.3)
     # Wet season: Oct-May (months 10, 11, 12, 1, 2, 3, 4, 5)
     # Dry season: Jun-Sep (months 6, 7, 8, 9)
-    df['season'] = df['month'].apply(lambda m: 'wet' if m in [10, 11, 12, 1, 2, 3, 4, 5] else 'dry')
-    df['dry_day_threshold'] = df['season'].map({'wet': cons_wet, 'dry': cons_dry})
-    
+    df["season"] = df["month"].apply(lambda m: "wet" if m in [10, 11, 12, 1, 2, 3, 4, 5] else "dry")
+    df["dry_day_threshold"] = df["season"].map({"wet": cons_wet, "dry": cons_dry})
+
     # Apply drought trigger (Requirement 3.1)
     # For monthly data, use SPI alone since consecutive_dry_days is not meaningful
     # For daily data, would use AND logic with both conditions
-    df["drought_trigger"] = (
-        (df["spi_30day"] < spi_thresh)
-    ).astype(int)
+    df["drought_trigger"] = ((df["spi_30day"] < spi_thresh)).astype(int)
 
     # Drought trigger confidence (0.25-1.0) (Requirement 3.5)
     # Use configuration-driven thresholds for confidence calculation
     drought_signals = [
-        (df["consecutive_dry_days"] >= df['dry_day_threshold']).astype(float),
+        (df["consecutive_dry_days"] >= df["dry_day_threshold"]).astype(float),
         (df["spi_30day"] < spi_thresh).astype(float),
         (df["rainfall_percentile"] < 10).astype(float),
-        (df["rainfall_deficit_pct"] > _get(drought_cfg, 'rainfall_deficit_pct', 'threshold', default=50)).astype(float),
+        (df["rainfall_deficit_pct"] > _get(drought_cfg, "rainfall_deficit_pct", "threshold", default=50)).astype(float),
     ]
     # Calculate mean of signals and scale to 0.25-1.0 range
     raw_confidence = np.mean(drought_signals, axis=0)
@@ -352,19 +352,19 @@ def _add_insurance_triggers(df):
 
     # FLOOD TRIGGER
     # Load configured flood thresholds (Requirements: 2.1, 2.2, 2.3)
-    flood_cfg = config.get('flood_triggers', {}) if config else {}
-    
+    flood_cfg = config.get("flood_triggers", {}) if config else {}
+
     # Extract thresholds from configuration
-    daily_thresh = _get(flood_cfg, 'daily_rainfall_mm', 'threshold', default=150)
-    day7_thresh = _get(flood_cfg, 'rainfall_7day_mm', 'threshold', default=250)
-    heavy_days_req = _get(flood_cfg, 'heavy_rain_days_7day', 'threshold', default=5)
-    percentile_thresh = _get(flood_cfg, 'rainfall_percentile', 'threshold', default=99)
-    
+    daily_thresh = _get(flood_cfg, "daily_rainfall_mm", "threshold", default=150)
+    day7_thresh = _get(flood_cfg, "rainfall_7day_mm", "threshold", default=250)
+    heavy_days_req = _get(flood_cfg, "heavy_rain_days_7day", "threshold", default=5)
+    percentile_thresh = _get(flood_cfg, "rainfall_percentile", "threshold", default=99)
+
     # Apply flood trigger logic with new thresholds (Requirement 2.1, 2.2, 2.3)
     # Use OR logic but with stricter thresholds to achieve 10% trigger rate
     df["flood_trigger"] = (
-        (df["rainfall_mm"] > float(daily_thresh)) |  # Daily rainfall exceeds 95th percentile
-        (df["rainfall_7day"] > float(day7_thresh))  # 7-day rainfall exceeds 95th percentile
+        (df["rainfall_mm"] > float(daily_thresh))  # Daily rainfall exceeds 95th percentile
+        | (df["rainfall_7day"] > float(day7_thresh))  # 7-day rainfall exceeds 95th percentile
         # Removed heavy_rain_days and percentile checks as they were causing over-triggering
     ).astype(int)
 

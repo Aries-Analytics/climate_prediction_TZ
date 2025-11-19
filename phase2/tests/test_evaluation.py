@@ -106,7 +106,7 @@ def test_calculate_metrics_returns_all_metrics(sample_predictions):
 def test_calculate_quantile_predictions_basic():
     """Test quantile prediction calculation."""
     from evaluation.evaluate import calculate_quantile_predictions
-    
+
     # Create ensemble predictions (3 models × 100 samples)
     np.random.seed(42)
     predictions = [
@@ -129,7 +129,7 @@ def test_calculate_quantile_predictions_basic():
 def test_calculate_quantile_predictions_default_quantiles():
     """Test quantile predictions with default quantiles (95% CI)."""
     from evaluation.evaluate import calculate_quantile_predictions
-    
+
     np.random.seed(42)
     predictions = [np.random.randn(50) for _ in range(5)]
 
@@ -148,7 +148,7 @@ def test_calculate_quantile_predictions_default_quantiles():
 def test_calculate_quantile_predictions_interval_width():
     """Test that prediction intervals have positive width."""
     from evaluation.evaluate import calculate_quantile_predictions
-    
+
     np.random.seed(42)
     n_samples = 100
 
@@ -167,15 +167,15 @@ def test_calculate_quantile_predictions_interval_width():
 def test_calculate_quantile_predictions_validates_inputs():
     """Test input validation for quantile predictions."""
     from evaluation.evaluate import calculate_quantile_predictions
-    
+
     # Empty list should raise error
     with pytest.raises(ValueError, match="cannot be empty"):
         calculate_quantile_predictions([])
-    
+
     # Mismatched lengths should raise error
     with pytest.raises(ValueError, match="same length"):
         calculate_quantile_predictions([np.array([1, 2, 3]), np.array([1, 2])])
-    
+
     # Invalid quantile should raise error
     with pytest.raises(ValueError, match="between 0 and 1"):
         calculate_quantile_predictions([np.array([1, 2, 3])], quantiles=[1.5])
@@ -184,13 +184,13 @@ def test_calculate_quantile_predictions_validates_inputs():
 def test_validate_prediction_intervals_coverage():
     """Test prediction interval coverage validation."""
     from evaluation.evaluate import calculate_quantile_predictions, validate_prediction_intervals
-    
+
     np.random.seed(42)
     n_samples = 1000
 
     # Create predictions with known distribution (normal)
     true_values = np.random.randn(n_samples)
-    
+
     # Create predictions with some noise
     predictions = [
         true_values + np.random.randn(n_samples) * 0.1
@@ -222,7 +222,7 @@ def test_validate_prediction_intervals_coverage():
 def test_validate_prediction_intervals_perfect_coverage():
     """Test interval validation with perfect coverage."""
     from evaluation.evaluate import validate_prediction_intervals
-    
+
     # Create data where all values are within interval
     y_true = np.array([5.0, 6.0, 7.0, 8.0, 9.0])
     lower = np.array([4.0, 5.0, 6.0, 7.0, 8.0])
@@ -238,7 +238,7 @@ def test_validate_prediction_intervals_perfect_coverage():
 def test_validate_prediction_intervals_validates_inputs():
     """Test input validation for interval validation."""
     from evaluation.evaluate import validate_prediction_intervals
-    
+
     # Mismatched lengths should raise error
     with pytest.raises(ValueError, match="same length"):
         validate_prediction_intervals(
@@ -246,7 +246,7 @@ def test_validate_prediction_intervals_validates_inputs():
             np.array([0, 1]),
             np.array([2, 3, 4])
         )
-    
+
     # Invalid confidence level should raise error
     with pytest.raises(ValueError, match="between 0 and 1"):
         validate_prediction_intervals(
@@ -312,7 +312,7 @@ def test_plot_residuals_over_time_doesnt_crash(sample_predictions, tmp_path):
     y_true, y_pred = sample_predictions
 
     # Create dates
-    dates = pd.date_range("2020-01-01", periods=len(y_true), freq="M")
+    dates = pd.date_range("2020-01-01", periods=len(y_true), freq="ME")
 
     save_path = tmp_path / "residuals.png"
 
