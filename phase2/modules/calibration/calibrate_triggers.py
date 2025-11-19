@@ -12,10 +12,8 @@ Functions:
 - simulate_trigger_rates: Simulate trigger rates with proposed thresholds
 """
 
-from pathlib import Path
-from typing import Dict, Optional, Tuple
+from typing import Dict
 
-import numpy as np
 import pandas as pd
 
 from utils.logger import log_error, log_info, log_warning

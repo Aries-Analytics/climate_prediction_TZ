@@ -13,12 +13,11 @@ Requirements: 7.2, 7.3
 """
 
 import os
-from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 import yaml
-from pydantic import BaseModel, Field, ValidationError, field_validator
+from pydantic import BaseModel, ValidationError, field_validator
 
 from utils.logger import log_error, log_info, log_warning
 
@@ -209,14 +208,14 @@ def load_trigger_config(config_path: Optional[str] = None) -> Dict:
             return _get_default_config()
 
         # Configuration is valid
-        log_info(f"✓ Successfully loaded trigger configuration")
+        log_info("✓ Successfully loaded trigger configuration")
         log_info(f"  Version: {config.get('version', 'unknown')}")
         log_info(f"  Calibration date: {config.get('calibration_date', 'unknown')}")
         log_info(f"  Data period: {config.get('data_period', 'unknown')}")
 
         # Log target trigger rates
         target_rates = config.get("target_trigger_rates", {})
-        log_info(f"  Target trigger rates:")
+        log_info("  Target trigger rates:")
         log_info(f"    Flood: {target_rates.get('flood', 0)*100:.1f}%")
         log_info(f"    Drought: {target_rates.get('drought', 0)*100:.1f}%")
         log_info(f"    Crop failure: {target_rates.get('crop_failure', 0)*100:.1f}%")
@@ -312,7 +311,7 @@ def validate_trigger_config(config: Dict) -> Tuple[bool, List[str]]:
     # ========================================================================
     try:
         # Attempt to validate with pydantic model
-        validated_config = TriggerThresholdsConfig(**config)
+        TriggerThresholdsConfig(**config)  # noqa: F841
         log_info("✓ Pydantic validation passed")
     except ValidationError as e:
         for error in e.errors():
@@ -367,7 +366,7 @@ def validate_trigger_config(config: Dict) -> Tuple[bool, List[str]]:
         threshold = daily_config.get("threshold")
         if threshold is not None:
             if not isinstance(threshold, (int, float)):
-                errors.append(f"Daily rainfall threshold must be numeric")
+                errors.append("Daily rainfall threshold must be numeric")
             elif threshold < 0 or threshold > 1000:
                 errors.append(f"Daily rainfall threshold out of range: {threshold}mm (expected 0-1000mm)")
 
@@ -380,7 +379,7 @@ def validate_trigger_config(config: Dict) -> Tuple[bool, List[str]]:
         threshold = day7_config.get("threshold")
         if threshold is not None:
             if not isinstance(threshold, (int, float)):
-                errors.append(f"7-day rainfall threshold must be numeric")
+                errors.append("7-day rainfall threshold must be numeric")
             elif threshold < 0 or threshold > 2000:
                 errors.append(f"7-day rainfall threshold out of range: {threshold}mm (expected 0-2000mm)")
 
@@ -402,7 +401,7 @@ def validate_trigger_config(config: Dict) -> Tuple[bool, List[str]]:
         threshold = spi_config.get("threshold")
         if threshold is not None:
             if not isinstance(threshold, (int, float)):
-                errors.append(f"SPI threshold must be numeric")
+                errors.append("SPI threshold must be numeric")
             elif threshold < -5 or threshold > 0:
                 errors.append(f"SPI threshold out of range: {threshold} (expected -5 to 0)")
             elif threshold > -1.0:
@@ -416,15 +415,19 @@ def validate_trigger_config(config: Dict) -> Tuple[bool, List[str]]:
 
         if wet_threshold is not None:
             if not isinstance(wet_threshold, (int, float)):
-                errors.append(f"Wet season dry days threshold must be numeric")
+                errors.append("Wet season dry days threshold must be numeric")
             elif wet_threshold < 7 or wet_threshold > 90:
-                errors.append(f"Wet season dry days threshold out of range: {wet_threshold} (expected 7-90 days)")
+                errors.append(
+                    f"Wet season dry days threshold out of range: {wet_threshold} (expected 7-90 days)"
+                )
 
         if dry_threshold is not None:
             if not isinstance(dry_threshold, (int, float)):
-                errors.append(f"Dry season dry days threshold must be numeric")
+                errors.append("Dry season dry days threshold must be numeric")
             elif dry_threshold < 7 or dry_threshold > 120:
-                errors.append(f"Dry season dry days threshold out of range: {dry_threshold} (expected 7-120 days)")
+                errors.append(
+                    f"Dry season dry days threshold out of range: {dry_threshold} (expected 7-120 days)"
+                )
 
     # ========================================================================
     # 6. Validate crop failure trigger configuration
@@ -447,19 +450,19 @@ def validate_trigger_config(config: Dict) -> Tuple[bool, List[str]]:
 
         if critical is not None:
             if not isinstance(critical, (int, float)):
-                errors.append(f"VCI critical threshold must be numeric")
+                errors.append("VCI critical threshold must be numeric")
             elif critical < 0 or critical > 100:
                 errors.append(f"VCI critical threshold out of range: {critical} (expected 0-100)")
 
         if severe is not None:
             if not isinstance(severe, (int, float)):
-                errors.append(f"VCI severe threshold must be numeric")
+                errors.append("VCI severe threshold must be numeric")
             elif severe < 0 or severe > 100:
                 errors.append(f"VCI severe threshold out of range: {severe} (expected 0-100)")
 
         if duration is not None:
             if not isinstance(duration, (int, float)):
-                errors.append(f"VCI duration must be numeric")
+                errors.append("VCI duration must be numeric")
             elif duration < 1 or duration > 90:
                 errors.append(f"VCI duration out of range: {duration} (expected 1-90 days)")
 
@@ -471,7 +474,7 @@ def validate_trigger_config(config: Dict) -> Tuple[bool, List[str]]:
 
         if threshold is not None:
             if not isinstance(threshold, (int, float)):
-                errors.append(f"NDVI anomaly threshold must be numeric")
+                errors.append("NDVI anomaly threshold must be numeric")
             elif threshold < -5 or threshold > 0:
                 errors.append(f"NDVI anomaly threshold out of range: {threshold} (expected -5 to 0 std)")
 
@@ -505,7 +508,7 @@ def validate_trigger_config(config: Dict) -> Tuple[bool, List[str]]:
     is_valid = len(errors) == 0
 
     if is_valid:
-        log_info(f"✓ Configuration validation passed")
+        log_info("✓ Configuration validation passed")
         if warnings:
             log_info(f"  Note: {len(warnings)} warnings (non-fatal)")
     else:

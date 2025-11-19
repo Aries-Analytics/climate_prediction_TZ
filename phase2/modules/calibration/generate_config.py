@@ -17,7 +17,7 @@ Requirements: 1.5, 7.1, 7.4
 
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict
 
 import pandas as pd
 import yaml
@@ -35,7 +35,7 @@ from modules.calibration.calibrate_triggers import (
     simulate_trigger_rates,
 )
 from modules.calibration.config_loader import validate_trigger_config
-from utils.logger import log_error, log_info, log_warning
+from utils.logger import log_error, log_info
 
 
 def load_historical_data() -> tuple[pd.DataFrame, pd.DataFrame]:
@@ -372,7 +372,7 @@ def main():
         df_chirps, df_ndvi = load_historical_data()
 
         # Generate calibrated configuration
-        config = generate_calibrated_config(df_chirps, df_ndvi, output_path="configs/trigger_thresholds.yaml")
+        generate_calibrated_config(df_chirps, df_ndvi, output_path="configs/trigger_thresholds.yaml")
 
         log_info("\n✓ Calibration workflow completed successfully!")
 
