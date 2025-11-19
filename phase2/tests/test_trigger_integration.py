@@ -175,7 +175,7 @@ class TestTriggerRateValidation:
             pytest.skip("Flood trigger column not found")
 
         flood_rate = df["flood_trigger"].mean()
-        
+
         # Skip if triggers haven't been calibrated yet (0% rate indicates no calibration)
         if flood_rate == 0.0:
             pytest.skip("Flood triggers not yet calibrated (0% rate)")
@@ -193,7 +193,7 @@ class TestTriggerRateValidation:
             pytest.skip("Drought trigger column not found")
 
         drought_rate = df["drought_trigger"].mean()
-        
+
         # Skip if triggers haven't been calibrated yet (0% rate indicates no calibration)
         if drought_rate == 0.0:
             pytest.skip("Drought triggers not yet calibrated (0% rate)")
@@ -211,7 +211,7 @@ class TestTriggerRateValidation:
             pytest.skip("Crop failure trigger column not found")
 
         crop_rate = df["crop_failure_trigger"].mean()
-        
+
         # Skip if triggers haven't been calibrated yet or are clearly misconfigured
         if crop_rate == 0.0 or crop_rate >= 0.5:
             pytest.skip(f"Crop failure triggers not properly calibrated ({crop_rate:.2%} rate)")
@@ -408,18 +408,26 @@ class TestDataConsistency:
 
         # Check for excessive missing values
         missing_pct = df.isnull().sum() / len(df)
-        
+
         # Skip columns that are expected to have high missing rates (optional features)
         # NDVI-based features like crop_failure_trigger can have high missing rates
         # Merge artifacts like "_right" columns can also have high missing rates
-        skip_columns = ["is_critical_period", "crop_failure_risk", "stress_duration", "crop_failure_trigger", "ndvi", "vci"]
-        
+        skip_columns = [
+            "is_critical_period",
+            "crop_failure_risk",
+            "stress_duration",
+            "crop_failure_trigger",
+            "ndvi",
+            "vci",
+        ]
+
         # Also skip merge artifact columns
         skip_columns.extend([c for c in df.columns if c.endswith("_right") or c.endswith("_left")])
 
         # No column should be more than 90% missing (lenient for synthetic/test data and rolling features)
         critical_cols = [
-            c for c in df.columns 
+            c
+            for c in df.columns
             if any(x in c.lower() for x in ["rainfall", "temp", "trigger", "oni", "iod"])
             and c not in skip_columns
             and not any(x in c.lower() for x in ["trend", "rolling", "lag"])  # Skip derived features
@@ -427,7 +435,9 @@ class TestDataConsistency:
 
         for col in critical_cols:
             if col in missing_pct.index:
-                assert missing_pct[col] < 0.90, f"Column {col} has {missing_pct[col]:.1%} missing values (acceptable up to 90%)"
+                assert (
+                    missing_pct[col] < 0.90
+                ), f"Column {col} has {missing_pct[col]:.1%} missing values (acceptable up to 90%)"
 
     def test_temporal_consistency(self, master_dataset_path):
         """Test that data is temporally consistent."""
@@ -473,7 +483,7 @@ class TestSeasonalPatterns:
 
         if "flood_trigger" not in df.columns or "month" not in df.columns:
             pytest.skip("Required columns not found")
-        
+
         # Skip if no triggers are present (not calibrated yet)
         if df["flood_trigger"].sum() == 0:
             pytest.skip("No flood triggers present (not calibrated yet)")
@@ -504,7 +514,7 @@ class TestSeasonalPatterns:
 
         if "drought_trigger" not in df.columns or "month" not in df.columns:
             pytest.skip("Required columns not found")
-        
+
         # Skip if no triggers are present (not calibrated yet)
         if df["drought_trigger"].sum() == 0:
             pytest.skip("No drought triggers present (not calibrated yet)")
