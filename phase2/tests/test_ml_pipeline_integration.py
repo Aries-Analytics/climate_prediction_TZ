@@ -20,7 +20,7 @@ def sample_master_dataset(tmp_path):
 
     data = {
         "year": [2020] * 25 + [2021] * 25,
-        "month": list(range(1, 13)) * 2 + list(range(1, 14)),
+        "month": list(range(1, 13)) * 4 + list(range(1, 3)),  # 12*4 + 2 = 50
         "temperature": np.random.uniform(20, 35, n_samples),
         "rainfall": np.random.uniform(0, 200, n_samples),
         "ndvi": np.random.uniform(0.2, 0.8, n_samples),
