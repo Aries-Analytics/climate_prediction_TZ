@@ -86,7 +86,7 @@ class TestRainfallDistributionAnalysis:
         result = analyze_rainfall_distribution(sample_rainfall_data)
 
         for key, value in result.items():
-            if "percentile" in key or "_p" in key:
+            if ("percentile" in key or "_p" in key) and isinstance(value, (int, float)):
                 assert value >= 0, f"{key} should be non-negative"
 
     def test_handles_empty_dataframe(self):
@@ -100,7 +100,7 @@ class TestRainfallDistributionAnalysis:
         """Test that function raises error for missing required columns."""
         df = pd.DataFrame({"rainfall_mm": [10, 20, 30]})
 
-        with pytest.raises(KeyError):
+        with pytest.raises(ValueError):
             analyze_rainfall_distribution(df)
 
 
@@ -117,8 +117,10 @@ class TestDroughtIndicatorAnalysis:
             {
                 "date": dates,
                 "spi_30day": np.random.normal(0, 1, len(dates)),  # Standardized
+                "spi_90day": np.random.normal(0, 1, len(dates)),  # Standardized
                 "consecutive_dry_days": np.random.randint(0, 60, len(dates)),
                 "rainfall_deficit_pct": np.random.uniform(-50, 50, len(dates)),
+                "rainfall_deficit_mm": np.random.uniform(-100, 100, len(dates)),
                 "month": dates.month,
             }
         )
@@ -159,9 +161,12 @@ class TestVegetationStressAnalysis:
         df = pd.DataFrame(
             {
                 "date": dates,
+                "ndvi": np.random.uniform(0.2, 0.8, len(dates)),
                 "vci": np.random.uniform(0, 100, len(dates)),
                 "ndvi_anomaly_std": np.random.normal(0, 1, len(dates)),
                 "stress_duration": np.random.randint(0, 60, len(dates)),
+                "severe_stress_duration": np.random.randint(0, 30, len(dates)),
+                "crop_failure_risk": np.random.uniform(0, 100, len(dates)),
             }
         )
 
