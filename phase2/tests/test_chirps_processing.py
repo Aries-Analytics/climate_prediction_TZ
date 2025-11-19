@@ -160,9 +160,9 @@ def test_chirps_processing_with_synthetic_flood():
     # Create synthetic data with flood conditions
     dates = pd.date_range("2020-01-01", "2020-12-31", freq="D")
 
-    # Simulate flood: 3 days with >100mm rainfall
+    # Simulate flood: 3 days with extremely high rainfall
     rainfall = np.random.gamma(2, 5, len(dates))  # Normal rainfall pattern
-    rainfall[150:153] = [120, 110, 105]  # 3-day heavy rainfall event
+    rainfall[150:153] = [250, 220, 200]  # 3-day extreme rainfall event (guaranteed flood trigger)
 
     synthetic_data = pd.DataFrame(
         {

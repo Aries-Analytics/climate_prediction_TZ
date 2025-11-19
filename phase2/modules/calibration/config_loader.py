@@ -371,9 +371,9 @@ def validate_trigger_config(config: Dict) -> Tuple[bool, List[str]]:
             elif threshold < 0 or threshold > 1000:
                 errors.append(f"Daily rainfall threshold out of range: {threshold}mm (expected 0-1000mm)")
 
-        # Check for rationale
+        # Check for rationale (required field)
         if not daily_config.get("rationale") or daily_config.get("rationale") == "TBD":
-            warnings.append("Daily rainfall threshold missing rationale documentation")
+            errors.append("Daily rainfall threshold missing rationale documentation")
 
     if "rainfall_7day_mm" in flood_config:
         day7_config = flood_config["rainfall_7day_mm"]

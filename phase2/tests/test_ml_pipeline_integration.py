@@ -116,7 +116,7 @@ def test_model_training_pipeline_end_to_end(sample_master_dataset, tmp_path):
 
     # Step 5: Evaluate
     metrics = calculate_metrics(y_test, y_pred)
-    assert "r2" in metrics
+    assert "r2_score" in metrics
     assert "rmse" in metrics
 
     # Step 6: Save model

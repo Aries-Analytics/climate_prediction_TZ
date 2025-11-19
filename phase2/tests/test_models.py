@@ -259,8 +259,8 @@ def test_ensemble_combines_predictions_correctly(sample_training_data):
 
     ensemble.load_base_models(rf_model, xgb_model, lstm_model)
 
-    # Get predictions
-    X_test = X_train[:5]
+    # Get predictions (use more samples for LSTM sequence requirements)
+    X_test = X_train[:20]  # LSTM needs at least 6 samples for sequence length
     rf_pred = rf_model.predict(X_test)
     xgb_pred = xgb_model.predict(X_test)
     lstm_pred = lstm_model.predict(X_test)
