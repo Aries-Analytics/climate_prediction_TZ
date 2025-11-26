@@ -1,6 +1,29 @@
 # Tanzania Climate Prediction - Phase 2
 
-A comprehensive end-to-end machine learning system for climate prediction in Tanzania, featuring data ingestion, processing, feature engineering, and model training pipelines.
+A comprehensive end-to-end machine learning system for climate prediction in Tanzania, featuring data ingestion, processing, feature engineering, model training pipelines, and an **interactive web dashboard**.
+
+## 🎉 NEW: Interactive Dashboard System
+
+**Production-ready web application for climate insights and risk management!**
+
+👉 **[Get Started with the Dashboard](GETTING_STARTED.md)** - 5-minute setup with Docker
+
+**Features**:
+- 📊 Executive Dashboard - Business KPIs and metrics
+- 🤖 Model Performance Monitoring - ML model tracking
+- ⚡ Triggers Dashboard - Insurance trigger events
+- 🌍 Climate Insights - Data analysis and trends
+- 📈 Risk Management - Portfolio risk assessment
+
+**Quick Start**:
+```powershell
+docker compose -f docker-compose.dev.yml up -d
+# Access at http://localhost:3000
+```
+
+See **[PROJECT_SUMMARY.md](PROJECT_SUMMARY.md)** for complete dashboard documentation.
+
+---
 
 ## Overview
 
@@ -11,6 +34,7 @@ Phase 2 delivers a complete ML system that:
 - **Model Training**: Trains multiple models (Random Forest, XGBoost, LSTM, Ensemble) with experiment tracking
 - **Evaluation**: Provides comprehensive model evaluation with uncertainty quantification
 - **Testing**: Includes 45+ tests ensuring data quality and model reliability
+- **🆕 Interactive Dashboard**: Web-based visualization and monitoring system
 
 ## Project Structure
 

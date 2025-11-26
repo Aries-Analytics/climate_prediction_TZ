@@ -1,14 +1,12 @@
 import { useState } from 'react'
-import { Outlet, useNavigate } from 'react-router-dom'
+import { Outlet } from 'react-router-dom'
 import {
   Box,
   AppBar,
   Toolbar,
   Typography,
   IconButton,
-  Drawer,
-  useTheme,
-  useMediaQuery
+  Drawer
 } from '@mui/material'
 import MenuIcon from '@mui/icons-material/Menu'
 import Sidebar from './Sidebar'
@@ -17,9 +15,6 @@ const DRAWER_WIDTH = 240
 
 export default function AppLayout() {
   const [mobileOpen, setMobileOpen] = useState(false)
-  const theme = useTheme()
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'))
-  const navigate = useNavigate()
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen)

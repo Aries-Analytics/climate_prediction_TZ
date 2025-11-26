@@ -223,7 +223,11 @@ export default function RiskManagementDashboard() {
                       height: 400,
                       barmode: 'group',
                       xaxis: { title: 'Scenario' },
-                      yaxis: { title: 'Value' }
+                      yaxis: { title: 'Value' },
+                      autosize: true
+                    }}
+                    config={{
+                      responsive: true
                     }}
                   />
                   <Box sx={{ mt: 2 }}>

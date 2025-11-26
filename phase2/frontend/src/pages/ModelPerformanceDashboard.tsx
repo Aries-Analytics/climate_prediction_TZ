@@ -33,9 +33,17 @@ export default function ModelPerformanceDashboard() {
     fetchModels()
   }, [])
 
+  // Models that support feature importance (tree-based models)
+  const supportsFeatureImportance = (modelName: string) => {
+    return ['random_forest', 'xgboost'].includes(modelName.toLowerCase())
+  }
+
   useEffect(() => {
-    if (selectedModel) {
+    if (selectedModel && supportsFeatureImportance(selectedModel)) {
       fetchFeatureImportance(selectedModel)
+    } else {
+      // Clear feature importance for models that don't support it
+      setFeatureImportance([])
     }
   }, [selectedModel])
 
@@ -67,7 +75,8 @@ export default function ModelPerformanceDashboard() {
       )
       setFeatureImportance(response.data)
     } catch (err) {
-      console.error('Failed to fetch feature importance:', err)
+      // Silently handle - feature importance may not be available
+      setFeatureImportance([])
     }
   }
 
@@ -87,7 +96,7 @@ export default function ModelPerformanceDashboard() {
     return 'error'
   }
 
-  const selectedModelData = models.find(m => m.modelName === selectedModel)
+  const selectedModelData = models.find((m: ModelMetrics) => m.modelName === selectedModel)
 
   if (isLoading) {
     return <LoadingSpinner message="Loading model performance data..." />
@@ -112,10 +121,10 @@ export default function ModelPerformanceDashboard() {
 
   const metricsColumns = [
     { id: 'modelName', label: 'Model Name' },
-    { id: 'r2Score', label: 'R² Score', format: (v: number) => v.toFixed(4) },
-    { id: 'rmse', label: 'RMSE', format: (v: number) => v.toFixed(4) },
-    { id: 'mae', label: 'MAE', format: (v: number) => v.toFixed(4) },
-    { id: 'mape', label: 'MAPE', format: (v: number) => v.toFixed(2) + '%' },
+    { id: 'r2Score', label: 'R² Score', format: (v: number) => v?.toFixed(4) ?? 'N/A' },
+    { id: 'rmse', label: 'RMSE', format: (v: number) => v?.toFixed(4) ?? 'N/A' },
+    { id: 'mae', label: 'MAE', format: (v: number) => v?.toFixed(4) ?? 'N/A' },
+    { id: 'mape', label: 'MAPE', format: (v: number) => (v?.toFixed(2) ?? 'N/A') + '%' },
     { 
       id: 'trainingDate', 
       label: 'Training Date',
@@ -123,29 +132,87 @@ export default function ModelPerformanceDashboard() {
     }
   ]
 
-  const featureImportanceData = {
-    x: featureImportance.map(f => f.importance),
-    y: featureImportance.map(f => f.featureName),
-    type: 'bar' as const,
-    orientation: 'h' as const,
-    marker: { color: '#1976d2' }
-  }
-
-  const metricsComparisonData = [
+  // Cleveland dot plot for feature importance
+  const featureImportanceData = [
+    // Lines from baseline to dots
     {
-      x: models.map(m => m.modelName),
-      y: models.map(m => m.r2Score),
-      name: 'R² Score',
-      type: 'bar' as const,
-      marker: { color: '#4caf50' }
+      x: featureImportance.map((f: FeatureImportance) => f.importance),
+      y: featureImportance.map((f: FeatureImportance) => f.featureName),
+      mode: 'lines',
+      type: 'scatter' as const,
+      line: { 
+        color: '#bdbdbd',
+        width: 1
+      },
+      hoverinfo: 'skip',
+      showlegend: false
     },
+    // Dots
     {
-      x: models.map(m => m.modelName),
-      y: models.map(m => m.rmse),
-      name: 'RMSE',
+      x: featureImportance.map((f: FeatureImportance) => f.importance),
+      y: featureImportance.map((f: FeatureImportance) => f.featureName),
+      mode: 'markers',
+      type: 'scatter' as const,
+      marker: { 
+        size: 10,
+        color: featureImportance.map((f: FeatureImportance) => f.importance),
+        colorscale: [
+          [0, '#e3f2fd'],
+          [0.5, '#1976d2'],
+          [1, '#0d47a1']
+        ],
+        showscale: false,
+        line: {
+          color: '#fff',
+          width: 1
+        }
+      },
+      hovertemplate: '<b>%{y}</b><br>' +
+                     'Importance: %{x:.4f}<br>' +
+                     '<i>Contribution to model predictions</i><br>' +
+                     '<extra></extra>',
+      showlegend: false
+    }
+  ]
+
+  // R² Score bar chart data
+  const r2ScoreData = [
+    {
+      x: models.map((m: ModelMetrics) => m.modelName),
+      y: models.map((m: ModelMetrics) => m.r2Score),
       type: 'bar' as const,
-      yaxis: 'y2',
-      marker: { color: '#ff9800' }
+      marker: { 
+        color: '#4caf50',
+        line: {
+          color: '#2e7d32',
+          width: 1
+        }
+      },
+      hovertemplate: '<b>%{x}</b><br>' +
+                     'R² Score: %{y:.4f}<br>' +
+                     '<i>Explains %{customdata:.1f}% of variance</i><br>' +
+                     '<extra></extra>',
+      customdata: models.map((m: ModelMetrics) => (m.r2Score ?? 0) * 100)
+    }
+  ]
+
+  // RMSE bar chart data
+  const rmseData = [
+    {
+      x: models.map((m: ModelMetrics) => m.modelName),
+      y: models.map((m: ModelMetrics) => m.rmse),
+      type: 'bar' as const,
+      marker: { 
+        color: '#ff9800',
+        line: {
+          color: '#e65100',
+          width: 1
+        }
+      },
+      hovertemplate: '<b>%{x}</b><br>' +
+                     'RMSE: %{y:.4f} mm<br>' +
+                     '<i>Average prediction error</i><br>' +
+                     '<extra></extra>'
     }
   ]
 
@@ -178,7 +245,7 @@ export default function ModelPerformanceDashboard() {
                   label="Select Model"
                   onChange={handleModelChange}
                 >
-                  {models.map((model) => (
+                  {models.map((model: ModelMetrics) => (
                     <MenuItem key={model.modelName} value={model.modelName}>
                       {model.modelName}
                     </MenuItem>
@@ -192,25 +259,35 @@ export default function ModelPerformanceDashboard() {
         {/* Selected Model Metrics */}
         {selectedModelData && (
           <>
-            <Grid item xs={12} md={3}>
-              <Card>
+            {/* Primary Metric - R² Score (Most Important) */}
+            <Grid item xs={12} md={6}>
+              <Card sx={{ height: '100%', bgcolor: 'primary.50' }}>
                 <CardContent>
-                  <Typography color="text.secondary" variant="body2" gutterBottom>
-                    R² Score
-                  </Typography>
-                  <Typography variant="h4" color={getMetricColor('r2Score', selectedModelData.r2Score)}>
-                    {selectedModelData.r2Score.toFixed(4)}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                    <Typography color="text.secondary" variant="body2">
+                      R² Score (Coefficient of Determination)
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                      - Primary Quality Metric
+                    </Typography>
+                  </Box>
+                  <Typography variant="h3" color={getMetricColor('r2Score', selectedModelData.r2Score)} sx={{ mb: 1 }}>
+                    {selectedModelData.r2Score?.toFixed(4) ?? 'N/A'}
                   </Typography>
                   <Chip
-                    label={selectedModelData.r2Score >= 0.8 ? 'Excellent' : selectedModelData.r2Score >= 0.6 ? 'Good' : 'Needs Improvement'}
+                    label={(selectedModelData.r2Score ?? 0) >= 0.8 ? 'Excellent' : (selectedModelData.r2Score ?? 0) >= 0.6 ? 'Good' : 'Needs Improvement'}
                     size="small"
-                    color={getMetricColor('r2Score', selectedModelData.r2Score)}
-                    sx={{ mt: 1 }}
+                    color={getMetricColor('r2Score', selectedModelData.r2Score ?? 0)}
+                    sx={{ mb: 1 }}
                   />
+                  <Typography variant="caption" color="text.secondary" display="block">
+                    Explains {((selectedModelData.r2Score ?? 0) * 100).toFixed(1)}% of variance in rainfall predictions
+                  </Typography>
                 </CardContent>
               </Card>
             </Grid>
 
+            {/* Secondary Metrics - Absolute Errors */}
             <Grid item xs={12} md={3}>
               <Card>
                 <CardContent>
@@ -218,10 +295,10 @@ export default function ModelPerformanceDashboard() {
                     RMSE
                   </Typography>
                   <Typography variant="h4">
-                    {selectedModelData.rmse.toFixed(4)}
+                    {selectedModelData.rmse?.toFixed(4) ?? 'N/A'}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
-                    Root Mean Squared Error
+                    Root Mean Squared Error (mm)
                   </Typography>
                 </CardContent>
               </Card>
@@ -234,27 +311,35 @@ export default function ModelPerformanceDashboard() {
                     MAE
                   </Typography>
                   <Typography variant="h4">
-                    {selectedModelData.mae.toFixed(4)}
+                    {selectedModelData.mae?.toFixed(4) ?? 'N/A'}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
-                    Mean Absolute Error
+                    Mean Absolute Error (mm)
                   </Typography>
                 </CardContent>
               </Card>
             </Grid>
 
-            <Grid item xs={12} md={3}>
-              <Card>
+            {/* MAPE with Warning */}
+            <Grid item xs={12} md={12}>
+              <Card sx={{ bgcolor: 'warning.50' }}>
                 <CardContent>
-                  <Typography color="text.secondary" variant="body2" gutterBottom>
-                    MAPE
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                    <Typography color="text.secondary" variant="body2">
+                      MAPE (Mean Absolute Percentage Error)
+                    </Typography>
+                    <Chip label="⚠️ Interpret with Caution" size="small" color="warning" variant="outlined" />
+                  </Box>
+                  <Typography variant="h5" sx={{ mb: 1 }}>
+                    {selectedModelData.mape?.toFixed(2) ?? 'N/A'}%
                   </Typography>
-                  <Typography variant="h4">
-                    {selectedModelData.mape.toFixed(2)}%
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    Mean Absolute Percentage Error
-                  </Typography>
+                  <Alert severity="info" sx={{ mt: 1 }}>
+                    <Typography variant="caption">
+                      <strong>Note:</strong> MAPE can be inflated by low rainfall values (near-zero). 
+                      For rainfall prediction, focus on <strong>R² and RMSE</strong> for overall model quality. 
+                      MAPE is most useful for comparing relative performance across models.
+                    </Typography>
+                  </Alert>
                 </CardContent>
               </Card>
             </Grid>
@@ -262,7 +347,7 @@ export default function ModelPerformanceDashboard() {
         )}
 
         {/* Feature Importance Chart */}
-        {featureImportance.length > 0 && (
+        {selectedModel && supportsFeatureImportance(selectedModel) && featureImportance.length > 0 && (
           <Grid item xs={12} md={6}>
             <Card>
               <CardContent>
@@ -270,12 +355,22 @@ export default function ModelPerformanceDashboard() {
                   Feature Importance
                 </Typography>
                 <Chart
-                  data={[featureImportanceData]}
+                  data={featureImportanceData}
                   layout={{
                     height: 400,
                     margin: { l: 150, r: 20, t: 20, b: 40 },
-                    xaxis: { title: 'Importance' },
-                    yaxis: { title: '' }
+                    xaxis: { 
+                      title: 'Importance',
+                      rangemode: 'tozero'
+                    },
+                    yaxis: { 
+                      title: '',
+                      autorange: 'reversed'
+                    },
+                    autosize: true
+                  }}
+                  config={{
+                    responsive: true
                   }}
                 />
               </CardContent>
@@ -283,25 +378,88 @@ export default function ModelPerformanceDashboard() {
           </Grid>
         )}
 
-        {/* Model Comparison Chart */}
+        {/* Feature Importance Not Available Message */}
+        {selectedModel && !supportsFeatureImportance(selectedModel) && (
+          <Grid item xs={12} md={6}>
+            <Card>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>
+                  Feature Importance
+                </Typography>
+                <Alert severity="info">
+                  <Typography variant="body2">
+                    Feature importance is only available for tree-based models (Random Forest, XGBoost). 
+                    The <strong>{selectedModel}</strong> model uses a different architecture that doesn't provide traditional feature importance scores.
+                  </Typography>
+                </Alert>
+              </CardContent>
+            </Card>
+          </Grid>
+        )}
+
+        {/* Model Comparison Charts - Small Multiples */}
         <Grid item xs={12} md={6}>
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>
-                Model Comparison
+                R² Score Comparison
+              </Typography>
+              <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 2 }}>
+                Higher is better - Measures how well the model explains variance
               </Typography>
               <Chart
-                data={metricsComparisonData}
+                data={r2ScoreData}
                 layout={{
-                  height: 400,
-                  barmode: 'group',
-                  xaxis: { title: 'Model' },
-                  yaxis: { title: 'R² Score' },
-                  yaxis2: {
-                    title: 'RMSE',
-                    overlaying: 'y',
-                    side: 'right'
-                  }
+                  height: 350,
+                  xaxis: { 
+                    title: 'Model',
+                    showgrid: false
+                  },
+                  yaxis: { 
+                    title: 'R² Score',
+                    rangemode: 'tozero',
+                    gridcolor: '#e0e0e0'
+                  },
+                  margin: { l: 60, r: 20, t: 20, b: 80 },
+                  autosize: true,
+                  showlegend: false
+                }}
+                config={{
+                  responsive: true
+                }}
+              />
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                RMSE Comparison
+              </Typography>
+              <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 2 }}>
+                Lower is better - Measures average prediction error
+              </Typography>
+              <Chart
+                data={rmseData}
+                layout={{
+                  height: 350,
+                  xaxis: { 
+                    title: 'Model',
+                    showgrid: false
+                  },
+                  yaxis: { 
+                    title: 'RMSE (mm)',
+                    rangemode: 'tozero',
+                    gridcolor: '#e0e0e0'
+                  },
+                  margin: { l: 60, r: 20, t: 20, b: 80 },
+                  autosize: true,
+                  showlegend: false
+                }}
+                config={{
+                  responsive: true
                 }}
               />
             </CardContent>

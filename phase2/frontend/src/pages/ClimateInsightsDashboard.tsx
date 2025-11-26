@@ -23,11 +23,11 @@ import Chart from '../components/charts/Chart'
 import { ClimateTimeSeries, Anomaly } from '../types'
 
 const VARIABLES = [
-  { value: 'temperature', label: 'Temperature (°C)' },
-  { value: 'rainfall', label: 'Rainfall (mm)' },
-  { value: 'ndvi', label: 'NDVI' },
-  { value: 'enso', label: 'ENSO Index' },
-  { value: 'iod', label: 'IOD Index' }
+  { value: 'temperature', label: 'Temperature (°C)', tooltip: 'Average monthly temperature' },
+  { value: 'rainfall', label: 'Rainfall (mm)', tooltip: 'Total monthly rainfall' },
+  { value: 'ndvi', label: 'NDVI', tooltip: 'Normalized Difference Vegetation Index - measures vegetation health (0=no vegetation, 1=dense vegetation)' },
+  { value: 'enso', label: 'ENSO Index', tooltip: 'El Niño-Southern Oscillation index - In East Africa: +ve=El Niño (wetter/more rain), -ve=La Niña (drier/less rain)' },
+  { value: 'iod', label: 'IOD Index', tooltip: 'Indian Ocean Dipole index - influences East African rainfall (+ve=wetter/more rain/floods, -ve=drier/less rain/droughts)' }
 ]
 
 export default function ClimateInsightsDashboard() {
@@ -37,7 +37,7 @@ export default function ClimateInsightsDashboard() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   
-  const [selectedVariables, setSelectedVariables] = useState<string[]>(['temperature', 'rainfall'])
+  const [selectedVariables, setSelectedVariables] = useState<string[]>(['temperature', 'rainfall', 'ndvi', 'enso', 'iod'])
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
 
@@ -75,14 +75,16 @@ export default function ClimateInsightsDashboard() {
         setAnomalies(anomalyResponse.data)
       }
 
-      // Fetch correlation matrix if multiple variables selected
-      if (selectedVariables.length > 1) {
-        const corrResponse = await axios.get(
-          `${API_BASE_URL}/climate/correlations?variables=${selectedVariables.join(',')}`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        )
-        setCorrelationMatrix(corrResponse.data)
-      }
+      // Always fetch correlation matrix for all 5 variables (independent of time series selection)
+      const allVariables = ['temperature', 'rainfall', 'ndvi', 'enso', 'iod']
+      const corrParams = new URLSearchParams()
+      allVariables.forEach(v => corrParams.append('variables', v))
+      const corrResponse = await axios.get(
+        `${API_BASE_URL}/climate/correlations?${corrParams.toString()}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
+      console.log('Correlation response:', corrResponse.data)
+      setCorrelationMatrix(corrResponse.data)
 
       setError(null)
     } catch (err: any) {
@@ -109,14 +111,34 @@ export default function ClimateInsightsDashboard() {
     )
   }
 
-  // Prepare time series chart data
-  const timeSeriesChartData = timeSeries.map((series) => ({
-    x: series.data.map(d => d.date),
-    y: series.data.map(d => d.value),
-    name: VARIABLES.find(v => v.value === series.variable)?.label || series.variable,
-    type: 'scatter' as const,
-    mode: 'lines' as const
-  }))
+  // Normalize data for better visualization (0-1 scale)
+  const normalizeData = (data: number[]) => {
+    const min = Math.min(...data)
+    const max = Math.max(...data)
+    return data.map(v => (v - min) / (max - min))
+  }
+
+  // Prepare time series chart data with dual axes
+  const timeSeriesChartData = timeSeries.map((series, index) => {
+    const varInfo = VARIABLES.find(v => v.value === series.variable)
+    const isSecondaryAxis = ['ndvi', 'enso', 'iod'].includes(series.variable)
+    
+    return {
+      x: series.data.map(d => d.date),
+      y: series.data.map(d => d.value),
+      name: varInfo?.label || series.variable,
+      type: 'scatter' as const,
+      mode: 'lines' as const,
+      yaxis: isSecondaryAxis ? 'y2' : 'y',
+      hovertemplate: `<b>${varInfo?.label}</b><br>` +
+                     `Date: %{x}<br>` +
+                     `Value: %{y:.2f}<br>` +
+                     `<i>${varInfo?.tooltip}</i><extra></extra>`,
+      line: {
+        width: 2
+      }
+    }
+  })
 
   // Prepare anomaly markers
   const anomalyMarkers = anomalies.length > 0 ? {
@@ -132,14 +154,73 @@ export default function ClimateInsightsDashboard() {
     }
   } : null
 
-  // Prepare correlation heatmap data
+  // Prepare correlation heatmap data with better formatting
   const correlationData = correlationMatrix ? [{
     z: correlationMatrix.matrix,
-    x: correlationMatrix.variables,
-    y: correlationMatrix.variables,
+    x: correlationMatrix.variables.map((v: string) => {
+      const varInfo = VARIABLES.find(varItem => varItem.value === v)
+      return varInfo?.label.split(' ')[0] || v  // Use short labels
+    }),
+    y: correlationMatrix.variables.map((v: string) => {
+      const varInfo = VARIABLES.find(varItem => varItem.value === v)
+      return varInfo?.label.split(' ')[0] || v  // Use short labels
+    }),
     type: 'heatmap' as const,
-    colorscale: 'RdBu',
-    zmid: 0
+    colorscale: [
+      [0, '#d73027'],      // Strong negative (red)
+      [0.25, '#fc8d59'],   // Moderate negative (orange)
+      [0.5, '#ffffbf'],    // No correlation (yellow)
+      [0.75, '#91bfdb'],   // Moderate positive (light blue)
+      [1, '#4575b4']       // Strong positive (dark blue)
+    ],
+    zmid: 0,
+    zmin: -1,
+    zmax: 1,
+    text: correlationMatrix.matrix.map((row: number[]) => 
+      row.map((val: number) => {
+        const absVal = Math.abs(val)
+        let strength = ''
+        if (absVal > 0.7) strength = 'Strong'
+        else if (absVal > 0.4) strength = 'Moderate'
+        else if (absVal > 0.2) strength = 'Weak'
+        else strength = 'None'
+        return `${val.toFixed(2)}\n${strength}`
+      })
+    ),
+    texttemplate: '%{text}',
+    textfont: { 
+      size: 11,
+      color: correlationMatrix.matrix.map((row: number[]) => 
+        row.map((val: number) => Math.abs(val) > 0.5 ? 'white' : 'black')
+      )
+    },
+    hovertemplate: '<b>%{y} vs %{x}</b><br>' +
+                   'Correlation: %{z:.3f}<br>' +
+                   '<i>Interpretation:</i><br>' +
+                   '• |r| > 0.7 = Strong relationship<br>' +
+                   '• |r| 0.4-0.7 = Moderate relationship<br>' +
+                   '• |r| 0.2-0.4 = Weak relationship<br>' +
+                   '• |r| < 0.2 = No relationship<br>' +
+                   '• Positive = variables move together<br>' +
+                   '• Negative = variables move opposite<extra></extra>',
+    colorbar: {
+      title: {
+        text: 'Correlation<br>Strength',
+        side: 'right'
+      },
+      tickvals: [-1, -0.7, -0.4, 0, 0.4, 0.7, 1],
+      ticktext: [
+        '-1.0<br><b>Strong -</b>', 
+        '-0.7<br>Moderate -', 
+        '-0.4<br>Weak -',
+        '0<br><b>None</b>', 
+        '0.4<br>Weak +',
+        '0.7<br>Moderate +',
+        '1.0<br><b>Strong +</b>'
+      ],
+      thickness: 20,
+      len: 0.9
+    }
   }] : []
 
   return (
@@ -170,9 +251,9 @@ export default function ClimateInsightsDashboard() {
                       value={selectedVariables}
                       onChange={handleVariableChange}
                       input={<OutlinedInput label="Variables" />}
-                      renderValue={(selected) => 
-                        selected.map(v => VARIABLES.find(var => var.value === v)?.label).join(', ')
-                      }
+                      renderValue={(selected) => {
+                        return selected.map(v => VARIABLES.find(varItem => varItem.value === v)?.label).join(', ');
+                      }}
                     >
                       {VARIABLES.map((variable) => (
                         <MenuItem key={variable.value} value={variable.value}>
@@ -221,9 +302,26 @@ export default function ClimateInsightsDashboard() {
                   layout={{
                     height: 500,
                     xaxis: { title: 'Date' },
-                    yaxis: { title: 'Value' },
+                    yaxis: { 
+                      title: 'Temperature (°C) / Rainfall (mm)',
+                      side: 'left'
+                    },
+                    yaxis2: {
+                      title: 'NDVI / ENSO / IOD Index',
+                      overlaying: 'y',
+                      side: 'right',
+                      showgrid: false
+                    },
                     hovermode: 'x unified',
-                    showlegend: true
+                    showlegend: true,
+                    autosize: true,
+                    legend: {
+                      orientation: 'h',
+                      y: -0.2
+                    }
+                  }}
+                  config={{
+                    responsive: true
                   }}
                 />
               </CardContent>
@@ -231,20 +329,41 @@ export default function ClimateInsightsDashboard() {
           </Grid>
         )}
 
-        {/* Correlation Heatmap */}
-        {correlationMatrix && selectedVariables.length > 1 && (
-          <Grid item xs={12} md={6}>
+        {/* Correlation Heatmap - Always shows all 5 variables */}
+        {correlationMatrix && (
+          <Grid item xs={12}>
             <Card>
               <CardContent>
                 <Typography variant="h6" gutterBottom>
                   Variable Correlations
                 </Typography>
+                <Typography variant="body2" color="text.secondary" paragraph>
+                  This heatmap shows how climate variables relate to each other. 
+                  <strong> Positive correlations</strong> (blue) mean variables increase together. 
+                  <strong> Negative correlations</strong> (red) mean when one increases, the other decreases.
+                  Values closer to ±1.0 indicate stronger relationships. Diagonal values are always 1.0 (perfect self-correlation).
+                </Typography>
                 <Chart
                   data={correlationData}
                   layout={{
-                    height: 400,
-                    xaxis: { title: '' },
-                    yaxis: { title: '' }
+                    height: 600,
+                    xaxis: { 
+                      title: '',
+                      tickangle: -45,
+                      side: 'bottom',
+                      tickfont: { size: 12 }
+                    },
+                    yaxis: { 
+                      title: '',
+                      autorange: 'reversed',
+                      tickfont: { size: 12 }
+                    },
+                    autosize: true,
+                    margin: { l: 120, r: 180, t: 50, b: 120 }
+                  }}
+                  config={{
+                    responsive: true,
+                    displayModeBar: true
                   }}
                 />
               </CardContent>

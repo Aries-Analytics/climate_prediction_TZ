@@ -126,28 +126,84 @@ export default function TriggersDashboard() {
     { 
       id: 'confidence', 
       label: 'Confidence',
-      format: (v: number) => (v * 100).toFixed(1) + '%'
+      format: (v: number) => v != null ? (v * 100).toFixed(1) + '%' : 'N/A'
     },
     { 
       id: 'severity', 
       label: 'Severity',
-      format: (v: number) => (v * 100).toFixed(1) + '%'
+      format: (v: number) => v != null ? (v * 100).toFixed(1) + '%' : 'N/A'
     },
     { 
       id: 'payoutAmount', 
-      label: 'Payout',
-      format: (v: number) => '$' + v.toLocaleString()
+      label: 'Payout (TZS)',
+      format: (v: number) => {
+        if (v == null) return 'N/A'
+        // Manual comma formatting
+        const num = Math.round(v)
+        return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') + ' TZS'
+      }
     }
   ]
 
-  // Timeline chart data
+  // Color mapping for consistent event type colors
+  const getEventColor = (triggerType: string): string => {
+    const colorMap: Record<string, string> = {
+      'drought': '#2196F3',      // Blue
+      'flood': '#4CAF50',        // Green
+      'crop_failure': '#FF9800'  // Orange
+    }
+    return colorMap[triggerType] || '#2196F3'
+  }
+
+  // Helper to format currency
+  const formatCurrency = (value: number) => {
+    return Math.round(value).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+  }
+
+  // Helper to get trigger description
+  const getTriggerDescription = (type: string): string => {
+    const descriptions: Record<string, string> = {
+      'drought': 'Extended period of low rainfall causing water stress',
+      'flood': 'Excessive rainfall causing waterlogging and crop damage',
+      'crop_failure': 'Vegetation health decline indicating crop stress'
+    }
+    return descriptions[type] || type
+  }
+
+  // Timeline chart data with rich tooltips
   const timelineData = triggers.reduce((acc: any, trigger) => {
     const type = trigger.triggerType
     if (!acc[type]) {
-      acc[type] = { x: [], y: [], name: type, type: 'scatter', mode: 'markers' }
+      const color = getEventColor(type)
+      acc[type] = { 
+        x: [], 
+        y: [], 
+        text: [],
+        name: type, 
+        type: 'scatter', 
+        mode: 'markers',
+        marker: {
+          color: color,
+          size: 10,
+          line: {
+            color: color,
+            width: 1
+          }
+        },
+        hovertemplate: '<b>%{text}</b><extra></extra>'
+      }
     }
     acc[type].x.push(trigger.date)
     acc[type].y.push(trigger.severity)
+    
+    // Create rich tooltip text
+    const tooltipText = `${type.toUpperCase()} Event<br>` +
+                       `Date: ${new Date(trigger.date).toLocaleDateString()}<br>` +
+                       `Severity: ${(trigger.severity * 100).toFixed(1)}%<br>` +
+                       `Confidence: ${(trigger.confidence * 100).toFixed(1)}%<br>` +
+                       `Payout: ${formatCurrency(trigger.payoutAmount)} TZS<br>` +
+                       `<i>${getTriggerDescription(type)}</i>`
+    acc[type].text.push(tooltipText)
     return acc
   }, {})
 
@@ -155,12 +211,21 @@ export default function TriggersDashboard() {
   const forecastData = forecasts.reduce((acc: any, forecast) => {
     const type = forecast.triggerType
     if (!acc[type]) {
+      const color = getEventColor(type)
       acc[type] = { 
         x: [], 
         y: [], 
         name: type, 
         type: 'scatter', 
         mode: 'lines+markers',
+        marker: {
+          color: color,
+          size: 8
+        },
+        line: {
+          color: color,
+          width: 2
+        },
         error_y: {
           type: 'data',
           symmetric: false,
@@ -258,8 +323,14 @@ export default function TriggersDashboard() {
                   layout={{
                     height: 400,
                     xaxis: { title: 'Date' },
-                    yaxis: { title: 'Severity', range: [0, 1] },
-                    hovermode: 'closest'
+                    yaxis: { title: 'Severity', range: [-0.05, 1.05] },
+                    hovermode: 'closest',
+                    showlegend: true,
+                    autosize: true
+                  }}
+                  config={{
+                    displayModeBar: true,
+                    responsive: true
                   }}
                 />
               </CardContent>
@@ -280,8 +351,14 @@ export default function TriggersDashboard() {
                   layout={{
                     height: 400,
                     xaxis: { title: 'Date' },
-                    yaxis: { title: 'Probability', range: [0, 1] },
-                    hovermode: 'closest'
+                    yaxis: { title: 'Probability', range: [-0.05, 1.05] },
+                    hovermode: 'closest',
+                    showlegend: true,
+                    autosize: true
+                  }}
+                  config={{
+                    displayModeBar: true,
+                    responsive: true
                   }}
                 />
               </CardContent>

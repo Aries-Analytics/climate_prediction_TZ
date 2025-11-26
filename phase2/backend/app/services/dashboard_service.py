@@ -18,7 +18,9 @@ TRIGGER_TARGETS = {
     "crop_failure": {"min": 0.03, "max": 0.12}
 }
 LOSS_RATIO_THRESHOLD = 0.70
-TOTAL_PREMIUMS_YTD = 1000000.0  # This should come from config or database
+# Total premiums in Tanzanian Shillings (TZS) for demonstration
+# Assuming 100 insured farmers × 100,000 TZS annual premium = 10,000,000 TZS
+TOTAL_PREMIUMS_YTD = 10000000.0  # TZS - This should come from config or database
 
 def calculate_trigger_rate(
     db: Session,
@@ -60,11 +62,31 @@ def calculate_trigger_rate(
         status=status
     )
 
-def get_executive_kpis(db: Session) -> ExecutiveKPIs:
-    """Get executive dashboard KPIs"""
-    # Calculate year-to-date period
-    today = date.today()
-    start_of_year = date(today.year, 1, 1)
+def get_executive_kpis(db: Session, year: int = None) -> ExecutiveKPIs:
+    """Get executive dashboard KPIs for a specific year"""
+    # Get the actual date range from the data
+    max_date = db.query(func.max(TriggerEvent.date)).scalar()
+    
+    if not max_date:
+        # No data available - return zeros
+        return ExecutiveKPIs(
+            flood_trigger_rate=TriggerRate(trigger_type="flood", rate=0.0, count=0, target_min=0.05, target_max=0.15, status="below_target"),
+            drought_trigger_rate=TriggerRate(trigger_type="drought", rate=0.0, count=0, target_min=0.08, target_max=0.20, status="below_target"),
+            crop_failure_trigger_rate=TriggerRate(trigger_type="crop_failure", rate=0.0, count=0, target_min=0.03, target_max=0.12, status="below_target"),
+            combined_trigger_rate=0.0,
+            loss_ratio=0.0,
+            sustainability_status="sustainable",
+            total_triggers_ytd=0,
+            estimated_payouts_ytd=0.0
+        )
+    
+    # Use specified year or the most recent year in the data
+    target_year = year if year else max_date.year
+    start_of_year = date(target_year, 1, 1)
+    end_of_year = date(target_year, 12, 31)
+    
+    # Use the minimum of end_of_year and max_date to avoid querying future dates
+    today = min(end_of_year, max_date)
     
     # Calculate trigger rates for each type
     flood_rate = calculate_trigger_rate(db, "flood", start_of_year, today)

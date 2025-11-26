@@ -16,6 +16,8 @@ import ModelTrainingIcon from '@mui/icons-material/ModelTraining'
 import WarningIcon from '@mui/icons-material/Warning'
 import CloudIcon from '@mui/icons-material/Cloud'
 import AssessmentIcon from '@mui/icons-material/Assessment'
+import TrendingUpIcon from '@mui/icons-material/TrendingUp'
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings'
 import LogoutIcon from '@mui/icons-material/Logout'
 import { useAuth } from '../../contexts/AuthContext'
 
@@ -24,11 +26,13 @@ interface SidebarProps {
 }
 
 const menuItems = [
-  { text: 'Executive Dashboard', icon: <DashboardIcon />, path: '/dashboard/executive' },
-  { text: 'Model Performance', icon: <ModelTrainingIcon />, path: '/dashboard/models' },
-  { text: 'Trigger Events', icon: <WarningIcon />, path: '/dashboard/triggers' },
-  { text: 'Climate Insights', icon: <CloudIcon />, path: '/dashboard/climate' },
-  { text: 'Risk Management', icon: <AssessmentIcon />, path: '/dashboard/risk' },
+  { text: 'Executive Snapshot', icon: <DashboardIcon />, path: '/dashboard/executive', roles: ['analyst', 'manager', 'admin'] },
+  { text: 'Model Performance', icon: <ModelTrainingIcon />, path: '/dashboard/models', roles: ['analyst', 'manager', 'admin'] },
+  { text: 'Trigger Events', icon: <WarningIcon />, path: '/dashboard/triggers', roles: ['analyst', 'manager', 'admin'] },
+  { text: 'Climate Insights', icon: <CloudIcon />, path: '/dashboard/climate', roles: ['analyst', 'manager', 'admin'] },
+  { text: 'Risk Management', icon: <AssessmentIcon />, path: '/dashboard/risk', roles: ['manager', 'admin'] },
+  { text: 'Early Warnings', icon: <TrendingUpIcon />, path: '/dashboard/forecasts', roles: ['analyst', 'manager', 'admin'] },
+  { text: 'Admin Panel', icon: <AdminPanelSettingsIcon />, path: '/dashboard/admin', roles: ['admin'] },
 ]
 
 export default function Sidebar({ onClose }: SidebarProps) {
@@ -59,17 +63,19 @@ export default function Sidebar({ onClose }: SidebarProps) {
 
       {/* Navigation Menu */}
       <List sx={{ flexGrow: 1 }}>
-        {menuItems.map((item) => (
-          <ListItem key={item.text} disablePadding>
-            <ListItemButton
-              selected={location.pathname === item.path}
-              onClick={() => handleNavigation(item.path)}
-            >
-              <ListItemIcon>{item.icon}</ListItemIcon>
-              <ListItemText primary={item.text} />
-            </ListItemButton>
-          </ListItem>
-        ))}
+        {menuItems
+          .filter((item) => !item.roles || item.roles.includes(user?.role || ''))
+          .map((item) => (
+            <ListItem key={item.text} disablePadding>
+              <ListItemButton
+                selected={location.pathname === item.path}
+                onClick={() => handleNavigation(item.path)}
+              >
+                <ListItemIcon>{item.icon}</ListItemIcon>
+                <ListItemText primary={item.text} />
+              </ListItemButton>
+            </ListItem>
+          ))}
       </List>
 
       <Divider />

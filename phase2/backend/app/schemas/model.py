@@ -1,28 +1,29 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, ConfigDict
 from datetime import date, datetime
 from typing import Optional, Dict, Any
 
 class ModelMetricsBase(BaseModel):
-    model_name: str
-    experiment_id: Optional[str] = None
-    r2_score: Optional[float] = None
+    model_config = ConfigDict(populate_by_name=True)
+    
+    model_name: str = Field(..., serialization_alias="modelName")
+    experiment_id: Optional[str] = Field(None, serialization_alias="experimentId")
+    r2_score: Optional[float] = Field(None, serialization_alias="r2Score")
     rmse: Optional[float] = None
     mae: Optional[float] = None
     mape: Optional[float] = None
-    training_date: datetime
-    data_start_date: Optional[date] = None
-    data_end_date: Optional[date] = None
+    training_date: datetime = Field(..., serialization_alias="trainingDate")
+    data_start_date: Optional[date] = Field(None, serialization_alias="dataStartDate")
+    data_end_date: Optional[date] = Field(None, serialization_alias="dataEndDate")
     hyperparameters: Optional[Dict[str, Any]] = None
 
 class ModelMetricsCreate(ModelMetricsBase):
     pass
 
 class ModelMetricsResponse(ModelMetricsBase):
-    id: int
-    created_at: datetime
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
     
-    class Config:
-        from_attributes = True
+    id: int
+    created_at: datetime = Field(..., serialization_alias="createdAt")
 
 class ModelPredictionBase(BaseModel):
     model_name: str
@@ -37,14 +38,15 @@ class ModelPredictionCreate(ModelPredictionBase):
     pass
 
 class ModelPredictionResponse(ModelPredictionBase):
-    id: int
-    created_at: datetime
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
     
-    class Config:
-        from_attributes = True
+    id: int
+    created_at: datetime = Field(..., serialization_alias="createdAt")
 
 class FeatureImportance(BaseModel):
-    feature_name: str
+    model_config = ConfigDict(populate_by_name=True)
+    
+    feature_name: str = Field(..., serialization_alias="featureName")
     importance: float
     rank: int
 

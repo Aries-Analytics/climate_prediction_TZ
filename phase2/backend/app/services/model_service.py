@@ -74,27 +74,41 @@ def compare_models(db: Session, model_names: List[str], metric: str = "r2_score"
 
 def get_feature_importance(model_name: str) -> List[FeatureImportance]:
     """Get feature importance for a model from saved files"""
-    # Try to load from outputs directory
-    importance_file = os.path.join(
-        settings.OUTPUTS_DIR,
-        "evaluation",
-        f"{model_name}_feature_importance.json"
-    )
+    import pandas as pd
+    import glob
+    
+    # Try multiple file name patterns
+    models_dir = os.path.join(settings.OUTPUTS_DIR, "models")
+    
+    # Pattern 1: exact match
+    importance_file = os.path.join(models_dir, f"{model_name}_feature_importance.csv")
+    
+    # Pattern 2: with _climate suffix (common pattern)
+    if not os.path.exists(importance_file):
+        importance_file = os.path.join(models_dir, f"{model_name}_climate_feature_importance.csv")
+    
+    # Pattern 3: search for any file containing the model name and feature_importance
+    # This handles cases like xgboost_climate_feature_importance_gain.csv
+    if not os.path.exists(importance_file):
+        pattern = os.path.join(models_dir, f"*{model_name}*feature_importance*.csv")
+        matches = glob.glob(pattern)
+        if matches:
+            importance_file = matches[0]
     
     if not os.path.exists(importance_file):
         return []
     
     try:
-        with open(importance_file, 'r') as f:
-            data = json.load(f)
+        # Read CSV file
+        df = pd.read_csv(importance_file)
         
         # Convert to FeatureImportance objects
         features = []
-        for rank, (feature, importance) in enumerate(data.items(), 1):
+        for idx, row in df.iterrows():
             features.append(FeatureImportance(
-                feature_name=feature,
-                importance=float(importance),
-                rank=rank
+                feature_name=row['feature'],
+                importance=float(row['importance']),
+                rank=int(row['rank']) if 'rank' in df.columns else idx + 1
             ))
         
         return sorted(features, key=lambda x: x.importance, reverse=True)

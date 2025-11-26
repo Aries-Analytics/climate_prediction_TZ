@@ -2,6 +2,11 @@
 Comprehensive Model Evaluation Script
 
 This script generates evaluation reports and visualizations for all trained models.
+
+Usage:
+    python run_evaluation.py
+
+This is a root-level entry point for the evaluation pipeline.
 """
 
 import sys

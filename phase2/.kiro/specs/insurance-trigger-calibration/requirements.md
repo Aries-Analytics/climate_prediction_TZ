@@ -79,17 +79,22 @@ This specification addresses the critical issue of insurance trigger calibration
 4. WHEN THE System identifies calibration issues, THE Insurance Trigger System SHALL flag any trigger type with activation rates outside acceptable ranges (drought: 8-20%, flood: 5-15%, crop failure: 3-10%)
 5. WHEN THE System produces validation outputs, THE Insurance Trigger System SHALL create visualizations showing trigger activation timeline, seasonal patterns, and confidence score distributions
 
-### Requirement 6: Financial Impact Recalculation
+### Requirement 6: Financial Impact Recalculation and Payout Structure
 
-**User Story:** As a finance manager, I want updated payout estimates based on recalibrated triggers, so that I can assess the financial viability of the insurance product.
+**User Story:** As a finance manager, I want updated payout estimates based on recalibrated triggers with realistic Tanzania-based amounts, so that I can assess the financial viability of the insurance product.
 
 #### Acceptance Criteria
 
-1. WHEN THE System recalculates financial impacts, THE Insurance Trigger System SHALL regenerate all business metrics reports using the new trigger thresholds
-2. WHEN THE System estimates payouts, THE Insurance Trigger System SHALL calculate average payout per year, total exposure, and payout frequency for each trigger type
-3. WHEN THE System compares old versus new triggers, THE Insurance Trigger System SHALL produce a comparison report showing the change in trigger rates and estimated payouts
-4. WHEN THE System evaluates financial sustainability, THE Insurance Trigger System SHALL flag any scenario where annual payout rates exceed 25% of premium income
-5. WHEN THE System generates executive summaries, THE Insurance Trigger System SHALL include updated risk assessment levels and financial impact projections
+1. WHEN THE System calculates payouts, THE Insurance Trigger System SHALL use Tanzanian Shillings (TZS) as the currency for all payout amounts
+2. WHEN THE System calculates drought payouts, THE Insurance Trigger System SHALL use a base amount of 500,000 TZS scaled by severity, with payouts only for severity >= 30%
+3. WHEN THE System calculates flood payouts, THE Insurance Trigger System SHALL use a base amount of 750,000 TZS scaled by severity, with payouts only for severity >= 30%
+4. WHEN THE System calculates crop failure payouts, THE Insurance Trigger System SHALL use a base amount of 625,000 TZS scaled by severity, with payouts only for severity >= 30%
+5. WHEN THE System encounters triggers with severity below 30%, THE Insurance Trigger System SHALL record the trigger event with a payout amount of 0 TZS for transparency and risk assessment
+6. WHEN THE System recalculates financial impacts, THE Insurance Trigger System SHALL regenerate all business metrics reports using the new trigger thresholds and payout structure
+7. WHEN THE System estimates payouts, THE Insurance Trigger System SHALL calculate average payout per year, total exposure, and payout frequency for each trigger type
+8. WHEN THE System compares old versus new triggers, THE Insurance Trigger System SHALL produce a comparison report showing the change in trigger rates and estimated payouts
+9. WHEN THE System evaluates financial sustainability, THE Insurance Trigger System SHALL flag any scenario where annual payout rates exceed 25% of premium income
+10. WHEN THE System generates executive summaries, THE Insurance Trigger System SHALL include updated risk assessment levels and financial impact projections in TZS
 
 ### Requirement 7: Configuration and Maintainability
 

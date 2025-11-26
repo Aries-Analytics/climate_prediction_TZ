@@ -13,6 +13,17 @@ from app.schemas.trigger_event import (
     TimelineEvent
 )
 
+# Tanzania coordinates (correct location for filtering)
+TANZANIA_LAT = -6.369028
+TANZANIA_LON = 34.888822
+
+def _filter_by_tanzania_location(query):
+    """Filter query to only return Tanzania records"""
+    return query.filter(
+        TriggerEvent.location_lat == TANZANIA_LAT,
+        TriggerEvent.location_lon == TANZANIA_LON
+    )
+
 def get_trigger_events(
     db: Session,
     start_date: Optional[date] = None,
@@ -21,8 +32,14 @@ def get_trigger_events(
     skip: int = 0,
     limit: int = 100
 ) -> List[TriggerEventResponse]:
-    """Get trigger events with optional filters"""
+    """Get trigger events with optional filters (Tanzania only)"""
+    from decimal import Decimal
+    import math
+    
     query = db.query(TriggerEvent)
+    
+    # Filter by Tanzania location
+    query = _filter_by_tanzania_location(query)
     
     if start_date:
         query = query.filter(TriggerEvent.date >= start_date)
@@ -36,19 +53,47 @@ def get_trigger_events(
     # Order by ID for stable, predictable pagination
     events = query.order_by(TriggerEvent.id.asc()).offset(skip).limit(limit).all()
     
-    return [TriggerEventResponse.model_validate(event) for event in events]
+    # Clean NaN values before validation
+    cleaned_events = []
+    for event in events:
+        # Convert NaN to None for numeric fields
+        if event.severity is not None and (isinstance(event.severity, float) and math.isnan(event.severity) or 
+                                           isinstance(event.severity, Decimal) and not event.severity.is_finite()):
+            event.severity = None
+        if event.confidence is not None and (isinstance(event.confidence, float) and math.isnan(event.confidence) or 
+                                             isinstance(event.confidence, Decimal) and not event.confidence.is_finite()):
+            event.confidence = None
+        if event.payout_amount is not None and (isinstance(event.payout_amount, float) and math.isnan(event.payout_amount) or 
+                                                isinstance(event.payout_amount, Decimal) and not event.payout_amount.is_finite()):
+            event.payout_amount = None
+        if event.location_lat is not None and (isinstance(event.location_lat, float) and math.isnan(event.location_lat) or 
+                                               isinstance(event.location_lat, Decimal) and not event.location_lat.is_finite()):
+            event.location_lat = None
+        if event.location_lon is not None and (isinstance(event.location_lon, float) and math.isnan(event.location_lon) or 
+                                               isinstance(event.location_lon, Decimal) and not event.location_lon.is_finite()):
+            event.location_lon = None
+        
+        cleaned_events.append(TriggerEventResponse.model_validate(event))
+    
+    return cleaned_events
 
 def get_trigger_timeline(
     db: Session,
     start_date: Optional[date] = None,
     end_date: Optional[date] = None
 ) -> List[TimelineEvent]:
-    """Get timeline view of trigger events grouped by date and type"""
+    """Get timeline view of trigger events grouped by date and type (Tanzania only)"""
     query = db.query(
         TriggerEvent.date,
         TriggerEvent.trigger_type,
         func.count(TriggerEvent.id).label('count'),
         func.sum(TriggerEvent.payout_amount).label('total_payout')
+    )
+    
+    # Filter by Tanzania location
+    query = query.filter(
+        TriggerEvent.location_lat == TANZANIA_LAT,
+        TriggerEvent.location_lon == TANZANIA_LON
     )
     
     if start_date:
@@ -197,8 +242,11 @@ def get_trigger_statistics(
     start_date: Optional[date] = None,
     end_date: Optional[date] = None
 ) -> dict:
-    """Calculate statistics for trigger events"""
+    """Calculate statistics for trigger events (Tanzania only)"""
     query = db.query(TriggerEvent)
+    
+    # Filter by Tanzania location
+    query = _filter_by_tanzania_location(query)
     
     if start_date:
         query = query.filter(TriggerEvent.date >= start_date)
@@ -209,16 +257,21 @@ def get_trigger_statistics(
     total_count = query.count()
     total_payout = query.with_entities(func.sum(TriggerEvent.payout_amount)).scalar() or 0
     
-    # Count by type
+    # Count by type (Tanzania only)
     type_counts = db.query(
         TriggerEvent.trigger_type,
         func.count(TriggerEvent.id).label('count')
     ).filter(
-        and_(
-            TriggerEvent.date >= start_date if start_date else True,
-            TriggerEvent.date <= end_date if end_date else True
-        )
-    ).group_by(TriggerEvent.trigger_type).all()
+        TriggerEvent.location_lat == TANZANIA_LAT,
+        TriggerEvent.location_lon == TANZANIA_LON
+    )
+    
+    if start_date:
+        type_counts = type_counts.filter(TriggerEvent.date >= start_date)
+    if end_date:
+        type_counts = type_counts.filter(TriggerEvent.date <= end_date)
+    
+    type_counts = type_counts.group_by(TriggerEvent.trigger_type).all()
     
     return {
         'total_count': total_count,

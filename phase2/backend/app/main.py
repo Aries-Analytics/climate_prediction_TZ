@@ -11,7 +11,13 @@ from app.core.error_handlers import (
     general_exception_handler
 )
 from app.middleware.audit import AuditMiddleware
-from app.api import auth, dashboard, models, triggers, climate, risk, admin
+from app.middleware.security import (
+    RateLimitMiddleware,
+    InputSanitizationMiddleware,
+    SecurityHeadersMiddleware
+)
+from app.api import auth, dashboard, models, triggers, climate, risk, admin, forecasts
+from app.core.cache import cache_manager
 
 app = FastAPI(
     title="Tanzania Climate Prediction API",
@@ -19,14 +25,24 @@ app = FastAPI(
     version="1.0.0"
 )
 
+@app.on_event("startup")
+async def startup_event():
+    """Initialize services on startup."""
+    await cache_manager.initialize()
+
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.ALLOWED_ORIGINS,
+    allow_origins=settings.get_allowed_origins(),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Add security middleware
+app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(InputSanitizationMiddleware)
+app.add_middleware(RateLimitMiddleware, requests_per_minute=100)
 
 # Add audit logging middleware
 app.add_middleware(AuditMiddleware)
@@ -45,6 +61,7 @@ app.include_router(triggers.router, prefix="/api")
 app.include_router(climate.router, prefix="/api")
 app.include_router(risk.router, prefix="/api")
 app.include_router(admin.router, prefix="/api")
+app.include_router(forecasts.router, prefix="/api")
 
 @app.get("/")
 async def root():
@@ -52,4 +69,18 @@ async def root():
 
 @app.get("/health")
 async def health_check():
-    return {"status": "healthy"}
+    """Basic health check endpoint"""
+    return {"status": "healthy", "service": "api"}
+
+@app.get("/health/ready")
+async def readiness_check():
+    """Readiness check with database connectivity"""
+    from app.core.database import SessionLocal
+    from sqlalchemy import text
+    try:
+        db = SessionLocal()
+        db.execute(text("SELECT 1"))
+        db.close()
+        return {"status": "ready", "database": "connected"}
+    except Exception as e:
+        return {"status": "not_ready", "database": "disconnected", "error": str(e)}

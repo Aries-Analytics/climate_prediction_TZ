@@ -1,15 +1,28 @@
+import { lazy, Suspense } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
 import CssBaseline from '@mui/material/CssBaseline'
+import { CircularProgress, Box } from '@mui/material'
 import { AuthProvider } from './contexts/AuthContext'
 import ProtectedRoute from './components/auth/ProtectedRoute'
 import AppLayout from './components/layout/AppLayout'
 import LoginPage from './pages/LoginPage'
-import ExecutiveDashboard from './pages/ExecutiveDashboard'
-import ModelPerformanceDashboard from './pages/ModelPerformanceDashboard'
-import TriggersDashboard from './pages/TriggersDashboard'
-import ClimateInsightsDashboard from './pages/ClimateInsightsDashboard'
-import RiskManagementDashboard from './pages/RiskManagementDashboard'
+
+// Lazy load dashboard pages for code splitting
+const ExecutiveDashboard = lazy(() => import('./pages/ExecutiveDashboard'))
+const ModelPerformanceDashboard = lazy(() => import('./pages/ModelPerformanceDashboard'))
+const TriggersDashboard = lazy(() => import('./pages/TriggersDashboard'))
+const ClimateInsightsDashboard = lazy(() => import('./pages/ClimateInsightsDashboard'))
+const RiskManagementDashboard = lazy(() => import('./pages/RiskManagementDashboard'))
+const ForecastDashboard = lazy(() => import('./pages/ForecastDashboard'))
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard'))
+
+// Loading component
+const LoadingFallback = () => (
+  <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
+    <CircularProgress />
+  </Box>
+)
 
 const theme = createTheme({
   palette: {
@@ -39,11 +52,13 @@ function App() {
                 </ProtectedRoute>
               }
             >
-              <Route path="executive" element={<ExecutiveDashboard />} />
-              <Route path="models" element={<ModelPerformanceDashboard />} />
-              <Route path="triggers" element={<TriggersDashboard />} />
-              <Route path="climate" element={<ClimateInsightsDashboard />} />
-              <Route path="risk" element={<RiskManagementDashboard />} />
+              <Route path="executive" element={<Suspense fallback={<LoadingFallback />}><ExecutiveDashboard /></Suspense>} />
+              <Route path="models" element={<Suspense fallback={<LoadingFallback />}><ModelPerformanceDashboard /></Suspense>} />
+              <Route path="triggers" element={<Suspense fallback={<LoadingFallback />}><TriggersDashboard /></Suspense>} />
+              <Route path="climate" element={<Suspense fallback={<LoadingFallback />}><ClimateInsightsDashboard /></Suspense>} />
+              <Route path="risk" element={<Suspense fallback={<LoadingFallback />}><RiskManagementDashboard /></Suspense>} />
+              <Route path="forecasts" element={<Suspense fallback={<LoadingFallback />}><ForecastDashboard /></Suspense>} />
+              <Route path="admin" element={<Suspense fallback={<LoadingFallback />}><AdminDashboard /></Suspense>} />
             </Route>
             <Route path="/" element={<Navigate to="/dashboard/executive" replace />} />
           </Routes>

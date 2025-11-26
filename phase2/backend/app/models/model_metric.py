@@ -11,7 +11,7 @@ class ModelMetric(Base):
     r2_score = Column(Numeric(6, 4), nullable=True)
     rmse = Column(Numeric(10, 4), nullable=True)
     mae = Column(Numeric(10, 4), nullable=True)
-    mape = Column(Numeric(6, 4), nullable=True)
+    mape = Column(Numeric(10, 4), nullable=True)  # Can be large percentage values
     training_date = Column(DateTime(timezone=True), nullable=False, index=True)
     data_start_date = Column(Date, nullable=True)
     data_end_date = Column(Date, nullable=True)

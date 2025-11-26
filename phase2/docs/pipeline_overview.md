@@ -231,7 +231,7 @@ All pipeline operations are logged to:
 
 Log format:
 ```
-2024-11-14 10:30:45 | INFO | module_name | Message
+2025-11-21 10:30:45 | INFO | module_name | Message
 ```
 
 ## Performance

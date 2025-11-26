@@ -5,6 +5,7 @@ from app.models.trigger_event import TriggerEvent
 from app.models.model_metric import ModelMetric
 from app.models.model_prediction import ModelPrediction
 from app.models.audit_log import AuditLog
+from app.models.forecast import Forecast, ForecastRecommendation, ForecastValidation
 
 __all__ = [
     "User",
@@ -13,4 +14,7 @@ __all__ = [
     "ModelMetric",
     "ModelPrediction",
     "AuditLog",
+    "Forecast",
+    "ForecastRecommendation",
+    "ForecastValidation",
 ]
