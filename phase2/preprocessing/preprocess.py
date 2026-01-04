@@ -694,32 +694,45 @@ def split_temporal_data(
         val_df = df_sorted.iloc[gap1_end:val_end].copy()
         test_df = df_sorted.iloc[gap2_end:].copy()
 
-        # Log split information
-        logger.info(
-            f"Train set: {len(train_df)} samples "
-            f"({int(train_df['year'].min())}-{int(train_df['month'].min()):02d} to "
-            f"{int(train_df['year'].max())}-{int(train_df['month'].max()):02d})"
-        )
-        logger.info(
-            f"Gap 1: {gap1_end - train_end} months "
-            f"({int(df_sorted.iloc[train_end]['year'])}-{int(df_sorted.iloc[train_end]['month']):02d} to "
-            f"{int(df_sorted.iloc[gap1_end-1]['year'])}-{int(df_sorted.iloc[gap1_end-1]['month']):02d})"
-        )
-        logger.info(
-            f"Validation set: {len(val_df)} samples "
-            f"({int(val_df['year'].min())}-{int(val_df['month'].min()):02d} to "
-            f"({int(val_df['year'].max())}-{int(val_df['month'].max()):02d})"
-        )
-        logger.info(
-            f"Gap 2: {gap2_end - val_end} months "
-            f"({int(df_sorted.iloc[val_end]['year'])}-{int(df_sorted.iloc[val_end]['month']):02d} to "
-            f"{int(df_sorted.iloc[gap2_end-1]['year'])}-{int(df_sorted.iloc[gap2_end-1]['month']):02d})"
-        )
-        logger.info(
-            f"Test set: {len(test_df)} samples "
-            f"({int(test_df['year'].min())}-{int(test_df['month'].min()):02d} to "
-            f"{int(test_df['year'].max())}-{int(test_df['month'].max()):02d})"
-        )
+        # Log split information (handle potential NaN values)
+        def safe_int(val):
+            """Safely convert to int, handling NaN"""
+            return int(val) if pd.notna(val) else 0
+        
+        if len(train_df) > 0:
+            logger.info(
+                f"Train set: {len(train_df)} samples "
+                f"({safe_int(train_df['year'].min())}-{safe_int(train_df['month'].min()):02d} to "
+                f"{safe_int(train_df['year'].max())}-{safe_int(train_df['month'].max()):02d})"
+            )
+        
+        if gap1_end > train_end and gap1_end <= len(df_sorted):
+            logger.info(
+                f"Gap 1: {gap1_end - train_end} months "
+                f"({safe_int(df_sorted.iloc[train_end]['year'])}-{safe_int(df_sorted.iloc[train_end]['month']):02d} to "
+                f"{safe_int(df_sorted.iloc[gap1_end-1]['year'])}-{safe_int(df_sorted.iloc[gap1_end-1]['month']):02d})"
+            )
+        
+        if len(val_df) > 0:
+            logger.info(
+                f"Validation set: {len(val_df)} samples "
+                f"({safe_int(val_df['year'].min())}-{safe_int(val_df['month'].min()):02d} to "
+                f"{safe_int(val_df['year'].max())}-{safe_int(val_df['month'].max()):02d})"
+            )
+        
+        if gap2_end > val_end and gap2_end <= len(df_sorted):
+            logger.info(
+                f"Gap 2: {gap2_end - val_end} months "
+                f"({safe_int(df_sorted.iloc[val_end]['year'])}-{safe_int(df_sorted.iloc[val_end]['month']):02d} to "
+                f"{safe_int(df_sorted.iloc[gap2_end-1]['year'])}-{safe_int(df_sorted.iloc[gap2_end-1]['month']):02d})"
+            )
+        
+        if len(test_df) > 0:
+            logger.info(
+                f"Test set: {len(test_df)} samples "
+                f"({safe_int(test_df['year'].min())}-{safe_int(test_df['month'].min()):02d} to "
+                f"{safe_int(test_df['year'].max())}-{safe_int(test_df['month'].max()):02d})"
+            )
         
         # Verify no year overlap
         train_years = set(train_df['year'].unique())
