@@ -16,12 +16,38 @@ import pandas as pd
 from scipy import stats
 
 from modules.calibration import load_trigger_config
-from utils.config import get_output_path
+from utils.config import get_output_path, get_data_path
 from utils.logger import log_error, log_info, log_warning
 from utils.validator import validate_dataframe
 
 # Module-level cache for trigger configuration
 _TRIGGER_CONFIG = None
+
+
+def _process_single_location(df):
+    """Process logic for a single location group."""
+    # 1. ROLLING RAINFALL STATISTICS
+    # log_info("Calculating rolling rainfall statistics...") # (Silent to avoid spam in loop)
+    df = _add_rolling_rainfall(df)
+
+    # 2. RAINFALL ANOMALIES
+    # log_info("Calculating rainfall anomalies...")
+    df = _add_rainfall_anomalies(df)
+
+    # 3. DROUGHT INDICATORS
+    # log_info("Calculating drought indicators...")
+    df = _add_drought_indicators(df)
+
+    # 4. FLOOD INDICATORS
+    # log_info("Calculating flood indicators...")
+    df = _add_flood_indicators(df)
+
+    # 5. INSURANCE TRIGGER SCORES
+    # log_info("Calculating insurance trigger scores...")
+    df = _add_insurance_triggers(df)
+    
+    return df
+
 
 
 def _get_trigger_config():
@@ -115,25 +141,19 @@ def process(data):
     # Create date column for easier manipulation
     df["date"] = pd.to_datetime(df[["year", "month"]].assign(day=1))
 
-    # 1. ROLLING RAINFALL STATISTICS
-    log_info("Calculating rolling rainfall statistics...")
-    df = _add_rolling_rainfall(df)
+    # Process by location if 'location' column exists
+    if 'location' in df.columns:
+        log_info(f"Processing data for {df['location'].nunique()} locations...")
+        processed_dfs = []
+        for loc, group in df.groupby('location'):
+            processed_dfs.append(_process_single_location(group.copy()))
+        df = pd.concat(processed_dfs, ignore_index=True)
+    else:
+        log_info("Processing single location data...")
+        df = _process_single_location(df)
 
-    # 2. RAINFALL ANOMALIES (must come before drought indicators)
-    log_info("Calculating rainfall anomalies...")
-    df = _add_rainfall_anomalies(df)
-
-    # 3. DROUGHT INDICATORS
-    log_info("Calculating drought indicators...")
-    df = _add_drought_indicators(df)
-
-    # 4. FLOOD INDICATORS
-    log_info("Calculating flood indicators...")
-    df = _add_flood_indicators(df)
-
-    # 5. INSURANCE TRIGGER SCORES
-    log_info("Calculating insurance trigger scores...")
-    df = _add_insurance_triggers(df)
+    # 6. QUALITY CHECKS (Global filter is fine, or per group. Keeping global for simplicity)
+    df = _apply_quality_filters(df)
 
     # 6. QUALITY CHECKS
     df = _apply_quality_filters(df)
@@ -146,7 +166,7 @@ def process(data):
     validate_dataframe(df, expected_columns=expected_cols, dataset_name="CHIRPS Processed")
 
     # Save processed data
-    output_path = get_output_path("processed", "chirps_processed.csv")
+    output_path = get_data_path("processed", "chirps_processed.csv")
     df.to_csv(output_path, index=False)
     log_info(f"Processed CHIRPS data saved to: {output_path}")
     log_info(f"[PROCESS] CHIRPS processing complete. Output shape: {df.shape}")

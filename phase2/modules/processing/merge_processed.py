@@ -9,11 +9,11 @@ Saves:
 
 import pandas as pd
 
-from utils.config import get_output_path
+from utils.config import get_data_path, get_output_path
 from utils.logger import log_error, log_info
 from utils.validator import validate_dataframe
 
-PROC_DIR = get_output_path("processed")  # outputs/processed directory as Path
+PROC_DIR = get_data_path("processed")  # data/processed directory as Path
 
 # mapping of expected files -> expected columns (used for lightweight checks)
 SOURCE_FILES = {
@@ -46,7 +46,7 @@ def merge_all():
     """
     Load available processed datasets and merge them into a master DataFrame.
 
-    Discovers all processed CSV files in outputs/processed/, loads them, and merges
+    Discovers all processed CSV files in data/processed/, loads them, and merges
     using an intelligent strategy based on available columns. Adds provenance tracking
     and saves both CSV and Parquet formats.
 
@@ -59,7 +59,7 @@ def merge_all():
     Raises
     ------
     FileNotFoundError
-        If no processed files are found in outputs/processed/ directory.
+        If no processed files are found in data/processed/ directory.
     Exception
         If merging fails due to data incompatibility or other errors.
 
@@ -84,8 +84,8 @@ def merge_all():
 
     **Output Files:**
 
-    - outputs/processed/master_dataset.csv
-    - outputs/processed/master_dataset.parquet
+    - data/processed/master_dataset.csv
+    - data/processed/master_dataset.parquet
 
     **Expected Source Files:**
 
@@ -119,7 +119,7 @@ def merge_all():
             dfs[fname] = df
 
     if not dfs:
-        raise FileNotFoundError("No processed files found in outputs/processed/ to merge.")
+        raise FileNotFoundError("No processed files found in data/processed/ to merge.")
 
     # Heuristic merging strategy:
     # 1) If multiple frames contain 'year' column -> merge on 'year' (outer)
@@ -136,14 +136,31 @@ def merge_all():
 
     try:
         if year_month_count >= 2:
-            # Merge on both year and month (best for time-series data)
+            # Merge on location, year, and month (best for multi-location time-series data)
             for fname, df in dfs.items():
-                if {"year", "month"}.issubset(set(df.columns)):
-                    if merged is None:
-                        merged = df.copy()
-                        provenance.append(fname)
-                    else:
-                        merged = pd.merge(merged, df, on=["year", "month"], how="outer", suffixes=("_left", "_right"))
+                # Check for location column availability
+                has_location = "location" in df.columns
+                
+                if merged is None:
+                    merged = df.copy()
+                    provenance.append(fname)
+                else:
+                    # Determine merge keys dynamically
+                    merge_keys = ["year", "month"]
+                    if has_location and "location" in merged.columns:
+                        merge_keys = ["location", "year", "month"]
+                    elif has_location:
+                        # If merged doesn't have location but new df does, we might have issues
+                        # But typically 'merged' starts with first df.
+                        pass 
+                    
+                    if set(merge_keys).issubset(set(df.columns)):
+                        # Avoid duplicate coordinate columns causing merge errors
+                        for coord_col in ["location_lat", "location_lon", "latitude", "longitude"]:
+                            if coord_col in df.columns and coord_col in merged.columns and coord_col not in merge_keys:
+                                df = df.drop(columns=[coord_col])
+
+                        merged = pd.merge(merged, df, on=merge_keys, how="outer", suffixes=("_left", "_right"))
                         provenance.append(fname)
         elif year_count >= 2:
             # Fallback: merge on year only
@@ -188,8 +205,8 @@ def merge_all():
         validate_dataframe(merged, expected_columns=None, dataset_name="Master Dataset")
 
         # Save outputs
-        csv_path = get_output_path("processed", "master_dataset.csv")
-        parquet_path = get_output_path("processed", "master_dataset.parquet")
+        csv_path = get_data_path("processed", "master_dataset.csv")
+        parquet_path = get_data_path("processed", "master_dataset.parquet")
         merged.to_csv(csv_path, index=False)
         merged.to_parquet(parquet_path, index=False)
         log_info(f"Master dataset written to: {csv_path} and {parquet_path}")

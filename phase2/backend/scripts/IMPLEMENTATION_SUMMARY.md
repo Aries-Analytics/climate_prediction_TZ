@@ -116,8 +116,8 @@ python scripts/verify_data.py
 
 | Script | Purpose | Key Features |
 |--------|---------|--------------|
-| `load_climate_data.py` | Load climate data | 72 records, batch insert, validation |
-| `load_trigger_events.py` | Load triggers | 3 types (drought/flood/crop), metadata |
+| `load_climate_data.py` | Load climate data | 191 records (2010-2025), batch insert, validation |
+| `load_trigger_events.py` | Load triggers | 67 events: 3 types (drought/flood/crop), metadata |
 | `load_model_metrics.py` | Load ML metrics | 4 models, R²/RMSE/MAE/MAPE |
 | `load_all_data.py` | Master orchestrator | Runs all loaders, error handling |
 | `seed_users.py` | Create users | 3 roles (admin/analyst/viewer) |

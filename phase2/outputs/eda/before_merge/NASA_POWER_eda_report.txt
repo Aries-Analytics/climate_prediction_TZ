@@ -1,0 +1,38 @@
+================================================================================
+EXPLORATORY DATA ANALYSIS REPORT
+Dataset: NASA_POWER
+================================================================================
+
+BASIC STATISTICS
+--------------------------------------------------------------------------------
+Rows: 2
+Columns: 4
+Memory Usage: 0.00 MB
+Numeric Columns: 3
+Categorical Columns: 1
+Datetime Columns: 0
+
+MISSING VALUES
+--------------------------------------------------------------------------------
+Total Missing Values: 0
+Columns with Missing Values: 0
+
+
+HIGH CORRELATIONS (|r| > 0.7)
+--------------------------------------------------------------------------------
+Number of High Correlations: 3
+
+Top 10 Correlations:
+  YEAR <-> TEMP: 1.000
+  YEAR <-> RADIATION: 1.000
+  TEMP <-> RADIATION: 1.000
+
+FEATURE STATISTICS SUMMARY
+--------------------------------------------------------------------------------
+Numeric Features: 3
+Categorical Features: 1
+
+
+================================================================================
+END OF REPORT
+================================================================================

@@ -104,8 +104,10 @@ def create_trigger_batch(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
-    """Bulk create trigger event records"""
+    """Bulk create trigger event records (with duplicate detection)"""
     created_count = 0
+    skipped_count = 0
+    
     for record in records:
         try:
             # Parse date
@@ -113,6 +115,18 @@ def create_trigger_batch(
                 record_date = datetime.strptime(record['date'], '%Y-%m-%d').date()
             else:
                 record_date = record['date']
+            
+            # Check for duplicates (same date, trigger_type, location)
+            existing = db.query(TriggerEvent).filter(
+                TriggerEvent.date == record_date,
+                TriggerEvent.trigger_type == record.get('trigger_type'),
+                TriggerEvent.location_lat == record.get('location_lat'),
+                TriggerEvent.location_lon == record.get('location_lon')
+            ).first()
+            
+            if existing:
+                skipped_count += 1
+                continue
             
             trigger_event = TriggerEvent(
                 date=record_date,
@@ -130,4 +144,4 @@ def create_trigger_batch(
             continue
     
     db.commit()
-    return {"message": f"Created {created_count} trigger events", "count": created_count}
+    return {"message": f"Created {created_count} trigger events, skipped {skipped_count} duplicates", "count": created_count, "skipped": skipped_count}

@@ -5,8 +5,11 @@ Data source: Google Earth Engine (UCSB-CHG/CHIRPS/DAILY)
 """
 
 import os
+from datetime import datetime, date
+from typing import Optional, Tuple
 
 import pandas as pd
+from sqlalchemy.orm import Session
 
 from utils.config import get_data_path
 from utils.logger import log_error, log_info, log_warning
@@ -95,8 +98,16 @@ def _fetch_gee_chirps(start_year, end_year, bounds):
                 maxPixels=1e9,
             )
 
-            # Get the value
-            rainfall = stats.get("precipitation").getInfo()
+            # Get the value - handle missing data gracefully
+            try:
+                rainfall_obj = stats.get("precipitation")
+                if rainfall_obj is not None:
+                    rainfall = rainfall_obj.getInfo()
+                else:
+                    rainfall = None
+            except Exception as e:
+                log_warning(f"Failed to get precipitation for {year}-{month:02d}: {e}")
+                rainfall = None
 
             if rainfall is not None:
                 records.append(
@@ -113,6 +124,8 @@ def _fetch_gee_chirps(start_year, end_year, bounds):
                 )
 
                 log_info(f"Retrieved CHIRPS data for {year}-{month:02d}: {rainfall:.2f} mm")
+            else:
+                log_warning(f"No CHIRPS data available for {year}-{month:02d}")
 
     df = pd.DataFrame(records)
     log_info(f"Retrieved {len(df)} monthly CHIRPS records from GEE")
@@ -122,8 +135,8 @@ def _fetch_gee_chirps(start_year, end_year, bounds):
 
 def fetch_chirps_data(
     dry_run=False,
-    start_year=2010,
-    end_year=2023,
+    start_year=1985,
+    end_year=2025,
     bounds=None,
     use_gee=True,
     *args,
@@ -289,14 +302,26 @@ def fetch_chirps_data(
                 log_warning(f"Failed to load cached data: {e}")
 
         # TIER 3: Generate synthetic climatological data (realistic patterns)
+        log_warning("=" * 70)
+        log_warning("⚠️  WARNING: USING SYNTHETIC CHIRPS DATA - NOT REAL SATELLITE DATA")
+        log_warning("=" * 70)
+        
         if not use_gee:
-            log_info("GEE disabled by user, generating synthetic climatological data")
+            log_warning("GEE disabled by user, generating synthetic climatological data")
         elif not GEE_AVAILABLE:
-            log_info("Google Earth Engine not available")
-            log_info("To use real satellite data, install: pip install earthengine-api")
-            log_info("Generating synthetic climatological data based on Tanzania climate patterns")
+            log_warning("Google Earth Engine not available")
+            log_warning("To use real satellite data, install: pip install earthengine-api")
         else:
-            log_info("Generating synthetic climatological data as fallback")
+            log_warning("Real CHIRPS data not available from GEE for requested period")
+            log_warning(f"Requested: {start_year}-{end_year}")
+            log_warning("Possible reasons:")
+            log_warning("  1. CHIRPS has 1-2 week data lag")
+            log_warning("  2. Recent months not yet available")
+            log_warning("  3. GEE authentication or access issues")
+        
+        log_warning("Generating synthetic climatological data based on Tanzania climate patterns")
+        log_warning("THIS DATA IS MODELED, NOT OBSERVED!")
+        log_warning("=" * 70)
 
         df = _generate_sample_chirps_data(start_year, end_year, bounds)
 
@@ -393,3 +418,121 @@ def _generate_sample_chirps_data(start_year, end_year, bounds):
 
 def fetch_data(*args, **kwargs):
     return fetch_chirps_data(*args, **kwargs)
+
+
+def ingest_chirps(
+    db: Session,
+    start_date: Optional[datetime] = None,
+    end_date: Optional[datetime] = None,
+    incremental: bool = True
+) -> Tuple[int, int]:
+    """
+    Ingest CHIRPS data and store to database (orchestrator-compatible interface).
+    
+    This function is designed to be called by the pipeline orchestrator.
+    It fetches CHIRPS data for the specified date range and stores it in the database.
+    
+    Parameters
+    ----------
+    db : Session
+        SQLAlchemy database session for storing data
+    start_date : datetime, optional
+        Start date for data retrieval. If None, defaults to 2010-01-01
+    end_date : datetime, optional
+        End date for data retrieval. If None, defaults to current date
+    incremental : bool, optional
+        Whether to use incremental ingestion (only fetch new data). Default is True.
+        
+    Returns
+    -------
+    Tuple[int, int]
+        Tuple of (records_fetched, records_stored)
+        - records_fetched: Number of records retrieved from source
+        - records_stored: Number of records successfully stored to database
+        
+    Examples
+    --------
+    >>> from sqlalchemy.orm import Session
+    >>> from datetime import datetime
+    >>> 
+    >>> # Full refresh for 2020-2023
+    >>> records_fetched, records_stored = ingest_chirps(
+    ...     db=db_session,
+    ...     start_date=datetime(2020, 1, 1),
+    ...     end_date=datetime(2023, 12, 31),
+    ...     incremental=False
+    ... )
+    >>> print(f"Fetched {records_fetched}, stored {records_stored}")
+    """
+    from backend.app.models.climate_data import ClimateData
+    from sqlalchemy import and_
+    
+    # Set default date range
+    if start_date is None:
+        start_date = datetime(2010, 1, 1)
+    if end_date is None:
+        end_date = datetime.now()
+    
+    log_info(f"Ingesting CHIRPS data from {start_date.date()} to {end_date.date()}")
+    
+    try:
+        # Fetch data using existing function
+        df = fetch_chirps_data(
+            start_year=start_date.year,
+            end_year=end_date.year,
+            dry_run=False
+        )
+        
+        if df.empty:
+            log_warning("No CHIRPS data fetched")
+            return (0, 0)
+        
+        records_fetched = len(df)
+        log_info(f"Fetched {records_fetched} CHIRPS records")
+        
+        # Filter to exact date range (month-level granularity)
+        df['date'] = pd.to_datetime(df[['year', 'month']].assign(day=1))
+        df = df[(df['date'] >= start_date) & (df['date'] <= end_date)]
+        
+        # Store to database
+        records_stored = 0
+        for _, row in df.iterrows():
+            try:
+                # Check if record already exists
+                existing = db.query(ClimateData).filter(
+                    and_(
+                        ClimateData.date == row['date'].date(),
+                        ClimateData.location_lat == float(row.get('lat_min', -6.369028)),
+                        ClimateData.location_lon == float(row.get('lon_min', 34.888822))
+                    )
+                ).first()
+                
+                if existing:
+                    # Update existing record
+                    existing.rainfall_mm = float(row['rainfall_mm'])
+                    records_stored += 1
+                else:
+                    # Create new record
+                    climate_record = ClimateData(
+                        date=row['date'].date(),
+                        location_lat=float(row.get('lat_min', -6.369028)),
+                        location_lon=float(row.get('lon_min', 34.888822)),
+                        rainfall_mm=float(row['rainfall_mm'])
+                    )
+                    db.add(climate_record)
+                    records_stored += 1
+                    
+            except Exception as e:
+                log_error(f"Failed to store CHIRPS record for {row['date']}: {e}")
+                continue
+        
+        # Commit all changes
+        db.commit()
+        log_info(f"Successfully stored {records_stored} CHIRPS records to database")
+        
+        return (records_fetched, records_stored)
+        
+    except Exception as e:
+        log_error(f"CHIRPS ingestion failed: {e}")
+        db.rollback()
+        raise

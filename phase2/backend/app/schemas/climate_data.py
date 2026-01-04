@@ -38,7 +38,11 @@ class ClimateDataResponse(ClimateDataBase):
 
 class TimeSeriesPoint(BaseModel):
     date: date
-    value: float
+    median: float
+    min: float
+    max: float
+    # Deprecated: kept for backward compatibility
+    value: Optional[float] = None
 
 class TimeSeries(BaseModel):
     variable: str

@@ -1,0 +1,20 @@
+# Minimal requirements for Pipeline Scheduler Service
+# Core dependencies only - no ML libraries needed
+
+# FastAPI/SQLAlchemy (for database and models)
+sqlalchemy==2.0.23
+psycopg2-binary==2.9.9
+pydantic[email]==2.5.0
+pydantic-settings==2.1.0
+alembic==1.12.1
+python-dateutil==2.8.2
+
+# Scheduling
+APScheduler==3.10.4
+
+# HTTP client (needed by alert_service)
+requests==2.31.0
+
+# Minimal data handling (needed by orchestrator/data_quality)
+pandas==2.0.3
+numpy==1.24.3

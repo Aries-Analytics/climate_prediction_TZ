@@ -140,8 +140,8 @@ def generate_threshold_report(analysis_results: Dict) -> str:
 ```
 
 **Inputs:**
-- Historical CHIRPS rainfall data (2018-2023)
-- Historical NDVI data (2018-2023)
+- Historical CHIRPS rainfall data (2010-2025)
+- Historical NDVI data (2010-2025)
 - Known extreme weather event dates (optional)
 
 **Outputs:**
@@ -239,12 +239,12 @@ flood_triggers:
   daily_rainfall_mm:
     threshold: 150  # 99th percentile
     rationale: "Based on historical flood events in Tanzania"
-    data_source: "CHIRPS 2018-2023"
+    data_source: "CHIRPS 2010-2025"
   
   rainfall_7day_mm:
     threshold: 250  # 97th percentile
     rationale: "Sustained heavy rainfall leading to flooding"
-    data_source: "CHIRPS 2018-2023"
+    data_source: "CHIRPS 2010-2025"
   
   heavy_rain_days_7day:
     threshold: 5
@@ -277,7 +277,7 @@ crop_failure_triggers:
     severe: 35
     duration_days: 30
     rationale: "FAO crop stress thresholds"
-    data_source: "MODIS NDVI 2018-2023"
+    data_source: "MODIS NDVI 2010-2025"
   
   ndvi_anomaly_std:
     threshold: -2.0

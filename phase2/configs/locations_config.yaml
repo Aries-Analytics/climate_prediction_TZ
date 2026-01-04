@@ -1,0 +1,74 @@
+locations:
+  dodoma:
+    name: "Dodoma"
+    latitude: -6.1630
+    longitude: 35.7516
+    elevation: 1120
+    climate_zone: "semi-arid"
+    region: "central"
+    description: "Capital city, semi-arid climate, baseline location for existing model"
+    
+  dar_es_salaam:
+    name: "Dar es Salaam"
+    latitude: -6.7924
+    longitude: 39.2083
+    elevation: 14
+    climate_zone: "tropical_coastal"
+    region: "eastern"
+    description: "Largest city, tropical humid climate, coastal flood risk assessment critical"
+    
+  arusha:
+    name: "Arusha"
+    latitude: -3.3869
+    longitude: 36.6830
+    elevation: 1400
+    climate_zone: "highland"
+    region: "northern"
+    description: "Northern highlands near Mt. Meru and Kilimanjaro, important agricultural exports"
+    
+  mwanza:
+    name: "Mwanza"
+    latitude: -2.5164
+    longitude: 32.9175
+    elevation: 1140
+    climate_zone: "lake_influenced"
+    region: "northwestern"
+    description: "On Lake Victoria, lake-moderated climate, fishing and cotton agriculture"
+    
+  mbeya:
+    name: "Mbeya"
+    latitude: -8.9094
+    longitude: 33.4606
+    elevation: 1700
+    climate_zone: "highland"
+    region: "southern"
+    description: "Southern highlands, major tea and coffee production area"
+    
+  morogoro:
+    name: "Morogoro"
+    latitude: -6.8209
+    longitude: 37.6634
+    elevation: 526
+    climate_zone: "tropical_transition"
+    region: "eastern"
+    description: "Eastern Tanzania, Uluguru Mountains foothills, transition climate zone"
+
+# Data collection period
+time_period:
+  start_year: 2000
+  end_year: 2025
+  total_months: 312  # 26 years * 12 months
+
+# Expected sample counts
+sample_counts:
+  single_location_baseline: 191  # 2010-2025 (Dodoma only)
+  phase1_target: 1872  # 6 locations * 312 months
+  phase2_target: 2496  # 8 locations * 312 months (optional expansion)
+
+# Feature-to-sample ratio targets
+ratio_targets:
+  minimum_acceptable: 10.0  # Minimum 10:1 ratio
+  target: 20.0  # Target 20:1 ratio
+  current_unhealthy: 2.5  # Current ratio with 191 samples
+  phase1_healthy: 20.8  # With 1560 samples (1092 training)
+  phase2_optimal: 33.3  # With 2496 samples (1747 training)

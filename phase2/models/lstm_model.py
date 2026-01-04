@@ -67,7 +67,7 @@ class LSTMModel(BaseModel):
 
     def _build_model(self, n_features: int) -> None:
         """
-        Build the LSTM model architecture.
+        Build the LSTM model architecture with enhanced regularization.
 
         Args:
             n_features: Number of input features
@@ -77,8 +77,12 @@ class LSTMModel(BaseModel):
         units = self.config["units"]
         dropout = self.config["dropout"]
         recurrent_dropout = self.config["recurrent_dropout"]
+        l2_reg = self.config.get("l2_regularization", 0.01)  # ENHANCED: L2 regularization
 
-        # Add LSTM layers
+        # ENHANCED: Import regularizers for L2 weight regularization
+        from tensorflow.keras import regularizers
+
+        # Add LSTM layers with L2 regularization
         for i, n_units in enumerate(units):
             return_sequences = i < len(units) - 1  # Return sequences for all but last layer
 
@@ -89,14 +93,16 @@ class LSTMModel(BaseModel):
                     recurrent_activation=self.config["recurrent_activation"],
                     dropout=dropout,
                     recurrent_dropout=recurrent_dropout,
+                    kernel_regularizer=regularizers.l2(l2_reg),  # ENHANCED: L2 on input weights
+                    recurrent_regularizer=regularizers.l2(l2_reg),  # ENHANCED: L2 on recurrent weights
                     return_sequences=return_sequences,
                     input_shape=(self.sequence_length, n_features) if i == 0 else None,
                     name=f"lstm_{i+1}",
                 )
             )
 
-        # Output layer
-        model.add(Dense(1, name="output"))
+        # Output layer with L2 regularization
+        model.add(Dense(1, kernel_regularizer=regularizers.l2(l2_reg), name="output"))
 
         # Compile model
         optimizer = keras.optimizers.Adam(learning_rate=self.config["learning_rate"])
@@ -104,10 +110,12 @@ class LSTMModel(BaseModel):
 
         self.model = model
 
-        logger.info(f"Built LSTM model with architecture:")
+        logger.info(f"Built LSTM model with enhanced regularization:")
         logger.info(f"  Sequence length: {self.sequence_length}")
         logger.info(f"  LSTM units: {units}")
         logger.info(f"  Dropout: {dropout}")
+        logger.info(f"  Recurrent dropout: {recurrent_dropout}")
+        logger.info(f"  L2 regularization: {l2_reg}")
         logger.info(f"  Total parameters: {model.count_params():,}")
 
     def prepare_sequences(self, X: np.ndarray, y: Optional[np.ndarray] = None) -> Tuple:

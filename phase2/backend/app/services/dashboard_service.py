@@ -11,6 +11,14 @@ from app.schemas.dashboard import (
     SustainabilityStatus
 )
 
+def get_available_years(db: Session) -> List[int]:
+    """Get list of years that have data in the database"""
+    years = db.query(
+        extract('year', TriggerEvent.date).label('year')
+    ).distinct().order_by('year').all()
+    
+    return [int(year[0]) for year in years] if years else []
+
 # Configuration constants
 TRIGGER_TARGETS = {
     "flood": {"min": 0.05, "max": 0.15},

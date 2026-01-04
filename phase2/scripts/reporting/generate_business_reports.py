@@ -18,6 +18,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from reporting.business_metrics import BusinessMetricsReporter
 from reporting.visualize_business_metrics import BusinessMetricsVisualizer
 from utils.logger import log_info
+from utils.config import MASTER_DATASET
 
 
 def main():
@@ -30,8 +31,8 @@ def main():
     parser.add_argument(
         '--data', 
         type=str, 
-        default='outputs/processed/master_dataset.csv',
-        help='Path to master dataset with triggers (default: outputs/processed/master_dataset.csv)'
+        default=str(MASTER_DATASET),  # Use canonical path from config
+        help=f'Path to master dataset with triggers (default: {MASTER_DATASET})'
     )
     parser.add_argument(
         '--output', 
@@ -67,17 +68,17 @@ def main():
     
     # Print summary
     print("\n" + "=" * 80)
-    print("✓ REPORTS GENERATED SUCCESSFULLY")
+    print("[OK] REPORTS GENERATED SUCCESSFULLY")
     print("=" * 80)
-    print(f"\n📁 Reports location: {reporter.output_dir}\n")
-    print("📊 Available reports:")
+    print(f"\nReports location: {reporter.output_dir}\n")
+    print("Available reports:")
     print("   1. executive_summary.md - High-level overview for stakeholders")
     print("   2. insurance_triggers_detailed.csv - All trigger events with dates")
     print("   3. alert_timeline.csv - Drought/flood/crop failure alerts")
     print("   4. payout_estimates.csv - Financial impact per event")
     print("   5. payout_summary_by_year.csv - Yearly financial summary")
     print("   6. risk_dashboard.json - Machine-readable metrics")
-    print("\n📈 Visualizations:")
+    print("\nVisualizations:")
     print("   1. trigger_timeline.png - Timeline of trigger events")
     print("   2. financial_impact.png - Payouts and events by year")
     print("   3. alert_distribution.png - Alert types and severity")

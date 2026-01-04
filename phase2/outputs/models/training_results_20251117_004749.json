@@ -1,0 +1,29 @@
+{
+  "training_start_time": "2025-11-17T00:47:49.032934",
+  "data_shapes": {
+    "train": [
+      50,
+      659
+    ],
+    "val": [
+      11,
+      659
+    ],
+    "test": [
+      11,
+      659
+    ]
+  },
+  "models": {
+    "random_forest": {
+      "error": "could not convert string to float: 'good'"
+    },
+    "xgboost": {
+      "error": "XGBModel.fit() got an unexpected keyword argument 'early_stopping_rounds'"
+    },
+    "lstm": {
+      "error": "could not convert string to float: 'good'"
+    }
+  },
+  "training_end_time": "2025-11-17T00:47:49.043859"
+}

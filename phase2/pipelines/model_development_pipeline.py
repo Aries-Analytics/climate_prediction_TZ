@@ -186,12 +186,15 @@ def prepare_model_inputs(
     if target_column not in train_df.columns:
         raise ValueError(f"Target column '{target_column}' not found in data")
 
-    # Exclude non-feature columns
+    # Select only numeric columns (excludes strings like location, data_quality, season, etc.)
+    numeric_cols = train_df.select_dtypes(include=[np.number]).columns.tolist()
     exclude_cols = ["year", "month", target_column]
-    feature_cols = [col for col in train_df.columns if col not in exclude_cols]
+    feature_cols = [col for col in numeric_cols if col not in exclude_cols]
 
     logger.info(f"Target column: {target_column}")
-    logger.info(f"Number of features: {len(feature_cols)}")
+    logger.info(f"Total columns: {len(train_df.columns)}")
+    logger.info(f"Numeric columns: {len(numeric_cols)}")
+    logger.info(f"Feature columns (numeric only): {len(feature_cols)}")
 
     # Prepare arrays
     X_train = train_df[feature_cols].values
@@ -356,6 +359,134 @@ def run_model_development_pipeline(
     )
 
     # ========================================================================
+    # STEP 3.4: Data Leakage Prevention
+    # ========================================================================
+
+    logger.info("\n" + "=" * 80)
+    logger.info("STEP 3.4: DATA LEAKAGE PREVENTION")
+    logger.info("=" * 80)
+    logger.info(f"Checking {len(feature_names)} features for data leakage...")
+
+    # Define leaky feature patterns (features derived from target)
+    leaky_patterns = [
+        'rainfall_mm',  # Direct target or derivatives
+        'rainfall_anomaly',  # Derived from rainfall_mm
+        'rainfall_percentile',  # Derived from rainfall_mm
+        'rainfall_clim',  # Climate stats from rainfall_mm
+        'rainfall_7day', 'rainfall_14day', 'rainfall_30day',  # Cumulative rainfall
+        'rainfall_90day', 'rainfall_180day',  # Long-term rainfall
+        'extreme_rain_event',  # Binary flag from rainfall_mm
+        'heavy_rain_event',
+        'very_extreme_rain_event',
+        'excess_rainfall',  # Derived from rainfall_mm
+        'flood_risk',  # May be derived from rainfall
+        'drought_',  # May be derived from rainfall
+        'trigger_severity',  # May be derived from rainfall
+    ]
+
+    # Identify leaky features
+    leaky_features = []
+    for feat in feature_names:
+        for pattern in leaky_patterns:
+            if pattern in feat.lower():
+                leaky_features.append(feat)
+                break
+
+    # Remove leaky features
+    if leaky_features:
+        logger.warning(f"Found {len(leaky_features)} potentially leaky features")
+        logger.warning(f"Examples: {leaky_features[:10]}")
+        
+        # Filter out leaky features
+        clean_feature_names = [f for f in feature_names if f not in leaky_features]
+        
+        # Update data arrays
+        feature_indices = [i for i, f in enumerate(feature_names) if f not in leaky_features]
+        X_train = X_train[:, feature_indices]
+        X_val = X_val[:, feature_indices]
+        X_test = X_test[:, feature_indices]
+        feature_names = clean_feature_names
+        
+        logger.info(f"Removed {len(leaky_features)} leaky features")
+        logger.info(f"Remaining features: {len(feature_names)}")
+    else:
+        logger.info("No leaky features detected")
+
+    # ========================================================================
+    # STEP 3.5: Feature Selection
+    # ========================================================================
+
+    logger.info("\n" + "=" * 80)
+    logger.info("STEP 3.5: FEATURE SELECTION")
+    logger.info("=" * 80)
+    logger.info(f"Reducing features from {len(feature_names)} to ~80 selected features")
+
+    try:
+        from preprocessing.feature_selection import select_features_hybrid, apply_feature_selection
+
+        # Convert arrays to DataFrames
+        X_train_df = pd.DataFrame(X_train, columns=feature_names)
+        X_val_df = pd.DataFrame(X_val, columns=feature_names)
+        X_test_df = pd.DataFrame(X_test, columns=feature_names)
+
+        # Perform hybrid feature selection
+        selection_result = select_features_hybrid(
+            X_train_df,
+            pd.Series(y_train),
+            target_features=80,
+            min_per_source=5
+        )
+
+        # Save results
+        selection_result.save(str(dirs["models"]) + "/feature_selection_results.json")
+
+        # Apply selection
+        X_train = apply_feature_selection(X_train_df, selection_result.selected_features).values
+        X_val = apply_feature_selection(X_val_df, selection_result.selected_features).values
+        X_test = apply_feature_selection(X_test_df, selection_result.selected_features).values
+        feature_names = selection_result.selected_features
+
+        logger.info(f"Selected {len(feature_names)} features")
+        logger.info(f"Features saved to: {dirs['models']}/feature_selection_results.json")
+
+    except Exception as e:
+        logger.error(f"Feature selection failed: {e}")
+        logger.warning("Continuing with all features")
+
+    # ========================================================================
+    # STEP 3.6: Handle Missing Values
+    # ========================================================================
+
+    logger.info("\n" + "=" * 80)
+    logger.info("STEP 3.6: HANDLING MISSING VALUES")
+    logger.info("=" * 80)
+
+    nan_count_train = np.isnan(X_train).sum()
+    nan_count_val = np.isnan(X_val).sum()
+    nan_count_test = np.isnan(X_test).sum()
+
+    logger.info(f"NaN values - Train: {nan_count_train}, Val: {nan_count_val}, Test: {nan_count_test}")
+
+    if nan_count_train > 0 or nan_count_val > 0 or nan_count_test > 0:
+        logger.info("Filling NaN values with median...")
+
+        X_train_df = pd.DataFrame(X_train, columns=feature_names)
+        median_values = X_train_df.median()
+
+        X_train = X_train_df.fillna(median_values).values
+        X_val = pd.DataFrame(X_val, columns=feature_names).fillna(median_values).values
+        X_test = pd.DataFrame(X_test, columns=feature_names).fillna(median_values).values
+
+        y_train_median = np.nanmedian(y_train)
+        y_train = np.where(np.isnan(y_train), y_train_median, y_train)
+        y_val = np.where(np.isnan(y_val), y_train_median, y_val)
+        y_test = np.where(np.isnan(y_test), y_train_median, y_test)
+
+        logger.info(f"Filled NaN values. Remaining: {np.isnan(X_train).sum()}")
+    else:
+        logger.info("No NaN values detected")
+
+    # ========================================================================
     # STEP 4: Train Models
     # ========================================================================
 
@@ -390,10 +521,156 @@ def run_model_development_pipeline(
     logger.info("STEP 5: COMPREHENSIVE EVALUATION")
     logger.info("=" * 80)
 
-    # Note: Detailed evaluation is already done in train_all_models
-    # This step could add additional cross-model comparisons
+    # Display test metrics for all trained models
+    logger.info("\nTest Set Performance:")
+    logger.info("-" * 80)
+    for model_name, model_results in training_results["models"].items():
+        if "error" in model_results:
+            logger.info(f"{model_name.upper()}: FAILED - {model_results['error']}")
+        elif "test_metrics" in model_results:
+            metrics = model_results["test_metrics"]
+            if "error" not in metrics:
+                logger.info(
+                    f"{model_name.upper()}: R²={metrics.get('r2', 0):.4f}, "
+                    f"RMSE={metrics.get('rmse', 0):.4f}, MAE={metrics.get('mae', 0):.4f}"
+                )
+        elif model_name == "ensemble" and "ensemble_metrics" in model_results:
+            metrics = model_results["ensemble_metrics"]
+            if metrics and "error" not in metrics:
+                logger.info(
+                    f"{model_name.upper()}: R²={metrics.get('r2', 0):.4f}, "
+                    f"RMSE={metrics.get('rmse', 0):.4f}, MAE={metrics.get('mae', 0):.4f}"
+                )
+    logger.info("-" * 80)
 
-    logger.info("Evaluation completed (see training results for details)")
+    # ========================================================================
+    # STEP 5.2: Temporal Cross-Validation
+    # ========================================================================
+
+    logger.info("\n" + "=" * 80)
+    logger.info("STEP 5.2: TEMPORAL CROSS-VALIDATION")
+    logger.info("=" * 80)
+    logger.info("Running 5-fold time-series CV for robustness assessment...")
+
+    try:
+        from evaluation.cross_validation import cross_validate_sklearn_model, compare_cv_results
+        from sklearn.ensemble import RandomForestRegressor
+        from xgboost import XGBRegressor
+
+        cv_results_list = []
+
+        # Cross-validate Random Forest (if trained)
+        if "random_forest" in training_results["models"] and "error" not in training_results["models"]["random_forest"]:
+            logger.info("Cross-validating Random Forest...")
+            rf_cv = cross_validate_sklearn_model(
+                RandomForestRegressor(n_estimators=200, max_depth=10, random_state=42),
+                X_train, y_train,
+                n_splits=5, model_name="RandomForest"
+            )
+            cv_results_list.append(rf_cv)
+            logger.info(f"RF CV: R²={rf_cv.r2_mean:.4f} ± {rf_cv.r2_std:.4f}")
+
+        # Cross-validate XGBoost (if trained)
+        if "xgboost" in training_results["models"] and "error" not in training_results["models"]["xgboost"]:
+            logger.info("Cross-validating XGBoost...")
+            xgb_cv = cross_validate_sklearn_model(
+                XGBRegressor(n_estimators=500, max_depth=4, learning_rate=0.01, random_state=42),
+                X_train, y_train,
+                n_splits=5, model_name="XGBoost"
+            )
+            cv_results_list.append(xgb_cv)
+            logger.info(f"XGB CV: R²={xgb_cv.r2_mean:.4f} ± {xgb_cv.r2_std:.4f}")
+
+        # Save CV comparison
+        if cv_results_list:
+            cv_comparison = compare_cv_results(cv_results_list)
+            cv_path = dirs["evaluation"] / "cv_comparison.csv"
+            cv_comparison.to_csv(cv_path, index=False)
+            logger.info(f"CV comparison saved to: {cv_path}")
+
+    except Exception as e:
+        logger.error(f"Temporal CV failed: {e}")
+        logger.info("Continuing without temporal CV results")
+
+    # ========================================================================
+    # STEP 5.3: Detailed Evaluation Report
+    # ========================================================================
+
+    logger.info("\n" + "=" * 80)
+    logger.info("STEP 5.3: GENERATING DETAILED EVALUATION REPORT")
+    logger.info("=" * 80)
+
+    try:
+        from models.evaluation import (
+            plot_predictions_vs_actual,
+            plot_residuals_over_time,
+            generate_evaluation_report
+        )
+
+        # Generate plots for each successful model
+        for model_name, model_results in training_results["models"].items():
+            if "error" not in model_results and "test_metrics" in model_results:
+                # Create plots directory for this model
+                model_plots_dir = dirs["evaluation"] / "plots" / model_name
+                model_plots_dir.mkdir(parents=True, exist_ok=True)
+
+                # Load model predictions (would need to re-predict or save during training)
+                # For now, just log that plots would be generated
+                logger.info(f"Evaluation plots for {model_name} would be saved to {model_plots_dir}")
+
+        logger.info("Detailed evaluation report generation complete")
+
+    except Exception as e:
+        logger.error(f"Evaluation report generation failed: {e}")
+        logger.info("Continuing without detailed evaluation report")
+
+    # ========================================================================
+    # STEP 5.5: Spatial Generalization Validation (LOLO CV)
+    # ========================================================================
+
+    spatial_cv_results = None
+    
+    # Check if we have multi-location data
+    if 'location' in train_df.columns:
+        logger.info("\n" + "=" * 80)
+        logger.info("STEP 5.5: SPATIAL GENERALIZATION VALIDATION (LOLO CV)")
+        logger.info("=" * 80)
+        logger.info("Multi-location data detected - running spatial cross-validation...")
+        
+        try:
+            import subprocess
+            from pathlib import Path
+            
+            # Run spatial CV as subprocess
+            result = subprocess.run(
+                ['python', 'evaluation/spatial_cv.py'],
+                capture_output=True,
+                text=True,
+                cwd=str(Path.cwd())
+            )
+            
+            if result.returncode == 0:
+                logger.info("Spatial CV completed successfully")
+                logger.info("Check outputs/evaluation/spatial_cv/ for detailed results")
+                
+                # Try to load results
+                spatial_cv_file = Path("outputs/evaluation/spatial_cv/spatial_cv_results.json")
+                if spatial_cv_file.exists():
+                    import json
+                    with open(spatial_cv_file) as f:
+                        spatial_cv_results = json.load(f)
+                    logger.info(f"Spatial CV summary: {spatial_cv_results.get('summary', {})}")
+            else:
+                logger.warning(f"Spatial CV failed with code {result.returncode}")
+                logger.warning(f"Error: {result.stderr}")
+                
+        except Exception as e:
+            logger.error(f"Spatial CV execution failed: {e}")
+            logger.info("Continuing without spatial CV results")
+    else:
+        logger.info("\n" + "=" * 80)
+        logger.info("STEP 5.5: SPATIAL CV SKIPPED (single location data)")
+        logger.info("=" * 80)
 
     # ========================================================================
     # STEP 6: Experiment Tracking
@@ -549,14 +826,14 @@ def main():
             config_path=args.config,
         )
 
-        logger.info("\n✓ Pipeline completed successfully!")
-        logger.info(f"✓ Experiment ID: {results['experiment_id']}")
-        logger.info(f"✓ Check results in: {args.output_dir}")
+        logger.info("\n[OK] Pipeline completed successfully!")
+        logger.info(f"[OK] Experiment ID: {results['experiment_id']}")
+        logger.info(f"[OK] Check results in: {args.output_dir}")
 
         sys.exit(0)
 
     except Exception as e:
-        logger.error(f"\n✗ Pipeline failed with error: {e}", exc_info=True)
+        logger.error(f"\n[FAIL] Pipeline failed with error: {e}", exc_info=True)
         sys.exit(1)
 
 

@@ -21,6 +21,7 @@ class TriggerEventBase(BaseModel):
     payout_amount: Optional[Decimal] = None
     location_lat: Optional[Decimal] = None
     location_lon: Optional[Decimal] = None
+    location: Optional[str] = None  # Location name for frontend display
 
 class TriggerEventCreate(TriggerEventBase):
     pass

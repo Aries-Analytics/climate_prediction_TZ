@@ -1,0 +1,32 @@
+{
+  "model_name": "lstm_rainfall",
+  "model_type": "lstm",
+  "created_at": "2025-11-15T09:00:24.271627",
+  "trained_at": "2025-11-15T09:00:57.404070",
+  "training_time_seconds": 30.17060613632202,
+  "config": {
+    "units": [
+      64,
+      32
+    ],
+    "dropout": 0.2,
+    "recurrent_dropout": 0.1,
+    "activation": "tanh",
+    "recurrent_activation": "sigmoid",
+    "epochs": 50,
+    "batch_size": 16,
+    "learning_rate": 0.001,
+    "patience": 10,
+    "validation_split": 0.15,
+    "sequence_length": 12,
+    "verbose": 0
+  },
+  "metrics": {
+    "rmse": 87.08434818041889,
+    "mae": 66.2511886564556,
+    "r2": -0.6468880740564555,
+    "mape": 126.27712647728633
+  },
+  "feature_names": null,
+  "n_features": null
+}

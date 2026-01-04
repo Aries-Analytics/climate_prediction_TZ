@@ -33,22 +33,22 @@ def seed_users():
             {
                 'username': 'admin',
                 'email': 'admin@climate-insurance.tz',
-                'password': 'admin123',  # Change in production!
+                'password': 'AdminPass2025!',
                 'role': 'admin',
                 'is_active': True
             },
             {
                 'username': 'analyst',
                 'email': 'analyst@climate-insurance.tz',
-                'password': 'analyst123',
+                'password': 'AnalystPass2025!',
                 'role': 'analyst',
                 'is_active': True
             },
             {
-                'username': 'viewer',
-                'email': 'viewer@climate-insurance.tz',
-                'password': 'viewer123',
-                'role': 'viewer',
+                'username': 'manager',
+                'email': 'manager@climate-insurance.tz',
+                'password': 'ManagerPass2025!',
+                'role': 'manager',
                 'is_active': True
             }
         ]

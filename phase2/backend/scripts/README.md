@@ -31,8 +31,8 @@ python scripts/load_all_data.py --clear
 
 This will:
 - Clear existing data
-- Load climate data (72 records)
-- Load trigger events
+- Load climate data (191 records from 2010-2025)
+- Load trigger events (67 events)
 - Load model metrics (4 models)
 
 ### Seed Users
@@ -232,7 +232,7 @@ python scripts/load_all_data.py --clear
 
 After loading, verify:
 
-- [ ] Climate data: 72 records (2018-01 to 2023-12)
+- [ ] Climate data: 191 records (2010-01 to 2025-11)
 - [ ] Trigger events: Multiple records (varies by data)
 - [ ] Model metrics: 4 records (RF, XGBoost, LSTM, Ensemble)
 - [ ] Users: 3 records (admin, analyst, viewer)

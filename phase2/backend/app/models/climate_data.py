@@ -1,9 +1,18 @@
-from sqlalchemy import Column, Integer, Date, Numeric, DateTime, Index
+from sqlalchemy import Column, Integer, Date, Numeric, DateTime, Index, UniqueConstraint
 from sqlalchemy.sql import func
 from app.core.database import Base
 
 class ClimateData(Base):
     __tablename__ = "climate_data"
+    
+    # Table constraints and indexes
+    __table_args__ = (
+        # UNIQUE CONSTRAINT: Prevent duplicate entries for same date and location
+        UniqueConstraint('date', 'location_lat', 'location_lon', name='uix_date_location'),
+        # Composite indexes for common query patterns
+        Index('idx_climate_date_location', 'date', 'location_lat', 'location_lon'),
+        Index('idx_climate_created_at', 'created_at'),
+    )
 
     id = Column(Integer, primary_key=True, index=True)
     date = Column(Date, nullable=False, index=True)
@@ -15,12 +24,6 @@ class ClimateData(Base):
     enso_index = Column(Numeric(5, 3), nullable=True)
     iod_index = Column(Numeric(5, 3), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    
-    # Composite indexes for common query patterns
-    __table_args__ = (
-        Index('idx_climate_date_location', 'date', 'location_lat', 'location_lon'),
-        Index('idx_climate_created_at', 'created_at'),
-    )
 
     def __repr__(self):
         return f"<ClimateData(id={self.id}, date={self.date}, location=({self.location_lat}, {self.location_lon}))>"

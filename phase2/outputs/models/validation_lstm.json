@@ -1,0 +1,64 @@
+{
+  "timestamp": "2025-12-29T17:11:38.737700",
+  "model_name": "lstm",
+  "feature_to_sample_ratio": 11.987179487179487,
+  "train_val_gap": 0.07525567315248671,
+  "test_set_size": 315,
+  "overfitting_severity": "high",
+  "baseline_comparison": {
+    "model_r2": 0.8051661740882382,
+    "baseline_r2": 0.6985446060327795,
+    "improvement": 0.10662156805545875
+  },
+  "checks_passed": [
+    "Excellent feature-to-sample ratio: 11.99:1 (>= 10:1 is ideal)",
+    "Good test set size: 315 samples (>= 100)",
+    "Good improvement over baseline: +10.66% (>= 10%)"
+  ],
+  "checks_failed": [],
+  "checks_warning": [
+    "Moderate overfitting detected: 7.53% gap"
+  ],
+  "recommendations": [
+    "Apply stronger regularization or reduce model complexity"
+  ],
+  "overall_status": "warning",
+  "all_checks": [
+    {
+      "name": "Feature-to-Sample Ratio",
+      "passed": true,
+      "severity": "pass",
+      "message": "Excellent feature-to-sample ratio: 11.99:1 (>= 10:1 is ideal)",
+      "value": 11.987179487179487,
+      "threshold": 5.0,
+      "recommendation": null
+    },
+    {
+      "name": "Train-Validation Gap",
+      "passed": false,
+      "severity": "warning",
+      "message": "Moderate overfitting detected: 7.53% gap",
+      "value": 0.07525567315248671,
+      "threshold": 0.05,
+      "recommendation": "Apply stronger regularization or reduce model complexity"
+    },
+    {
+      "name": "Test Set Size",
+      "passed": true,
+      "severity": "pass",
+      "message": "Good test set size: 315 samples (>= 100)",
+      "value": 315.0,
+      "threshold": 50.0,
+      "recommendation": null
+    },
+    {
+      "name": "Baseline Improvement",
+      "passed": true,
+      "severity": "pass",
+      "message": "Good improvement over baseline: +10.66% (>= 10%)",
+      "value": 0.10662156805545875,
+      "threshold": 0.1,
+      "recommendation": null
+    }
+  ]
+}

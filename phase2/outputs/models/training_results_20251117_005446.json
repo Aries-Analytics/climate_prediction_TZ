@@ -1,0 +1,49 @@
+{
+  "training_start_time": "2025-11-17T00:54:46.279352",
+  "data_shapes": {
+    "train": [
+      50,
+      648
+    ],
+    "val": [
+      11,
+      648
+    ],
+    "test": [
+      11,
+      648
+    ]
+  },
+  "models": {
+    "random_forest": {
+      "train_metrics": {
+        "rmse": 0.19887222865199444,
+        "mae": 0.1428901121409159,
+        "r2": 0.9607303665466886,
+        "mape": 21.254008193121273
+      },
+      "val_metrics": {
+        "rmse": 0.2743449560237206,
+        "mae": 0.22925170372856843,
+        "r2": 0.9038555590974342,
+        "mape": 29.64691074257539
+      },
+      "training_time": 0.3158886432647705,
+      "n_estimators": 200,
+      "n_features": 648,
+      "test_metrics": {
+        "rmse": 0.4059653495075236,
+        "mae": 0.3849870376130772,
+        "r2": 0.8416100290185147,
+        "mape": 175.8187308869274
+      }
+    },
+    "xgboost": {
+      "error": "XGBModel.fit() got an unexpected keyword argument 'callbacks'"
+    },
+    "lstm": {
+      "error": "Not enough samples (11) for sequence length 12"
+    }
+  },
+  "training_end_time": "2025-11-17T00:54:46.826065"
+}

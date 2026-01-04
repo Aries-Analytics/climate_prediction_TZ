@@ -23,8 +23,8 @@ This specification defines requirements for integrating the real climate predict
 
 #### Acceptance Criteria
 
-1. WHEN the data loading script executes THEN the system SHALL read master_dataset.csv from outputs/processed/
-2. WHEN climate data is loaded THEN the system SHALL insert all 72 monthly records into the climate_data table
+1. WHEN the data loading script executes THEN the system SHALL read merged_data_2010_2025.csv from data/processed/
+2. WHEN climate data is loaded THEN the system SHALL insert all 191 monthly records (2010-2025) into the climate_data table
 3. WHEN data loading completes THEN the system SHALL verify all records were inserted successfully
 4. WHEN duplicate data exists THEN the system SHALL provide an option to clear and reload
 5. WHEN loading fails THEN the system SHALL rollback changes and report specific errors
@@ -83,7 +83,7 @@ This specification defines requirements for integrating the real climate predict
 
 #### Acceptance Criteria
 
-1. WHEN the executive dashboard loads THEN the system SHALL display current trigger rates from real data
+1. WHEN the executive dashboard loads THEN the system SHALL display current trigger rates from real data spanning 2010-2025
 2. WHEN KPI cards render THEN the system SHALL show drought rate, flood rate, and crop failure rate
 3. WHEN trend charts display THEN the system SHALL show 12-month rainfall and NDVI trends
 4. WHEN sustainability status renders THEN the system SHALL calculate and display current sustainability level
@@ -107,7 +107,7 @@ This specification defines requirements for integrating the real climate predict
 
 #### Acceptance Criteria
 
-1. WHEN the triggers dashboard loads THEN the system SHALL display all trigger events from 2018-2023
+1. WHEN the triggers dashboard loads THEN the system SHALL display all trigger events from 2010-2025
 2. WHEN the timeline renders THEN the system SHALL show triggers chronologically with type indicators
 3. WHEN filters are applied THEN the system SHALL allow filtering by trigger type, date range, and severity
 4. WHEN trigger details display THEN the system SHALL show confidence, severity, and location for each event
@@ -119,7 +119,7 @@ This specification defines requirements for integrating the real climate predict
 
 #### Acceptance Criteria
 
-1. WHEN the climate dashboard loads THEN the system SHALL display rainfall time series from 2018-2023
+1. WHEN the climate dashboard loads THEN the system SHALL display rainfall time series from 2010-2025
 2. WHEN temperature charts render THEN the system SHALL show monthly temperature trends
 3. WHEN NDVI visualization displays THEN the system SHALL show vegetation health over time
 4. WHEN anomalies are detected THEN the system SHALL highlight values exceeding 2 standard deviations
@@ -169,7 +169,7 @@ This specification defines requirements for integrating the real climate predict
 
 1. WHEN verification runs THEN the system SHALL check record counts match source CSV files
 2. WHEN data validation executes THEN the system SHALL verify no null values in required fields
-3. WHEN date ranges are checked THEN the system SHALL confirm data spans 2018-2023 period
+3. WHEN date ranges are checked THEN the system SHALL confirm data spans 2010-2025 period
 4. WHEN trigger counts are validated THEN the system SHALL match counts from processed CSV files
 5. WHEN verification completes THEN the system SHALL generate a validation report with pass/fail status
 

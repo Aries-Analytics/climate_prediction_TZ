@@ -11,7 +11,7 @@ services:
     volumes:
       - postgres_data_dev:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U user -d climate_dev"]
+      test: [ "CMD-SHELL", "pg_isready -U user -d climate_dev" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -24,10 +24,11 @@ services:
     environment:
       - DATABASE_URL=postgresql://user:pass@db:5432/climate_dev
       - JWT_SECRET=dev_secret_change_in_production
-      - ALLOWED_ORIGINS=["http://localhost:3000"]
+      - ALLOWED_ORIGINS=["http://localhost:3000","http://localhost:3001"]
     volumes:
       - ./backend:/app
       - ./outputs:/outputs
+      - ./data:/app/data # Mount data directory for scripts
     command: uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
     depends_on:
       db:
@@ -47,6 +48,44 @@ services:
       - /app/node_modules
     depends_on:
       - backend
+
+  pipeline-scheduler:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.scheduler
+    container_name: climate_pipeline_scheduler_dev
+    environment:
+      - DATABASE_URL=postgresql://user:pass@db:5432/climate_dev
+      - PIPELINE_SCHEDULE=0 6 * * *
+      - PIPELINE_TIMEZONE=UTC
+      - ALERT_EMAIL_ENABLED=false
+      - ALERT_SLACK_ENABLED=false
+    volumes:
+      - ./backend:/app
+      - ./outputs:/outputs
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  pipeline-monitor:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.monitoring
+    container_name: climate_pipeline_monitor_dev
+    ports:
+      - "9090:9090"
+      - "8080:8080"
+    environment:
+      - DATABASE_URL=postgresql://user:pass@db:5432/climate_dev
+      - MONITORING_METRICS_PORT=9090
+      - MONITORING_HEALTH_PORT=8080
+    volumes:
+      - ./backend:/app
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
 
 volumes:
   postgres_data_dev:

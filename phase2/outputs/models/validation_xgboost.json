@@ -1,0 +1,64 @@
+{
+  "timestamp": "2025-12-29T17:11:38.732638",
+  "model_name": "xgboost",
+  "feature_to_sample_ratio": 11.987179487179487,
+  "train_val_gap": 0.14301526894871053,
+  "test_set_size": 315,
+  "overfitting_severity": "high",
+  "baseline_comparison": {
+    "model_r2": 0.857380417423511,
+    "baseline_r2": 0.6985446060327795,
+    "improvement": 0.15883581139073155
+  },
+  "checks_passed": [
+    "Excellent feature-to-sample ratio: 11.99:1 (>= 10:1 is ideal)",
+    "Good test set size: 315 samples (>= 100)",
+    "Good improvement over baseline: +15.88% (>= 10%)"
+  ],
+  "checks_failed": [
+    "Severe overfitting detected: 14.30% gap (> 10%)"
+  ],
+  "checks_warning": [],
+  "recommendations": [
+    "URGENT: Apply strong regularization, reduce features, or simplify model"
+  ],
+  "overall_status": "fail",
+  "all_checks": [
+    {
+      "name": "Feature-to-Sample Ratio",
+      "passed": true,
+      "severity": "pass",
+      "message": "Excellent feature-to-sample ratio: 11.99:1 (>= 10:1 is ideal)",
+      "value": 11.987179487179487,
+      "threshold": 5.0,
+      "recommendation": null
+    },
+    {
+      "name": "Train-Validation Gap",
+      "passed": false,
+      "severity": "fail",
+      "message": "Severe overfitting detected: 14.30% gap (> 10%)",
+      "value": 0.14301526894871053,
+      "threshold": 0.05,
+      "recommendation": "URGENT: Apply strong regularization, reduce features, or simplify model"
+    },
+    {
+      "name": "Test Set Size",
+      "passed": true,
+      "severity": "pass",
+      "message": "Good test set size: 315 samples (>= 100)",
+      "value": 315.0,
+      "threshold": 50.0,
+      "recommendation": null
+    },
+    {
+      "name": "Baseline Improvement",
+      "passed": true,
+      "severity": "pass",
+      "message": "Good improvement over baseline: +15.88% (>= 10%)",
+      "value": 0.15883581139073155,
+      "threshold": 0.1,
+      "recommendation": null
+    }
+  ]
+}

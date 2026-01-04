@@ -26,13 +26,13 @@ TANZANIA_LON = 34.888822
 
 
 def load_trigger_events(
-    master_csv: str = "/outputs/processed/master_dataset.csv",
+    master_csv: str = "../data/processed/merged_data_2010_2025.csv",
     clear_existing: bool = False
 ):
     """
     Load trigger events from master dataset.
     
-    Extracts drought, flood, and crop failure triggers from the master dataset.
+    Extracts drought, flood, and crop failure triggers from the merged 2010-2025 dataset.
     """
     logger.info(f"Loading trigger events from {master_csv}")
     
@@ -72,6 +72,16 @@ def load_trigger_events(
             
             # Extract drought triggers
             if row.get('drought_trigger') == True or row.get('drought_trigger') == 1:
+                # Handle NaN values properly
+                severity_val = row.get('drought_severity', 0.5)
+                severity = float(severity_val) if pd.notna(severity_val) else 0.5
+                
+                # Skip triggers with severity below minimum threshold (10%)
+                # Triggers with 0% severity don't make practical sense
+                if severity < 0.1:
+                    logger.debug(f"Skipping drought trigger at {date} with severity {severity:.2f} (below 10% threshold)")
+                    continue
+                
                 # Check if exists (smart upsert)
                 existing = db.query(TriggerEvent).filter(
                     TriggerEvent.date == date,
@@ -79,10 +89,6 @@ def load_trigger_events(
                     TriggerEvent.location_lat == TANZANIA_LAT,
                     TriggerEvent.location_lon == TANZANIA_LON
                 ).first()
-                
-                # Handle NaN values properly
-                severity_val = row.get('drought_severity', 0.5)
-                severity = float(severity_val) if pd.notna(severity_val) else 0.5
                 
                 confidence_val = row.get('drought_trigger_confidence', 0.8)
                 confidence = float(confidence_val) if pd.notna(confidence_val) else 0.8
@@ -104,7 +110,8 @@ def load_trigger_events(
                         confidence=confidence,
                         payout_amount=payout,
                         location_lat=TANZANIA_LAT,
-                        location_lon=TANZANIA_LON
+                        location_lon=TANZANIA_LON,
+                        location='Tanzania'  # Location name for map display
                     )
                     batch.append(trigger)
                 triggers_loaded['drought'] += 1
@@ -113,6 +120,18 @@ def load_trigger_events(
             
             # Extract flood triggers
             if row.get('flood_trigger') == True or row.get('flood_trigger') == 1:
+                # Handle NaN values properly - flood_risk_score is 0-100, normalize to 0-1
+                severity_val = row.get('flood_risk_score_left', row.get('flood_risk_score_right', 50.0))
+                if pd.notna(severity_val):
+                    severity = min(float(severity_val) / 100.0, 1.0)  # Normalize to 0-1
+                else:
+                    severity = 0.5
+                
+                # Skip triggers with severity below minimum threshold (10%)
+                if severity < 0.1:
+                    logger.debug(f"Skipping flood trigger at {date} with severity {severity:.2f} (below 10% threshold)")
+                    continue
+                
                 # Check if exists (smart upsert)
                 existing = db.query(TriggerEvent).filter(
                     TriggerEvent.date == date,
@@ -120,13 +139,6 @@ def load_trigger_events(
                     TriggerEvent.location_lat == TANZANIA_LAT,
                     TriggerEvent.location_lon == TANZANIA_LON
                 ).first()
-                
-                # Handle NaN values properly - flood_risk_score is 0-100, normalize to 0-1
-                severity_val = row.get('flood_risk_score_left', row.get('flood_risk_score_right', 50.0))
-                if pd.notna(severity_val):
-                    severity = min(float(severity_val) / 100.0, 1.0)  # Normalize to 0-1
-                else:
-                    severity = 0.5
                 
                 confidence_val = row.get('flood_trigger_confidence', 0.8)
                 confidence = float(confidence_val) if pd.notna(confidence_val) else 0.8
@@ -148,7 +160,8 @@ def load_trigger_events(
                         confidence=confidence,
                         payout_amount=payout,
                         location_lat=TANZANIA_LAT,
-                        location_lon=TANZANIA_LON
+                        location_lon=TANZANIA_LON,
+                        location='Tanzania'  # Location name for map display
                     )
                     batch.append(trigger)
                 triggers_loaded['flood'] += 1
@@ -157,6 +170,18 @@ def load_trigger_events(
             
             # Extract crop failure triggers
             if row.get('crop_failure_trigger') == True or row.get('crop_failure_trigger') == 1:
+                # Handle NaN values properly - crop_failure_risk is 0-100, normalize to 0-1
+                severity_val = row.get('crop_failure_risk', 50.0)
+                if pd.notna(severity_val):
+                    severity = min(float(severity_val) / 100.0, 1.0)  # Normalize to 0-1
+                else:
+                    severity = 0.5
+                
+                # Skip triggers with severity below minimum threshold (10%)
+                if severity < 0.1:
+                    logger.debug(f"Skipping crop failure trigger at {date} with severity {severity:.2f} (below 10% threshold)")
+                    continue
+                
                 # Check if exists (smart upsert)
                 existing = db.query(TriggerEvent).filter(
                     TriggerEvent.date == date,
@@ -164,13 +189,6 @@ def load_trigger_events(
                     TriggerEvent.location_lat == TANZANIA_LAT,
                     TriggerEvent.location_lon == TANZANIA_LON
                 ).first()
-                
-                # Handle NaN values properly - crop_failure_risk is 0-100, normalize to 0-1
-                severity_val = row.get('crop_failure_risk', 50.0)
-                if pd.notna(severity_val):
-                    severity = min(float(severity_val) / 100.0, 1.0)  # Normalize to 0-1
-                else:
-                    severity = 0.5
                 
                 confidence_val = row.get('crop_failure_trigger_confidence', 0.8)
                 # Handle 0.0 confidence - use default
@@ -196,7 +214,8 @@ def load_trigger_events(
                         confidence=confidence,
                         payout_amount=payout,
                         location_lat=TANZANIA_LAT,
-                        location_lon=TANZANIA_LON
+                        location_lon=TANZANIA_LON,
+                        location='Tanzania'  # Location name for map display
                     )
                     batch.append(trigger)
                 triggers_loaded['crop_failure'] += 1
@@ -238,7 +257,7 @@ if __name__ == "__main__":
     import argparse
     
     parser = argparse.ArgumentParser(description="Load trigger events into dashboard database")
-    parser.add_argument("--csv", default="/outputs/processed/master_dataset.csv", help="Path to master CSV")
+    parser.add_argument("--csv", default="../data/processed/merged_data_2010_2025.csv", help="Path to master CSV")
     parser.add_argument("--clear", action="store_true", help="Clear existing data before loading")
     
     args = parser.parse_args()

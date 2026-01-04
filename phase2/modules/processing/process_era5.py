@@ -6,7 +6,7 @@ Transforms raw ERA5 reanalysis data with unit conversions and derived features.
 import numpy as np
 import pandas as pd
 
-from utils.config import get_output_path
+from utils.config import get_output_path, get_data_path
 from utils.logger import log_info
 from utils.validator import validate_dataframe
 
@@ -218,7 +218,7 @@ def process(data):
         # For dry-run or minimal data, just validate it's not empty
         validate_dataframe(df, expected_columns=None, dataset_name="ERA5 Processed")
 
-    output_path = get_output_path("processed", "era5_processed.csv")
+    output_path = get_data_path("processed", "era5_processed.csv")
     df.to_csv(output_path, index=False)
     log_info(f"[SAVE] Processed output saved to {output_path}")
     log_info(f"[PROCESS] ERA5 data processed successfully: {len(df)} records, {len(df.columns)} features")

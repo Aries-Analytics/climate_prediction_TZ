@@ -15,6 +15,21 @@ class ModelMetricsBase(BaseModel):
     data_start_date: Optional[date] = Field(None, serialization_alias="dataStartDate")
     data_end_date: Optional[date] = Field(None, serialization_alias="dataEndDate")
     hyperparameters: Optional[Dict[str, Any]] = None
+    
+    # Cross-validation metrics (more reliable)
+    cv_r2_mean: Optional[float] = Field(None, serialization_alias="cvR2Mean")
+    cv_r2_std: Optional[float] = Field(None, serialization_alias="cvR2Std")
+    cv_r2_ci_lower: Optional[float] = Field(None, serialization_alias="cvR2CiLower")
+    cv_r2_ci_upper: Optional[float] = Field(None, serialization_alias="cvR2CiUpper")
+    cv_rmse_mean: Optional[float] = Field(None, serialization_alias="cvRmseMean")
+    cv_rmse_std: Optional[float] = Field(None, serialization_alias="cvRmseStd")
+    cv_mae_mean: Optional[float] = Field(None, serialization_alias="cvMaeMean")
+    cv_mae_std: Optional[float] = Field(None, serialization_alias="cvMaeStd")
+    cv_n_splits: Optional[int] = Field(None, serialization_alias="cvNSplits")
+    
+    # Feature selection info
+    n_features: Optional[int] = Field(None, serialization_alias="nFeatures")
+    feature_to_sample_ratio: Optional[float] = Field(None, serialization_alias="featureToSampleRatio")
 
 class ModelMetricsCreate(ModelMetricsBase):
     pass

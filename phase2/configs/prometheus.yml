@@ -1,0 +1,69 @@
+# Prometheus Configuration for Climate Early Warning System
+
+global:
+  scrape_interval: 15s  # Scrape targets every 15 seconds
+  evaluation_interval: 15s  # Evaluate rules every 15 seconds
+  external_labels:
+    cluster: 'climate-ews'
+    environment: 'production'
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          # - 'alertmanager:9093'  # Uncomment if using Alertmanager
+
+# Load rules once and periodically evaluate them
+rule_files:
+  - 'alerts.yml'
+
+# Scrape configurations
+scrape_configs:
+  # Pipeline monitoring service
+  - job_name: 'pipeline-monitor'
+    static_configs:
+      - targets: ['pipeline-monitor:9090']
+        labels:
+          service: 'pipeline-monitor'
+          component: 'monitoring'
+    
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    
+    metrics_path: '/metrics'
+    
+    # Relabel to add instance information
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'pipeline-monitor'
+
+  # Backend API (if exposing metrics)
+  - job_name: 'backend-api'
+    static_configs:
+      - targets: ['backend:8000']
+        labels:
+          service: 'backend'
+          component: 'api'
+    
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    
+    metrics_path: '/metrics'
+
+  # PostgreSQL exporter (optional - requires postgres_exporter)
+  # - job_name: 'postgres'
+  #   static_configs:
+  #     - targets: ['postgres-exporter:9187']
+  #       labels:
+  #         service: 'database'
+  #         component: 'postgres'
+
+  # Node exporter (optional - for system metrics)
+  # - job_name: 'node'
+  #   static_configs:
+  #     - targets: ['node-exporter:9100']
+  #       labels:
+  #         service: 'system'
+  #         component: 'node'

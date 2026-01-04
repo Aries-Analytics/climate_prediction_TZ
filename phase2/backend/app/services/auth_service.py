@@ -41,7 +41,11 @@ def create_user(db: Session, user_data: UserCreate) -> User:
 
 def authenticate_user(db: Session, username: str, password: str) -> Optional[User]:
     """Authenticate a user by username and password"""
-    user = db.query(User).filter(User.username == username).first()
+    # Try looking up by email first
+    user = get_user_by_email(db, username)
+    # If not found, try by username
+    if not user:
+        user = get_user_by_username(db, username)
     
     if not user:
         return None

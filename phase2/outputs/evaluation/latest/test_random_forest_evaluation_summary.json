@@ -1,0 +1,49 @@
+{
+  "model_name": "test_random_forest",
+  "target_name": "Test Target",
+  "evaluation_timestamp": "2025-11-15T07:39:17.322648",
+  "test_samples": 50,
+  "overall_metrics": {
+    "r2_score": 0.8490141455619131,
+    "rmse": 0.8597134784814209,
+    "mae": 0.6650877751440187,
+    "mape": 88.43249886696759
+  },
+  "r2_threshold": 0.85,
+  "meets_threshold": false,
+  "seasonal_performance": [
+    {
+      "target": "Test Target",
+      "season": "Short Rains",
+      "n_samples": 12,
+      "r2_score": 0.9088247682939444,
+      "rmse": 0.6761095595877581,
+      "mae": 0.5949481706873391,
+      "mape": 40.55943862003332
+    },
+    {
+      "target": "Test Target",
+      "season": "Long Rains",
+      "n_samples": 12,
+      "r2_score": 0.855707620989427,
+      "rmse": 0.8115606319297406,
+      "mae": 0.6329932019427692,
+      "mape": 33.2146069262344
+    },
+    {
+      "target": "Test Target",
+      "season": "Dry Season",
+      "n_samples": 26,
+      "r2_score": 0.807395296794079,
+      "rmse": 0.9520485141113304,
+      "mae": 0.7122727802169094,
+      "mape": 136.01293833819872
+    }
+  ],
+  "output_files": {
+    "seasonal_metrics_csv": "outputs\\evaluation\\test_random_forest_seasonal_performance.csv",
+    "predictions_vs_actual_plot": "outputs\\evaluation\\test_random_forest_predictions_vs_actual.png",
+    "residuals_plot": "outputs\\evaluation\\test_random_forest_residuals_over_time.png",
+    "feature_importance_plot": "outputs\\evaluation\\test_random_forest_feature_importance.png"
+  }
+}

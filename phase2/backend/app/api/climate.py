@@ -4,6 +4,7 @@ from datetime import date, datetime
 from typing import List, Optional
 from app.core.database import get_db
 from app.core.dependencies import get_current_active_user
+from app.core.exceptions import DatabaseError
 from app.schemas.climate_data import TimeSeries
 from app.services import climate_service
 from app.models.user import User
@@ -61,8 +62,11 @@ def create_climate_batch(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
-    """Bulk create climate data records"""
+    """Bulk create climate data records with upsert (skip duplicates)"""
     created_count = 0
+    updated_count = 0
+    skipped_count = 0
+    
     for record in records:
         try:
             # Parse date
@@ -71,21 +75,50 @@ def create_climate_batch(
             else:
                 record_date = record['date']
             
-            climate_record = ClimateData(
-                date=record_date,
-                location_lat=record.get('location_lat'),
-                location_lon=record.get('location_lon'),
-                temperature_avg=record.get('temperature_avg'),
-                rainfall_mm=record.get('rainfall_mm'),
-                ndvi=record.get('ndvi'),
-                enso_index=record.get('enso_index'),
-                iod_index=record.get('iod_index')
-            )
-            db.add(climate_record)
-            created_count += 1
+            # Check if record already exists (unique constraint on date + location)
+            existing = db.query(ClimateData).filter(
+                ClimateData.date == record_date,
+                ClimateData.location_lat == record.get('location_lat'),
+                ClimateData.location_lon == record.get('location_lon')
+            ).first()
+            
+            if existing:
+                # Update existing record
+                existing.temperature_avg = record.get('temperature_avg')
+                existing.rainfall_mm = record.get('rainfall_mm')
+                existing.ndvi = record.get('ndvi')
+                existing.enso_index = record.get('enso_index')
+                existing.iod_index = record.get('iod_index')
+                updated_count += 1
+            else:
+                # Create new record
+                climate_record = ClimateData(
+                    date=record_date,
+                    location_lat=record.get('location_lat'),
+                    location_lon=record.get('location_lon'),
+                    temperature_avg=record.get('temperature_avg'),
+                    rainfall_mm=record.get('rainfall_mm'),
+                    ndvi=record.get('ndvi'),
+                    enso_index=record.get('enso_index'),
+                    iod_index=record.get('iod_index')
+                )
+                db.add(climate_record)
+                created_count += 1
+                
         except Exception as e:
-            print(f"Error adding record: {e}")
+            print(f"Error processing record: {e}")
+            skipped_count += 1
             continue
     
-    db.commit()
-    return {"message": f"Created {created_count} climate records", "count": created_count}
+    try:
+        db.commit()
+        return {
+            "message": f"Processed {len(records)} records", 
+            "created": created_count,
+            "updated": updated_count,
+            "skipped": skipped_count
+        }
+    except Exception as e:
+        db.rollback()
+        print(f"Commit error: {e}")
+        raise DatabaseError(f"Failed to commit batch: {str(e)}")

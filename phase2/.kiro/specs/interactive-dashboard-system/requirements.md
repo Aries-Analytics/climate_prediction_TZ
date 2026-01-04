@@ -67,6 +67,23 @@ This specification defines requirements for building a professional, interactive
 4. WHEN a trigger event is selected THEN the system SHALL display detailed information including confidence and severity
 5. WHEN the user exports data THEN the system SHALL provide trigger events in CSV format
 
+### Requirement 4a (Geographic Visualization Extension)
+
+**User Story:** As an insurance analyst, I want to visualize trigger events on an interactive map of Tanzania, so that I can understand the spatial distribution of climate risks and target interventions to specific geographic regions.
+
+#### Acceptance Criteria
+
+1. WHEN the triggers dashboard loads THEN the system SHALL display an interactive map of Tanzania with markers for all monitored locations
+2. WHEN trigger events occur THEN the system SHALL color-code location markers by trigger type (red=drought, blue=flood, yellow=crop failure)
+3. WHEN the user hovers over location markers THEN the system SHALL display tooltips with location name and active trigger counts
+4. WHEN the user clicks a location marker THEN the system SHALL display detailed trigger history for that specific location
+5. WHEN the user toggles map layers THEN the system SHALL filter markers by trigger type or severity level
+6. WHEN multiple triggers occur at one location THEN the system SHALL display pulsing/animated markers to indicate active events
+7. WHEN the user selects a time range THEN the system SHALL update the map to show only triggers within that period
+8. WHEN viewing forecast data THEN the system SHALL overlay risk zones or heatmaps showing predicted trigger probability
+9. WHEN the map is zoomed THEN the system SHALL maintain marker visibility and adjust clustering if needed
+10. WHEN the user requests geographic export THEN the system SHALL provide trigger data with location coordinates in GeoJSON/CSV format
+
 ### Requirement 5
 
 **User Story:** As a risk manager, I want to visualize climate trends and anomalies on interactive charts, so that I can identify patterns and assess long-term climate risks.

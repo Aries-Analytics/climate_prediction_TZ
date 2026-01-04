@@ -20,32 +20,32 @@ logger = logging.getLogger(__name__)
 MODEL_CONFIG = {
     "random_forest": {
         "n_estimators": 200,
-        "max_depth": 15,
-        "min_samples_split": 5,
-        "min_samples_leaf": 2,
+        "max_depth": 10,  # ENHANCED: Reduced from 15 to 10 to prevent overfitting
+        "min_samples_split": 10,  # ENHANCED: Increased from 5 to 10 for stronger regularization
+        "min_samples_leaf": 5,  # ENHANCED: Increased from 2 to 5 to prevent overfitting
         "max_features": "sqrt",
         "random_state": 42,
         "n_jobs": -1,
         "verbose": 0,
     },
     "xgboost": {
-        "n_estimators": 200,
-        "max_depth": 8,
-        "learning_rate": 0.05,
+        "n_estimators": 500,  # ENHANCED: Increased for early stopping with slower learning
+        "max_depth": 4,  # ENHANCED: Reduced from 8 to 4 for stronger regularization
+        "learning_rate": 0.01,  # ENHANCED: Reduced from 0.05 to 0.01 for slower, more stable learning
         "subsample": 0.8,
         "colsample_bytree": 0.8,
-        "min_child_weight": 1,
-        "gamma": 0,
-        "reg_alpha": 0,
-        "reg_lambda": 1,
+        "min_child_weight": 5,  # ENHANCED: Increased from 1 to 5 for stronger regularization
+        "gamma": 0.1,  # ENHANCED: Increased from 0 to 0.1 for minimum loss reduction
+        "reg_alpha": 0.1,  # ENHANCED: Increased from 0 to 0.1 for L1 regularization
+        "reg_lambda": 1.0,  # ENHANCED: Kept at 1.0 for L2 regularization (already good)
         "random_state": 42,
         "n_jobs": -1,
         "verbosity": 0,
     },
     "lstm": {
-        "units": [128, 64],
-        "dropout": 0.2,
-        "recurrent_dropout": 0.1,
+        "units": [64, 32],  # ENHANCED: Reduced from [128, 64] to [64, 32] to reduce model capacity
+        "dropout": 0.3,  # ENHANCED: Increased from 0.2 to 0.3 for stronger regularization
+        "recurrent_dropout": 0.2,  # ENHANCED: Increased from 0.1 to 0.2 for stronger regularization
         "activation": "tanh",
         "recurrent_activation": "sigmoid",
         "epochs": 100,
@@ -55,6 +55,7 @@ MODEL_CONFIG = {
         "validation_split": 0.15,
         "sequence_length": 6,  # Reduced from 12 to 6 for smaller datasets
         "verbose": 1,
+        "l2_regularization": 0.01,  # ENHANCED: Added L2 weight regularization
     },
     "ensemble": {"weights": {"rf": 0.3, "xgb": 0.4, "lstm": 0.3}, "method": "weighted_average"},
 }
@@ -65,8 +66,8 @@ MODEL_CONFIG = {
 # ============================================================================
 
 FEATURE_CONFIG = {
-    "lag_periods": [1, 3, 6, 12],
-    "rolling_windows": [3, 6],
+    "lag_periods": [1, 3, 6],  # OPTIMIZED: Reduced from [1,3,6,12] to [1,3,6] for smaller datasets
+    "rolling_windows": [3],  # OPTIMIZED: Reduced from [3,6] to [3] - use only 3-month windows
     "rolling_stats": ["mean", "std"],
     "interaction_features": [
         {"feature1": "enso", "feature2": "rainfall", "operation": "multiply"},
@@ -75,6 +76,7 @@ FEATURE_CONFIG = {
     "target_variables": ["temperature", "rainfall", "ndvi"],
     "max_missing_gap": 2,
     "normalization_method": "standardization",
+    "correlation_threshold": 0.95,  # OPTIMIZED: Added threshold for removing highly correlated features
 }
 
 

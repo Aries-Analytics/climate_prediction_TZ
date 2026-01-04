@@ -1,0 +1,53 @@
+================================================================================
+EXPLORATORY DATA ANALYSIS REPORT
+Dataset: CHIRPS
+================================================================================
+
+BASIC STATISTICS
+--------------------------------------------------------------------------------
+Rows: 6
+Columns: 41
+Memory Usage: 0.00 MB
+Numeric Columns: 41
+Categorical Columns: 0
+Datetime Columns: 0
+
+MISSING VALUES
+--------------------------------------------------------------------------------
+Total Missing Values: 0
+Columns with Missing Values: 0
+
+
+HIGH CORRELATIONS (|r| > 0.7)
+--------------------------------------------------------------------------------
+Number of High Correlations: 133
+
+Top 10 Correlations:
+  flood_risk_score <-> trigger_severity: 1.000
+  rainfall_7day <-> rainfall_14day: 1.000
+  rainfall_7day <-> rainfall_30day: 1.000
+  rainfall_7day <-> rainfall_90day: 1.000
+  rainfall_7day <-> rainfall_180day: 1.000
+  rainfall_14day <-> rainfall_30day: 1.000
+  rainfall_14day <-> rainfall_90day: 1.000
+  rainfall_14day <-> rainfall_180day: 1.000
+  rainfall_30day <-> rainfall_90day: 1.000
+  rainfall_30day <-> rainfall_180day: 1.000
+
+TIME SERIES ANALYSIS
+--------------------------------------------------------------------------------
+Start Date: 2020-01-01
+End Date: 2021-03-01
+Number of Months: 6
+Date Range: 1.16 years
+Gaps in Time Series: 1
+
+FEATURE STATISTICS SUMMARY
+--------------------------------------------------------------------------------
+Numeric Features: 41
+Categorical Features: 1
+
+
+================================================================================
+END OF REPORT
+================================================================================

@@ -26,21 +26,125 @@ def get_model_metrics(db: Session, model_name: str) -> Optional[ModelMetricsResp
     return ModelMetricsResponse.model_validate(metric)
 
 def get_all_models(db: Session) -> List[ModelMetricsResponse]:
-    """Get latest metrics for all models"""
-    # Get the latest metric for each model
-    # Use a simpler approach that works with SQLite
+    """Get latest metrics for all models with CV and feature selection data"""
+    # Get the latest metric for each model by ID (most recent insert)
+    # Using MAX(id) ensures we get the truly latest record even when training_date is same
     subquery = db.query(
         ModelMetric.model_name,
-        func.max(ModelMetric.training_date).label('max_date')
+        func.max(ModelMetric.id).label('max_id')
     ).group_by(ModelMetric.model_name).subquery()
     
     metrics = db.query(ModelMetric).join(
         subquery,
         (ModelMetric.model_name == subquery.c.model_name) &
-        (ModelMetric.training_date == subquery.c.max_date)
+        (ModelMetric.id == subquery.c.max_id)
     ).all()
     
-    return [ModelMetricsResponse.model_validate(m) for m in metrics]
+    # Load CV and feature selection data from latest training results
+    cv_data, feature_data = _load_latest_training_results()
+    
+    # Enhance metrics with CV and feature selection data
+    enhanced_metrics = []
+    for m in metrics:
+        metric_dict = {
+            "id": m.id,
+            "model_name": m.model_name,
+            "experiment_id": m.experiment_id,
+            "r2_score": m.r2_score,
+            "rmse": m.rmse,
+            "mae": m.mae,
+            "mape": m.mape,
+            "training_date": m.training_date,
+            "data_start_date": m.data_start_date,
+            "data_end_date": m.data_end_date,
+            "hyperparameters": m.hyperparameters,
+            "created_at": m.created_at,
+        }
+        
+        # Add CV data if available
+        # Try exact match first, then try with underscores replaced
+        model_key = m.model_name
+        if model_key not in cv_data:
+            # Try alternative naming (e.g., "random_forest" vs "Random Forest")
+            model_key = model_key.replace('_', ' ').title()
+        if model_key not in cv_data:
+            # Try lowercase with underscores
+            model_key = m.model_name.lower().replace(' ', '_')
+        
+        if model_key in cv_data:
+            cv = cv_data[model_key]
+            metric_dict.update({
+                "cv_r2_mean": cv.get("r2_mean"),
+                "cv_r2_std": cv.get("r2_std"),
+                "cv_r2_ci_lower": cv.get("r2_ci_lower"),
+                "cv_r2_ci_upper": cv.get("r2_ci_upper"),
+                "cv_rmse_mean": cv.get("rmse_mean"),
+                "cv_rmse_std": cv.get("rmse_std"),
+                "cv_mae_mean": cv.get("mae_mean"),
+                "cv_mae_std": cv.get("mae_std"),
+                "cv_n_splits": cv.get("n_splits"),
+            })
+        
+        # Add feature selection data
+        if feature_data:
+            metric_dict.update({
+                "n_features": feature_data.get("selected_features"),
+                "feature_to_sample_ratio": feature_data.get("feature_to_sample_ratio"),
+            })
+        
+        enhanced_metrics.append(ModelMetricsResponse(**metric_dict))
+    
+    return enhanced_metrics
+
+
+def _load_latest_training_results():
+    """Load CV and feature selection data from latest training results JSON"""
+    import glob
+    
+    models_dir = os.path.join(settings.OUTPUTS_DIR, "models")
+    
+    # Find the latest training_results JSON file
+    pattern = os.path.join(models_dir, "training_results_*.json")
+    result_files = glob.glob(pattern)
+    
+    if not result_files:
+        return {}, {}
+    
+    # Get the most recent file
+    latest_file = max(result_files, key=os.path.getmtime)
+    
+    try:
+        with open(latest_file, 'r') as f:
+            results = json.load(f)
+        
+        # Extract CV data
+        cv_data = {}
+        if "cross_validation" in results and results["cross_validation"]:
+            for model_name, cv_metrics in results["cross_validation"].items():
+                cv_data[model_name] = cv_metrics
+        
+        # Extract feature selection data
+        feature_data = {}
+        if "feature_selection" in results:
+            fs = results["feature_selection"]
+            feature_data = {
+                "selected_features": fs.get("selected_features"),
+                "original_features": fs.get("original_features"),
+            }
+            
+            # Calculate feature-to-sample ratio
+            # Assuming 133 training samples (from data_shapes)
+            if "data_shapes" in results and "train" in results["data_shapes"]:
+                n_train_samples = results["data_shapes"]["train"][0]
+                n_features = fs.get("selected_features", 1)
+                if n_features > 0:
+                    feature_data["feature_to_sample_ratio"] = n_train_samples / n_features
+        
+        return cv_data, feature_data
+    
+    except Exception as e:
+        # Silently fail and return empty dicts
+        return {}, {}
 
 def compare_models(db: Session, model_names: List[str], metric: str = "r2_score") -> ModelComparison:
     """Compare multiple models by a specific metric"""

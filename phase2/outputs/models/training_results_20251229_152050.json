@@ -1,0 +1,37 @@
+{
+  "training_start_time": "2025-12-29T15:19:09.027793",
+  "data_shapes": {
+    "train": [
+      936,
+      76
+    ],
+    "val": [
+      312,
+      76
+    ],
+    "test": [
+      288,
+      76
+    ]
+  },
+  "models": {
+    "random_forest": {
+      "error": "Input contains NaN."
+    },
+    "xgboost": {
+      "error": "Input contains NaN."
+    },
+    "lstm": {
+      "error": "Input contains NaN."
+    }
+  },
+  "training_end_time": "2025-12-29T15:20:50.647656",
+  "baselines": {},
+  "cross_validation": null,
+  "feature_selection": {
+    "original_features": 111,
+    "selected_features": 76,
+    "reduction_pct": 31.53153153153153
+  },
+  "validation_summary": {}
+}

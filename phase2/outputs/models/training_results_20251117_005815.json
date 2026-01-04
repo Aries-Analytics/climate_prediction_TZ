@@ -1,0 +1,49 @@
+{
+  "training_start_time": "2025-11-17T00:58:03.859552",
+  "data_shapes": {
+    "train": [
+      50,
+      648
+    ],
+    "val": [
+      11,
+      648
+    ],
+    "test": [
+      11,
+      648
+    ]
+  },
+  "models": {
+    "random_forest": {
+      "train_metrics": {
+        "rmse": 0.1988722286519945,
+        "mae": 0.14289011214091601,
+        "r2": 0.9607303665466886,
+        "mape": 21.254008193121276
+      },
+      "val_metrics": {
+        "rmse": 0.27434495602372055,
+        "mae": 0.22925170372856837,
+        "r2": 0.9038555590974342,
+        "mape": 29.64691074257538
+      },
+      "training_time": 0.28798580169677734,
+      "n_estimators": 200,
+      "n_features": 648,
+      "test_metrics": {
+        "rmse": 0.4059653495075236,
+        "mae": 0.3849870376130772,
+        "r2": 0.8416100290185147,
+        "mape": 175.8187308869274
+      }
+    },
+    "xgboost": {
+      "error": "XGBModel.fit() got an unexpected keyword argument 'early_stopping_rounds'"
+    },
+    "lstm": {
+      "error": "Found array with 0 sample(s) (shape=(0,)) while a minimum of 1 is required."
+    }
+  },
+  "training_end_time": "2025-11-17T00:58:15.960077"
+}

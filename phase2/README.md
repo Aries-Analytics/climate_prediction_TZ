@@ -66,6 +66,9 @@ phase2/
 │   ├── model_development_pipeline.py # Full ML pipeline (spec-compliant)
 │   └── README.md              # Pipeline documentation
 │
+├── train_pipeline.py          # Enhanced ML training pipeline (RECOMMENDED)
+├── train_pipeline_old_deprecated.py # Old version (DO NOT USE)
+│
 ├── models/                     # Model implementations
 │   ├── random_forest_model.py
 │   ├── xgboost_model.py
@@ -200,12 +203,27 @@ python pipelines/run_data_pipeline.py --start-year 2010 --end-year 2020
 
 ### 2. Model Training
 
+**Enhanced Training Pipeline (RECOMMENDED):**
+```bash
+# Full pipeline with feature selection, baselines, and validation
+python train_pipeline.py
+
+# Skip feature selection (not recommended)
+python train_pipeline.py --skip-feature-selection
+
+# Custom feature count (default: 75)
+python train_pipeline.py --target-features 100
+
+# Skip preprocessing if features exist
+python train_pipeline.py --skip-preprocessing
+```
+
 **Quick prototyping (fast, no preprocessing):**
 ```bash
 python pipelines/quick_model_pipeline.py
 ```
 
-**Full ML pipeline (with feature engineering):**
+**Legacy ML pipeline (alternative):**
 ```bash
 # Train all models
 python model_development_pipeline.py
@@ -213,17 +231,17 @@ python model_development_pipeline.py
 # Train specific models
 python model_development_pipeline.py --models rf,xgb
 
-# Skip preprocessing (use existing features)
-python model_development_pipeline.py --skip-preprocessing
-
 # Named experiment
 python model_development_pipeline.py --experiment-name rainfall_v2
-
-# Custom configuration
-python model_development_pipeline.py --config configs/custom.json
 ```
 
-See `docs/MODEL_DEVELOPMENT_GUIDE.md` for detailed ML pipeline documentation.
+**Note**: `train_pipeline.py` includes scientifically sound improvements:
+- Feature selection (640 → 75 features)
+- Baseline model comparison
+- Enhanced regularization
+- Automated validation checks
+
+See `docs/MODEL_IMPROVEMENT_IMPLEMENTATION_GUIDE.md` for details.
 
 ### 3. Business Reports
 

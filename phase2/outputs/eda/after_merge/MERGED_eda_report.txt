@@ -1,0 +1,75 @@
+================================================================================
+EXPLORATORY DATA ANALYSIS REPORT
+Dataset: MERGED
+================================================================================
+
+BASIC STATISTICS
+--------------------------------------------------------------------------------
+Rows: 48
+Columns: 159
+Memory Usage: 0.08 MB
+Numeric Columns: 152
+Categorical Columns: 7
+Datetime Columns: 0
+
+MISSING VALUES
+--------------------------------------------------------------------------------
+Total Missing Values: 986
+Columns with Missing Values: 63
+
+Top 10 Columns with Missing Values:
+  ndvi_change_yoy: 48 (100.00%)
+  temp_mean_c: 24 (50.00%)
+  vpd_kpa: 24 (50.00%)
+  temp_max_c: 24 (50.00%)
+  data_quality: 24 (50.00%)
+  temp_variability: 24 (50.00%)
+  temp_range_c: 24 (50.00%)
+  gdd_base15: 24 (50.00%)
+  gdd_base10: 24 (50.00%)
+  vci_class: 24 (50.00%)
+
+HIGH CORRELATIONS (|r| > 0.7)
+--------------------------------------------------------------------------------
+Number of High Correlations: 796
+
+Top 10 Correlations:
+  iod <-> iod_impact_score: 1.000
+  crop_failure_risk <-> trigger_severity_right: 1.000
+  temp_mean_c <-> heat_index_c: 1.000
+  rainfall_90day <-> rainfall_180day: 1.000
+  rainfall_anomaly_mm <-> rainfall_deficit_mm: -1.000
+  rainfall_anomaly_pct <-> rainfall_deficit_pct: -1.000
+  drought_trigger <-> drought_trigger_confidence: 1.000
+  ndvi <-> vegetation_vigor: 1.000
+  ndvi_60day_mean <-> ndvi_90day_mean: 1.000
+  is_severe_stress <-> severe_stress_trigger: 1.000
+
+TIME SERIES ANALYSIS
+--------------------------------------------------------------------------------
+Start Date: 2020-01-01
+End Date: 2023-12-01
+Number of Months: 48
+Date Range: 3.92 years
+Gaps in Time Series: 0
+
+FEATURE STATISTICS SUMMARY
+--------------------------------------------------------------------------------
+Numeric Features: 152
+Categorical Features: 8
+
+Features with >10% Missing Values: 59
+  ndvi_change_yoy: 100.00%
+  temp_mean_c: 50.00%
+  temp_max_c: 50.00%
+  temp_min_c: 50.00%
+  precip_mm: 50.00%
+  humidity_pct: 50.00%
+  solar_rad_wm2: 50.00%
+  latitude: 50.00%
+  longitude: 50.00%
+  heat_index_c: 50.00%
+
+================================================================================
+END OF REPORT
+================================================================================

@@ -2,9 +2,21 @@
 
 ## Task List
 
-- [x] 1. Set up database schema and migrations
+- [ ] 1. Load 2010-2025 dataset into database
 
 
+
+
+
+  - Update file paths in backend/scripts/load_all_data.py to use data/processed/merged_data_2010_2025.csv
+  - Update file paths in backend/scripts/load_climate_data.py to use data/processed/merged_data_2010_2025.csv
+  - Update file paths in backend/scripts/load_trigger_events.py to use data/processed/merged_data_2010_2025.csv
+  - Run the data loading script: `cd backend && python scripts/load_all_data.py --clear`
+  - Verify 191 records loaded successfully (2010-2025)
+  - Restart backend container to pick up new data: `docker-compose restart backend`
+  - _Requirements: 1.1, 1.2, 1.3_
+
+- [x] 2. Set up database schema and migrations
   - Create Alembic migration for climate_data table with all 176 columns
   - Create migration for trigger_events table with event details
   - Create migration for model_metrics and feature_importance tables
@@ -12,45 +24,40 @@
   - Run migrations to create all tables in PostgreSQL
   - _Requirements: 1.1, 1.2, 2.1, 3.1_
 
-- [x] 2. Create climate data loading script
+- [x] 3. Create climate data loading script (ALREADY COMPLETE - exists at backend/scripts/load_climate_data.py)
 
-  - [x] 2.1 Implement CSV reader for master_dataset.csv
-
-    - Read CSV with pandas
-    - Validate column names and data types
+  - [x] 2.1 Implement CSV reader for merged_data_2010_2025.csv
+    - Read CSV with pandas from data/processed/merged_data_2010_2025.csv
+    - Validate column names and data types (176 columns)
     - Handle missing values appropriately
+    - Verify 191 data rows (2010-2025)
     - _Requirements: 1.1_
-
   
-  - [ ] 2.2 Implement data transformation logic
+  - [x] 2.2 Implement data transformation logic
     - Convert data types (dates, floats, booleans)
-    - Map CSV columns to database columns
-    - Validate data ranges (year 2018-2023, month 1-12)
-
+    - Map CSV columns to database columns (all 176 columns)
+    - Validate data ranges (year 2010-2025, month 1-12)
     - _Requirements: 1.2_
   
-  - [ ] 2.3 Implement database insertion with transactions
+  - [x] 2.3 Implement database insertion with transactions
     - Create SQLAlchemy session
     - Bulk insert records with error handling
-
     - Commit transaction or rollback on error
     - _Requirements: 1.3, 1.5_
   
-  - [ ] 2.4 Add clear and reload functionality
+  - [x] 2.4 Add clear and reload functionality
     - Implement truncate table option
-
     - Add confirmation prompt for data clearing
     - Handle duplicate record detection
     - _Requirements: 1.4_
   
-  - [ ] 2.5 Implement verification and reporting
-
+  - [x] 2.5 Implement verification and reporting
     - Count records loaded vs CSV rows
     - Verify date range coverage
     - Generate loading summary report
     - _Requirements: 1.3, 13.1_
 
-- [ ] 3. Create trigger events loading script
+- [x] 4. Create trigger events loading script (ALREADY COMPLETE - exists at backend/scripts/load_trigger_events.py)
   - [x] 3.1 Implement drought trigger extraction
 
     - Read chirps_processed.csv
@@ -87,7 +94,7 @@
     - Display severity distribution
     - _Requirements: 2.5_
 
-- [ ] 4. Create model metrics loading script
+- [x] 5. Create model metrics loading script (ALREADY COMPLETE - exists at backend/scripts/load_model_metrics.py)
   - [x] 4.1 Implement training results parser
 
     - Read training_results JSON file
@@ -123,16 +130,15 @@
 
 
 
-- [ ] 5. Create master data loading orchestration script
+- [x] 6. Create master data loading orchestration script (ALREADY COMPLETE - exists at backend/scripts/load_all_data.py)
   - Implement main script that calls all loaders in sequence
   - Add command-line arguments (--clear, --verify-only, --skip-models)
   - Implement progress reporting with status updates
   - Add error handling and rollback for failed loads
-
   - Generate comprehensive loading report
   - _Requirements: 1.5, 12.1, 12.2_
 
-- [x] 6. Create database seeding script for users
+- [x] 7. Create database seeding script for users
 
   - [ ] 6.1 Implement admin user creation
     - Create admin account with full permissions
@@ -151,7 +157,7 @@
     - Check for existing users before creation
     - _Requirements: 18.4, 18.5_
 
-- [ ] 7. Update Docker Compose configuration
+- [ ] 8. Update Docker Compose configuration
   - [ ] 7.1 Configure PostgreSQL service
     - Set database name, user, password from environment
     - Add health check for database readiness
@@ -177,9 +183,9 @@
     - Test docker-compose down cleanup
     - _Requirements: 11.4, 11.5_
 
-- [ ] 8. Implement data verification script
+- [ ] 9. Implement data verification script
   - [ ] 8.1 Verify record counts
-    - Count climate_data records (should be 72)
+    - Count climate_data records (should be 191 for 2010-2025 dataset)
     - Count trigger_events records
     - Count model_metrics records (should be 4)
     - _Requirements: 13.1_
@@ -191,7 +197,7 @@
     - _Requirements: 13.2_
   
   - [ ] 8.3 Verify date range coverage
-    - Confirm data spans 2018-01 to 2023-12
+    - Confirm data spans 2010-01 to 2025-11 (191 months)
     - Check for missing months
     - _Requirements: 13.3_
   
@@ -206,7 +212,7 @@
     - Provide recommendations for fixes
     - _Requirements: 13.5_
 
-- [ ] 9. Update backend API services to use real data
+- [ ] 10. Update backend API services to use real data
   - [ ] 9.1 Update dashboard service
     - Modify KPI calculations to query climate_data table
     - Implement trigger rate calculations from real data
@@ -237,7 +243,7 @@
     - Generate risk recommendations
     - _Requirements: 10.1, 10.3_
 
-- [ ] 10. Implement frontend data fetching and display
+- [ ] 11. Implement frontend data fetching and display
   - [ ] 10.1 Update Executive Dashboard
     - Fetch KPIs from /api/dashboard/kpis
     - Display trigger rate cards with real data
@@ -273,7 +279,7 @@
     - Show early warning alerts
     - _Requirements: 10.1, 10.2, 10.3, 10.4, 10.5_
 
-- [-] 11. Implement error handling and loading states
+- [-] 12. Implement error handling and loading states
 
   - [ ] 11.1 Add loading indicators
     - Show spinners during data fetch
@@ -292,7 +298,7 @@
     - Log warnings for data quality issues
     - _Requirements: 14.1, 14.5_
 
-- [ ] 12. Implement data refresh functionality
+- [ ] 13. Implement data refresh functionality
   - [ ] 12.1 Add manual refresh button
     - Implement refresh button on each dashboard
     - Fetch latest data from API on click
@@ -311,7 +317,7 @@
     - Provide retry option
     - _Requirements: 17.4, 17.5_
 
-- [ ] 13. Create comprehensive documentation
+- [ ] 14. Create comprehensive documentation
   - [ ] 13.1 Write data loading guide
     - Document step-by-step loading process
     - Explain command-line options
@@ -342,7 +348,7 @@
     - Provide production deployment steps
     - _Requirements: 16.1, 16.2, 16.3_
 
-- [ ] 14. Implement health checks and monitoring
+- [ ] 15. Implement health checks and monitoring
   - [ ] 14.1 Add database health check
     - Implement /health/db endpoint
     - Test database connectivity
@@ -366,7 +372,7 @@
     - Alert on consecutive failures
     - _Requirements: 15.5_
 
-- [ ] 15. Configure environment-based settings
+- [ ] 16. Configure environment-based settings
   - [ ] 15.1 Create .env.template file
     - Document all required environment variables
     - Provide example values
@@ -392,7 +398,7 @@
     - Check database connection on startup
     - _Requirements: 16.4_
 
-- [ ] 16. Implement comprehensive logging
+- [ ] 17. Implement comprehensive logging
   - [ ] 16.1 Configure backend logging
     - Set up structured logging with timestamps
     - Include severity levels (INFO, WARNING, ERROR)
@@ -417,7 +423,7 @@
     - Include user context in error logs
     - _Requirements: 14.5_
 
-- [ ] 17. Implement responsive design
+- [ ] 18. Implement responsive design
   - [ ] 17.1 Make dashboards mobile-friendly
     - Use responsive grid layouts
     - Adapt chart sizes to screen width
@@ -441,7 +447,7 @@
     - Adjust chart aspect ratios
     - _Requirements: 20.5_
 
-- [ ] 18. End-to-end testing and validation
+- [ ] 19. End-to-end testing and validation
   - Run complete data loading process
   - Verify all services start successfully
   - Test all dashboard pages load with real data
@@ -452,7 +458,7 @@
   - Validate responsive design on multiple devices
   - _Requirements: All_
 
-- [ ] 19. Create deployment checklist
+- [ ] 20. Create deployment checklist
   - Document pre-deployment steps
   - Create production environment setup guide
   - Document backup and recovery procedures
@@ -460,7 +466,7 @@
   - Document rollback procedures
   - _Requirements: 11.1, 16.3_
 
-- [ ] 20. Final documentation and handoff
+- [ ] 21. Final documentation and handoff
   - Create user guide for dashboard
   - Document admin procedures
   - Create video walkthrough of system

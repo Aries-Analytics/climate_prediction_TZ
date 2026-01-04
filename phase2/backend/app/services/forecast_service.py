@@ -168,9 +168,11 @@ class ForecastGenerator:
             # Use baseline prediction if no model loaded
             probability = self._baseline_prediction(features_df, trigger_type)
         
-        # Calculate confidence intervals
-        uncertainty = 0.15 if self.model is not None else 0.25  # Higher uncertainty for baseline
-        confidence_lower, confidence_upper = self.calculate_confidence_intervals(probability, uncertainty)
+        # Calculate confidence intervals - wider for longer horizons
+        base_uncertainty = 0.15 if self.model is not None else 0.25
+        # Increase uncertainty by 2% per month beyond 3 months
+        horizon_uncertainty = base_uncertainty + (0.02 * (horizon_months - 3))
+        confidence_lower, confidence_upper = self.calculate_confidence_intervals(probability, horizon_uncertainty)
         
         return ForecastCreate(
             forecast_date=start_date,
@@ -195,28 +197,44 @@ class ForecastGenerator:
             Probability estimate (0-1)
         """
         features = features_df.iloc[0]
+        horizon_months = features['horizon_months']
         
+        # Calculate base probability from current conditions
         if trigger_type == "drought":
             # Low rainfall and high temperature indicate drought risk
             rainfall_score = 1.0 - min(1.0, features['avg_rainfall_30d'] / 100.0)
             temp_score = min(1.0, max(0.0, (features['avg_temp_30d'] - 25) / 10.0))
             ndvi_score = 1.0 - min(1.0, max(0.0, features['avg_ndvi_30d']))
-            probability = (rainfall_score * 0.5 + temp_score * 0.3 + ndvi_score * 0.2)
+            base_probability = (rainfall_score * 0.5 + temp_score * 0.3 + ndvi_score * 0.2)
             
         elif trigger_type == "flood":
             # High rainfall indicates flood risk
             rainfall_score = min(1.0, features['total_rainfall_30d'] / 300.0)
-            probability = rainfall_score * 0.7 + 0.1  # Base 10% risk
+            base_probability = rainfall_score * 0.7 + 0.1  # Base 10% risk
             
         elif trigger_type == "crop_failure":
             # Combination of factors
             rainfall_score = abs(features['avg_rainfall_30d'] - 50) / 50.0  # Deviation from optimal
             ndvi_score = 1.0 - min(1.0, max(0.0, features['avg_ndvi_30d']))
-            probability = (rainfall_score * 0.5 + ndvi_score * 0.5)
+            base_probability = (rainfall_score * 0.5 + ndvi_score * 0.5)
         else:
-            probability = 0.2  # Default baseline
+            base_probability = 0.2  # Default baseline
         
-        return min(1.0, max(0.0, probability))
+        # Apply horizon decay factor - uncertainty increases with time
+        # Longer horizons should regress toward mean probability
+        # Use exponential decay: probability moves toward mean (maximum uncertainty) as horizon increases
+        # Much more aggressive decay: 0.6 for faster degradation
+        horizon_decay = 0.6 ** (horizon_months - 3)  # Decay factor starting from 3 months
+        mean_probability = 0.15  # Long-term average risk (reduced to 15% for better degradation)
+        
+        # Blend base probability with mean based on horizon
+        # At 3 months: 100% base, 0% mean
+        # At 4 months: 60% base, 40% mean
+        # At 5 months: 36% base, 64% mean
+        # At 6 months: 22% base, 78% mean
+        adjusted_probability = base_probability * horizon_decay + mean_probability * (1 - horizon_decay)
+        
+        return min(1.0, max(0.0, adjusted_probability))
 
 
 def generate_forecasts(
@@ -311,8 +329,10 @@ def get_forecasts(
         end_date: Filter by target date end
         
     Returns:
-        List of matching forecasts
+        List of matching forecasts with staleness flags
     """
+    from datetime import datetime, timedelta, timezone
+    
     query = db.query(Forecast)
     
     if trigger_type:
@@ -332,7 +352,22 @@ def get_forecasts(
     
     forecasts = query.order_by(desc(Forecast.target_date)).all()
     
-    return [ForecastResponse.model_validate(f) for f in forecasts]
+    # Convert to response objects with staleness flag
+    staleness_threshold = timedelta(days=7)
+    now = datetime.now(timezone.utc)
+    
+    result = []
+    for f in forecasts:
+        forecast_response = ForecastResponse.model_validate(f)
+        # Add staleness flag
+        if f.created_at:
+            age = now - f.created_at
+            forecast_response.is_stale = age > staleness_threshold
+        else:
+            forecast_response.is_stale = False
+        result.append(forecast_response)
+    
+    return result
 
 
 

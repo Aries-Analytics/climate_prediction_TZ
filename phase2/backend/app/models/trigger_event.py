@@ -13,6 +13,7 @@ class TriggerEvent(Base):
     payout_amount = Column(Numeric(10, 2), nullable=True)
     location_lat = Column(Numeric(10, 6), nullable=True)
     location_lon = Column(Numeric(10, 6), nullable=True)
+    location = Column(String(100), nullable=True)  # Location name for display
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     
     # Composite indexes for common query patterns

@@ -1,0 +1,58 @@
+================================================================================
+EXPLORATORY DATA ANALYSIS REPORT
+Dataset: OCEAN_INDICES
+================================================================================
+
+BASIC STATISTICS
+--------------------------------------------------------------------------------
+Rows: 48
+Columns: 60
+Memory Usage: 0.03 MB
+Numeric Columns: 57
+Categorical Columns: 3
+Datetime Columns: 0
+
+MISSING VALUES
+--------------------------------------------------------------------------------
+Total Missing Values: 12
+Columns with Missing Values: 4
+
+Top 10 Columns with Missing Values:
+  enso_trend_3month: 3 (6.25%)
+  iod_trend_3month: 3 (6.25%)
+  enso_3month_ahead: 3 (6.25%)
+  iod_3month_ahead: 3 (6.25%)
+
+HIGH CORRELATIONS (|r| > 0.7)
+--------------------------------------------------------------------------------
+Number of High Correlations: 274
+
+Top 10 Correlations:
+  iod <-> iod_impact_score: 1.000
+  is_negative_iod <-> drought_risk_climate: 1.000
+  is_strong_positive_iod <-> flood_risk_climate: 1.000
+  is_strong_positive_iod <-> climate_flood_trigger: 1.000
+  flood_risk_climate <-> climate_flood_trigger: 1.000
+  prob_above_normal_rainfall <-> flood_probability: 1.000
+  prob_below_normal_rainfall <-> drought_probability: 1.000
+  overall_climate_risk <-> trigger_severity: 1.000
+  oni <-> enso_impact_score: 0.999
+  enso_intensity <-> combined_intensity: 0.995
+
+TIME SERIES ANALYSIS
+--------------------------------------------------------------------------------
+Start Date: 2020-01-01
+End Date: 2023-12-01
+Number of Months: 48
+Date Range: 3.92 years
+Gaps in Time Series: 0
+
+FEATURE STATISTICS SUMMARY
+--------------------------------------------------------------------------------
+Numeric Features: 57
+Categorical Features: 4
+
+
+================================================================================
+END OF REPORT
+================================================================================

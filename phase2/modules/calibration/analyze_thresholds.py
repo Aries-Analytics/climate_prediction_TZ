@@ -12,11 +12,16 @@ Functions:
 """
 
 import json
+import sys
 from pathlib import Path
 from typing import Dict
 
 import numpy as np
 import pandas as pd
+
+# Add project root to path for imports
+project_root = Path(__file__).resolve().parent.parent.parent
+sys.path.insert(0, str(project_root))
 
 from utils.logger import log_error, log_info, log_warning
 

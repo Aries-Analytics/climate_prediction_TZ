@@ -1,0 +1,96 @@
+# Prometheus Alert Rules for Climate Early Warning System
+
+groups:
+  - name: pipeline_alerts
+    interval: 30s
+    rules:
+      # Pipeline execution failures
+      - alert: PipelineExecutionFailed
+        expr: increase(pipeline_execution_failures_total[1h]) > 0
+        for: 5m
+        labels:
+          severity: critical
+          component: pipeline
+        annotations:
+          summary: "Pipeline execution failed"
+          description: "Pipeline has failed {{ $value }} times in the last hour"
+          
+      # Low success rate
+      - alert: PipelineSuccessRateLow
+        expr: pipeline_execution_success_rate < 0.8
+        for: 10m
+        labels:
+          severity: warning
+          component: pipeline
+        annotations:
+          summary: "Pipeline success rate is low"
+          description: "Pipeline success rate is {{ $value | humanizePercentage }}, below 80% threshold"
+      
+      # Stale data
+      - alert: DataStale
+        expr: data_freshness_days > 7
+        for: 1h
+        labels:
+          severity: critical
+          component: data
+        annotations:
+          summary: "Climate data is stale"
+          description: "Climate data is {{ $value }} days old, exceeding 7-day threshold"
+      
+      # Stale forecasts
+      - alert: ForecastsStale
+        expr: forecast_freshness_days > 7
+        for: 1h
+        labels:
+          severity: critical
+          component: forecasts
+        annotations:
+          summary: "Forecasts are stale"
+          description: "Forecasts are {{ $value }} days old, exceeding 7-day threshold"
+      
+      # Long execution duration
+      - alert: PipelineExecutionSlow
+        expr: pipeline_execution_duration_seconds > 3600
+        for: 5m
+        labels:
+          severity: warning
+          component: pipeline
+        annotations:
+          summary: "Pipeline execution is slow"
+          description: "Pipeline execution took {{ $value | humanizeDuration }}, exceeding 1 hour"
+      
+      # No recent executions
+      - alert: PipelineNotRunning
+        expr: time() - pipeline_last_success_timestamp > 86400
+        for: 1h
+        labels:
+          severity: critical
+          component: pipeline
+        annotations:
+          summary: "Pipeline has not run successfully"
+          description: "No successful pipeline execution in the last 24 hours"
+
+  - name: system_alerts
+    interval: 30s
+    rules:
+      # Monitoring service down
+      - alert: MonitoringServiceDown
+        expr: up{job="pipeline-monitor"} == 0
+        for: 5m
+        labels:
+          severity: critical
+          component: monitoring
+        annotations:
+          summary: "Monitoring service is down"
+          description: "Pipeline monitoring service has been down for more than 5 minutes"
+      
+      # Backend API down
+      - alert: BackendAPIDown
+        expr: up{job="backend-api"} == 0
+        for: 5m
+        labels:
+          severity: critical
+          component: api
+        annotations:
+          summary: "Backend API is down"
+          description: "Backend API has been down for more than 5 minutes"

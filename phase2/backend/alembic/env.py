@@ -11,8 +11,20 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 from app.core.database import Base
 from app.core.config import settings
 
-# Import all models here to ensure they're registered with Base
-# from app.models import user, climate_data, trigger_events, etc.
+# CRITICAL: Import ALL models here to ensure they're registered with Base.metadata
+# This prevents Alembic autogenerate from thinking tables are "missing" and creating
+# dangerous migrations that drop existing tables.
+from app.models import (
+    trigger_event,
+    location,
+    user,
+    audit_log,
+    climate_data,
+    forecast,
+    model_metric,
+    model_prediction,
+    pipeline_execution
+)
 
 # this is the Alembic Config object
 config = context.config

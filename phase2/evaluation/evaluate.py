@@ -3,7 +3,7 @@ Evaluation Engine for Tanzania Climate Prediction Models
 Provides comprehensive model evaluation including seasonal performance analysis
 """
 
-from typing import Dict, Optional
+from typing import Dict, Optional, Any
 
 import numpy as np
 import pandas as pd
@@ -603,3 +603,366 @@ def generate_evaluation_report(
 def generate_report(model, metrics):
     """Legacy function for compatibility"""
     logger.info(f"Dry-run: evaluating model {model} with metrics {metrics}")
+
+
+
+def calculate_prediction_interval_coverage(
+    y_true: np.ndarray,
+    y_pred: np.ndarray,
+    y_std: np.ndarray,
+    confidence: float = 0.95
+) -> Dict[str, float]:
+    """
+    Calculate prediction interval coverage at specified confidence level.
+    
+    EXPANDED METRIC: Validates that prediction intervals have correct coverage.
+    
+    Args:
+        y_true: Actual values
+        y_pred: Predicted values (mean)
+        y_std: Standard deviation of predictions
+        confidence: Confidence level (default 0.95)
+        
+    Returns:
+        Dictionary with coverage metrics
+        
+    Requirements: 5.1
+    """
+    from scipy import stats
+    
+    # Calculate z-score for confidence level
+    z_score = stats.norm.ppf((1 + confidence) / 2)
+    
+    # Calculate prediction intervals
+    lower_bound = y_pred - z_score * y_std
+    upper_bound = y_pred + z_score * y_std
+    
+    # Check coverage
+    within_interval = (y_true >= lower_bound) & (y_true <= upper_bound)
+    actual_coverage = np.mean(within_interval)
+    
+    # Calculate interval width
+    interval_width = upper_bound - lower_bound
+    
+    results = {
+        'confidence_level': confidence,
+        'actual_coverage': float(actual_coverage),
+        'expected_coverage': confidence,
+        'coverage_error': float(actual_coverage - confidence),
+        'mean_interval_width': float(np.mean(interval_width)),
+        'median_interval_width': float(np.median(interval_width)),
+        'n_samples': len(y_true),
+        'n_within_interval': int(np.sum(within_interval))
+    }
+    
+    logger.info(
+        f"Prediction interval coverage: {actual_coverage:.2%} "
+        f"(expected: {confidence:.2%}, error: {actual_coverage - confidence:+.2%})"
+    )
+    
+    return results
+
+
+def calculate_seasonal_metrics(
+    y_true: np.ndarray,
+    y_pred: np.ndarray,
+    months: np.ndarray
+) -> Dict[str, Dict[str, float]]:
+    """
+    Calculate metrics separately for each season.
+    
+    EXPANDED METRIC: Provides season-specific performance breakdown.
+    
+    Seasons for Tanzania:
+    - Short rains (Vuli): October-December
+    - Long rains (Masika): March-May  
+    - Dry season: January-February, June-September
+    
+    Args:
+        y_true: Actual values
+        y_pred: Predicted values
+        months: Month numbers (1-12)
+        
+    Returns:
+        Dictionary with metrics for each season
+        
+    Requirements: 5.2
+    """
+    from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
+    
+    # Define seasons
+    seasons = {
+        'short_rains': [10, 11, 12],
+        'long_rains': [3, 4, 5],
+        'dry_season': [1, 2, 6, 7, 8, 9]
+    }
+    
+    seasonal_metrics = {}
+    
+    for season_name, season_months in seasons.items():
+        # Filter data for this season
+        mask = np.isin(months, season_months)
+        
+        if not mask.any():
+            logger.warning(f"No data for {season_name}")
+            continue
+        
+        y_true_season = y_true[mask]
+        y_pred_season = y_pred[mask]
+        
+        # Calculate metrics
+        if len(y_true_season) >= 2:
+            r2 = r2_score(y_true_season, y_pred_season)
+            rmse = np.sqrt(mean_squared_error(y_true_season, y_pred_season))
+            mae = mean_absolute_error(y_true_season, y_pred_season)
+            
+            # MAPE
+            mask_nonzero = y_true_season != 0
+            if mask_nonzero.any():
+                mape = np.mean(np.abs((y_true_season[mask_nonzero] - y_pred_season[mask_nonzero]) / y_true_season[mask_nonzero])) * 100
+            else:
+                mape = np.nan
+            
+            seasonal_metrics[season_name] = {
+                'r2': float(r2),
+                'rmse': float(rmse),
+                'mae': float(mae),
+                'mape': float(mape),
+                'n_samples': int(np.sum(mask))
+            }
+            
+            logger.info(f"{season_name}: R²={r2:.4f}, RMSE={rmse:.4f}, n={np.sum(mask)}")
+        else:
+            logger.warning(f"Insufficient data for {season_name} ({len(y_true_season)} samples)")
+    
+    return seasonal_metrics
+
+
+def calculate_skill_score(
+    y_true: np.ndarray,
+    y_pred: np.ndarray,
+    y_baseline: np.ndarray
+) -> Dict[str, float]:
+    """
+    Calculate skill scores relative to baseline model.
+    
+    EXPANDED METRIC: Measures improvement over climatology baseline.
+    
+    Skill Score = 1 - (MSE_model / MSE_baseline)
+    - Score > 0: Model better than baseline
+    - Score = 0: Model same as baseline
+    - Score < 0: Model worse than baseline
+    
+    Args:
+        y_true: Actual values
+        y_pred: Model predictions
+        y_baseline: Baseline predictions (e.g., climatology)
+        
+    Returns:
+        Dictionary with skill scores
+        
+    Requirements: 5.3
+    """
+    from sklearn.metrics import mean_squared_error, mean_absolute_error
+    
+    # Calculate MSE for model and baseline
+    mse_model = mean_squared_error(y_true, y_pred)
+    mse_baseline = mean_squared_error(y_true, y_baseline)
+    
+    # Calculate MAE for model and baseline
+    mae_model = mean_absolute_error(y_true, y_pred)
+    mae_baseline = mean_absolute_error(y_true, y_baseline)
+    
+    # Calculate skill scores
+    mse_skill_score = 1 - (mse_model / mse_baseline) if mse_baseline != 0 else np.nan
+    mae_skill_score = 1 - (mae_model / mae_baseline) if mae_baseline != 0 else np.nan
+    
+    # Calculate improvement percentages
+    mse_improvement = ((mse_baseline - mse_model) / mse_baseline * 100) if mse_baseline != 0 else np.nan
+    mae_improvement = ((mae_baseline - mae_model) / mae_baseline * 100) if mae_baseline != 0 else np.nan
+    
+    results = {
+        'mse_skill_score': float(mse_skill_score),
+        'mae_skill_score': float(mae_skill_score),
+        'mse_improvement_pct': float(mse_improvement),
+        'mae_improvement_pct': float(mae_improvement),
+        'model_mse': float(mse_model),
+        'baseline_mse': float(mse_baseline),
+        'model_mae': float(mae_model),
+        'baseline_mae': float(mae_baseline)
+    }
+    
+    logger.info(
+        f"Skill scores: MSE={mse_skill_score:.4f} ({mse_improvement:+.1f}%), "
+        f"MAE={mae_skill_score:.4f} ({mae_improvement:+.1f}%)"
+    )
+    
+    return results
+
+
+def identify_worst_predictions(
+    y_true: np.ndarray,
+    y_pred: np.ndarray,
+    dates: Optional[pd.Series] = None,
+    n_worst: int = 10
+) -> pd.DataFrame:
+    """
+    Identify worst-performing predictions for error analysis.
+    
+    EXPANDED METRIC: Helps identify problematic months/conditions.
+    
+    Args:
+        y_true: Actual values
+        y_pred: Predicted values
+        dates: Optional date information
+        n_worst: Number of worst predictions to return
+        
+    Returns:
+        DataFrame with worst predictions sorted by absolute error
+        
+    Requirements: 5.4
+    """
+    # Calculate errors
+    errors = y_pred - y_true
+    abs_errors = np.abs(errors)
+    pct_errors = np.abs(errors / (y_true + 1e-10)) * 100
+    
+    # Create DataFrame
+    results_df = pd.DataFrame({
+        'actual': y_true,
+        'predicted': y_pred,
+        'error': errors,
+        'abs_error': abs_errors,
+        'pct_error': pct_errors
+    })
+    
+    # Add dates if provided
+    if dates is not None:
+        results_df['date'] = dates.values
+    else:
+        results_df['index'] = np.arange(len(y_true))
+    
+    # Sort by absolute error and get worst predictions
+    worst_df = results_df.nlargest(n_worst, 'abs_error')
+    
+    logger.info(f"Identified {n_worst} worst predictions:")
+    logger.info(f"  Mean absolute error: {worst_df['abs_error'].mean():.4f}")
+    logger.info(f"  Max absolute error: {worst_df['abs_error'].max():.4f}")
+    
+    return worst_df
+
+
+def generate_comprehensive_report(
+    y_true: np.ndarray,
+    y_pred: np.ndarray,
+    y_baseline: Optional[np.ndarray] = None,
+    months: Optional[np.ndarray] = None,
+    dates: Optional[pd.Series] = None,
+    model_name: str = "Model",
+    confidence_level: float = 0.95
+) -> Dict[str, Any]:
+    """
+    Generate comprehensive evaluation report with all expanded metrics.
+    
+    EXPANDED METRIC: Combines all evaluation metrics into single report.
+    
+    Args:
+        y_true: Actual values
+        y_pred: Predicted values
+        y_baseline: Optional baseline predictions for skill scores
+        months: Optional month numbers for seasonal analysis
+        dates: Optional dates for worst prediction analysis
+        model_name: Name of the model
+        confidence_level: Confidence level for intervals
+        
+    Returns:
+        Dictionary with comprehensive evaluation metrics
+        
+    Requirements: 5.5
+    """
+    logger.info(f"Generating comprehensive evaluation report for {model_name}")
+    
+    report = {
+        'model_name': model_name,
+        'n_samples': len(y_true)
+    }
+    
+    # Basic metrics
+    report['basic_metrics'] = calculate_metrics(y_true, y_pred)
+    
+    # Seasonal metrics
+    if months is not None:
+        report['seasonal_metrics'] = calculate_seasonal_metrics(y_true, y_pred, months)
+    
+    # Skill scores
+    if y_baseline is not None:
+        report['skill_scores'] = calculate_skill_score(y_true, y_pred, y_baseline)
+    
+    # Worst predictions
+    report['worst_predictions'] = identify_worst_predictions(
+        y_true, y_pred, dates, n_worst=10
+    ).to_dict('records')
+    
+    # Summary statistics
+    errors = y_pred - y_true
+    report['error_statistics'] = {
+        'mean_error': float(np.mean(errors)),
+        'median_error': float(np.median(errors)),
+        'std_error': float(np.std(errors)),
+        'min_error': float(np.min(errors)),
+        'max_error': float(np.max(errors)),
+        'q25_error': float(np.percentile(errors, 25)),
+        'q75_error': float(np.percentile(errors, 75))
+    }
+    
+    logger.info("Comprehensive report generated successfully")
+    
+    return report
+
+
+def compare_models(
+    y_true: np.ndarray,
+    predictions_dict: Dict[str, np.ndarray],
+    baseline_name: Optional[str] = None
+) -> pd.DataFrame:
+    """
+    Compare multiple models side-by-side.
+    
+    Args:
+        y_true: Actual values
+        predictions_dict: Dictionary mapping model names to predictions
+        baseline_name: Optional name of baseline model for skill scores
+        
+    Returns:
+        DataFrame with comparison metrics
+    """
+    from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
+    
+    comparison_data = []
+    
+    baseline_pred = predictions_dict.get(baseline_name) if baseline_name else None
+    
+    for model_name, y_pred in predictions_dict.items():
+        metrics = {
+            'Model': model_name,
+            'R²': r2_score(y_true, y_pred),
+            'RMSE': np.sqrt(mean_squared_error(y_true, y_pred)),
+            'MAE': mean_absolute_error(y_true, y_pred)
+        }
+        
+        # Add skill score if baseline provided
+        if baseline_pred is not None and model_name != baseline_name:
+            mse_model = mean_squared_error(y_true, y_pred)
+            mse_baseline = mean_squared_error(y_true, baseline_pred)
+            skill_score = 1 - (mse_model / mse_baseline)
+            metrics['Skill Score'] = skill_score
+            metrics['Improvement %'] = ((mse_baseline - mse_model) / mse_baseline * 100)
+        
+        comparison_data.append(metrics)
+    
+    df = pd.DataFrame(comparison_data)
+    df = df.sort_values('R²', ascending=False).reset_index(drop=True)
+    
+    logger.info(f"Compared {len(predictions_dict)} models")
+    
+    return df

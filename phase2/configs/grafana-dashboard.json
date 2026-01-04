@@ -1,0 +1,301 @@
+{
+  "dashboard": {
+    "title": "Climate Early Warning System - Pipeline Monitoring",
+    "tags": ["climate", "pipeline", "monitoring"],
+    "timezone": "utc",
+    "schemaVersion": 16,
+    "version": 1,
+    "refresh": "30s",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Pipeline Execution Status",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 6, "x": 0, "y": 0},
+        "targets": [
+          {
+            "expr": "pipeline_execution_success_rate",
+            "legendFormat": "Success Rate",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "graphMode": "area",
+          "colorMode": "value",
+          "unit": "percentunit"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "red"},
+                {"value": 0.8, "color": "yellow"},
+                {"value": 0.95, "color": "green"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 2,
+        "title": "Total Executions",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 6, "x": 6, "y": 0},
+        "targets": [
+          {
+            "expr": "pipeline_execution_total",
+            "legendFormat": "Total",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "graphMode": "area",
+          "colorMode": "value"
+        }
+      },
+      {
+        "id": 3,
+        "title": "Failed Executions",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 6, "x": 12, "y": 0},
+        "targets": [
+          {
+            "expr": "pipeline_execution_failures_total",
+            "legendFormat": "Failures",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "graphMode": "area",
+          "colorMode": "value"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 1, "color": "yellow"},
+                {"value": 5, "color": "red"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 4,
+        "title": "Last Execution Duration",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 6, "x": 18, "y": 0},
+        "targets": [
+          {
+            "expr": "pipeline_execution_duration_seconds",
+            "legendFormat": "Duration",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "graphMode": "area",
+          "colorMode": "value",
+          "unit": "s"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 1800, "color": "yellow"},
+                {"value": 3600, "color": "red"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 5,
+        "title": "Execution Duration Over Time",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
+        "targets": [
+          {
+            "expr": "pipeline_execution_duration_seconds",
+            "legendFormat": "Duration (seconds)",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "s", "label": "Duration"},
+          {"format": "short"}
+        ],
+        "xaxis": {"mode": "time"}
+      },
+      {
+        "id": 6,
+        "title": "Success Rate Over Time",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4},
+        "targets": [
+          {
+            "expr": "pipeline_execution_success_rate",
+            "legendFormat": "Success Rate",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "percentunit", "label": "Success Rate", "min": 0, "max": 1},
+          {"format": "short"}
+        ],
+        "xaxis": {"mode": "time"}
+      },
+      {
+        "id": 7,
+        "title": "Data Freshness",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 6, "x": 0, "y": 12},
+        "targets": [
+          {
+            "expr": "data_freshness_days",
+            "legendFormat": "Days",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "graphMode": "area",
+          "colorMode": "value",
+          "unit": "d"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 2, "color": "yellow"},
+                {"value": 7, "color": "red"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 8,
+        "title": "Forecast Freshness",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 6, "x": 6, "y": 12},
+        "targets": [
+          {
+            "expr": "forecast_freshness_days",
+            "legendFormat": "Days",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "graphMode": "area",
+          "colorMode": "value",
+          "unit": "d"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 2, "color": "yellow"},
+                {"value": 7, "color": "red"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 9,
+        "title": "Records Ingested",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 6, "x": 12, "y": 12},
+        "targets": [
+          {
+            "expr": "pipeline_data_records_ingested_total",
+            "legendFormat": "Records",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "graphMode": "area",
+          "colorMode": "value"
+        }
+      },
+      {
+        "id": 10,
+        "title": "Forecasts Generated",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 6, "x": 18, "y": 12},
+        "targets": [
+          {
+            "expr": "pipeline_forecasts_generated_total",
+            "legendFormat": "Forecasts",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "graphMode": "area",
+          "colorMode": "value"
+        }
+      },
+      {
+        "id": 11,
+        "title": "Execution Rate (per hour)",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
+        "targets": [
+          {
+            "expr": "rate(pipeline_execution_total[1h])",
+            "legendFormat": "Executions/hour",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "short", "label": "Rate"},
+          {"format": "short"}
+        ],
+        "xaxis": {"mode": "time"}
+      },
+      {
+        "id": 12,
+        "title": "Failure Rate (per hour)",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16},
+        "targets": [
+          {
+            "expr": "rate(pipeline_execution_failures_total[1h])",
+            "legendFormat": "Failures/hour",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "short", "label": "Rate"},
+          {"format": "short"}
+        ],
+        "xaxis": {"mode": "time"},
+        "alert": {
+          "conditions": [
+            {
+              "evaluator": {"params": [0], "type": "gt"},
+              "operator": {"type": "and"},
+              "query": {"params": ["A", "5m", "now"]},
+              "reducer": {"params": [], "type": "avg"},
+              "type": "query"
+            }
+          ],
+          "executionErrorState": "alerting",
+          "frequency": "1m",
+          "handler": 1,
+          "name": "Pipeline Failures",
+          "noDataState": "no_data",
+          "notifications": []
+        }
+      }
+    ]
+  }
+}

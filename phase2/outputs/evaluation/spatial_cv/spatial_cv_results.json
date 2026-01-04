@@ -1,0 +1,218 @@
+{
+  "random_forest_Arusha": {
+    "model": "random_forest",
+    "hold_out_location": "Arusha",
+    "train_locations": [
+      "Dar es Salaam",
+      "Dodoma",
+      "Mbeya",
+      "Morogoro",
+      "Mwanza"
+    ],
+    "metrics": {
+      "r2": 0.6647954394068791,
+      "rmse": 0.5341937531247032,
+      "mae": 0.3686469674753235,
+      "mape": 163.04932434056434,
+      "n_samples": 312
+    }
+  },
+  "xgboost_Arusha": {
+    "model": "xgboost",
+    "hold_out_location": "Arusha",
+    "train_locations": [
+      "Dar es Salaam",
+      "Dodoma",
+      "Mbeya",
+      "Morogoro",
+      "Mwanza"
+    ],
+    "metrics": {
+      "r2": 0.7069106896490731,
+      "rmse": 0.49950959529044653,
+      "mae": 0.32440360301971394,
+      "mape": 274.1232739036933,
+      "n_samples": 312
+    }
+  },
+  "random_forest_Dar es Salaam": {
+    "model": "random_forest",
+    "hold_out_location": "Dar es Salaam",
+    "train_locations": [
+      "Arusha",
+      "Dodoma",
+      "Mbeya",
+      "Morogoro",
+      "Mwanza"
+    ],
+    "metrics": {
+      "r2": 0.67555669311338,
+      "rmse": 0.6020559690710844,
+      "mae": 0.4346044889736431,
+      "mape": 130.28473949244238,
+      "n_samples": 312
+    }
+  },
+  "xgboost_Dar es Salaam": {
+    "model": "xgboost",
+    "hold_out_location": "Dar es Salaam",
+    "train_locations": [
+      "Arusha",
+      "Dodoma",
+      "Mbeya",
+      "Morogoro",
+      "Mwanza"
+    ],
+    "metrics": {
+      "r2": 0.7957342307129294,
+      "rmse": 0.4777110134439669,
+      "mae": 0.34575108289349926,
+      "mape": 126.29995927978175,
+      "n_samples": 312
+    }
+  },
+  "random_forest_Dodoma": {
+    "model": "random_forest",
+    "hold_out_location": "Dodoma",
+    "train_locations": [
+      "Arusha",
+      "Dar es Salaam",
+      "Mbeya",
+      "Morogoro",
+      "Mwanza"
+    ],
+    "metrics": {
+      "r2": 0.6017377339086466,
+      "rmse": 0.5481804639737354,
+      "mae": 0.40199892413606464,
+      "mape": 87.50731921931899,
+      "n_samples": 312
+    }
+  },
+  "xgboost_Dodoma": {
+    "model": "xgboost",
+    "hold_out_location": "Dodoma",
+    "train_locations": [
+      "Arusha",
+      "Dar es Salaam",
+      "Mbeya",
+      "Morogoro",
+      "Mwanza"
+    ],
+    "metrics": {
+      "r2": 0.7253698538330652,
+      "rmse": 0.45521134568543054,
+      "mae": 0.31754164150215275,
+      "mape": 71.20954162217996,
+      "n_samples": 312
+    }
+  },
+  "random_forest_Mbeya": {
+    "model": "random_forest",
+    "hold_out_location": "Mbeya",
+    "train_locations": [
+      "Arusha",
+      "Dar es Salaam",
+      "Dodoma",
+      "Morogoro",
+      "Mwanza"
+    ],
+    "metrics": {
+      "r2": 0.7553042871742857,
+      "rmse": 0.6249968423854443,
+      "mae": 0.4529184784405315,
+      "mape": 98.61018286114546,
+      "n_samples": 312
+    }
+  },
+  "xgboost_Mbeya": {
+    "model": "xgboost",
+    "hold_out_location": "Mbeya",
+    "train_locations": [
+      "Arusha",
+      "Dar es Salaam",
+      "Dodoma",
+      "Morogoro",
+      "Mwanza"
+    ],
+    "metrics": {
+      "r2": 0.7809271551278688,
+      "rmse": 0.5913694932902718,
+      "mae": 0.39382542509043067,
+      "mape": 130.5572278881371,
+      "n_samples": 312
+    }
+  },
+  "random_forest_Morogoro": {
+    "model": "random_forest",
+    "hold_out_location": "Morogoro",
+    "train_locations": [
+      "Arusha",
+      "Dar es Salaam",
+      "Dodoma",
+      "Mbeya",
+      "Mwanza"
+    ],
+    "metrics": {
+      "r2": 0.7954128257963698,
+      "rmse": 0.3956783421122979,
+      "mae": 0.2872871201621845,
+      "mape": 382.62633927308013,
+      "n_samples": 312
+    }
+  },
+  "xgboost_Morogoro": {
+    "model": "xgboost",
+    "hold_out_location": "Morogoro",
+    "train_locations": [
+      "Arusha",
+      "Dar es Salaam",
+      "Dodoma",
+      "Mbeya",
+      "Mwanza"
+    ],
+    "metrics": {
+      "r2": 0.8305777956417445,
+      "rmse": 0.3600710800943615,
+      "mae": 0.26509587045142213,
+      "mape": 247.2886563414097,
+      "n_samples": 312
+    }
+  },
+  "random_forest_Mwanza": {
+    "model": "random_forest",
+    "hold_out_location": "Mwanza",
+    "train_locations": [
+      "Arusha",
+      "Dar es Salaam",
+      "Dodoma",
+      "Mbeya",
+      "Morogoro"
+    ],
+    "metrics": {
+      "r2": 0.7112914239877962,
+      "rmse": 0.4440288723480464,
+      "mae": 0.31972046218697214,
+      "mape": 218.68994480756112,
+      "n_samples": 312
+    }
+  },
+  "xgboost_Mwanza": {
+    "model": "xgboost",
+    "hold_out_location": "Mwanza",
+    "train_locations": [
+      "Arusha",
+      "Dar es Salaam",
+      "Dodoma",
+      "Mbeya",
+      "Morogoro"
+    ],
+    "metrics": {
+      "r2": 0.6682097836572184,
+      "rmse": 0.47600679891360453,
+      "mae": 0.3403503635175934,
+      "mape": 962.409855570775,
+      "n_samples": 312
+    }
+  }
+}

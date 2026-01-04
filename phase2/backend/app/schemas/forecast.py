@@ -41,6 +41,7 @@ class ForecastCreate(ForecastBase):
 class ForecastResponse(ForecastBase):
     id: int
     created_at: datetime
+    is_stale: bool = False
     
     model_config = ConfigDict(
         from_attributes=True,

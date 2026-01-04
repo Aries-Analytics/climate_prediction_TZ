@@ -20,6 +20,12 @@ tensorflow==2.15.0
 scikit-learn==1.3.2
 xgboost==2.0.3
 
+# Scheduling
+APScheduler==3.10.4
+
+# Monitoring
+Flask==3.0.0
+
 # Testing
 pytest==7.4.3
 pytest-cov==4.1.0

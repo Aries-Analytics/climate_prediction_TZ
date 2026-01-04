@@ -1,0 +1,29 @@
+{
+  "training_start_time": "2025-12-29T21:04:21.216640",
+  "data_shapes": {
+    "train": [
+      1122,
+      375
+    ],
+    "val": [
+      372,
+      375
+    ],
+    "test": [
+      378,
+      375
+    ]
+  },
+  "models": {
+    "random_forest": {
+      "error": "could not convert string to float: 'good'"
+    },
+    "xgboost": {
+      "error": "could not convert string to float: 'good'"
+    },
+    "lstm": {
+      "error": "could not convert string to float: 'good'"
+    }
+  },
+  "training_end_time": "2025-12-29T21:04:21.272145"
+}

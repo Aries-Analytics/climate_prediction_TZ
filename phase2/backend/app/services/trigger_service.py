@@ -38,8 +38,8 @@ def get_trigger_events(
     
     query = db.query(TriggerEvent)
     
-    # Filter by Tanzania location
-    query = _filter_by_tanzania_location(query)
+    # Note: Removed hardcoded location filter to support all 6 locations
+    # query = _filter_by_tanzania_location(query)
     
     if start_date:
         query = query.filter(TriggerEvent.date >= start_date)
@@ -90,11 +90,11 @@ def get_trigger_timeline(
         func.sum(TriggerEvent.payout_amount).label('total_payout')
     )
     
-    # Filter by Tanzania location
-    query = query.filter(
-        TriggerEvent.location_lat == TANZANIA_LAT,
-        TriggerEvent.location_lon == TANZANIA_LON
-    )
+    # Note: Removed hardcoded location filter to support all 6 locations
+    # query = query.filter(
+    #     TriggerEvent.location_lat == TANZANIA_LAT,
+    #     TriggerEvent.location_lon == TANZANIA_LON
+    # )
     
     if start_date:
         query = query.filter(TriggerEvent.date >= start_date)
@@ -245,8 +245,8 @@ def get_trigger_statistics(
     """Calculate statistics for trigger events (Tanzania only)"""
     query = db.query(TriggerEvent)
     
-    # Filter by Tanzania location
-    query = _filter_by_tanzania_location(query)
+    # Note: Removed hardcoded location filter to support all 6 locations
+    # query = _filter_by_tanzania_location(query)
     
     if start_date:
         query = query.filter(TriggerEvent.date >= start_date)
@@ -257,13 +257,10 @@ def get_trigger_statistics(
     total_count = query.count()
     total_payout = query.with_entities(func.sum(TriggerEvent.payout_amount)).scalar() or 0
     
-    # Count by type (Tanzania only)
+    # Note: Removed hardcoded location filter to support all 6 locations
     type_counts = db.query(
         TriggerEvent.trigger_type,
         func.count(TriggerEvent.id).label('count')
-    ).filter(
-        TriggerEvent.location_lat == TANZANIA_LAT,
-        TriggerEvent.location_lon == TANZANIA_LON
     )
     
     if start_date:
@@ -273,8 +270,23 @@ def get_trigger_statistics(
     
     type_counts = type_counts.group_by(TriggerEvent.trigger_type).all()
     
+    # Convert to dict for easy access
+    counts_by_type = {trigger_type: count for trigger_type, count in type_counts}
+    
+    # Total time periods: 6 locations * 312 months (2000-2025) = 1872
+    # This is the denominator for calculating trigger rates
+    TOTAL_TIME_PERIODS = 1872
+    
+    # Calculate rates as percentage of total time periods
+    rates = {
+        trigger_type: round(count / TOTAL_TIME_PERIODS * 100, 1)
+        for trigger_type, count in counts_by_type.items()
+    }
+    
     return {
         'total_count': total_count,
         'total_payout': float(total_payout),
-        'by_type': {trigger_type: count for trigger_type, count in type_counts}
+        'total_periods': TOTAL_TIME_PERIODS,
+        'by_type': counts_by_type,
+        'rates': rates  # Percentage of time periods with each trigger type
     }

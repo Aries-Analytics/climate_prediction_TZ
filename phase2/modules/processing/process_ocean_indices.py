@@ -16,7 +16,7 @@ Features created:
 import numpy as np
 import pandas as pd
 
-from utils.config import get_output_path
+from utils.config import get_output_path, get_data_path
 from utils.logger import log_error, log_info
 from utils.validator import validate_dataframe
 
@@ -66,6 +66,17 @@ def process(data):
 
     # Create date column for easier manipulation
     df["date"] = pd.to_datetime(df[["year", "month"]].assign(day=1))
+    
+    # Handle missing values in ocean indices
+    # Forward fill is appropriate because ENSO/IOD phases persist for months
+    # This is scientifically sound: ocean patterns are slow-moving (3-6 month persistence)
+    if "oni" in df.columns:
+        df["oni"] = df["oni"].ffill()  # Forward fill: use last known value
+        df["oni"] = df["oni"].bfill()  # Backfill any remaining NaN at start
+        
+    if "iod" in df.columns:
+        df["iod"] = df["iod"].ffill()  # Forward fill: use last known value
+        df["iod"] = df["iod"].bfill()  # Backfill any remaining NaN at start
 
     # 1. ENSO INDICATORS
     if "oni" in df.columns:
@@ -114,7 +125,7 @@ def process(data):
     validate_dataframe(df, expected_columns=expected_cols, dataset_name="Ocean Indices Processed")
 
     # Save processed data
-    output_path = get_output_path("processed", "ocean_indices_processed.csv")
+    output_path = get_data_path("processed", "ocean_indices_processed.csv")
     df.to_csv(output_path, index=False)
     log_info(f"Processed Ocean Indices data saved to: {output_path}")
     log_info(f"[PROCESS] Ocean Indices processing complete. Output shape: {df.shape}")
@@ -136,9 +147,8 @@ def _add_enso_indicators(df):
     )
 
     # Numeric ENSO phase (-2 to 2)
-    df["enso_phase"] = pd.cut(df["oni"], bins=[-np.inf, -1.5, -0.5, 0.5, 1.5, np.inf], labels=[-2, -1, 0, 1, 2]).astype(
-        int
-    )
+    enso_phase_raw = pd.cut(df["oni"], bins=[-np.inf, -1.5, -0.5, 0.5, 1.5, np.inf], labels=[-2, -1, 0, 1, 2])
+    df["enso_phase"] = pd.to_numeric(enso_phase_raw, errors='coerce').fillna(0).astype(int)
 
     # ENSO impact score for East Africa (-1 to 1, positive = more rain)
     df["enso_impact_score"] = np.clip(df["oni"] / 2, -1, 1)
@@ -150,19 +160,19 @@ def _add_enso_indicators(df):
     df["enso_persistence"] = _calculate_persistence(df["enso_phase"])
 
     # ENSO phase transition indicator
-    df["enso_phase_change"] = (df["enso_phase"] != df["enso_phase"].shift(1)).astype(int)
+    df["enso_phase_change"] = (df["enso_phase"] != df["enso_phase"].shift(1)).fillna(0).astype(int)
 
     # El Niño indicator (ONI > 0.5 for insurance triggers)
-    df["is_el_nino"] = (df["oni"] > 0.5).astype(int)
+    df["is_el_nino"] = (df["oni"] > 0.5).fillna(0).astype(int)
 
     # La Niña indicator (ONI < -0.5 for insurance triggers)
-    df["is_la_nina"] = (df["oni"] < -0.5).astype(int)
+    df["is_la_nina"] = (df["oni"] < -0.5).fillna(0).astype(int)
 
     # Strong El Niño (historically associated with floods)
-    df["is_strong_el_nino"] = (df["oni"] > 1.5).astype(int)
+    df["is_strong_el_nino"] = (df["oni"] > 1.5).fillna(0).astype(int)
 
     # Strong La Niña (historically associated with droughts)
-    df["is_strong_la_nina"] = (df["oni"] < -1.5).astype(int)
+    df["is_strong_la_nina"] = (df["oni"] < -1.5).fillna(0).astype(int)
 
     # ENSO intensity (absolute value)
     df["enso_intensity"] = np.abs(df["oni"])
@@ -184,9 +194,8 @@ def _add_iod_indicators(df):
     )
 
     # Numeric IOD phase (-2 to 2)
-    df["iod_phase"] = pd.cut(df["iod"], bins=[-np.inf, -0.8, -0.4, 0.4, 0.8, np.inf], labels=[-2, -1, 0, 1, 2]).astype(
-        int
-    )
+    iod_phase_raw = pd.cut(df["iod"], bins=[-np.inf, -0.8, -0.4, 0.4, 0.8, np.inf], labels=[-2, -1, 0, 1, 2])
+    df["iod_phase"] = pd.to_numeric(iod_phase_raw, errors='coerce').fillna(0).astype(int)
 
     # IOD impact score for East Africa (-1 to 1, positive = more rain)
     df["iod_impact_score"] = np.clip(df["iod"] / 1.5, -1, 1)
@@ -198,19 +207,19 @@ def _add_iod_indicators(df):
     df["iod_persistence"] = _calculate_persistence(df["iod_phase"])
 
     # IOD phase transition indicator
-    df["iod_phase_change"] = (df["iod_phase"] != df["iod_phase"].shift(1)).astype(int)
+    df["iod_phase_change"] = (df["iod_phase"] != df["iod_phase"].shift(1)).fillna(0).astype(int)
 
     # Positive IOD indicator (IOD > 0.4 for insurance triggers)
-    df["is_positive_iod"] = (df["iod"] > 0.4).astype(int)
+    df["is_positive_iod"] = (df["iod"] > 0.4).fillna(0).astype(int)
 
     # Negative IOD indicator (IOD < -0.4 for insurance triggers)
-    df["is_negative_iod"] = (df["iod"] < -0.4).astype(int)
+    df["is_negative_iod"] = (df["iod"] < -0.4).fillna(0).astype(int)
 
     # Strong positive IOD (historically associated with floods)
-    df["is_strong_positive_iod"] = (df["iod"] > 0.8).astype(int)
+    df["is_strong_positive_iod"] = (df["iod"] > 0.8).fillna(0).astype(int)
 
     # Strong negative IOD (historically associated with droughts)
-    df["is_strong_negative_iod"] = (df["iod"] < -0.8).astype(int)
+    df["is_strong_negative_iod"] = (df["iod"] < -0.8).fillna(0).astype(int)
 
     # IOD intensity (absolute value)
     df["iod_intensity"] = np.abs(df["iod"])
@@ -232,18 +241,18 @@ def _add_combined_climate_impacts(df):
     df["enso_iod_product"] = df["oni"] * df["iod"]
 
     # Favorable conditions for rainfall (El Niño + Positive IOD)
-    df["favorable_rainfall_climate"] = ((df["oni"] > 0.5) & (df["iod"] > 0.4)).astype(int)
+    df["favorable_rainfall_climate"] = ((df["oni"] > 0.5) & (df["iod"] > 0.4)).fillna(0).astype(int)
 
     # Drought risk conditions (La Niña + Negative IOD)
-    df["drought_risk_climate"] = ((df["oni"] < -0.5) & (df["iod"] < -0.4)).astype(int)
+    df["drought_risk_climate"] = ((df["oni"] < -0.5) & (df["iod"] < -0.4)).fillna(0).astype(int)
 
     # Flood risk conditions (Strong El Niño + Strong Positive IOD)
-    df["flood_risk_climate"] = ((df["oni"] > 1.0) & (df["iod"] > 0.6)).astype(int)
+    df["flood_risk_climate"] = ((df["oni"] > 1.0) & (df["iod"] > 0.6)).fillna(0).astype(int)
 
     # Conflicting signals (ENSO and IOD in opposite phases)
     df["conflicting_signals"] = (
         ((df["oni"] > 0.5) & (df["iod"] < -0.4)) | ((df["oni"] < -0.5) & (df["iod"] > 0.4))
-    ).astype(int)
+    ).fillna(0).astype(int)
 
     # Climate uncertainty score (0-1, higher = more uncertain)
     df["climate_uncertainty"] = _calculate_climate_uncertainty(df)
@@ -350,9 +359,9 @@ def _add_climate_risk_indicators(df):
 
     # Early warning indicator (risk developing in next 3 months)
     if "enso_3month_ahead" in df.columns and "iod_3month_ahead" in df.columns:
-        df["early_warning_drought"] = ((df["enso_3month_ahead"] < -0.5) & (df["iod_3month_ahead"] < -0.4)).astype(int)
+        df["early_warning_drought"] = ((df["enso_3month_ahead"] < -0.5) & (df["iod_3month_ahead"] < -0.4)).fillna(0).astype(int)
 
-        df["early_warning_flood"] = ((df["enso_3month_ahead"] > 1.0) & (df["iod_3month_ahead"] > 0.6)).astype(int)
+        df["early_warning_flood"] = ((df["enso_3month_ahead"] > 1.0) & (df["iod_3month_ahead"] > 0.6)).fillna(0).astype(int)
 
     return df
 
@@ -368,34 +377,34 @@ def _add_insurance_triggers(df):
     if "oni" in df.columns and "iod" in df.columns:
         df["climate_drought_trigger"] = (
             (df["oni"] < -0.5) & (df["iod"] < -0.4) & (df["enso_persistence"] >= 3)
-        ).astype(int)
+        ).fillna(0).astype(int)
 
         # Drought trigger confidence
         drought_signals = [
-            (df["oni"] < -0.5).astype(float),
-            (df["iod"] < -0.4).astype(float),
-            (df["enso_persistence"] >= 3).astype(float),
-            (df["drought_probability"] > 0.5).astype(float),
+            (df["oni"] < -0.5).fillna(0).astype(float),
+            (df["iod"] < -0.4).fillna(0).astype(float),
+            (df["enso_persistence"] >= 3).fillna(0).astype(float),
+            (df["drought_probability"] > 0.5).fillna(0).astype(float),
         ]
         df["climate_drought_trigger_confidence"] = np.mean(drought_signals, axis=0)
 
     # FLOOD TRIGGER (climate-based)
     # Trigger if: Strong El Niño + Positive IOD
     if "oni" in df.columns and "iod" in df.columns:
-        df["climate_flood_trigger"] = ((df["oni"] > 1.0) & (df["iod"] > 0.6)).astype(int)
+        df["climate_flood_trigger"] = ((df["oni"] > 1.0) & (df["iod"] > 0.6)).fillna(0).astype(int)
 
         # Flood trigger confidence
         flood_signals = [
-            (df["oni"] > 1.0).astype(float),
-            (df["iod"] > 0.6).astype(float),
-            (df["flood_probability"] > 0.4).astype(float),
-            (df["combined_intensity"] > 1.0).astype(float),
+            (df["oni"] > 1.0).fillna(0).astype(float),
+            (df["iod"] > 0.6).fillna(0).astype(float),
+            (df["flood_probability"] > 0.4).fillna(0).astype(float),
+            (df["combined_intensity"] > 1.0).fillna(0).astype(float),
         ]
         df["climate_flood_trigger_confidence"] = np.mean(flood_signals, axis=0)
 
     # COMBINED TRIGGER
     if "climate_drought_trigger" in df.columns and "climate_flood_trigger" in df.columns:
-        df["any_climate_trigger"] = (df["climate_drought_trigger"] | df["climate_flood_trigger"]).astype(int)
+        df["any_climate_trigger"] = (df["climate_drought_trigger"] | df["climate_flood_trigger"]).fillna(0).astype(int)
 
     # Trigger severity (for payout calculation)
     if "drought_risk_score" in df.columns and "flood_risk_score" in df.columns:

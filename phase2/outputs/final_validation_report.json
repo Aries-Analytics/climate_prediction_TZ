@@ -1,0 +1,192 @@
+{
+  "generated_at": "2025-11-19T01:31:37.932816",
+  "trigger_rates": {
+    "flood": {
+      "rate": 0.09722222222222222,
+      "target_min": 0.05,
+      "target_max": 0.15,
+      "pass": true
+    },
+    "drought": {
+      "rate": 0.12152777777777778,
+      "target_min": 0.08,
+      "target_max": 0.2,
+      "pass": true
+    },
+    "crop_failure": {
+      "rate": 0.059233449477351915,
+      "target_min": 0.03,
+      "target_max": 0.1,
+      "pass": true
+    },
+    "overall_pass": true
+  },
+  "financial_sustainability": {
+    "combined_trigger_rate": {
+      "rate": 0.2152777777777778,
+      "threshold": 0.3,
+      "pass": true
+    },
+    "avg_triggers_per_year": {
+      "value": 2.5833333333333335,
+      "threshold": 6,
+      "pass": true
+    },
+    "sustainable": true
+  },
+  "data_quality": {
+    "record_count": {
+      "actual": 288,
+      "expected": 288,
+      "pass": true
+    },
+    "missing_values": {
+      "max_missing_pct": 0.0,
+      "threshold": 0.05,
+      "pass": true
+    },
+    "temporal_consistency": {
+      "duplicates": 0.0,
+      "pass": true
+    },
+    "overall_pass": true
+  },
+  "known_events": {
+    "total_events": 12,
+    "total_detected": 8,
+    "overall_detection_rate": 0.6666666666666666,
+    "flood_results": {
+      "total_events": 7,
+      "detected_events": 7,
+      "missed_events": 0,
+      "details": [
+        {
+          "event": "December 2006 floods",
+          "year": 2006,
+          "month": 12,
+          "severity": "severe",
+          "detected": true,
+          "confidence": 0.625,
+          "rainfall_mm": 268.64,
+          "rainfall_7day": 507.50000000000006
+        },
+        {
+          "event": "April 2018 floods (Dar es Salaam)",
+          "year": 2018,
+          "month": 4,
+          "severity": "severe",
+          "detected": true,
+          "confidence": 0.8125,
+          "rainfall_mm": 243.06,
+          "rainfall_7day": 1066.85
+        },
+        {
+          "event": "December 2019 floods",
+          "year": 2019,
+          "month": 12,
+          "severity": "moderate",
+          "detected": true,
+          "confidence": 0.4375,
+          "rainfall_mm": 230.25,
+          "rainfall_7day": 522.3300000000002
+        },
+        {
+          "event": "March 2020 floods",
+          "year": 2020,
+          "month": 3,
+          "severity": "severe",
+          "detected": true,
+          "confidence": 0.8125,
+          "rainfall_mm": 278.04,
+          "rainfall_7day": 1148.73
+        },
+        {
+          "event": "April 2020 floods",
+          "year": 2020,
+          "month": 4,
+          "severity": "moderate",
+          "detected": true,
+          "confidence": 0.4375,
+          "rainfall_mm": 197.69,
+          "rainfall_7day": 1327.97
+        },
+        {
+          "event": "January 2022 floods",
+          "year": 2022,
+          "month": 1,
+          "severity": "severe",
+          "detected": true,
+          "confidence": 0.625,
+          "rainfall_mm": 257.57,
+          "rainfall_7day": 510.4200000000001
+        },
+        {
+          "event": "February 2022 floods",
+          "year": 2022,
+          "month": 2,
+          "severity": "severe",
+          "detected": true,
+          "confidence": 0.625,
+          "rainfall_mm": 236.75,
+          "rainfall_7day": 740.1600000000001
+        }
+      ],
+      "detection_rate": 1.0
+    },
+    "drought_results": {
+      "total_events": 5,
+      "detected_events": 1,
+      "missed_events": 4,
+      "details": [
+        {
+          "event": "2005-2006 drought",
+          "year": 2005,
+          "month": 12,
+          "severity": "severe",
+          "detected": true,
+          "confidence": 0.8125,
+          "spi_30day": -0.4309057155330512,
+          "rainfall_mm": 72.47
+        },
+        {
+          "event": "2005-2006 drought",
+          "year": 2006,
+          "month": 1,
+          "severity": "severe",
+          "detected": false,
+          "spi_30day": -0.2751236770686903,
+          "rainfall_mm": 112.01
+        },
+        {
+          "event": "2016-2017 drought (El Ni\u00f1o)",
+          "year": 2016,
+          "month": 12,
+          "severity": "severe",
+          "detected": false,
+          "spi_30day": -0.0274057774449875,
+          "rainfall_mm": 91.09
+        },
+        {
+          "event": "2016-2017 drought (El Ni\u00f1o)",
+          "year": 2017,
+          "month": 1,
+          "severity": "severe",
+          "detected": false,
+          "spi_30day": 0.1127474046329537,
+          "rainfall_mm": 110.7
+        },
+        {
+          "event": "2016-2017 drought (El Ni\u00f1o)",
+          "year": 2017,
+          "month": 2,
+          "severity": "moderate",
+          "detected": false,
+          "spi_30day": 0.2858305541695726,
+          "rainfall_mm": 145.91
+        }
+      ],
+      "detection_rate": 0.2
+    }
+  },
+  "overall_pass": true
+}

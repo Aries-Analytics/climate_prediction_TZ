@@ -1,0 +1,12 @@
+{
+  "total_records": 1872,
+  "date_range": "2000-01-01 00:00:00 to 2025-12-01 00:00:00",
+  "drought_events": 224,
+  "flood_events": 175,
+  "crop_failure_events": 117,
+  "total_trigger_events": 393,
+  "high_risk_periods": 18,
+  "avg_drought_confidence": 0.32286060279870826,
+  "avg_flood_confidence": 0.282494617868676,
+  "avg_severity": 0.31075483870967735
+}

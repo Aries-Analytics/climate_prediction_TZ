@@ -1,0 +1,98 @@
+{
+  "metadata": {
+    "locations": [
+      "Arusha",
+      "Dar es Salaam",
+      "Dodoma",
+      "Mbeya",
+      "Mwanza"
+    ],
+    "n_locations": 5,
+    "total_samples": 1560,
+    "train_samples": 1090,
+    "val_samples": 230,
+    "test_samples": 240,
+    "n_features": 78,
+    "feature_to_sample_ratio": 13.974358974358974,
+    "target_variable": "rainfall_mm",
+    "timestamp": "2025-12-31T13:53:08.471218"
+  },
+  "models": {
+    "random_forest": {
+      "model": "Random Forest",
+      "test_r2": 0.970941427434076,
+      "test_rmse": 16.77693125388723,
+      "test_mae": 9.048997072207637,
+      "test_mape": 5359896410.163813,
+      "prediction_interval_width": 65.76467648753814,
+      "train_metrics": {
+        "train_r2": 0.9924473335368887,
+        "val_r2": 0.9642241603184982,
+        "gap": 0.028223173218390518,
+        "gap_pct": 2.8437955612020875
+      }
+    },
+    "xgboost": {
+      "model": "XGBoost",
+      "test_r2": 0.9899199789201254,
+      "test_rmse": 9.881118479100985,
+      "test_mae": 5.055577357404711,
+      "test_mape": 1390254155.745562,
+      "prediction_interval_width": 38.70388901239794,
+      "train_metrics": {
+        "train_r2": 0.9998758509829859,
+        "val_r2": 0.9882626108678623,
+        "gap": 0.011613240115123658,
+        "gap_pct": 1.1614682066485142
+      }
+    },
+    "ensemble": {
+      "model": "Ensemble",
+      "test_r2": 0.9899199789201254,
+      "test_rmse": 9.881118479100985,
+      "test_mae": 5.055577357404711,
+      "test_mape": 1390254155.745562,
+      "prediction_interval_width": 38.70388901239794
+    }
+  },
+  "best_model": "XGBoost",
+  "baseline_comparison": {
+    "baseline": {
+      "location": "Dodoma",
+      "samples": 134,
+      "features": 78,
+      "ratio": 1.7179487179487178,
+      "best_r2": "Ensemble",
+      "ensemble_metrics": {
+        "model": "Ensemble",
+        "test_r2": 0.9863179053643392,
+        "test_rmse": 10.747591161505902,
+        "test_mae": 5.467030843910863,
+        "test_mape": Infinity,
+        "prediction_interval_width": 41.312735423305035
+      }
+    },
+    "multi_location": {
+      "locations": 5,
+      "samples": 1090,
+      "features": 78,
+      "ratio": 13.974358974358974,
+      "best_r2": "XGBoost",
+      "ensemble_metrics": {
+        "model": "Ensemble",
+        "test_r2": 0.9899199789201254,
+        "test_rmse": 9.881118479100985,
+        "test_mae": 5.055577357404711,
+        "test_mape": 1390254155.745562,
+        "prediction_interval_width": 38.70388901239794
+      }
+    },
+    "improvements": {
+      "sample_increase": "8.1x",
+      "ratio_improvement": "8.1x",
+      "r2_change": 0.0036020735557862338,
+      "rmse_reduction_pct": 8.062017519872894,
+      "pi_width_reduction_pct": 6.3148721191563
+    }
+  }
+}

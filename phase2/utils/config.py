@@ -50,6 +50,31 @@ NDVI_SOURCE = os.getenv("NDVI_SOURCE", "")
 OCEAN_INDICES_SOURCE = os.getenv("OCEAN_INDICES_SOURCE", "https://psl.noaa.gov/data/climateindices/list/")
 
 # ---------------------------------------------------------------------
+# Canonical File Paths (Single Source of Truth)
+# ---------------------------------------------------------------------
+# Input Data
+MASTER_DATASET = DATA_DIR / "processed" / "master_dataset.csv"
+
+# Model Outputs
+MODELS_DIR = OUTPUT_DIR / "models"
+TRAINING_RESULTS_CANONICAL = MODELS_DIR / "latest_training_results.json"
+TRAIN_FEATURES_MULTI = OUTPUT_DIR / "processed" / "features_train_multi_location.parquet"
+VAL_FEATURES_MULTI = OUTPUT_DIR / "processed" / "features_val_multi_location.parquet"
+TEST_FEATURES_MULTI = OUTPUT_DIR / "processed" / "features_test_multi_location.parquet"
+
+# Business Reports
+BUSINESS_REPORTS_DIR = OUTPUT_DIR / "business_reports"
+PAYOUT_ESTIMATES = BUSINESS_REPORTS_DIR / "payout_estimates.csv"
+INSURANCE_TRIGGERS = BUSINESS_REPORTS_DIR / "insurance_triggers_detailed.csv"
+ALERT_TIMELINE = BUSINESS_REPORTS_DIR / "alert_timeline.csv"
+EXECUTIVE_SUMMARY = BUSINESS_REPORTS_DIR / "executive_summary.md"
+RISK_DASHBOARD = BUSINESS_REPORTS_DIR / "risk_dashboard.json"
+
+# Ensure output directories exist
+MODELS_DIR.mkdir(parents=True, exist_ok=True)
+BUSINESS_REPORTS_DIR.mkdir(parents=True, exist_ok=True)
+
+# ---------------------------------------------------------------------
 # Project-wide constants
 # ---------------------------------------------------------------------
 DEFAULT_REGION = os.getenv("DEFAULT_REGION", "Tanzania")
@@ -144,11 +169,11 @@ def get_output_path(*subpaths) -> Path:
 # ---------------------------------------------------------------------
 def save_processed_output(df, filename: str):
     """
-    Save a pandas DataFrame into outputs/processed and return the file path.
+    Save a pandas DataFrame into data/processed and return the file path.
     This is a small convenience wrapper used by processing modules.
     """
     try:
-        out_path = get_output_path("processed", filename)
+        out_path = get_data_path("processed", filename)
         # Use DataFrame.to_csv if possible, otherwise raise informative error
         if hasattr(df, "to_csv"):
             df.to_csv(out_path, index=False)
@@ -211,7 +236,6 @@ def validate_environment():
         DATA_DIR / "processed",
         DATA_DIR / "external",
         OUTPUT_DIR,
-        OUTPUT_DIR / "processed",
     ):
         p.mkdir(parents=True, exist_ok=True)
         print(f"[CONFIG] Verified directory: {p}")

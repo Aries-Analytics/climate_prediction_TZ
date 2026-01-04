@@ -1,0 +1,40 @@
+{
+  "metadata": {
+    "location": "Dodoma",
+    "period": "2010-2025",
+    "total_samples": 192,
+    "train_samples": 134,
+    "val_samples": 28,
+    "test_samples": 30,
+    "n_features": 78,
+    "feature_to_sample_ratio": 1.7179487179487178,
+    "timestamp": "2025-12-29T15:07:07.990378"
+  },
+  "models": {
+    "random_forest": {
+      "model": "Random Forest",
+      "test_r2": 0.9844943424715707,
+      "test_rmse": 11.44142021013114,
+      "test_mae": 6.104718010942747,
+      "test_mape": Infinity,
+      "prediction_interval_width": 44.60531930738731
+    },
+    "xgboost": {
+      "model": "XGBoost",
+      "test_r2": 0.9781812388924941,
+      "test_rmse": 13.57218860408419,
+      "test_mae": 6.6688165573847185,
+      "test_mape": Infinity,
+      "prediction_interval_width": 51.86885096668922
+    },
+    "ensemble": {
+      "model": "Ensemble",
+      "test_r2": 0.9863179053643392,
+      "test_rmse": 10.747591161505902,
+      "test_mae": 5.467030843910863,
+      "test_mape": Infinity,
+      "prediction_interval_width": 41.312735423305035
+    }
+  },
+  "best_model": "Ensemble"
+}

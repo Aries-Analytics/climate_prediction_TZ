@@ -6,6 +6,8 @@ from app.models.model_metric import ModelMetric
 from app.models.model_prediction import ModelPrediction
 from app.models.audit_log import AuditLog
 from app.models.forecast import Forecast, ForecastRecommendation, ForecastValidation
+from app.models.pipeline_execution import PipelineExecution, DataQualityMetrics, SourceIngestionTracking
+from app.models.location import Location
 
 __all__ = [
     "User",
@@ -17,4 +19,8 @@ __all__ = [
     "Forecast",
     "ForecastRecommendation",
     "ForecastValidation",
+    "PipelineExecution",
+    "DataQualityMetrics",
+    "SourceIngestionTracking",
+    "Location",
 ]

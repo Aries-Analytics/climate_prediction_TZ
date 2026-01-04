@@ -15,7 +15,7 @@ import numpy as np
 import pandas as pd
 
 from modules.calibration import load_trigger_config
-from utils.config import get_output_path
+from utils.config import get_output_path, get_data_path
 from utils.logger import log_error, log_info, log_warning
 from utils.validator import validate_dataframe
 
@@ -66,33 +66,19 @@ def process(data):
     # Create date column for easier manipulation
     df["date"] = pd.to_datetime(df[["year", "month"]].assign(day=1))
 
-    # 1. NDVI TEMPORAL STATISTICS
-    log_info("Calculating NDVI temporal statistics...")
-    df = _add_ndvi_temporal_stats(df)
+    # Process by location if 'location' column exists
+    if 'location' in df.columns:
+        log_info(f"Processing data for {df['location'].nunique()} locations...")
+        processed_dfs = []
+        for loc, group in df.groupby('location'):
+            processed_dfs.append(_process_single_location(group.copy()))
+        df = pd.concat(processed_dfs, ignore_index=True)
+    else:
+        log_info("Processing single location data...")
+        df = _process_single_location(df)
 
-    # 2. NDVI ANOMALIES AND PERCENTILES
-    log_info("Calculating NDVI anomalies...")
-    df = _add_ndvi_anomalies(df)
-
-    # 3. VEGETATION CONDITION INDEX (VCI)
-    log_info("Calculating Vegetation Condition Index...")
-    df = _add_vegetation_condition_index(df)
-
-    # 4. DROUGHT STRESS INDICATORS
-    log_info("Calculating drought stress indicators...")
-    df = _add_drought_stress_indicators(df)
-
-    # 5. CROP GROWTH STAGE INDICATORS
-    log_info("Detecting crop growth stages...")
-    df = _add_growth_stage_indicators(df)
-
-    # 6. CROP FAILURE RISK
-    log_info("Calculating crop failure risk...")
-    df = _add_crop_failure_risk(df)
-
-    # 7. INSURANCE TRIGGERS
-    log_info("Calculating insurance triggers...")
-    df = _add_insurance_triggers(df)
+    # 8. QUALITY CHECKS (Global)
+    df = _apply_quality_filters(df)
 
     # 8. QUALITY CHECKS
     df = _apply_quality_filters(df)
@@ -105,7 +91,7 @@ def process(data):
     validate_dataframe(df, expected_columns=expected_cols, dataset_name="NDVI Processed")
 
     # Save processed data
-    output_path = get_output_path("processed", "ndvi_processed.csv")
+    output_path = get_data_path("processed", "ndvi_processed.csv")
     df.to_csv(output_path, index=False)
     log_info(f"Processed NDVI data saved to: {output_path}")
     log_info(f"[PROCESS] NDVI processing complete. Output shape: {df.shape}")
@@ -115,6 +101,33 @@ def process(data):
 
 # Module-level cache for trigger configuration
 _TRIGGER_CONFIG = None
+
+
+def _process_single_location(df):
+    """Process logic for a single location group."""
+    # 1. NDVI TEMPORAL STATISTICS
+    df = _add_ndvi_temporal_stats(df)
+
+    # 2. NDVI ANOMALIES AND PERCENTILES
+    df = _add_ndvi_anomalies(df)
+
+    # 3. VEGETATION CONDITION INDEX (VCI)
+    df = _add_vegetation_condition_index(df)
+
+    # 4. DROUGHT STRESS INDICATORS
+    df = _add_drought_stress_indicators(df)
+
+    # 5. CROP GROWTH STAGE INDICATORS
+    df = _add_growth_stage_indicators(df)
+
+    # 6. CROP FAILURE RISK
+    df = _add_crop_failure_risk(df)
+
+    # 7. INSURANCE TRIGGERS
+    df = _add_insurance_triggers(df)
+    
+    return df
+
 
 
 def _get_trigger_config():

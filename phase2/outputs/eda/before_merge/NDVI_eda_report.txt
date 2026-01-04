@@ -1,0 +1,71 @@
+================================================================================
+EXPLORATORY DATA ANALYSIS REPORT
+Dataset: NDVI
+================================================================================
+
+BASIC STATISTICS
+--------------------------------------------------------------------------------
+Rows: 2
+Columns: 47
+Memory Usage: 0.00 MB
+Numeric Columns: 45
+Categorical Columns: 2
+Datetime Columns: 0
+
+MISSING VALUES
+--------------------------------------------------------------------------------
+Total Missing Values: 13
+Columns with Missing Values: 8
+
+Top 10 Columns with Missing Values:
+  ndvi_trend_30day: 2 (100.00%)
+  ndvi_change_yoy: 2 (100.00%)
+  crop_failure_risk: 2 (100.00%)
+  crop_failure_risk_class: 2 (100.00%)
+  trigger_severity: 2 (100.00%)
+  ndvi_volatility_30day: 1 (50.00%)
+  ndvi_change_mom: 1 (50.00%)
+  vci_class: 1 (50.00%)
+
+HIGH CORRELATIONS (|r| > 0.7)
+--------------------------------------------------------------------------------
+Number of High Correlations: 190
+
+Top 10 Correlations:
+  ndvi_30day_mean <-> ndvi_anomaly_pct: 1.000
+  ndvi_30day_mean <-> ndvi_anomaly_std: 1.000
+  ndvi_30day_mean <-> ndvi_percentile: 1.000
+  ndvi_30day_mean <-> ndvi_deficit_pct: -1.000
+  ndvi_30day_mean <-> vci: 1.000
+  ndvi_30day_mean <-> vci_30day_mean: 1.000
+  ndvi_30day_mean <-> vegetation_vigor: 1.000
+  ndvi_30day_mean <-> is_stressed: -1.000
+  ndvi_30day_mean <-> stress_duration: -1.000
+  ndvi_30day_mean <-> is_severe_stress: -1.000
+
+TIME SERIES ANALYSIS
+--------------------------------------------------------------------------------
+Start Date: 2020-01-01
+End Date: 2021-01-01
+Number of Months: 2
+Date Range: 1.00 years
+Gaps in Time Series: 1
+
+FEATURE STATISTICS SUMMARY
+--------------------------------------------------------------------------------
+Numeric Features: 45
+Categorical Features: 3
+
+Features with >10% Missing Values: 8
+  ndvi_trend_30day: 100.00%
+  ndvi_change_yoy: 100.00%
+  crop_failure_risk: 100.00%
+  crop_failure_risk_class: 100.00%
+  trigger_severity: 100.00%
+  ndvi_volatility_30day: 50.00%
+  ndvi_change_mom: 50.00%
+  vci_class: 50.00%
+
+================================================================================
+END OF REPORT
+================================================================================

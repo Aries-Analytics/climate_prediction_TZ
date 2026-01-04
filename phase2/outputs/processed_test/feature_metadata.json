@@ -1,0 +1,34 @@
+{
+  "input_file": "outputs/processed/master_dataset.csv",
+  "output_directory": "outputs/processed_test",
+  "initial_shape": [
+    288,
+    174
+  ],
+  "final_shape": [
+    288,
+    660
+  ],
+  "features_added": 486,
+  "train_samples": 201,
+  "val_samples": 43,
+  "test_samples": 44,
+  "lag_periods": [
+    1,
+    3,
+    6,
+    12
+  ],
+  "rolling_windows": [
+    3,
+    6
+  ],
+  "missing_values_before": 333,
+  "missing_values_after": 3364,
+  "normalized_features": 649,
+  "date_range": {
+    "train": "2000-1 to 2016-12",
+    "val": "2016-1 to 2020-12",
+    "test": "2020-1 to 2023-12"
+  }
+}

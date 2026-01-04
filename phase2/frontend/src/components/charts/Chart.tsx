@@ -8,9 +8,10 @@ interface ChartProps {
   layout?: any
   config?: any
   title?: string
+  onRelayout?: (event: any) => void  // Add event handler prop
 }
 
-export default function Chart({ data, layout = {}, config = {}, title }: ChartProps) {
+export default function Chart({ data, layout = {}, config = {}, title, onRelayout }: ChartProps) {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const [plotRef, setPlotRef] = useState<any>(null)
 
@@ -46,7 +47,7 @@ export default function Chart({ data, layout = {}, config = {}, title }: ChartPr
   const handleExport = (format: 'png' | 'svg' | 'pdf') => {
     if (plotRef && plotRef.el) {
       const filename = title || 'chart'
-      
+
       // Use Plotly's downloadImage function
       const Plotly = (window as any).Plotly
       if (Plotly && Plotly.downloadImage) {
@@ -86,6 +87,7 @@ export default function Chart({ data, layout = {}, config = {}, title }: ChartPr
         config={defaultConfig}
         style={{ width: '100%', height: '100%', minHeight: '400px' }}
         useResizeHandler={true}
+        onRelayout={onRelayout}  // Forward the event handler
       />
     </Box>
   )

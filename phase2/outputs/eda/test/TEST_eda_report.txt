@@ -1,0 +1,49 @@
+================================================================================
+EXPLORATORY DATA ANALYSIS REPORT
+Dataset: TEST
+================================================================================
+
+BASIC STATISTICS
+--------------------------------------------------------------------------------
+Rows: 2
+Columns: 4
+Memory Usage: 0.00 MB
+Numeric Columns: 4
+Categorical Columns: 0
+Datetime Columns: 0
+
+MISSING VALUES
+--------------------------------------------------------------------------------
+Total Missing Values: 0
+Columns with Missing Values: 0
+
+
+HIGH CORRELATIONS (|r| > 0.7)
+--------------------------------------------------------------------------------
+Number of High Correlations: 6
+
+Top 10 Correlations:
+  year <-> month: 1.000
+  year <-> rainfall: 1.000
+  year <-> temp: 1.000
+  month <-> rainfall: 1.000
+  month <-> temp: 1.000
+  rainfall <-> temp: 1.000
+
+TIME SERIES ANALYSIS
+--------------------------------------------------------------------------------
+Start Date: 2020-01-01
+End Date: 2021-02-01
+Number of Months: 2
+Date Range: 1.09 years
+Gaps in Time Series: 1
+
+FEATURE STATISTICS SUMMARY
+--------------------------------------------------------------------------------
+Numeric Features: 4
+Categorical Features: 1
+
+
+================================================================================
+END OF REPORT
+================================================================================

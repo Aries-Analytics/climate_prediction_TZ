@@ -84,11 +84,11 @@ This design outlines the technical approach for integrating real climate predict
 ```
 CSV Files → Data Loaders → PostgreSQL → Backend API → Frontend Dashboard
     ↓
-outputs/processed/
-├── master_dataset.csv
+data/processed/
+├── merged_data_2010_2025.csv (191 monthly records)
 ├── chirps_processed.csv
 ├── ndvi_processed.csv
-└── training_results.json
+└── outputs/models/training_results.json
 ```
 
 ## Components and Interfaces
@@ -97,7 +97,7 @@ outputs/processed/
 
 #### Climate Data Loader (`backend/load_climate_data.py`)
 
-**Purpose:** Load master_dataset.csv into climate_data table
+**Purpose:** Load merged_data_2010_2025.csv into climate_data table
 
 **Interface:**
 ```python
@@ -110,7 +110,7 @@ def load_climate_data(
     Load climate data from CSV into database.
     
     Args:
-        csv_path: Path to master_dataset.csv
+        csv_path: Path to merged_data_2010_2025.csv (191 monthly records from 2010-2025)
         db_url: PostgreSQL connection string
         clear_existing: Whether to truncate table before loading
         
@@ -573,7 +573,7 @@ class ModelMetrics(Base):
 *A property is a characteristic or behavior that should hold true across all valid executions of a system-essentially, a formal statement about what the system should do. Properties serve as the bridge between human-readable specifications and machine-verifiable correctness guarantees.*
 
 ### Property 1: Data Loading Completeness
-*For any* CSV file loaded, the number of records in the database should equal the number of data rows in the CSV file (excluding header).
+*For any* CSV file loaded, the number of records in the database should equal the number of data rows in the CSV file (excluding header). For the merged_data_2010_2025.csv file, this should be 191 monthly records.
 
 **Validates: Requirements 1.2, 1.3**
 
@@ -598,7 +598,7 @@ class ModelMetrics(Base):
 **Validates: Requirements 6.1, 6.5**
 
 ### Property 6: Date Range Integrity
-*For any* query with date filters, the returned records should have dates within the specified range (2018-2023).
+*For any* query with date filters, the returned records should have dates within the specified range (2010-2025).
 
 **Validates: Requirements 13.3**
 
@@ -762,6 +762,12 @@ def test_data_loading_completeness(num_records):
     # Verify
     db_count = count_records(test_db_url)
     assert db_count == num_records
+    
+def test_full_dataset_loading():
+    """Test loading the complete 2010-2025 dataset"""
+    result = load_climate_data('data/processed/merged_data_2010_2025.csv', db_url, clear_existing=True)
+    assert result['status'] == 'success'
+    assert result['records_loaded'] == 191
 ```
 
 **Property 2: Trigger Event Consistency**

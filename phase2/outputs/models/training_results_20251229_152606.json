@@ -1,0 +1,37 @@
+{
+  "training_start_time": "2025-12-29T15:25:44.949917",
+  "data_shapes": {
+    "train": [
+      1090,
+      54
+    ],
+    "val": [
+      230,
+      54
+    ],
+    "test": [
+      240,
+      54
+    ]
+  },
+  "models": {
+    "random_forest": {
+      "error": "Input y contains NaN."
+    },
+    "xgboost": {
+      "error": "[15:25:44] C:\\actions-runner\\_work\\xgboost\\xgboost\\src\\data\\data.cc:550: Check failed: valid: Label contains NaN, infinity or a value too large."
+    },
+    "lstm": {
+      "error": "Found array with 0 sample(s) (shape=(0,)) while a minimum of 1 is required."
+    }
+  },
+  "training_end_time": "2025-12-29T15:26:06.697766",
+  "baselines": {},
+  "cross_validation": null,
+  "feature_selection": {
+    "original_features": 54,
+    "selected_features": 54,
+    "reduction_pct": 0.0
+  },
+  "validation_summary": {}
+}

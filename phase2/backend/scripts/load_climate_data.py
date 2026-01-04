@@ -25,12 +25,12 @@ TANZANIA_LAT = -6.369028
 TANZANIA_LON = 34.888822
 
 
-def load_climate_data(csv_path: str = "/outputs/processed/master_dataset.csv", clear_existing: bool = False):
+def load_climate_data(csv_path: str = "../data/processed/merged_data_2010_2025.csv", clear_existing: bool = False):
     """
     Load climate data from CSV into database.
     
     Args:
-        csv_path: Path to master_dataset.csv
+        csv_path: Path to merged_data_2010_2025.csv (2010-2025 dataset)
         clear_existing: If True, truncate table before loading
     """
     logger.info(f"Loading climate data from {csv_path}")
@@ -129,7 +129,7 @@ if __name__ == "__main__":
     import argparse
     
     parser = argparse.ArgumentParser(description="Load climate data into dashboard database")
-    parser.add_argument("--csv", default="/outputs/processed/master_dataset.csv", help="Path to CSV file")
+    parser.add_argument("--csv", default="../data/processed/merged_data_2010_2025.csv", help="Path to CSV file")
     parser.add_argument("--clear", action="store_true", help="Clear existing data before loading")
     
     args = parser.parse_args()

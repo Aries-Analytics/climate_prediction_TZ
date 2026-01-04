@@ -1,0 +1,78 @@
+{
+  "timestamp": "2025-11-15T08:33:50.152396",
+  "dataset": {
+    "total_samples": 288,
+    "train_samples": 201,
+    "val_samples": 43,
+    "test_samples": 44,
+    "n_features": 162,
+    "target": "rainfall_mm"
+  },
+  "models": {
+    "random_forest": {
+      "metrics": {
+        "r2_score": 0.9833306590770249,
+        "rmse": 10.248191735975489,
+        "mae": 7.311751956619772,
+        "mape": 16.297636758499536
+      },
+      "training_time": 0.5992007255554199
+    },
+    "xgboost": {
+      "metrics": {
+        "r2_score": 0.9794853190131804,
+        "rmse": 11.36895144316039,
+        "mae": 8.11300074924122,
+        "mape": 19.065220635493596
+      },
+      "training_time": 1.4863519668579102
+    },
+    "lstm": {
+      "metrics": {
+        "r2_score": -0.07039958641505217,
+        "rmse": 86.48464284457627,
+        "mae": 70.23832898139955,
+        "mape": 254.2423557579688
+      },
+      "training_time": 28.206008434295654
+    },
+    "ensemble": {
+      "metrics": {
+        "r2_score": 0.920833806700515,
+        "rmse": 22.333557591710285,
+        "mae": 17.553757887642504,
+        "mape": 50.2468571536865
+      },
+      "training_time": 0
+    }
+  },
+  "seasonal_performance": [
+    {
+      "target": "rainfall_mm",
+      "season": "Short Rains",
+      "n_samples": 12,
+      "r2_score": 0.988046247883267,
+      "rmse": 7.731936986709904,
+      "mae": 6.162452487073122,
+      "mape": 7.387475091571432
+    },
+    {
+      "target": "rainfall_mm",
+      "season": "Long Rains",
+      "n_samples": 10,
+      "r2_score": 0.969380045225699,
+      "rmse": 10.804759155133256,
+      "mae": 9.330049665404033,
+      "mape": 11.957262769113914
+    },
+    {
+      "target": "rainfall_mm",
+      "season": "Dry Season",
+      "n_samples": 22,
+      "r2_score": 0.9801363626005414,
+      "rmse": 11.152449162159458,
+      "mae": 7.0212345269251015,
+      "mape": 23.13062220836288
+    }
+  ]
+}

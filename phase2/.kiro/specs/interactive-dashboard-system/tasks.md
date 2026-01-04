@@ -425,6 +425,104 @@ This implementation plan breaks down the Interactive Dashboard System into incre
     - Include applied filters in export
     - _Requirements: 4.5, 18.2_
 
+- [-] 15a. Implement Geographic Map Visualization **[NEW - IN PROGRESS]**
+
+  - [x] 15a.1 Create Locations table and backend service
+    - Create locations table migration
+    - Create Location SQLAlchemy model
+    - Implement geo_service.py for location operations
+    - Seed database with 6 monitored locations (Arusha, Dar es Salaam, Dodoma, Mbeya, Mwanza, Morogoro)
+    - _Requirements: 4a.1_
+
+  - [x] 15a.2 Create location API endpoints
+    - GET /api/locations (list all monitored locations)
+    - GET /api/locations/{id} (get location details)
+    - GET /api/locations/{id}/triggers (get triggers for specific location)
+    - GET /api/locations/summary (get trigger summary by location)
+    - GET /api/triggers/geojson (export triggers as GeoJSON)
+    - _Requirements: 4a.1, 4a.10_
+
+  - [ ] 15a.3 Install and configure mapping library
+    - Install react-leaflet and leaflet packages
+    - Add Leaflet CSS to project
+    - Configure Vite to handle Leaflet assets
+    - Test basic map rendering
+    - _Requirements: 4a.1_
+
+  - [ ] 15a.4 Create GeographicMap component
+    - Create src/components/maps/GeographicMap.tsx
+    - Initialize Leaflet map centered on Tanzania
+    - Add base map tiles (OpenStreetMap or Mapbox)
+    - Implement responsive sizing
+    - Add zoom controls
+    - _Requirements: 4a.1, 4a.9_
+
+  - [ ] 15a.5 Implement location markers
+    - Fetch monitored locations from API
+    - Render marker for each location
+    - Color-code markers by active trigger type (red=drought, blue=flood, yellow=crop failure)
+    - Add marker icons for different trigger types
+    - Implement marker clustering for dense areas (if needed later)
+    - _Requirements: 4a.2, 4a.5_
+
+  - [ ] 15a.6 Add marker interactivity
+    - Implement tooltip on hover showing location name and active trigger count
+    - Implement click handler to show detailed trigger history panel
+    - Add pulsing/animated markers for active triggers
+    - Ensure markers update when trigger data changes
+    - _Requirements: 4a.3, 4a.4, 4a.6_
+
+  - [ ] 15a.7 Implement layer toggle controls
+    - Add checkbox controls for filtering by trigger type (drought/flood/crop failure)
+    - Implement severity level filtering (low/medium/high)
+    - Update markers dynamically when filters change
+    - Persist filter state in component
+    - _Requirements: 4a.5_
+
+  - [ ] 15a.8 Integrate time-range filtering
+    - Connect map to existing date range picker from TriggersDashboard
+    - Update markers to show only triggers within selected date range
+    - Add visual indicator for selected time period
+    - Sync map state with timeline view
+    - _Requirements: 4a.7_
+
+  - [ ] 15a.9 Implement optional heatmap overlay
+    - Create risk heatmap endpoint (GET /api/locations/heatmap)
+    - Add heatmap layer toggle control
+    - Render heatmap overlay showing trigger probability or density
+    - Allow switching between marker view and heatmap view
+    - _Requirements: 4a.8_
+
+  - [ ] 15a.10 Add geographic export functionality
+    - Implement GeoJSON export button
+    - Generate GeoJSON with location coordinates and trigger data
+    - Add PNG export for map snapshot
+    - Include metadata (date range, filters) in exports
+    - _Requirements: 4a.10_
+
+  - [ ] 15a.11 Integrate map into TriggersDashboard layout
+    - Add map as top section of Triggers Dashboard
+    - Create responsive layout: map on left, timeline/table on right (desktop)
+    - Stack vertically on mobile (map top, timeline below)
+    - Ensure map and timeline are synchronized (clicking marker updates timeline)
+    - Test responsive behavior on different screen sizes
+    - _Requirements: 4a.1_
+
+  - [ ] 15a.12 Add loading states and error handling
+    - Show loading spinner while map initializes
+    - Display error message if location data fails to load
+    - Handle missing marker data gracefully
+    - Add retry mechanism for failed API calls
+    - _Requirements: 9.2, 9.3_
+
+  - [ ] 15a.13 Test map performance and accessibility
+    - Test with all 5-8 locations loaded
+    - Verify smooth pan/zoom performance
+    - Test keyboard navigation for map controls
+    - Ensure markers are accessible via screen readers
+    - Test on mobile devices (touch interactions)
+    - _Requirements: 13.4, 14.1, 14.2_
+
 - [x] 16. Implement Climate Insights Dashboard
 
 

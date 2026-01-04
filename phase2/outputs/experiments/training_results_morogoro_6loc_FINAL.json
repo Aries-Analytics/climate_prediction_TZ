@@ -1,0 +1,29 @@
+{
+  "training_start_time": "2025-12-29T21:18:28.236804",
+  "data_shapes": {
+    "train": [
+      1122,
+      365
+    ],
+    "val": [
+      372,
+      365
+    ],
+    "test": [
+      378,
+      365
+    ]
+  },
+  "models": {
+    "random_forest": {
+      "error": "Input contains NaN."
+    },
+    "xgboost": {
+      "error": "Input contains NaN."
+    },
+    "lstm": {
+      "error": "Found array with 0 sample(s) (shape=(0,)) while a minimum of 1 is required."
+    }
+  },
+  "training_end_time": "2025-12-29T21:19:00.502006"
+}

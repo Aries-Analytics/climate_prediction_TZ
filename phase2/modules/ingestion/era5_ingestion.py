@@ -4,8 +4,11 @@ Fetches reanalysis climate data from Copernicus Climate Data Store (CDS)
 """
 
 import os
+from datetime import datetime
+from typing import Optional, Tuple
 
 import pandas as pd
+from sqlalchemy.orm import Session
 
 from utils.config import get_data_path
 from utils.logger import log_error, log_info
@@ -22,8 +25,8 @@ TANZANIA_BOUNDS = {
 
 def fetch_era5_data(
     dry_run=False,
-    start_year=2010,
-    end_year=2023,
+    start_year=1985,
+    end_year=2025,
     bounds=None,
     variables=None,
     *args,
@@ -157,8 +160,17 @@ def fetch_era5_data(
         ]
 
     try:
-        # Initialize CDS API client
-        c = cdsapi.Client()
+        # Initialize CDS API client with explicit endpoint
+        # This prevents warnings about deprecated API endpoints
+        api_key = os.getenv("ERA5_API_KEY")
+        if api_key:
+            c = cdsapi.Client(
+                url="https://cds.climate.copernicus.eu/api",
+                key=api_key
+            )
+        else:
+            # Fall back to .cdsapirc configuration
+            c = cdsapi.Client()
 
         # Prepare download path
         nc_file = get_data_path("raw", "era5_raw.nc")
@@ -313,3 +325,112 @@ def fetch_era5_data(
 
 def fetch_data(*args, **kwargs):
     return fetch_era5_data(*args, **kwargs)
+
+
+def ingest_era5(
+    db: Session,
+    start_date: Optional[datetime] = None,
+    end_date: Optional[datetime] = None,
+    incremental: bool = True
+) -> Tuple[int, int]:
+    """
+    Ingest ERA5 data and store to database (orchestrator-compatible interface).
+    
+    This function is designed to be called by the pipeline orchestrator.
+    It fetches ERA5 data for the specified date range and stores it in the database.
+    
+    Parameters
+    ----------
+    db : Session
+        SQLAlchemy database session for storing data
+    start_date : datetime, optional
+        Start date for data retrieval. If None, defaults to 2010-01-01
+    end_date : datetime, optional
+        End date for data retrieval. If None, defaults to current date
+    incremental : bool, optional
+        Whether to use incremental ingestion (only fetch new data). Default is True.
+        
+    Returns
+    -------
+    Tuple[int, int]
+        Tuple of (records_fetched, records_stored)
+        - records_fetched: Number of records retrieved from source
+        - records_stored: Number of records successfully stored to database
+    """
+    from backend.app.models.climate_data import ClimateData
+    from sqlalchemy import and_
+    
+    # Set default date range
+    if start_date is None:
+        start_date = datetime(2010, 1, 1)
+    if end_date is None:
+        end_date = datetime.now()
+    
+    log_info(f"Ingesting ERA5 data from {start_date.date()} to {end_date.date()}")
+    
+    try:
+        # Fetch data using existing function
+        df = fetch_era5_data(
+            start_year=start_date.year,
+            end_year=end_date.year,
+            dry_run=False
+        )
+        
+        if df.empty:
+            log_info("No ERA5 data fetched")
+            return (0, 0)
+        
+        records_fetched = len(df)
+        log_info(f"Fetched {records_fetched} ERA5 records")
+        
+        # Filter to exact date range (month-level granularity)
+        df['date'] = pd.to_datetime(df[['year', 'month']].assign(day=1))
+        df = df[(df['date'] >= start_date) & (df['date'] <= end_date)]
+        
+        # Store to database (ERA5 provides regional averages, use Tanzania center point)
+        records_stored = 0
+        tanzania_lat = -6.369028
+        tanzania_lon = 34.888822
+        
+        for _, row in df.iterrows():
+            try:
+                # Check if record already exists
+                existing = db.query(ClimateData).filter(
+                    and_(
+                        ClimateData.date == row['date'].date(),
+                        ClimateData.location_lat == tanzania_lat,
+                        ClimateData.location_lon == tanzania_lon
+                    )
+                ).first()
+                
+                if existing:
+                    # Update existing record with ERA5 data
+                    if 'temp_2m' in row:
+                        # Convert Kelvin to Celsius
+                        existing.temperature_avg = float(row['temp_2m']) - 273.15
+                    records_stored += 1
+                else:
+                    # Create new record
+                    climate_record = ClimateData(
+                        date=row['date'].date(),
+                        location_lat=tanzania_lat,
+                        location_lon=tanzania_lon,
+                        temperature_avg=float(row['temp_2m']) - 273.15 if 'temp_2m' in row else None
+                    )
+                    db.add(climate_record)
+                    records_stored += 1
+                    
+            except Exception as e:
+                log_error(f"Failed to store ERA5 record for {row['date']}: {e}")
+                continue
+        
+        # Commit all changes
+        db.commit()
+        log_info(f"Successfully stored {records_stored} ERA5 records to database")
+        
+        return (records_fetched, records_stored)
+        
+    except Exception as e:
+        log_error(f"ERA5 ingestion failed: {e}")
+        db.rollback()
+        raise

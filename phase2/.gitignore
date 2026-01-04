@@ -8,7 +8,45 @@
 # Data Files (raw, processed, outputs)
 # ===============================================================
 data/
-outputs/
+
+# Outputs - Selective Ignore Strategy:
+# - Ignore: Heavy binary files (models, large data)
+# - Track: Lightweight reports, summaries, visualizations
+
+# Heavy binary model files (DO gitignore - can be 50-200 MB each)
+outputs/models/*.pkl
+outputs/models/*.keras
+outputs/models/*.h5
+outputs/models/*.joblib
+outputs/models/*.pt
+outputs/models/*.pth
+
+# Large processed data files (DO gitignore)
+outputs/processed/*.parquet
+outputs/processed/*.feather
+outputs/processed/*.npy
+outputs/processed/*.npz
+
+# Intermediate/temp visualizations (DO gitignore)
+outputs/visualizations/temp/
+outputs/visualizations/intermediate/
+outputs/visualizations/**/*_temp.png
+outputs/visualizations/**/*_draft.png
+
+# BUT track these lightweight outputs (override with !)
+!outputs/business_reports/**/*.md
+!outputs/business_reports/**/*.csv
+!outputs/experiments/**/*.json
+!outputs/experiments/**/*.jsonl
+!outputs/experiments/**/*.md
+!outputs/evaluation/**/*.json
+!outputs/evaluation/**/*.csv
+!outputs/evaluation/**/*.txt
+!outputs/models/**/*.json
+!outputs/models/**/*metadata.json
+!outputs/processed/**/*.json
+!outputs/visualizations/**/*.png
+!outputs/visualizations/**/*.jpg
 
 # ===============================================================
 # Raw Data Files (do not commit large data files)
@@ -33,3 +71,18 @@ logs/
 # Admin/Utility Scripts (project management automation)
 # ===============================================================
 *.ps1
+
+# ===============================================================
+# Node.js Dependencies (frontend)
+# ===============================================================
+node_modules/
+frontend/node_modules/
+**/node_modules/
+
+# ===============================================================
+# Build outputs
+# ===============================================================
+dist/
+build/
+frontend/dist/
+frontend/build/

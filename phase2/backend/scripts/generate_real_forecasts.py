@@ -157,7 +157,7 @@ def expand_monthly_to_daily(df):
     merged = pd.merge(daily_df, df, on='date', how='left')
     
     # Forward fill the values (each month's value applies to all days in that month)
-    merged = merged.fillna(method='ffill')
+    merged = merged.ffill(axis=0)
     
     return merged
 
@@ -289,20 +289,61 @@ def main():
             print("\n❌ No data stored in database")
             return
         
-        # Step 3: Generate forecasts
+        # Step 3: Generate forecasts for multiple dates (creates timeline)
         print("\n" + "=" * 60)
-        print("GENERATING FORECASTS")
+        print("GENERATING FORECAST TIMELINE")
         print("=" * 60)
         
-        # Use today as forecast date
-        forecast_date = date.today()
-        print(f"\nForecast date: {forecast_date}")
-        print("Horizons: 3, 4, 5, 6 months ahead")
-        print("\nLoading trained model...")
+        # Find the latest climate data date
+        from sqlalchemy import func
+        latest_climate_date = db.query(func.max(ClimateData.date)).scalar()
         
-        # Generate forecasts for 3, 4, 5, and 6 months ahead
+        if not latest_climate_date:
+            print("\n❌ No climate data found in database")
+            return
+        
+        print(f"\nLatest climate data: {latest_climate_date}")
+        print("Note: Forecasts predict FUTURE dates (3-6 months ahead)")
+        print("      We can only generate forecasts up to the latest data date\n")
+        
+        # Generate forecasts for the past 8 weeks (every week) to create a timeline
+        # This shows how predictions evolved over time
+        forecast_dates = []
+        start_date = latest_climate_date - timedelta(weeks=8)
+        
+        for week in range(9):  # 0 to 8 weeks ago (9 data points)
+            forecast_date = start_date + timedelta(weeks=week)
+            # Only use dates where we have climate data
+            if forecast_date <= latest_climate_date:
+                forecast_dates.append(forecast_date)
+        
+        print(f"Generating forecasts for {len(forecast_dates)} dates...")
+        print(f"Forecast date range: {forecast_dates[0]} to {forecast_dates[-1]}")
+        
+        # Calculate what dates we're predicting
+        target_start = forecast_dates[0] + timedelta(days=90)  # 3 months ahead
+        target_end = forecast_dates[-1] + timedelta(days=180)   # 6 months ahead
+        print(f"These will predict: {target_start} to {target_end}\n")
+        
+        print("Loading trained model...")
+        
+        # Generate forecasts for all dates
         horizons = [3, 4, 5, 6]
-        forecasts = generate_forecasts(db, forecast_date, horizons)
+        all_forecasts = []
+        
+        for forecast_date in forecast_dates:
+            target_start = forecast_date + timedelta(days=90)
+            target_end = forecast_date + timedelta(days=180)
+            print(f"Forecast from {forecast_date} → predicting {target_start} to {target_end}")
+            
+            try:
+                forecasts = generate_forecasts(db, forecast_date, horizons)
+                print(f"  ✓ Generated {len(forecasts)} forecasts")
+                all_forecasts.extend(forecasts)
+            except Exception as e:
+                print(f"  ✗ Error: {e}")
+        
+        forecasts = all_forecasts
         
         if not forecasts:
             print("\n❌ No forecasts generated")

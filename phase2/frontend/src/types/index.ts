@@ -3,7 +3,7 @@ export interface User {
   id: number;
   username: string;
   email: string;
-  role: 'admin' | 'analyst' | 'viewer';
+  role: 'admin' | 'analyst' | 'manager';
   isActive: boolean;
   createdAt: string;
   lastLogin?: string;
@@ -49,6 +49,25 @@ export interface ModelMetrics {
   mape: number;
   trainingDate: string;
   experimentId: string;
+  // Cross-validation metrics (more reliable)
+  cvR2Mean?: number;
+  cvR2Std?: number;
+  cvR2CiLower?: number;
+  cvR2CiUpper?: number;
+  cvRmseMean?: number;
+  cvRmseStd?: number;
+  cvMaeMean?: number;
+  cvMaeStd?: number;
+  cvNSplits?: number;
+  // Feature selection info
+  nFeatures?: number;
+  featureToSampleRatio?: number;
+  // Sample counts (for dynamic metrics)
+  trainingSamples?: number;
+  valSamples?: number;
+  testSamples?: number;
+  // Model configuration
+  hyperparameters?: Record<string, any>;
 }
 
 export interface FeatureImportance {
@@ -73,6 +92,7 @@ export interface TriggerEvent {
   payoutAmount: number;
   locationLat?: number;
   locationLon?: number;
+  location?: string;  // Location name from backend
 }
 
 export interface TriggerForecast {
@@ -95,7 +115,10 @@ export interface EarlyWarning {
 // Climate interfaces
 export interface TimeSeriesPoint {
   date: string;
-  value: number;
+  median: number;
+  min: number;
+  max: number;
+  value?: number; // Deprecated, for backward compatibility
 }
 
 export interface ClimateTimeSeries {

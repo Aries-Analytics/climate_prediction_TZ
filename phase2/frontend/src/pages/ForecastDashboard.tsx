@@ -21,6 +21,7 @@ import { API_BASE_URL } from '../config/api'
 import LoadingSpinner from '../components/common/LoadingSpinner'
 import EmptyState from '../components/common/EmptyState'
 import Chart from '../components/charts/Chart'
+import { prepareForecastTraces } from '../utils/forecastChartUtils'
 
 interface Forecast {
   id: number
@@ -49,23 +50,17 @@ interface ForecastWithRecommendations extends Forecast {
   recommendations?: Recommendation[]
 }
 
-interface TriggerEvent {
-  id: number
-  date: string
-  triggerType: string
-  confidence: number
-  severity: number
-}
+
 
 export default function ForecastDashboard() {
   const [forecasts, setForecasts] = useState<Forecast[]>([])
   const [recommendations, setRecommendations] = useState<Recommendation[]>([])
-  const [historicalTriggers, setHistoricalTriggers] = useState<TriggerEvent[]>([])
   const [selectedTriggerType, setSelectedTriggerType] = useState<string>('all')
   const [selectedHorizon, setSelectedHorizon] = useState<string>('all')
-  const [showHistorical, setShowHistorical] = useState<boolean>(true)
   const [isLoading, setIsLoading] = useState(true)
+  const [isGenerating, setIsGenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
   const triggerTypes = ['drought', 'flood', 'crop_failure']
   const horizons = [3, 4, 5, 6]
@@ -73,14 +68,14 @@ export default function ForecastDashboard() {
   useEffect(() => {
     fetchForecasts()
     fetchRecommendations()
-    fetchHistoricalTriggers()
   }, [])
 
   const fetchForecasts = async () => {
     try {
       setIsLoading(true)
       const token = localStorage.getItem('token')
-      const response = await axios.get(`${API_BASE_URL}/forecasts/latest`, {
+      // Fetch ALL forecasts (not just latest) to show timeline
+      const response = await axios.get(`${API_BASE_URL}/forecasts`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       setForecasts(response.data)
@@ -129,19 +124,32 @@ export default function ForecastDashboard() {
     }
   }
 
-  const fetchHistoricalTriggers = async () => {
+  const handleGenerateForecasts = async () => {
     try {
+      setIsGenerating(true)
+      setError(null)
+      setSuccessMessage(null)
+      
       const token = localStorage.getItem('token')
-      const response = await axios.get(`${API_BASE_URL}/triggers`, {
-        headers: { Authorization: `Bearer ${token}` },
-        params: { limit: 100 }
-      })
-      setHistoricalTriggers(response.data)
-    } catch (err) {
-      // Silently handle - historical data may not be available
-      setHistoricalTriggers([])
+      const response = await axios.post(
+        `${API_BASE_URL}/forecasts/generate`,
+        { horizons: [3, 4, 5, 6] },
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
+      
+      setSuccessMessage(`Successfully generated ${response.data.length} new forecasts`)
+      
+      // Refresh data
+      await fetchForecasts()
+      await fetchRecommendations()
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Failed to generate forecasts')
+    } finally {
+      setIsGenerating(false)
     }
   }
+
+
 
   const handleTriggerTypeChange = (event: SelectChangeEvent) => {
     setSelectedTriggerType(event.target.value)
@@ -207,16 +215,6 @@ export default function ForecastDashboard() {
     return colors[triggerType] || '#9e9e9e'
   }
 
-  const getHorizonColor = (horizon: number) => {
-    const colors: Record<number, string> = {
-      3: '#4caf50',
-      4: '#8bc34a',
-      5: '#ffc107',
-      6: '#ff9800'
-    }
-    return colors[horizon] || '#9e9e9e'
-  }
-
   if (isLoading) {
     return <LoadingSpinner message="Loading forecasts..." />
   }
@@ -240,82 +238,13 @@ export default function ForecastDashboard() {
 
   const filteredForecasts = getFilteredForecasts()
 
-  // Prepare timeline chart data
-  const timelineData = triggerTypes.map(triggerType => {
-    const typeForecasts = filteredForecasts.filter(f => f.triggerType === triggerType)
-    
-    return horizons.map(horizon => {
-      const horizonForecasts = typeForecasts.filter(f => f.horizonMonths === horizon)
-      
-      return {
-        x: horizonForecasts.map(f => f.targetDate),
-        y: horizonForecasts.map(f => f.probability),
-        error_y: {
-          type: 'data',
-          symmetric: false,
-          array: horizonForecasts.map(f => f.confidenceUpper - f.probability),
-          arrayminus: horizonForecasts.map(f => f.probability - f.confidenceLower),
-          color: 'rgba(0,0,0,0.2)',
-          thickness: 1,
-          width: 3
-        },
-        type: 'scatter' as const,
-        mode: 'lines+markers',
-        name: `${triggerType} (${horizon}mo)`,
-        line: {
-          color: getTriggerTypeColor(triggerType),
-          width: 2,
-          dash: horizon === 3 ? 'solid' : horizon === 4 ? 'dash' : horizon === 5 ? 'dot' : 'dashdot'
-        },
-        marker: {
-          size: 8,
-          color: getTriggerTypeColor(triggerType),
-          line: {
-            color: '#fff',
-            width: 1
-          }
-        },
-        hovertemplate: '<b>%{fullData.name}</b><br>' +
-                       'Date: %{x}<br>' +
-                       'Probability: %{y:.2%}<br>' +
-                       'CI: [%{customdata[0]:.2%}, %{customdata[1]:.2%}]<br>' +
-                       '<extra></extra>',
-        customdata: horizonForecasts.map(f => [f.confidenceLower, f.confidenceUpper])
-      }
-    })
-  }).flat()
-
-  // Add historical trigger events as markers
-  const historicalData = showHistorical ? triggerTypes.map(triggerType => {
-    const typeTriggers = historicalTriggers.filter(t => 
-      t.triggerType === triggerType && 
-      (selectedTriggerType === 'all' || t.triggerType === selectedTriggerType)
-    )
-    
-    return {
-      x: typeTriggers.map(t => t.date),
-      y: typeTriggers.map(() => 1.0), // Place at top of chart
-      type: 'scatter' as const,
-      mode: 'markers',
-      name: `${triggerType} (actual)`,
-      marker: {
-        symbol: 'x',
-        size: 12,
-        color: getTriggerTypeColor(triggerType),
-        line: {
-          color: '#000',
-          width: 2
-        }
-      },
-      hovertemplate: '<b>Actual Trigger Event</b><br>' +
-                     'Type: %{fullData.name}<br>' +
-                     'Date: %{x}<br>' +
-                     '<extra></extra>',
-      showlegend: true
-    }
-  }) : []
-
-  const allChartData = [...timelineData, ...historicalData]
+  // Prepare clean forecast-only timeline data
+  const timelineData = prepareForecastTraces(filteredForecasts)
+  
+  // Calculate date range for focused view (today + 12 months)
+  const today = new Date()
+  const futureDate = new Date(today)
+  futureDate.setMonth(futureDate.getMonth() + 12)
 
   // High-risk forecasts (probability > 0.3)
   const highRiskForecasts = filteredForecasts.filter(f => f.probability > 0.3)
@@ -333,11 +262,12 @@ export default function ForecastDashboard() {
         </Box>
         <Stack direction="row" spacing={2}>
           <Button
-            variant={showHistorical ? 'contained' : 'outlined'}
-            onClick={() => setShowHistorical(!showHistorical)}
-            size="small"
+            variant="contained"
+            color="primary"
+            onClick={handleGenerateForecasts}
+            disabled={isGenerating}
           >
-            {showHistorical ? 'Hide' : 'Show'} Historical Events
+            {isGenerating ? 'Generating...' : 'Generate New Forecasts'}
           </Button>
           <Button
             variant="outlined"
@@ -348,6 +278,12 @@ export default function ForecastDashboard() {
           </Button>
         </Stack>
       </Box>
+
+      {successMessage && (
+        <Alert severity="success" onClose={() => setSuccessMessage(null)} sx={{ mb: 3 }}>
+          {successMessage}
+        </Alert>
+      )}
 
       {highRiskForecasts.length > 0 && (
         <Alert severity="warning" icon={<WarningIcon />} sx={{ mb: 3 }}>
@@ -406,34 +342,93 @@ export default function ForecastDashboard() {
           </Card>
         </Grid>
 
+        {/* Visual Legend Guide */}
+        <Grid item xs={12}>
+          <Card sx={{ bgcolor: 'info.50' }}>
+            <CardContent>
+              <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
+                📊 Chart Guide
+              </Typography>
+              <Grid container spacing={2}>
+                <Grid item xs={12} md={3}>
+                  <Typography variant="caption" fontWeight="bold" display="block">Line Colors:</Typography>
+                  <Typography variant="caption" display="block">🟠 Orange = Drought</Typography>
+                  <Typography variant="caption" display="block">🔵 Blue = Flood</Typography>
+                  <Typography variant="caption" display="block">🔴 Red = Crop Failure</Typography>
+                </Grid>
+                <Grid item xs={12} md={3}>
+                  <Typography variant="caption" fontWeight="bold" display="block">Line Styles:</Typography>
+                  <Typography variant="caption" display="block">━━━ Solid = 3 months ahead</Typography>
+                  <Typography variant="caption" display="block">╌╌╌ Dash = 4 months ahead</Typography>
+                  <Typography variant="caption" display="block">··· Dot = 5 months ahead</Typography>
+                  <Typography variant="caption" display="block">━·━ Dash-Dot = 6 months ahead</Typography>
+                </Grid>
+                <Grid item xs={12} md={3}>
+                  <Typography variant="caption" fontWeight="bold" display="block">Error Bars:</Typography>
+                  <Typography variant="caption" display="block">Vertical bars show 95% confidence interval</Typography>
+                  <Typography variant="caption" display="block">Wider bars = more uncertainty</Typography>
+                </Grid>
+                <Grid item xs={12} md={3}>
+                  <Typography variant="caption" fontWeight="bold" display="block">Risk Threshold:</Typography>
+                  <Typography variant="caption" display="block">Red dashed line at 30%</Typography>
+                  <Typography variant="caption" display="block">Above = High risk, action needed</Typography>
+                </Grid>
+              </Grid>
+            </CardContent>
+          </Card>
+        </Grid>
+
         {/* Forecast Timeline Chart */}
         <Grid item xs={12}>
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>
-                Forecast Probability Timeline
+                Forecast Probability Timeline - Next 6 Months
               </Typography>
               <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 2 }}>
-                Hover over points for detailed information. Error bars show confidence intervals.
+                Showing predicted trigger probabilities for the next 3-6 months. Click legend items to show/hide specific forecasts.
               </Typography>
               <Chart
-                data={allChartData}
+                data={timelineData}
                 layout={{
                   height: 500,
                   xaxis: {
-                    title: 'Target Date',
-                    type: 'date'
+                    title: 'Target Date (Forecast Horizon)',
+                    type: 'date',
+                    range: [today.toISOString().split('T')[0], futureDate.toISOString().split('T')[0]],
+                    fixedrange: false,
+                    gridcolor: '#e0e0e0',
+                    showgrid: true
                   },
                   yaxis: {
                     title: 'Trigger Probability',
                     tickformat: '.0%',
-                    range: [0, 1]
+                    range: [0, 1],
+                    fixedrange: false,
+                    gridcolor: '#e0e0e0',
+                    showgrid: true,
+                    zeroline: true,
+                    zerolinecolor: '#999',
+                    zerolinewidth: 1
                   },
                   hovermode: 'closest',
+                  showlegend: true,
                   legend: {
-                    orientation: 'h',
-                    y: -0.2
+                    orientation: 'v',
+                    y: 1,
+                    x: 1.02,
+                    xanchor: 'left',
+                    yanchor: 'top',
+                    bgcolor: 'rgba(255,255,255,0.95)',
+                    bordercolor: '#ccc',
+                    borderwidth: 1,
+                    itemclick: 'toggle',
+                    itemdoubleclick: false,
+                    font: {
+                      size: 11
+                    }
                   },
+                  margin: { l: 80, r: 200, t: 40, b: 80 },
                   shapes: [
                     {
                       type: 'line',
@@ -443,9 +438,23 @@ export default function ForecastDashboard() {
                       y0: 0.3,
                       y1: 0.3,
                       line: {
-                        color: 'red',
+                        color: '#d32f2f',
                         width: 2,
                         dash: 'dash'
+                      }
+                    },
+                    {
+                      type: 'line',
+                      x0: today.toISOString().split('T')[0],
+                      x1: today.toISOString().split('T')[0],
+                      xref: 'x',
+                      y0: 0,
+                      y1: 1,
+                      yref: 'y',
+                      line: {
+                        color: '#666',
+                        width: 2,
+                        dash: 'solid'
                       }
                     }
                   ],
@@ -458,14 +467,43 @@ export default function ForecastDashboard() {
                       text: 'High Risk Threshold (30%)',
                       showarrow: false,
                       font: {
-                        size: 10,
-                        color: 'red'
-                      }
+                        size: 11,
+                        color: '#d32f2f',
+                        family: 'Arial, sans-serif'
+                      },
+                      bgcolor: 'rgba(255,255,255,0.8)',
+                      borderpad: 4
+                    },
+                    {
+                      x: today.toISOString().split('T')[0],
+                      y: 1.02,
+                      xref: 'x',
+                      yref: 'y',
+                      text: '📍 Today',
+                      showarrow: true,
+                      arrowhead: 2,
+                      arrowsize: 1,
+                      arrowwidth: 2,
+                      arrowcolor: '#666',
+                      ax: 0,
+                      ay: -30,
+                      font: {
+                        size: 11,
+                        color: '#666',
+                        family: 'Arial, sans-serif'
+                      },
+                      bgcolor: 'rgba(255,255,255,0.9)',
+                      borderpad: 4
                     }
                   ]
                 }}
                 config={{
-                  responsive: true
+                  responsive: true,
+                  displayModeBar: true,
+                  displaylogo: false,
+                  modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d', 'autoScale2d'],
+                  editable: false,
+                  scrollZoom: false
                 }}
               />
             </CardContent>
@@ -501,7 +539,7 @@ export default function ForecastDashboard() {
                             {(forecast.probability * 100).toFixed(1)}%
                           </Typography>
                           <Typography variant="caption" color="text.secondary" display="block">
-                            Target: {new Date(forecast.targetDate).toLocaleDateString()}
+                            Target: {forecast.targetDate ? new Date(forecast.targetDate).toLocaleDateString() : 'N/A'}
                           </Typography>
                           <Typography variant="caption" color="text.secondary" display="block">
                             CI: [{(forecast.confidenceLower * 100).toFixed(1)}%, {(forecast.confidenceUpper * 100).toFixed(1)}%]

@@ -1,0 +1,22 @@
+# Minimal requirements for Pipeline Monitoring Service
+# Core dependencies only - no ML libraries needed
+
+# FastAPI/SQLAlchemy (for database and models)
+sqlalchemy==2.0.23
+psycopg2-binary==2.9.9
+pydantic[email]==2.5.0
+pydantic-settings==2.1.0
+python-dateutil==2.8.2
+
+# Monitoring/API
+Flask==3.0.0
+
+# HTTP client for health checks
+requests==2.31.0
+
+# Scheduling (needed by scheduler import)
+APScheduler==3.10.4
+
+# Minimal data handling (needed by orchestrator/data_quality)
+pandas==2.0.3
+numpy==1.24.3

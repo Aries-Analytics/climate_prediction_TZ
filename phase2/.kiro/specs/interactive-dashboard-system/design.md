@@ -72,6 +72,7 @@ The application serves multiple stakeholder types (executives, data scientists, 
 - **Build Tool:** Vite
 - **UI Library:** Material-UI (MUI) v5
 - **Charts:** Plotly.js / Recharts
+- **Maps:** React-Leaflet 4.x (Leaflet.js 1.9+) **[NEW]**
 - **HTTP Client:** Axios
 - **State Management:** React Context API (or Redux if needed)
 - **Routing:** React Router v6
@@ -203,6 +204,25 @@ def generate_risk_report(format: str) -> bytes
 def get_recommendations() -> List[Recommendation]
 ```
 
+#### 7. Geographic Visualization Service **[NEW]**
+
+**Module:** `backend/app/services/geo_service.py`
+
+**Responsibilities:**
+- Provide location data for map markers
+- Aggregate trigger events by location
+- Calculate risk zones and heatmap data
+- Generate GeoJSON exports
+
+**Key Functions:**
+```python
+def get_monitored_locations() -> List[Location]
+def get_location_trigger_summary(location_id: int, start_date: date, end_date: date) -> LocationTriggerSummary
+def get_triggers_by_location(start_date: date, end_date: date) -> Dict[int, List[TriggerEvent]]
+def generate_risk_heatmap(trigger_type: str) -> HeatmapData
+def export_geojson(filters: TriggerFilters) -> dict
+```
+
 ### API Endpoints
 
 #### Authentication Endpoints
@@ -241,7 +261,18 @@ GET    /api/triggers               # List trigger events (paginated)
 GET    /api/triggers/timeline      # Get timeline view
 GET    /api/triggers/forecast      # Get trigger probability forecasts
 GET    /api/triggers/export        # Export triggers as CSV
+GET    /api/triggers/geojson       # Export triggers as GeoJSON **[NEW]**
 POST   /api/triggers/alerts        # Create manual alert
+```
+
+#### Geographic/Location Endpoints **[NEW]**
+
+```
+GET    /api/locations              # List all monitored locations
+GET    /api/locations/{id}         # Get location details
+GET    /api/locations/{id}/triggers # Get triggers for specific location
+GET    /api/locations/summary      # Get trigger summary by location
+GET    /api/locations/heatmap      # Get risk heatmap data
 ```
 
 #### Climate Endpoints
@@ -303,6 +334,7 @@ GET    /api/admin/health           # System health check
 - Drift monitoring alerts
 
 **TriggersDashboard** (`src/pages/TriggersDashboard.tsx`)
+- Interactive geographic map (NEW - see Geographic Visualization component below)
 - Interactive timeline
 - Trigger event table (filterable)
 - Forecast probability charts
@@ -346,6 +378,18 @@ GET    /api/admin/health           # System health check
 **ErrorBoundary** (`src/components/common/ErrorBoundary.tsx`)
 - Catch and display errors gracefully
 
+**GeographicMap** (`src/components/maps/GeographicMap.tsx`) **[NEW]**
+- Interactive map of Tanzania
+- Location markers for monitored sites
+- Color-coded by trigger type/severity
+- Tooltip on hover with location details
+- Click handler for detailed drill-down
+- Layer toggle controls (filter by trigger type)
+- Time-range filtering integration
+- Heatmap overlay support (optional)
+- Pulsing markers for active triggers
+- Export to GeoJSON/image
+
 #### 4. Authentication Components
 
 **LoginPage** (`src/pages/LoginPage.tsx`)
@@ -380,6 +424,25 @@ CREATE INDEX idx_users_username ON users(username);
 CREATE INDEX idx_users_email ON users(email);
 ```
 
+#### Locations Table **[NEW]**
+
+```sql
+CREATE TABLE locations (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    latitude DECIMAL(10, 6) NOT NULL,
+    longitude DECIMAL(10, 6) NOT NULL,
+    elevation INTEGER,
+    climate_zone VARCHAR(50),
+    region VARCHAR(50),
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_locations_coords ON locations(latitude, longitude);
+CREATE INDEX idx_locations_active ON locations(is_active);
+```
+
 #### Climate Data Table
 
 ```sql
@@ -406,17 +469,19 @@ CREATE INDEX idx_climate_location ON climate_data(location_lat, location_lon);
 CREATE TABLE trigger_events (
     id SERIAL PRIMARY KEY,
     date DATE NOT NULL,
+    location_id INTEGER REFERENCES locations(id),  -- NEW: Foreign key to locations
     trigger_type VARCHAR(50) NOT NULL CHECK (trigger_type IN ('drought', 'flood', 'crop_failure')),
     confidence DECIMAL(4, 3) CHECK (confidence BETWEEN 0 AND 1),
     severity DECIMAL(4, 3) CHECK (severity BETWEEN 0 AND 1),
     payout_amount DECIMAL(10, 2),
-    location_lat DECIMAL(10, 6),
-    location_lon DECIMAL(10, 6),
+    location_lat DECIMAL(10, 6),  -- Kept for backwards compatibility
+    location_lon DECIMAL(10, 6),  -- Kept for backwards compatibility
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX idx_trigger_date ON trigger_events(date);
 CREATE INDEX idx_trigger_type ON trigger_events(trigger_type);
+CREATE INDEX idx_trigger_location ON trigger_events(location_id);  -- NEW index
 ```
 
 #### Model Predictions Table

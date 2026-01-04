@@ -125,8 +125,8 @@ def generate_evaluation_summary(results_dict, save_path):
     summary = {
         "evaluation_date": pd.Timestamp.now().isoformat(),
         "models": results_dict,
-        "best_model": max(results_dict.items(), key=lambda x: x[1].get('r2', 0) if x[1] else 0)[0],
-        "target_achieved": any(m.get('r2', 0) >= 0.85 for m in results_dict.values() if m)
+        "best_model": max(results_dict.items(), key=lambda x: x[1].get('r2_score', 0) if x[1] else 0)[0],
+        "target_achieved": any(m.get('r2_score', 0) >= 0.85 for m in results_dict.values() if m)
     }
     
     with open(save_path, 'w') as f:
@@ -156,21 +156,58 @@ def main():
     archive_dir.mkdir(parents=True, exist_ok=True)
     
     # Load test data
-    logger.info("\nLoading test data...")
+    logger.info("\\nLoading test data...")
     test_df = pd.read_csv("outputs/processed/features_test.csv")
     
-    # Get feature columns (exclude year, month, and target)
-    numeric_cols = test_df.select_dtypes(include=['number']).columns.tolist()
-    exclude_cols = ['year', 'month']
-    feature_cols = [col for col in numeric_cols if col not in exclude_cols]
+    # Load selected features from feature selection
+    feature_selection_file = "outputs/models/feature_selection_results.json"
+    if Path(feature_selection_file).exists():
+        logger.info(f"Loading selected features from {feature_selection_file}...")
+        with open(feature_selection_file, 'r') as f:
+            feature_selection_results = json.load(f)
+        
+        # Get selected feature names
+        selected_features = feature_selection_results.get('selected_features', {})
+        if isinstance(selected_features, dict):
+            # Dict format: keys are feature names
+            feature_cols = list(selected_features.keys())
+        elif isinstance(selected_features, list):
+            # List format: items are feature names
+            feature_cols = selected_features
+        else:
+            logger.warning(f"Unexpected selected_features format: {type(selected_features)}")
+            feature_cols = []
+        
+        logger.info(f"Using {len(feature_cols)} selected features from training")
+    else:
+        logger.warning("Feature selection file not found! Using all numeric columns...")
+        # Get feature columns (exclude year, month, and target) - fallback
+        numeric_cols = test_df.select_dtypes(include=['number']).columns.tolist()
+        exclude_cols = ['year', 'month']
+        feature_cols = [col for col in numeric_cols if col not in exclude_cols]
     
     # Handle target variable
-    if 'rainfall_mm' in feature_cols:
+    if 'rainfall_mm' in test_df.columns:
         target_col = 'rainfall_mm'
-        feature_cols.remove('rainfall_mm')
+        # Remove target from features if present
+        if target_col in feature_cols:
+            feature_cols.remove(target_col)
     else:
-        target_col = feature_cols[-1]
-        feature_cols = feature_cols[:-1]
+        # Fallback: assume last column is target
+        if feature_cols:
+            target_col = feature_cols[-1]
+            feature_cols = feature_cols[:-1]
+        else:
+            logger.error("No feature columns found!")
+            return
+    
+    # Ensure all selected features exist in test set
+    logger.info(f"Verifying features exist in test set...")
+    missing_features = [f for f in feature_cols if f not in test_df.columns]
+    if missing_features:
+        logger.warning(f"Missing {len(missing_features)} features in test set: {missing_features[:5]}...")
+        feature_cols = [f for f in feature_cols if f in test_df.columns]
+        logger.info(f"Using {len(feature_cols)} available features")
     
     # Drop all-NaN columns
     all_nan_cols = test_df[feature_cols].columns[test_df[feature_cols].isnull().all()].tolist()
@@ -178,8 +215,14 @@ def main():
         logger.info(f"Dropping {len(all_nan_cols)} all-NaN columns")
         feature_cols = [col for col in feature_cols if col not in all_nan_cols]
     
-    X_test = test_df[feature_cols].fillna(0).values
-    y_test = test_df[target_col].values
+    # Use median imputation (consistent with training)
+    feature_median = test_df[feature_cols].median()
+    target_median = test_df[target_col].median()
+    if pd.isna(target_median):
+        target_median = 0.0
+    
+    X_test = test_df[feature_cols].fillna(feature_median).values
+    y_test = test_df[target_col].fillna(target_median).values
     
     # Create date column for time series plots
     test_dates = pd.to_datetime(test_df[['year', 'month']].assign(day=1))
@@ -308,16 +351,28 @@ def main():
     logger.info(f"\n{'='*80}")
     logger.info("BEST MODEL PERFORMANCE")
     logger.info(f"{'='*80}")
-    best_model = max(results.items(), key=lambda x: x[1].get('r2_score', 0) if x[1] else 0)
-    logger.info(f"Best Model: {best_model[0].upper()}")
-    logger.info(f"  R² Score: {best_model[1]['r2_score']:.4f}")
-    logger.info(f"  RMSE: {best_model[1]['rmse']:.4f}")
-    logger.info(f"  MAE: {best_model[1]['mae']:.4f}")
     
-    if best_model[1]['r2_score'] >= 0.85:
-        logger.info("\n🎯 TARGET ACHIEVED: R² ≥ 0.85!")
+    # Filter out None results before finding best model
+    valid_results = {k: v for k, v in results.items() if v is not None}
+    
+    if not valid_results:
+        logger.error("No valid model results to evaluate!")
+        return
+    
+    best_model = max(valid_results.items(), key=lambda x: x[1].get('r2_score', 0))
+    logger.info(f"Best Model: {best_model[0].upper()}")
+    
+    if best_model[1] and 'r2_score' in best_model[1]:
+        logger.info(f"  R² Score: {best_model[1]['r2_score']:.4f}")
+        logger.info(f"  RMSE: {best_model[1]['rmse']:.4f}")
+        logger.info(f"  MAE: {best_model[1]['mae']:.4f}")
+        
+        if best_model[1]['r2_score'] >= 0.85:
+            logger.info("\n🎯 TARGET ACHIEVED: R² ≥ 0.85!")
+        else:
+            logger.info(f"\n⚠️  Target not achieved. Gap: {0.85 - best_model[1]['r2_score']:.4f}")
     else:
-        logger.info(f"\n⚠️  Target not achieved. Gap: {0.85 - best_model[1]['r2_score']:.4f}")
+        logger.warning("Best model has incomplete metrics")
     
     logger.info(f"{'='*80}\n")
 

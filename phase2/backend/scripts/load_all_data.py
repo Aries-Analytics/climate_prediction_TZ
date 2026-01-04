@@ -53,7 +53,7 @@ def load_all_data(clear_existing: bool = False, skip_models: bool = False):
     logger.info("=" * 80)
     try:
         results['climate_data'] = load_climate_data(
-            csv_path="/outputs/processed/master_dataset.csv",
+            csv_path="../data/processed/merged_data_2010_2025.csv",
             clear_existing=clear_existing
         )
         if results['climate_data']:
@@ -71,7 +71,7 @@ def load_all_data(clear_existing: bool = False, skip_models: bool = False):
     logger.info("=" * 80)
     try:
         results['trigger_events'] = load_trigger_events(
-            master_csv="/outputs/processed/master_dataset.csv",
+            master_csv="../data/processed/merged_data_2010_2025.csv",
             clear_existing=clear_existing
         )
         if results['trigger_events']:
@@ -90,7 +90,7 @@ def load_all_data(clear_existing: bool = False, skip_models: bool = False):
         logger.info("=" * 80)
         try:
             results['model_metrics'] = load_model_metrics(
-                results_file="outputs/models/training_results.json",
+                results_file="../outputs/models/training_results_20251128_093948.json",
                 clear_existing=clear_existing
             )
             if results['model_metrics']:
