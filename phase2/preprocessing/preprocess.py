@@ -697,28 +697,28 @@ def split_temporal_data(
         # Log split information
         logger.info(
             f"Train set: {len(train_df)} samples "
-            f"({train_df['year'].min()}-{train_df['month'].min():02d} to "
-            f"{train_df['year'].max()}-{train_df['month'].max():02d})"
+            f"({int(train_df['year'].min())}-{int(train_df['month'].min()):02d} to "
+            f"{int(train_df['year'].max())}-{int(train_df['month'].max()):02d})"
         )
         logger.info(
             f"Gap 1: {gap1_end - train_end} months "
-            f"({df_sorted.iloc[train_end]['year']}-{df_sorted.iloc[train_end]['month']:02d} to "
-            f"{df_sorted.iloc[gap1_end-1]['year']}-{df_sorted.iloc[gap1_end-1]['month']:02d})"
+            f"({int(df_sorted.iloc[train_end]['year'])}-{int(df_sorted.iloc[train_end]['month']):02d} to "
+            f"{int(df_sorted.iloc[gap1_end-1]['year'])}-{int(df_sorted.iloc[gap1_end-1]['month']):02d})"
         )
         logger.info(
             f"Validation set: {len(val_df)} samples "
-            f"({val_df['year'].min()}-{val_df['month'].min():02d} to "
-            f"{val_df['year'].max()}-{val_df['month'].max():02d})"
+            f"({int(val_df['year'].min())}-{int(val_df['month'].min()):02d} to "
+            f"({int(val_df['year'].max())}-{int(val_df['month'].max()):02d})"
         )
         logger.info(
             f"Gap 2: {gap2_end - val_end} months "
-            f"({df_sorted.iloc[val_end]['year']}-{df_sorted.iloc[val_end]['month']:02d} to "
-            f"{df_sorted.iloc[gap2_end-1]['year']}-{df_sorted.iloc[gap2_end-1]['month']:02d})"
+            f"({int(df_sorted.iloc[val_end]['year'])}-{int(df_sorted.iloc[val_end]['month']):02d} to "
+            f"{int(df_sorted.iloc[gap2_end-1]['year'])}-{int(df_sorted.iloc[gap2_end-1]['month']):02d})"
         )
         logger.info(
             f"Test set: {len(test_df)} samples "
-            f"({test_df['year'].min()}-{test_df['month'].min():02d} to "
-            f"{test_df['year'].max()}-{test_df['month'].max():02d})"
+            f"({int(test_df['year'].min())}-{int(test_df['month'].min()):02d} to "
+            f"{int(test_df['year'].max())}-{int(test_df['month'].max()):02d})"
         )
         
         # Verify no year overlap
