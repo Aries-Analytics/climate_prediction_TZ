@@ -18,22 +18,27 @@ export default function Chart({ data, layout = {}, config = {}, title, onRelayou
   const defaultLayout = {
     autosize: true,
     margin: { l: 50, r: 50, t: 50, b: 50 },
-    ...layout
+    ...layout,
+    dragmode: false, // Disable drag to zoom/pan (force override)
+    xaxis: { ...(layout.xaxis || {}), fixedrange: true },
+    yaxis: { ...(layout.yaxis || {}), fixedrange: true },
+    yaxis2: { ...(layout.yaxis2 || {}), fixedrange: true },
   }
 
   const defaultConfig = {
+    ...config,
     responsive: true,
-    displayModeBar: true,
+    scrollZoom: false, // Force disable
+    displayModeBar: false, // Force hide mode bar to prevent interactions
     displaylogo: false,
-    modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d'],
+    modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d', 'zoomIn2d', 'zoomOut2d', 'autoScale2d', 'resetScale2d'],
     toImageButtonOptions: {
       format: 'png',
       filename: title || 'chart',
       height: 800,
       width: 1200,
       scale: 2
-    },
-    ...config
+    }
   }
 
   const handleExportClick = (event: React.MouseEvent<HTMLElement>) => {

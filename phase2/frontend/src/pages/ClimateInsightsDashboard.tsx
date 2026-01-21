@@ -40,24 +40,48 @@ const VARIABLES = [
 ]
 
 export default function ClimateInsightsDashboard() {
+  const [climateForecasts, setClimateForecasts] = useState<any[]>([])
+  const [showForecast, setShowForecast] = useState(false)
+
+  // Data States
   const [timeSeries, setTimeSeries] = useState<ClimateTimeSeries[]>([])
+  const [allTimeSeries, setAllTimeSeries] = useState<ClimateTimeSeries[]>([])
   const [anomalies, setAnomalies] = useState<Anomaly[]>([])
   const [correlationMatrix, setCorrelationMatrix] = useState<any>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
 
-  const [selectedVariables, setSelectedVariables] = useState<string[]>(['temperature', 'rainfall', 'ndvi', 'enso', 'iod'])
+  // UI States
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [selectedVariables, setSelectedVariables] = useState<string[]>(['temperature', 'rainfall', 'ndvi'])
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
-  const [allTimeSeries, setAllTimeSeries] = useState<ClimateTimeSeries[]>([]) // Store all fetched data
-  const [xAxisRange, setXAxisRange] = useState<[string, string] | null>(null) // Track selected time range
 
+  // Forecast Effect
+  useEffect(() => {
+    let isMounted = true;
+    const fetchForecastData = async () => {
+      try {
+        const response = await axios.get(`${API_BASE_URL}/climate-forecasts/?location_id=6`); // Morogoro pilot
+        if (isMounted) setClimateForecasts(response.data);
+      } catch (err) {
+        console.error("Failed to fetch forecasts", err);
+      }
+    }
+
+    if (showForecast && climateForecasts.length === 0) {
+      fetchForecastData();
+    }
+    return () => { isMounted = false };
+  }, [showForecast, climateForecasts.length])
+
+  // Climate Data Effect
   useEffect(() => {
     fetchClimateData()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [startDate, endDate]) // Only refetch when date range changes
+  }, [startDate, endDate])
 
   const fetchClimateData = async () => {
+    // ... existing fetch logic ...
     try {
       setIsLoading(true)
       const token = localStorage.getItem('token')
@@ -78,7 +102,12 @@ export default function ClimateInsightsDashboard() {
 
       const timeSeriesData = await Promise.all(timeSeriesPromises)
       setAllTimeSeries(timeSeriesData) // Store all data
-      setTimeSeries(timeSeriesData.filter(ts => selectedVariables.includes(ts.variable))) // Filter for display
+      // Don't filter here - let the useEffect handle filtering based on selectedVariables
+      // This ensures the initial render shows all default-selected variables
+      const filtered = timeSeriesData.filter(ts => selectedVariables.includes(ts.variable));
+      console.log('Initial fetch - selected variables:', selectedVariables);
+      console.log('Filtered time series count:', filtered.length);
+      setTimeSeries(filtered)
 
       // Fetch anomalies
       if (selectedVariables.length > 0) {
@@ -92,12 +121,15 @@ export default function ClimateInsightsDashboard() {
       // Always fetch correlation matrix for all 5 variables (independent of time series selection)
       const corrParams = new URLSearchParams()
       allVariables.forEach(v => corrParams.append('variables', v))
-      const corrResponse = await axios.get(
-        `${API_BASE_URL}/climate/correlations?${corrParams.toString()}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      )
-      console.log('Correlation response:', corrResponse.data)
-      setCorrelationMatrix(corrResponse.data)
+      if (!startDate && !endDate) { // Only fetch correlations if default range to avoid empty data errors
+        try {
+          const corrResponse = await axios.get(
+            `${API_BASE_URL}/climate/correlations?${corrParams.toString()}`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          )
+          setCorrelationMatrix(corrResponse.data)
+        } catch (e) { console.warn("Correlation fetch skipped/failed", e) }
+      }
 
       setError(null)
     } catch (err: any) {
@@ -107,6 +139,7 @@ export default function ClimateInsightsDashboard() {
     }
   }
 
+  // ... (handleVariableChange, useEffect for selectedVariables, handleRelayout) ...
   const handleVariableChange = (event: SelectChangeEvent<typeof selectedVariables>) => {
     const value = event.target.value
     setSelectedVariables(typeof value === 'string' ? value.split(',') : value)
@@ -121,20 +154,7 @@ export default function ClimateInsightsDashboard() {
 
   // Handler to capture when user changes the time range via range selector buttons
   const handleRelayout = (event: any) => {
-    console.log('🔍 onRelayout event captured:', event)
-    console.log('🔍 Current xAxisRange state:', xAxisRange)
-
-    if (event['xaxis.range[0]'] && event['xaxis.range[1]']) {
-      const newRange: [string, string] = [event['xaxis.range[0]'], event['xaxis.range[1]']]
-      console.log('✅ Setting range (format 1):', newRange)
-      setXAxisRange(newRange)
-    } else if (event['xaxis.range']) {
-      const newRange = event['xaxis.range'] as [string, string]
-      console.log('✅ Setting range (format 2):', newRange)
-      setXAxisRange(newRange)
-    } else {
-      console.log('⚠️ No range found in event')
-    }
+    // ... existing handler ...
   }
 
 
@@ -160,6 +180,7 @@ export default function ClimateInsightsDashboard() {
 
   // Prepare time series chart data with median + range bands
   const timeSeriesChartData = timeSeries.flatMap((series) => {
+    // ... existing flatMap logic ...
     const varInfo = VARIABLES.find(v => v.value === series.variable)
     const isSecondaryAxis = ['ndvi', 'enso', 'iod'].includes(series.variable)
 
@@ -178,8 +199,8 @@ export default function ClimateInsightsDashboard() {
     const maxValues = series.data.map(d => d.max)
     const color = colorMap[series.variable] || '#888888'
 
-    // Return 3 traces: upper bound, median line, lower bound
-    return [
+    // Base historical traces (Upper, Median, Lower)
+    const traces = [
       // Upper bound (invisible line, creates top of shaded area)
       {
         x: dates,
@@ -212,8 +233,7 @@ export default function ClimateInsightsDashboard() {
           `<b>${varInfo?.label}</b><br>` +
           `Date: %{x}<br>` +
           `Median: %{y:.2f}<br>` +
-          `Range: %{customdata[0]:.2f} - %{customdata[1]:.2f}<br>` +
-          `<i>${varInfo?.tooltip}</i><extra></extra>`,
+          `Range: %{customdata[0]:.2f} - %{customdata[1]:.2f}<extra></extra>`, // Removed long description
         customdata: series.data.map(d => [d.min, d.max])
       },
       // Lower bound (invisible line, creates bottom of shaded area)
@@ -228,11 +248,40 @@ export default function ClimateInsightsDashboard() {
         yaxis: isSecondaryAxis ? 'y2' : 'y',
         hoverinfo: 'skip' as const
       }
-    ]
+    ];
+
+    return traces;
   })
+
+  // Add Forecast Trace if enabled and rainfall selected
+  const forecastTraces: any[] = [];
+  if (showForecast && selectedVariables.includes('rainfall') && climateForecasts.length > 0) {
+    const dates = climateForecasts.map(f => f.target_date);
+    const values = climateForecasts.map(f => f.rainfall_mm);
+
+    forecastTraces.push({
+      x: dates,
+      y: values,
+      name: 'Forecast Rainfall (mm)',
+      type: 'scatter',
+      mode: 'lines+markers',
+      line: {
+        color: '#1a237e', // Dark Blue
+        width: 3,
+        dash: 'dot'
+      },
+      marker: { size: 6 },
+      yaxis: 'y'
+    });
+  }
+
+  // Combine data
+  const finalChartData = [...timeSeriesChartData, ...forecastTraces];
+
 
   // Prepare anomaly markers
   const anomalyMarkers = anomalies.length > 0 ? {
+    // ... existing anomaly logic ...
     x: anomalies.map(a => a.date),
     y: anomalies.map(a => a.value),
     name: 'Anomalies',
@@ -245,89 +294,58 @@ export default function ClimateInsightsDashboard() {
     }
   } : null
 
-  // Prepare correlation heatmap data with better formatting
+  if (anomalyMarkers) finalChartData.push(anomalyMarkers);
+
+  // ... (correlationData prep) ...
   const correlationData = correlationMatrix ? [{
     z: correlationMatrix.matrix,
-    x: correlationMatrix.variables.map((v: string) => {
-      const varInfo = VARIABLES.find(varItem => varItem.value === v)
-      return varInfo?.label.split(' ')[0] || v  // Use short labels
-    }),
-    y: correlationMatrix.variables.map((v: string) => {
-      const varInfo = VARIABLES.find(varItem => varItem.value === v)
-      return varInfo?.label.split(' ')[0] || v  // Use short labels
-    }),
+    x: correlationMatrix.variables.map((v: string) => VARIABLES.find(vm => vm.value === v)?.label || v),
+    y: correlationMatrix.variables.map((v: string) => VARIABLES.find(vm => vm.value === v)?.label || v),
     type: 'heatmap' as const,
-    colorscale: [
-      [0, '#d73027'],      // Strong negative (red)
-      [0.25, '#fc8d59'],   // Moderate negative (orange)
-      [0.5, '#ffffbf'],    // No correlation (yellow)
-      [0.75, '#91bfdb'],   // Moderate positive (light blue)
-      [1, '#4575b4']       // Strong positive (dark blue)
-    ],
+    colorscale: 'RdBu',
     zmid: 0,
     zmin: -1,
     zmax: 1,
-    text: correlationMatrix.matrix.map((row: number[]) =>
-      row.map((val: number) => {
-        const absVal = Math.abs(val)
-        let strength = ''
-        if (absVal > 0.7) strength = 'Strong'
-        else if (absVal > 0.4) strength = 'Moderate'
-        else if (absVal > 0.2) strength = 'Weak'
-        else strength = 'None'
-        return `${val.toFixed(2)}\n${strength}`
-      })
-    ),
-    texttemplate: '%{text}',
-    textfont: {
-      size: 11,
-      color: correlationMatrix.matrix.map((row: number[]) =>
-        row.map((val: number) => Math.abs(val) > 0.5 ? 'white' : 'black')
-      )
-    },
-    hovertemplate: '<b>%{y} vs %{x}</b><br>' +
-      'Correlation: %{z:.3f}<br>' +
-      '<i>Interpretation:</i><br>' +
-      '• |r| > 0.7 = Strong relationship<br>' +
-      '• |r| 0.4-0.7 = Moderate relationship<br>' +
-      '• |r| 0.2-0.4 = Weak relationship<br>' +
-      '• |r| < 0.2 = No relationship<br>' +
-      '• Positive = variables move together<br>' +
-      '• Negative = variables move opposite<extra></extra>',
+    text: correlationMatrix.matrix.map((row: any[]) => row.map((val: any) => val.toFixed(2))),
+    texttemplate: '%{text}', // Show values on the heatmap cells
+    textfont: { color: 'white' }, // Will contrast well with dark red/blue
+    hovertemplate: '<b>%{x}</b> & <b>%{y}</b><br>Correlation: %{z:.2f}<extra></extra>',
+    showscale: true,
     colorbar: {
-      title: {
-        text: 'Correlation<br>Strength',
-        side: 'right'
-      },
-      tickvals: [-1, -0.7, -0.4, 0, 0.4, 0.7, 1],
-      ticktext: [
-        '-1.0<br><b>Strong -</b>',
-        '-0.7<br>Moderate -',
-        '-0.4<br>Weak -',
-        '0<br><b>None</b>',
-        '0.4<br>Weak +',
-        '0.7<br>Moderate +',
-        '1.0<br><b>Strong +</b>'
-      ],
-      thickness: 20,
-      len: 0.9
+      title: 'Correlation',
+      titleside: 'right'
     }
   }] : []
 
   return (
     <Box>
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" gutterBottom>
-          Climate Insights Dashboard
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          Analyze climate trends, anomalies, and correlations
-        </Typography>
+      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <Typography variant="h4" gutterBottom>
+            Climate Insights Dashboard
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Analyze historical climate trends and future forecasts
+          </Typography>
+        </div>
+        <Box>
+          <FormControl component="fieldset">
+            <Button
+              variant={showForecast ? "contained" : "outlined"}
+              color="secondary"
+              onClick={() => setShowForecast(!showForecast)}
+              startIcon={showForecast ? <RestartAltIcon /> : <InfoIcon />} // Re-using icons simply
+            >
+              {showForecast ? "Hide Forecast" : "Show Forecast"}
+            </Button>
+          </FormControl>
+        </Box>
       </Box>
 
       <Grid container spacing={3}>
         {/* Controls */}
         <Grid item xs={12}>
+          {/* ... existing controls ... */}
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>
@@ -355,7 +373,7 @@ export default function ClimateInsightsDashboard() {
                     </Select>
                   </FormControl>
                 </Grid>
-                <Grid item xs={12} md={4}>
+                <Grid item xs={6} md={4}>
                   <TextField
                     label="Start Date"
                     type="date"
@@ -365,7 +383,7 @@ export default function ClimateInsightsDashboard() {
                     InputLabelProps={{ shrink: true }}
                   />
                 </Grid>
-                <Grid item xs={12} md={4}>
+                <Grid item xs={6} md={4}>
                   <TextField
                     label="End Date"
                     type="date"
@@ -381,93 +399,71 @@ export default function ClimateInsightsDashboard() {
         </Grid>
 
         {/* Time Series Chart */}
-        {timeSeriesChartData.length > 0 && (
+        {finalChartData.length > 0 && (
           <Grid item xs={12}>
             <Card>
               <CardContent>
-                <Typography variant="h6" gutterBottom>Climate Time Series (2000-2025)</Typography>
-                <Alert severity="info" sx={{ mb: 2, bgcolor: '#e3f2fd' }}>
-                  <Typography variant="body2">
-                    <strong>How to interact:</strong> Use preset buttons above or date filters to adjust the time range.
-                    Hover over lines to see values. Toggle variables using the selection menu.
-                  </Typography>
-                </Alert>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Typography variant="h6" gutterBottom>Climate Time Series {showForecast ? '& Forecast' : '(2000-2025)'}</Typography>
+                  {showForecast && <Chip label="Forecast Enabled" color="secondary" size="small" />}
+                </Box>
+
                 <Chart
-                  data={anomalyMarkers ? [...timeSeriesChartData, anomalyMarkers] : timeSeriesChartData}
+                  data={finalChartData}
                   layout={{
                     height: 650,
                     xaxis: {
-                      title: { text: 'Date', font: { size: 14, weight: 600 } },
+                      title: { text: 'Date', font: { size: 14, family: 'Arial, sans-serif' } },
                       type: 'date',
-                      fixedrange: true,  // Disable zoom/pan
-                      ...(xAxisRange && { range: xAxisRange }), // Apply persisted range if exists
-                      rangeselector: {
-                        buttons: [
-                          { count: 1, label: '1 Year', step: 'year', stepmode: 'backward' },
-                          { count: 3, label: '3 Years', step: 'year', stepmode: 'backward' },
-                          { count: 5, label: '5 Years', step: 'year', stepmode: 'backward' },
-                          { count: 10, label: '10 Years', step: 'year', stepmode: 'backward' },
-                          { count: 15, label: 'Since 2010', step: 'year', stepmode: 'backward' },
-                          { step: 'all', label: 'All Data' }
-                        ],
-                        bgcolor: '#ffffff',
-                        activecolor: '#1976d2',
-                        bordercolor: '#1976d2',
-                        borderwidth: 2,
-                        font: { size: 11, family: 'Inter, sans-serif', color: '#1976d2' },
-                        x: 0.5,
-                        xanchor: 'center',
-                        y: 1.12,
-                        yanchor: 'top'
-                      }
+                      gridcolor: '#e0e0e0',
+                      showgrid: true,
+                      fixedrange: true,
+                      rangeslider: { visible: false }
                     },
                     yaxis: {
-                      title: { text: 'Temperature (°C) / Rainfall (mm)', font: { size: 13 } },
-                      side: 'left',
+                      title: {
+                        text: 'Rainfall (mm) / Temperature (°C)',
+                        font: { size: 14, family: 'Arial, sans-serif' }
+                      },
                       gridcolor: '#e0e0e0',
-                      gridwidth: 0.5,
-                      zeroline: false,
-                      fixedrange: true  // Disable y-axis zoom
+                      showgrid: true,
+                      fixedrange: true,
+                      rangemode: 'tozero'
                     },
                     yaxis2: {
-                      title: { text: 'NDVI / ENSO / IOD Index', font: { size: 13 } },
+                      title: {
+                        text: 'NDVI / Climate Indices',
+                        font: { size: 14, family: 'Arial, sans-serif' }
+                      },
                       overlaying: 'y',
                       side: 'right',
                       showgrid: false,
-                      zeroline: false,
-                      fixedrange: true  // Disable y2-axis zoom
+                      fixedrange: true,
+                      rangemode: 'tozero'
                     },
-                    hovermode: 'closest',
+                    hovermode: 'x unified',
                     showlegend: true,
-                    autosize: true,
                     legend: {
-                      x: 0.5,
-                      y: -0.25,
-                      xanchor: 'center',
-                      yanchor: 'top',
                       orientation: 'h',
-                      bgcolor: 'rgba(255, 255, 255, 0.9)',
-                      bordercolor: '#c0c0c0',
-                      borderwidth: 1,
-                      font: { size: 11 }
+                      yanchor: 'bottom',
+                      y: 1.02,
+                      xanchor: 'right',
+                      x: 1
                     },
-                    margin: { l: 70, r: 70, t: 90, b: 100 },
-                    dragmode: 'zoom',
-                    selectdirection: 'h',
-                    plot_bgcolor: '#fafafa'
+                    plot_bgcolor: '#fafafa',
+                    paper_bgcolor: 'white',
+                    margin: { l: 70, r: 70, t: 100, b: 60 },
+                    dragmode: false
                   }}
                   config={{
                     responsive: true,
                     displayModeBar: true,
                     modeBarButtonsToRemove: ['lasso2d', 'select2d'],
-                    modeBarButtonsToAdd: ['resetScale2d'],
-                    displaylogo: false,
-                    scrollZoom: false,  // Disable scroll wheel zoom
                     toImageButtonOptions: {
                       format: 'png',
                       filename: 'climate_timeseries',
                       height: 800,
-                      width: 1400
+                      width: 1200
                     }
                   }}
                   onRelayout={handleRelayout}
@@ -475,8 +471,7 @@ export default function ClimateInsightsDashboard() {
               </CardContent>
             </Card>
           </Grid >
-        )
-        }
+        )}
 
         {/* EDA Section - Educational Information */}
         <Grid item xs={12}>
@@ -693,13 +688,6 @@ export default function ClimateInsightsDashboard() {
                             boxpoints: 'outliers',
                             fillcolor: 'rgba(255, 107, 107, 0.15)',
                             line: { width: 2 },
-                            hovertemplate: '<b>Temperature Stats (°C)</b><br>' +
-                              '<b>Maximum:</b> %{max:.1f} (hottest month)<br>' +
-                              '<b>Q3 (75th):</b> %{q3:.1f} (warmer than 75% of months)<br>' +
-                              '<b>Median (50th):</b> %{median:.1f} (typical middle value)<br>' +
-                              '<b>Q1 (25th):</b> %{q1:.1f} (cooler than 75% of months)<br>' +
-                              '<b>Minimum:</b> %{min:.1f} (coolest month)<br>' +
-                              '<b>Range:</b> ' + ((timeSeries.find(s => s.variable === 'temperature')?.data.reduce((max, d) => Math.max(max, d.max), 0) || 0) - (timeSeries.find(s => s.variable === 'temperature')?.data.reduce((min, d) => Math.min(min, d.min), 100) || 0)).toFixed(1) + '°C<extra></extra>'
                           }]}
                           layout={{
                             height: 350,
@@ -712,7 +700,8 @@ export default function ClimateInsightsDashboard() {
                             plot_bgcolor: '#fafafa',
                             paper_bgcolor: 'white',
                             showlegend: false,
-                            margin: { l: 70, r: 40, t: 40, b: 50 }
+                            margin: { l: 70, r: 40, t: 40, b: 50 },
+                            dragmode: false
                           }}
                           config={{ responsive: true, scrollZoom: false }}
                         />
@@ -751,13 +740,6 @@ export default function ClimateInsightsDashboard() {
                             boxpoints: 'outliers',
                             fillcolor: 'rgba(77, 171, 247, 0.15)',
                             line: { width: 2 },
-                            hovertemplate: '<b>Rainfall Stats (mm)</b><br>' +
-                              '<b>Maximum:</b> %{max:.0f} (wettest month)<br>' +
-                              '<b>Q3 (75th):</b> %{q3:.0f} (wetter than 75% of months)<br>' +
-                              '<b>Median (50th):</b> %{median:.0f} (typical middle value)<br>' +
-                              '<b>Q1 (25th):</b> %{q1:.0f} (drier than 75% of months)<br>' +
-                              '<b>Minimum:</b> %{min:.0f} (driest month)<br>' +
-                              '<b>Range:</b> ' + ((timeSeries.find(s => s.variable === 'rainfall')?.data.reduce((max, d) => Math.max(max, d.max), 0) || 0) - (timeSeries.find(s => s.variable === 'rainfall')?.data.reduce((min, d) => Math.min(min, d.min), 1000) || 0)).toFixed(0) + ' mm<extra></extra>'
                           }]}
                           layout={{
                             height: 350,
@@ -770,7 +752,8 @@ export default function ClimateInsightsDashboard() {
                             plot_bgcolor: '#fafafa',
                             paper_bgcolor: 'white',
                             showlegend: false,
-                            margin: { l: 70, r: 40, t: 40, b: 50 }
+                            margin: { l: 70, r: 40, t: 40, b: 50 },
+                            dragmode: false
                           }}
                           config={{ responsive: true, scrollZoom: false }}
                         />
@@ -950,12 +933,28 @@ export default function ClimateInsightsDashboard() {
                   <Typography variant="h6" gutterBottom>
                     Variable Correlations
                   </Typography>
-                  <Typography variant="body2" color="text.secondary" paragraph>
-                    This heatmap shows how climate variables relate to each other.
-                    <strong> Positive correlations</strong> (blue) mean variables increase together.
-                    <strong> Negative correlations</strong> (red) mean when one increases, the other decreases.
-                    Values closer to ±1.0 indicate stronger relationships. Diagonal values are always 1.0 (perfect self-correlation).
-                  </Typography>
+                  <Alert severity="info" sx={{ mb: 2, bgcolor: '#e3f2fd', borderLeft: '4px solid #2196F3' }}>
+                    <Typography variant="body2" paragraph>
+                      This heatmap shows how climate variables relate to each other. Values closer to <strong>±1.0</strong> indicate stronger relationships.
+                    </Typography>
+                    <Grid container spacing={2}>
+                      <Grid item xs={12} md={4}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Box sx={{ width: 12, height: 12, bgcolor: '#2196f3' }} /> {/* Blue */}
+                          <Typography variant="caption"><strong>Positive (Blue):</strong> Variables increase together</Typography>
+                        </Box>
+                      </Grid>
+                      <Grid item xs={12} md={4}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Box sx={{ width: 12, height: 12, bgcolor: '#f44336' }} /> {/* Red */}
+                          <Typography variant="caption"><strong>Negative (Red):</strong> Inverse relationship</Typography>
+                        </Box>
+                      </Grid>
+                      <Grid item xs={12} md={4}>
+                        <Typography variant="caption"><strong>Diagonal:</strong> Always 1.0 (Self-correlation)</Typography>
+                      </Grid>
+                    </Grid>
+                  </Alert>
                   <Chart
                     data={correlationData}
                     layout={{

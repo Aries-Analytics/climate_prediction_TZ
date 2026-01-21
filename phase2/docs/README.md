@@ -1,6 +1,6 @@
 # Tanzania Climate Intelligence Platform - Documentation
 
-**Last Updated**: January 4, 2026  
+**Last Updated**: January 5, 2026  
 **Status**: ✅ Production-Ready  
 **Version**: 3.0 (6-Location System)
 
@@ -168,6 +168,7 @@
 
 - **[current/](./current/)** - Current status and verification documents
   - [6_LOCATION_EXPANSION_SUMMARY.md](./current/6_LOCATION_EXPANSION_SUMMARY.md) - Latest expansion
+  - [JANUARY_2026_PIPELINE_IMPROVEMENTS.md](./current/JANUARY_2026_PIPELINE_IMPROVEMENTS.md) - Recent pipeline fixes
   - [EXECUTIVE_SUMMARY.md](./current/EXECUTIVE_SUMMARY.md) - Executive summary
   - [CRITICAL_NUMBERS_VERIFICATION.md](./current/CRITICAL_NUMBERS_VERIFICATION.md) - Verified metrics
   - [CONSOLIDATION_SUMMARY.md](./current/CONSOLIDATION_SUMMARY.md) - Consolidation record
@@ -256,6 +257,17 @@ Please create an issue or update the relevant core document.
 ---
 
 ## 🆕 What's New
+
+### January 5, 2026 - Data Pipeline Robustness Improvements
+
+- ✅ **Resolved 10 critical test failures** - 100% test pass rate achieved
+- ✅ **Fixed temporal column consistency** - All data sources now include year/month
+- ✅ **Improved NaN handling** - Reduced sample loss from 100% to <10%
+- ✅ **Eliminated duplicates** - Removed 1,872 duplicate records
+- ✅ **Fixed flood triggers** - Insurance triggers now activate correctly
+- ✅ **Production-ready pipeline** - Comprehensive validation and error handling
+
+See [JANUARY_2026_PIPELINE_IMPROVEMENTS.md](./current/JANUARY_2026_PIPELINE_IMPROVEMENTS.md) for details.
 
 ### January 4, 2026 - Documentation Consolidation
 

@@ -11,6 +11,8 @@ import os
 from app.models.forecast import Forecast, ForecastRecommendation, ForecastValidation
 from app.models.trigger_event import TriggerEvent
 from app.models.climate_data import ClimateData
+from app.models.climate_forecast import ClimateForecast
+from app.config.rice_thresholds import get_kilombero_stage, RAINFALL_THRESHOLDS
 from app.schemas.forecast import (
     ForecastCreate,
     ForecastResponse,
@@ -25,11 +27,17 @@ from app.core.config import settings
 class ForecastGenerator:
     """Service for generating climate trigger forecasts"""
     
+from app.models.location import Location
+
+class ForecastGenerator:
+    """Service for generating climate trigger forecasts"""
+    
     def __init__(self):
         self.model = None
         self.model_version = "ensemble_v1"
         
     def load_model(self):
+        # ... (keep existing load_model implementation)
         """Load trained model from disk (supports both pickle and Keras formats)"""
         try:
             # Try to load Keras model first (for LSTM)
@@ -56,7 +64,7 @@ class ForecastGenerator:
             print(f"Failed to load model: {e}")
         return False
     
-    def prepare_features(self, db: Session, start_date: date, horizon_months: int) -> Optional[pd.DataFrame]:
+    def prepare_features(self, db: Session, start_date: date, horizon_months: int, location: Optional[Location] = None) -> Optional[pd.DataFrame]:
         """
         Prepare features for forecast generation
         
@@ -64,6 +72,7 @@ class ForecastGenerator:
             db: Database session
             start_date: Starting date for forecast
             horizon_months: Number of months ahead to forecast
+            location: Optional location to filter by
             
         Returns:
             DataFrame with features or None if insufficient data
@@ -71,12 +80,25 @@ class ForecastGenerator:
         # Get recent climate data (last 6 months)
         lookback_date = start_date - timedelta(days=180)
         
-        climate_data = db.query(ClimateData).filter(
+        query = db.query(ClimateData).filter(
             and_(
                 ClimateData.date >= lookback_date,
                 ClimateData.date <= start_date
             )
-        ).order_by(ClimateData.date).all()
+        )
+        
+        if location:
+            # Match by coordinates with small tolerance
+            query = query.filter(
+                and_(
+                    ClimateData.location_lat >= location.latitude - 0.001,
+                    ClimateData.location_lat <= location.latitude + 0.001,
+                    ClimateData.location_lon >= location.longitude - 0.001,
+                    ClimateData.location_lon <= location.longitude + 0.001
+                )
+            )
+            
+        climate_data = query.order_by(ClimateData.date).all()
         
         if len(climate_data) < 30:  # Need at least 30 days of data
             return None
@@ -106,75 +128,50 @@ class ForecastGenerator:
         }
         
         return pd.DataFrame([features])
-    
-    def calculate_confidence_intervals(
-        self, 
-        probability: float, 
-        uncertainty: float = 0.15
-    ) -> Tuple[float, float]:
-        """
-        Calculate confidence intervals for a probability prediction
-        
-        Args:
-            probability: Base probability (0-1)
-            uncertainty: Uncertainty factor (default 0.15)
-            
-        Returns:
-            Tuple of (lower_bound, upper_bound)
-        """
+
+    def calculate_confidence_intervals(self, probability: float, uncertainty: float = 0.15) -> Tuple[float, float]:
+        # ... (keep existing implementation)
         lower = max(0.0, probability - uncertainty)
         upper = min(1.0, probability + uncertainty)
         return lower, upper
-    
+
     def generate_forecast(
         self,
         db: Session,
         start_date: date,
         horizon_months: int,
-        trigger_type: str
+        trigger_type: str,
+        location: Optional[Location] = None
     ) -> Optional[ForecastCreate]:
         """
         Generate a single forecast
-        
-        Args:
-            db: Database session
-            start_date: Date to forecast from
-            horizon_months: Months ahead (3-6)
-            trigger_type: Type of trigger (drought, flood, crop_failure)
-            
-        Returns:
-            ForecastCreate object or None if generation fails
         """
         # Calculate target date
         target_date = start_date + relativedelta(months=horizon_months)
         
         # Prepare features
-        features_df = self.prepare_features(db, start_date, horizon_months)
+        features_df = self.prepare_features(db, start_date, horizon_months, location)
         if features_df is None:
             return None
         
         # Generate prediction
         if self.model is not None:
             try:
-                # Use model to predict
                 prediction = self.model.predict_proba(features_df)[0]
-                # Assuming binary classification, take probability of positive class
                 probability = float(prediction[1] if len(prediction) > 1 else prediction[0])
             except Exception as e:
                 print(f"Model prediction failed: {e}")
-                # Fall back to baseline
                 probability = self._baseline_prediction(features_df, trigger_type)
         else:
-            # Use baseline prediction if no model loaded
             probability = self._baseline_prediction(features_df, trigger_type)
         
-        # Calculate confidence intervals - wider for longer horizons
+        # Calculate confidence intervals
         base_uncertainty = 0.15 if self.model is not None else 0.25
-        # Increase uncertainty by 2% per month beyond 3 months
         horizon_uncertainty = base_uncertainty + (0.02 * (horizon_months - 3))
         confidence_lower, confidence_upper = self.calculate_confidence_intervals(probability, horizon_uncertainty)
         
         return ForecastCreate(
+            location_id=location.id if location else None,
             forecast_date=start_date,
             target_date=target_date,
             horizon_months=horizon_months,
@@ -184,113 +181,88 @@ class ForecastGenerator:
             confidence_upper=confidence_upper,
             model_version=self.model_version
         )
-    
-    def _baseline_prediction(self, features_df: pd.DataFrame, trigger_type: str) -> float:
-        """
-        Baseline prediction using simple heuristics
         
-        Args:
-            features_df: Feature DataFrame
-            trigger_type: Type of trigger
-            
-        Returns:
-            Probability estimate (0-1)
-        """
+    def _baseline_prediction(self, features_df: pd.DataFrame, trigger_type: str) -> float:
+        # ... (keep existing implementation)
         features = features_df.iloc[0]
         horizon_months = features['horizon_months']
         
-        # Calculate base probability from current conditions
         if trigger_type == "drought":
-            # Low rainfall and high temperature indicate drought risk
             rainfall_score = 1.0 - min(1.0, features['avg_rainfall_30d'] / 100.0)
             temp_score = min(1.0, max(0.0, (features['avg_temp_30d'] - 25) / 10.0))
             ndvi_score = 1.0 - min(1.0, max(0.0, features['avg_ndvi_30d']))
             base_probability = (rainfall_score * 0.5 + temp_score * 0.3 + ndvi_score * 0.2)
-            
         elif trigger_type == "flood":
-            # High rainfall indicates flood risk
             rainfall_score = min(1.0, features['total_rainfall_30d'] / 300.0)
-            base_probability = rainfall_score * 0.7 + 0.1  # Base 10% risk
-            
+            base_probability = rainfall_score * 0.7 + 0.1
         elif trigger_type == "crop_failure":
-            # Combination of factors
-            rainfall_score = abs(features['avg_rainfall_30d'] - 50) / 50.0  # Deviation from optimal
+            rainfall_score = abs(features['avg_rainfall_30d'] - 50) / 50.0
             ndvi_score = 1.0 - min(1.0, max(0.0, features['avg_ndvi_30d']))
             base_probability = (rainfall_score * 0.5 + ndvi_score * 0.5)
         else:
-            base_probability = 0.2  # Default baseline
-        
-        # Apply horizon decay factor - uncertainty increases with time
-        # Longer horizons should regress toward mean probability
-        # Use exponential decay: probability moves toward mean (maximum uncertainty) as horizon increases
-        # Much more aggressive decay: 0.6 for faster degradation
-        horizon_decay = 0.6 ** (horizon_months - 3)  # Decay factor starting from 3 months
-        mean_probability = 0.15  # Long-term average risk (reduced to 15% for better degradation)
-        
-        # Blend base probability with mean based on horizon
-        # At 3 months: 100% base, 0% mean
-        # At 4 months: 60% base, 40% mean
-        # At 5 months: 36% base, 64% mean
-        # At 6 months: 22% base, 78% mean
+            base_probability = 0.2
+
+        horizon_decay = 0.6 ** (horizon_months - 3)
+        mean_probability = 0.15
         adjusted_probability = base_probability * horizon_decay + mean_probability * (1 - horizon_decay)
         
         return min(1.0, max(0.0, adjusted_probability))
 
 
-def generate_forecasts(
+def generate_forecasts_all_locations(
     db: Session,
     start_date: Optional[date] = None,
     horizons: List[int] = [3, 4, 5, 6]
 ) -> List[ForecastResponse]:
-    """
-    Generate forecasts for all trigger types and horizons
-    
-    Args:
-        db: Database session
-        start_date: Starting date (defaults to today)
-        horizons: List of forecast horizons in months
-        
-    Returns:
-        List of generated forecasts
-    """
+    """Generate forecasts for all locations"""
     if start_date is None:
         start_date = date.today()
     
     generator = ForecastGenerator()
     generator.load_model()
     
+    # Generate for all locations that have climate data
+    # Frontend will filter to show only location_id=6 (Morogoro)
+    locations = db.query(Location).all()
+    
+    if not locations:
+        print(f"ERROR: No locations found in database!")
+        return []
+    
     trigger_types = ["drought", "flood", "crop_failure"]
     forecasts = []
     
-    for trigger_type in trigger_types:
-        for horizon in horizons:
-            forecast_data = generator.generate_forecast(db, start_date, horizon, trigger_type)
-            
-            if forecast_data:
-                # Check if forecast already exists
-                existing = db.query(Forecast).filter(
-                    and_(
-                        Forecast.forecast_date == forecast_data.forecast_date,
-                        Forecast.target_date == forecast_data.target_date,
-                        Forecast.trigger_type == forecast_data.trigger_type
-                    )
-                ).first()
-                
-                if existing:
-                    # Update existing forecast
-                    for key, value in forecast_data.model_dump().items():
-                        setattr(existing, key, value)
-                    db.commit()
-                    db.refresh(existing)
-                    forecasts.append(ForecastResponse.model_validate(existing))
-                else:
-                    # Create new forecast
-                    forecast = Forecast(**forecast_data.model_dump())
-                    db.add(forecast)
-                    db.commit()
-                    db.refresh(forecast)
-                    forecasts.append(ForecastResponse.model_validate(forecast))
+    print(f"Generating forecasts for {len(locations)} locations: {[l.name for l in locations]}")
     
+    for location in locations:
+        for trigger_type in trigger_types:
+            for horizon in horizons:
+                forecast_data = generator.generate_forecast(db, start_date, horizon, trigger_type, location)
+                
+                if forecast_data:
+                    # Update or create
+                    existing = db.query(Forecast).filter(
+                        and_(
+                            Forecast.location_id == location.id,
+                            Forecast.forecast_date == forecast_data.forecast_date,
+                            Forecast.target_date == forecast_data.target_date,
+                            Forecast.trigger_type == forecast_data.trigger_type
+                        )
+                    ).first()
+                    
+                    if existing:
+                        for key, value in forecast_data.model_dump().items():
+                            setattr(existing, key, value)
+                        db.commit()
+                        db.refresh(existing)
+                        forecasts.append(ForecastResponse.model_validate(existing))
+                    else:
+                        forecast = Forecast(**forecast_data.model_dump())
+                        db.add(forecast)
+                        db.commit()
+                        db.refresh(forecast)
+                        forecasts.append(ForecastResponse.model_validate(forecast))
+                        
     return forecasts
 
 
@@ -315,7 +287,9 @@ def get_forecasts(
     min_probability: Optional[float] = None,
     horizon_months: Optional[int] = None,
     start_date: Optional[date] = None,
-    end_date: Optional[date] = None
+    end_date: Optional[date] = None,
+    location_id: Optional[int] = None,
+    days: Optional[int] = None
 ) -> List[ForecastResponse]:
     """
     Query forecasts with filters
@@ -327,6 +301,8 @@ def get_forecasts(
         horizon_months: Filter by horizon
         start_date: Filter by target date start
         end_date: Filter by target date end
+        location_id: Filter by location ID (6 = Morogoro)
+        days: Filter forecasts within N days from today
         
     Returns:
         List of matching forecasts with staleness flags
@@ -344,6 +320,17 @@ def get_forecasts(
     if horizon_months is not None:
         query = query.filter(Forecast.horizon_months == horizon_months)
     
+    if location_id is not None:
+        query = query.filter(Forecast.location_id == location_id)
+    
+    if days is not None:
+        from_date = datetime.now(timezone.utc).date()
+        to_date = from_date + timedelta(days=days)
+        query = query.filter(
+            Forecast.target_date >= from_date,
+            Forecast.target_date <= to_date
+        )
+    
     if start_date:
         query = query.filter(Forecast.target_date >= start_date)
     
@@ -352,19 +339,57 @@ def get_forecasts(
     
     forecasts = query.order_by(desc(Forecast.target_date)).all()
     
-    # Convert to response objects with staleness flag
+    # Convert to response objects with staleness flag and UI context
     staleness_threshold = timedelta(days=7)
     now = datetime.now(timezone.utc)
     
     result = []
     for f in forecasts:
         forecast_response = ForecastResponse.model_validate(f)
-        # Add staleness flag
+        
+        # 1. Staleness
         if f.created_at:
             age = now - f.created_at
             forecast_response.is_stale = age > staleness_threshold
         else:
             forecast_response.is_stale = False
+            
+        # 2. Phenology Stage
+        stage = get_kilombero_stage(f.target_date)
+        forecast_response.stage = stage
+        
+        # 3. Threshold Value
+        t_type = f.trigger_type
+        if t_type == "rainfall_deficit": t_type = "drought"
+        if t_type == "excessive_rainfall": t_type = "flood"
+        
+        threshold = 0.0
+        if t_type == 'drought':
+             threshold = RAINFALL_THRESHOLDS.get(stage, {}).get('min', 0.0)
+        elif t_type == 'flood':
+             threshold = RAINFALL_THRESHOLDS.get(stage, {}).get('excessive', 0.0)
+        
+        forecast_response.threshold_value = threshold
+        
+        # 4. Expected Deficit / Deviation
+        # Only query if meaningful
+        if threshold > 0:
+            cf = db.query(ClimateForecast).filter(
+                and_(
+                    ClimateForecast.location_id == f.location_id,
+                    ClimateForecast.target_date == f.target_date
+                )
+            ).first()
+            
+            if cf:
+                forecast_val = float(cf.rainfall_mm or 0.0)
+                if t_type == 'drought':
+                    # Deficit: Threshold - Actual (e.g. 100 - 80 = 20mm deficit)
+                    forecast_response.expected_deficit = max(0.0, threshold - forecast_val)
+                elif t_type == 'flood':
+                    # Excess: Actual - Threshold (e.g. 300 - 250 = 50mm excess)
+                    forecast_response.expected_deficit = max(0.0, forecast_val - threshold)
+        
         result.append(forecast_response)
     
     return result

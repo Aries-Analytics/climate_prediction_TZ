@@ -15,7 +15,7 @@ import numpy as np
 import pandas as pd
 
 from modules.calibration import load_trigger_config
-from utils.config import get_output_path, get_data_path
+from utils.config import get_data_path, get_output_path
 from utils.logger import log_error, log_info, log_warning
 from utils.validator import validate_dataframe
 
@@ -67,10 +67,10 @@ def process(data):
     df["date"] = pd.to_datetime(df[["year", "month"]].assign(day=1))
 
     # Process by location if 'location' column exists
-    if 'location' in df.columns:
+    if "location" in df.columns:
         log_info(f"Processing data for {df['location'].nunique()} locations...")
         processed_dfs = []
-        for loc, group in df.groupby('location'):
+        for loc, group in df.groupby("location"):
             processed_dfs.append(_process_single_location(group.copy()))
         df = pd.concat(processed_dfs, ignore_index=True)
     else:
@@ -125,9 +125,8 @@ def _process_single_location(df):
 
     # 7. INSURANCE TRIGGERS
     df = _add_insurance_triggers(df)
-    
-    return df
 
+    return df
 
 
 def _get_trigger_config():

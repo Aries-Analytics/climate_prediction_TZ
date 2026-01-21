@@ -23,6 +23,10 @@ class Location(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
+    # Relationships
+    forecasts = relationship("Forecast", back_populates="location")
+    climate_forecasts = relationship("ClimateForecast", back_populates="location", cascade="all, delete-orphan")
+    
     def __repr__(self):
         return f"<Location(name='{self.name}', lat={self.latitude}, lon={self.longitude})>"
     

@@ -417,17 +417,13 @@ def validate_trigger_config(config: Dict) -> Tuple[bool, List[str]]:
             if not isinstance(wet_threshold, (int, float)):
                 errors.append("Wet season dry days threshold must be numeric")
             elif wet_threshold < 7 or wet_threshold > 90:
-                errors.append(
-                    f"Wet season dry days threshold out of range: {wet_threshold} (expected 7-90 days)"
-                )
+                errors.append(f"Wet season dry days threshold out of range: {wet_threshold} (expected 7-90 days)")
 
         if dry_threshold is not None:
             if not isinstance(dry_threshold, (int, float)):
                 errors.append("Dry season dry days threshold must be numeric")
             elif dry_threshold < 7 or dry_threshold > 120:
-                errors.append(
-                    f"Dry season dry days threshold out of range: {dry_threshold} (expected 7-120 days)"
-                )
+                errors.append(f"Dry season dry days threshold out of range: {dry_threshold} (expected 7-120 days)")
 
     # ========================================================================
     # 6. Validate crop failure trigger configuration

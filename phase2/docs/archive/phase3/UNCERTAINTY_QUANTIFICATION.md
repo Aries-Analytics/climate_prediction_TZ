@@ -1,5 +1,7 @@
 # Uncertainty Quantification for Climate Predictions
 
+> **Scope**: This document describes uncertainty quantification for **climate variable predictions** (rainfall mm, NDVI values, soil moisture %). These predictions are then compared to fixed thresholds to determine insurance triggers. This is NOT about predicting trigger probabilities directly. See [PARAMETRIC_INSURANCE_FINAL.md](../references/PARAMETRIC_INSURANCE_FINAL.md#trigger-detection-methodology) for the complete trigger detection process.
+
 ## Overview
 
 Uncertainty quantification provides prediction intervals (confidence bounds) around climate predictions, allowing users to understand the reliability and range of possible outcomes.

@@ -1,10 +1,10 @@
 # Requirements Document
 
-## Status: 🔄 IN PROGRESS - New Issues Identified
+## Status: 🔄 IN PROGRESS - Data Pipeline Test Failures
 
 ## Introduction
 
-This feature addresses the failing CI/CD pipeline by resolving import errors and test collection failures across Python versions 3.9, 3.10, and 3.11. The system currently has module import errors preventing test execution. The goal is to establish a stable, passing CI/CD pipeline with proper dependency management and reliable test execution
+This feature addresses the failing CI/CD pipeline by resolving data processing errors, empty dataframe issues, and test failures across Python versions 3.9, 3.10, and 3.11. The system currently has 10 failing tests related to data pipeline processing, temporal data splitting, and insurance trigger calibration. The goal is to establish a stable, passing CI/CD pipeline with correct data processing logic and reliable test execution
 
 ## Glossary
 
@@ -86,3 +86,63 @@ This feature addresses the failing CI/CD pipeline by resolving import errors and
 3. THE CI_Pipeline SHALL collect and execute all valid test files without import errors
 4. WHEN a test requires an optional dependency, THE Test_Suite SHALL skip the test gracefully with appropriate markers
 5. THE CI_Pipeline SHALL report which tests were skipped and why
+
+### Requirement 7
+
+**User Story:** As a developer, I want data processing functions to handle year/month columns correctly, so that merge operations succeed
+
+#### Acceptance Criteria
+
+1. WHEN the merge_processed module merges data sources, THE System SHALL ensure all dataframes contain year and month columns
+2. WHEN processing modules create output data, THE System SHALL include year and month columns in the output
+3. WHEN the Test_Suite runs merge tests, THE System SHALL successfully merge data without KeyError exceptions
+4. WHEN pipeline tests execute, THE System SHALL produce non-empty dataframes with temporal columns
+5. THE System SHALL validate that year and month columns exist before attempting merge operations
+
+### Requirement 8
+
+**User Story:** As a developer, I want temporal data splitting to handle edge cases correctly, so that preprocessing tests pass
+
+#### Acceptance Criteria
+
+1. WHEN split_temporal_data receives data with insufficient samples for validation set, THE System SHALL handle it gracefully
+2. WHEN split_temporal_data calculates split indices, THE System SHALL ensure all splits contain at least one sample
+3. WHEN the Test_Suite validates split sizes, THE System SHALL ensure train + val + test equals total samples
+4. WHEN the Test_Suite checks temporal order, THE System SHALL ensure validation set is not empty
+5. THE System SHALL document minimum data requirements for temporal splitting
+
+### Requirement 9
+
+**User Story:** As a developer, I want CHIRPS flood trigger logic to work correctly, so that insurance trigger tests pass
+
+#### Acceptance Criteria
+
+1. WHEN process_chirps processes synthetic flood data with extreme rainfall, THE System SHALL detect flood events
+2. WHEN flood risk score exceeds threshold, THE System SHALL set flood_trigger to 1
+3. WHEN the Test_Suite validates flood triggers, THE System SHALL find at least one triggered event in synthetic flood scenarios
+4. WHEN extreme rainfall events occur (>200mm/day), THE System SHALL calculate flood_risk_score >= 50
+5. THE System SHALL ensure flood trigger logic activates for guaranteed flood scenarios
+
+### Requirement 10
+
+**User Story:** As a developer, I want preprocessing pipeline to produce non-empty feature datasets, so that ML pipeline tests pass
+
+#### Acceptance Criteria
+
+1. WHEN preprocess_pipeline processes master dataset, THE System SHALL produce non-empty train/val/test dataframes
+2. WHEN feature engineering adds lag and rolling features, THE System SHALL retain sufficient samples after dropping NaN values
+3. WHEN the Test_Suite validates output structure, THE System SHALL ensure all output files contain data
+4. WHEN temporal splitting occurs, THE System SHALL ensure minimum samples per split to avoid empty dataframes
+5. THE System SHALL log warnings when data loss exceeds acceptable thresholds during preprocessing
+
+### Requirement 11
+
+**User Story:** As a developer, I want duplicate year-month records to be handled correctly, so that data consistency tests pass
+
+#### Acceptance Criteria
+
+1. WHEN the System ingests data from multiple sources, THE System SHALL detect duplicate year-month combinations
+2. WHEN duplicate records exist, THE System SHALL either deduplicate or aggregate them appropriately
+3. WHEN the Test_Suite validates temporal consistency, THE System SHALL have zero duplicate year-month records
+4. WHEN merging processed data, THE System SHALL use appropriate merge strategies to prevent duplication
+5. THE System SHALL document the deduplication strategy in processing modules

@@ -30,8 +30,7 @@ class LocationResponse(BaseModel):
 
 @router.get("", response_model=List[LocationResponse])
 def get_locations(
-    db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    db: Session = Depends(get_db)
 ):
     """
     Get all monitored locations.
@@ -46,8 +45,7 @@ def get_locations(
 @router.get("/{location_id}", response_model=LocationResponse)
 def get_location(
     location_id: int,
-    db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    db: Session = Depends(get_db)
 ):
     """
     Get a specific location by ID.

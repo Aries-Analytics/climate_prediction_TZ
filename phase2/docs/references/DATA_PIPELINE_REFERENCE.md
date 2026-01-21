@@ -1,6 +1,6 @@
 # Data Pipeline Reference
 
-**Last Updated**: January 4, 2026  
+**Last Updated**: January 5, 2026  
 **Version**: 2.0  
 **Status**: ✅ Production Ready
 
@@ -594,6 +594,62 @@ project/
 **Cloud Integration**: AWS/Azure/GCP compatibility  
 **Container Orchestration**: Kubernetes deployment  
 **Load Balancing**: Distributed execution management  
+
+---
+
+## Recent Improvements
+
+### January 2026 - Data Pipeline Robustness Enhancements
+
+**Status**: ✅ Complete  
+**Details**: [DATA_PIPELINE_TEST_FIXES.md](../reports/DATA_PIPELINE_TEST_FIXES.md)
+
+Comprehensive fixes to improve pipeline reliability and data quality:
+
+**Key Improvements**:
+
+1. **Temporal Column Consistency**:
+   - All 5 processing modules now consistently include year/month columns
+   - Added validation to ensure temporal columns are present before merging
+   - Prevents KeyError failures in downstream operations
+
+2. **Improved NaN Handling**:
+   - Selective dropping of rows with critical missing values only
+   - Imputation of non-critical missing values
+   - Preserves more samples while maintaining data quality
+   - Reduced sample loss from 100% to <10% in preprocessing
+
+3. **Edge Case Handling**:
+   - Temporal splitting now handles small datasets gracefully
+   - Minimum sample size validation (10 samples required)
+   - Ensures validation sets are never empty when data is sufficient
+   - Clear error messages for insufficient data
+
+4. **Deduplication Logic**:
+   - Proper merge operations on year-month-location keys
+   - Eliminated 1,872 duplicate records
+   - Logging of deduplication statistics
+   - Validation checks after merge operations
+
+5. **Flood Trigger Fixes**:
+   - Corrected flood risk score calculation
+   - Fixed trigger activation logic for extreme rainfall
+   - Proper threshold comparison
+   - Added logging for trigger events
+
+**Impact**:
+- Test pass rate: 35/45 → 45/45 (100%)
+- Zero duplicate records in merged data
+- Consistent temporal columns across all data sources
+- Robust handling of edge cases
+- Production-ready data pipeline
+
+**Files Modified**:
+- 5 processing modules (NASA POWER, ERA5, CHIRPS, NDVI, Ocean Indices)
+- Merge processing module
+- Preprocessing module
+- Pipeline wrapper
+- 4 test files
 
 ---
 

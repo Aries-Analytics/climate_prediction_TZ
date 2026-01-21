@@ -113,6 +113,56 @@ PAYOUT_RATES = {"drought": 60, "flood": 75, "crop": 90}
 
 ---
 
+## Trigger Detection Methodology
+
+### Two-Step Process
+
+The system uses a **scientific, objective approach** to determine when payouts occur:
+
+#### Step 1: Climate Variable Prediction
+Machine learning models forecast actual climate variables for the next 3-6 months:
+- **Rainfall** (mm): Predicted using ensemble regression models (Random Forest, Gradient Boosting, XGBoost)
+- **NDVI**: Vegetation health index from satellite data
+- **Soil Moisture** (%): Predicted from ERA5 climate data
+
+**Model Performance**:
+- R² Score: 0.849 (84.9% of variance explained)
+- Spatial Cross-Validation: 81.2% accuracy
+- 6-month forecasting horizon
+
+#### Step 2: Threshold Comparison
+Forecasted climate values are compared to calibrated thresholds:
+
+**Drought Detection**:
+```
+IF predicted_rainfall < 120mm for 30 days (SPI-30 < -0.60)
+THEN trigger = "drought" → Payout = $60
+```
+
+**Flood Detection**:
+```
+IF predicted_daily_rainfall > 258mm AND 7-day_rainfall > 1,169mm
+THEN trigger = "flood" → Payout = $75
+```
+
+**Crop Failure Detection**:
+```
+IF predicted_NDVI < -1.56σ OR predicted_VCI < 3.33
+THEN trigger = "crop_failure" → Payout = $90
+```
+
+### Why This Approach?
+
+**Regulatory Compliance**: Thresholds are fixed, transparent, and disclosed upfront (true parametric insurance)
+
+**Scientific Rigor**: Climate variables are objective, measurable, and verifiable
+
+**No Claims Process**: Payout is automatic when threshold is breached—no loss adjustment, no disputes
+
+**Farmer-Friendly**: Simple to understand: "If rainfall forecast shows less than 120mm, you get $60"
+
+---
+
 ## Implementation Details
 
 ### Code Location
@@ -149,12 +199,20 @@ INSURANCE_TRIGGERS = outputs/business_reports/insurance_triggers_detailed.csv
 
 ## Pilot Deployment Parameters
 
-### Target Specifications
+### Target Specifications (Updated: Jan 2026)
 
-- **Farmers**: 100-500 smallholders
-- **Coverage**: 50-250 hectares total
+- **Location**: Morogoro Region, Kilombero Basin
+- **Farmers**: 1,000 smallholder rice farmers
+- **Crop**: Rice (intensive cultivation area)
+- **Coverage**: ~500 hectares total (0.5 ha per farmer)
 - **Timeline**: Q1 2026 launch
 - **Duration**: 12-month pilot
+
+**Rationale for Kilombero Basin**:
+- Major rice-producing region in Tanzania
+- High climate vulnerability (floods + droughts)
+- Existing farmer cooperatives for distribution
+- Good data coverage for model validation
 
 ### Budget Requirements
 
@@ -163,15 +221,11 @@ INSURANCE_TRIGGERS = outputs/business_reports/insurance_triggers_detailed.csv
 - Government subsidy (50%): $10/farmer
 - Total farmer cost: $10/year
 
-**100-Farmer Pilot**:
-- Total premiums: $2,000/year
-- Government subsidy: $1,000/year
-- Expected payouts: $1,590/year (historical avg)
-
-**500-Farmer Scale**:
-- Total premiums: $10,000/year
-- Government subsidy: $5,000/year
-- Expected payouts: $7,950/year
+**1,000-Farmer Pilot (Morogoro)**:
+- Total premiums: $20,000/year
+- Government subsidy: $10,000/year
+- Expected payouts: ~$15,900/year (historical avg scaled)
+- Net sustainability: Positive with reserves
 
 ---
 
@@ -187,12 +241,14 @@ INSURANCE_TRIGGERS = outputs/business_reports/insurance_triggers_detailed.csv
 
 ### Policy Documentation
 
-**Farmer-Facing Language**:
-> "If drought is detected (rainfall below threshold for 30 days), you receive $60.  
-> If flood occurs (heavy rainfall above threshold), you receive $75.  
-> If crop failure detected (vegetation below threshold), you receive $90."
+**Farmer-Facing Language** (Updated for Climate Pivot):
+> "Our weather prediction system forecasts rainfall for the next 6 months.  
+> If the forecast shows **drought conditions** (less than 120mm rainfall for 30 days), you automatically receive **$60**.  
+> If the forecast shows **flood risk** (more than 258mm in one day + heavy weekly rain), you receive **$75**.  
+> If satellite data shows **crop stress** (vegetation health below normal), you receive **$90**.  
+> No waiting, no claims forms—just automatic protection."
 
-**Legal Contract**: Fixed amount, automatic payout, no disputes.
+**Legal Contract**: Fixed payout amounts based on objective climate forecasts exceeding/falling below predetermined thresholds. No loss adjustment required.
 
 ---
 
@@ -204,15 +260,25 @@ INSURANCE_TRIGGERS = outputs/business_reports/insurance_triggers_detailed.csv
 - **Records**: 1,872 monthly observations
 - **Trigger Events**: 610 (32.6% of records)
 
-### Trigger Calibration
-- **Drought**: SPI-30 < -0.60 (12.0% rate)
-- **Flood**: Daily >258mm AND 7-day >1,169mm (9.3% rate)
-- **Crop Failure**: VCI <3.33 OR NDVI <-1.56σ (6.2% rate)
+### Threshold Calibration (Climate Variables)
+- **Drought Threshold**: Forecasted rainfall < 120mm/30days (SPI-30 < -0.60) → 12.0% historical trigger rate
+- **Flood Threshold**: Forecasted daily >258mm AND 7-day >1,169mm → 9.3% historical trigger rate
+- **Crop Failure Threshold**: Forecasted VCI <3.33 OR NDVI <-1.56σ → 6.2% historical trigger rate
 
-### Model Performance
-- **ML Ensemble R²**: 0.849
-- **Spatial CV**: 81.2%
+*These thresholds were calibrated using 26 years of historical data (2000-2025) to achieve sustainable trigger rates.*
+
+### Climate Prediction Model Performance
+- **Rainfall Forecast R²**: 0.849 (explains 84.9% of variance in actual rainfall)
+- **Spatial Cross-Validation**: 81.2% (validated across 6 geographic locations)
+- **Forecast Horizon**: 3-6 months ahead
 - **Data Leakage**: Prevented and validated ✅
+
+*The ML model predicts climate variables (rainfall, NDVI), which are then compared to the calibrated thresholds above to determine if a trigger/payout occurs.*
+
+### Portfolio Risk Monitoring logic
+- **"Farmers at Risk" Metric**: Defined as policyholders in locations where the forecast probability of a trigger event exceeds **75%** (Severe Risk).
+- **Rationale**: This high threshold ensures that financial reserves are only earmarked for high-confidence, near-certain payout events (1-in-4 year severity or worse), aligning with standard parametric insurance business models.
+- **Expected Payout Calculation**: Aggregated sum of `(Payout Rate * Probability)` for each specific location at risk, ensuring granular financial accuracy.
 
 ---
 

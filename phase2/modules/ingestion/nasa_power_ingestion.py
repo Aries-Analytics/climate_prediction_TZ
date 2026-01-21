@@ -110,7 +110,16 @@ def fetch_nasa_power_data(
 
     if dry_run:
         # Return placeholder data for testing
-        df = pd.DataFrame({"YEAR": [2020, 2021], "TEMP": [24.5, 25.0], "RADIATION": [200, 210]})
+        df = pd.DataFrame(
+            {
+                "year": [2020, 2021],
+                "month": [1, 1],
+                "t2m": [24.5, 25.0],
+                "prectotcorr": [50.0, 55.0],
+                "rh2m": [70.0, 72.0],
+                "allsky_sfc_sw_dwn": [200, 210],
+            }
+        )
         log_info("Dry run mode: returning placeholder data")
         return df
 
@@ -254,17 +263,14 @@ def fetch_data(*args, **kwargs):
 
 
 def ingest_nasa_power(
-    db: Session,
-    start_date: Optional[datetime] = None,
-    end_date: Optional[datetime] = None,
-    incremental: bool = True
+    db: Session, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None, incremental: bool = True
 ) -> Tuple[int, int]:
     """
     Ingest NASA POWER data and store to database (orchestrator-compatible interface).
-    
+
     This function is designed to be called by the pipeline orchestrator.
     It fetches NASA POWER data for the specified date range and stores it in the database.
-    
+
     Parameters
     ----------
     db : Session
@@ -275,7 +281,7 @@ def ingest_nasa_power(
         End date for data retrieval. If None, defaults to current date
     incremental : bool, optional
         Whether to use incremental ingestion (only fetch new data). Default is True.
-        
+
     Returns
     -------
     Tuple[int, int]
@@ -285,73 +291,73 @@ def ingest_nasa_power(
     """
     from backend.app.models.climate_data import ClimateData
     from sqlalchemy import and_
-    
+
     # Set default date range
     if start_date is None:
         start_date = datetime(2010, 1, 1)
     if end_date is None:
         end_date = datetime.now()
-    
+
     log_info(f"Ingesting NASA POWER data from {start_date.date()} to {end_date.date()}")
-    
+
     try:
         # Fetch data using existing function
-        df = fetch_nasa_power_data(
-            start_year=start_date.year,
-            end_year=end_date.year,
-            dry_run=False
-        )
-        
+        df = fetch_nasa_power_data(start_year=start_date.year, end_year=end_date.year, dry_run=False)
+
         if df.empty:
             log_info("No NASA POWER data fetched")
             return (0, 0)
-        
+
         records_fetched = len(df)
         log_info(f"Fetched {records_fetched} NASA POWER records")
-        
+
         # Filter to exact date range (month-level granularity)
-        df['date'] = pd.to_datetime(df[['year', 'month']].assign(day=1))
-        df = df[(df['date'] >= start_date) & (df['date'] <= end_date)]
-        
+        df["date"] = pd.to_datetime(df[["year", "month"]].assign(day=1))
+        df = df[(df["date"] >= start_date) & (df["date"] <= end_date)]
+
         # Store to database
         records_stored = 0
         for _, row in df.iterrows():
             try:
                 # Check if record already exists
-                existing = db.query(ClimateData).filter(
-                    and_(
-                        ClimateData.date == row['date'].date(),
-                        ClimateData.location_lat == float(row.get('latitude', TANZANIA_LAT)),
-                        ClimateData.location_lon == float(row.get('longitude', TANZANIA_LON))
+                existing = (
+                    db.query(ClimateData)
+                    .filter(
+                        and_(
+                            ClimateData.date == row["date"].date(),
+                            ClimateData.location_lat == float(row.get("latitude", TANZANIA_LAT)),
+                            ClimateData.location_lon == float(row.get("longitude", TANZANIA_LON)),
+                        )
                     )
-                ).first()
-                
+                    .first()
+                )
+
                 if existing:
                     # Update existing record with NASA POWER data
-                    if 't2m' in row:
-                        existing.temperature_avg = float(row['t2m'])
+                    if "t2m" in row:
+                        existing.temperature_avg = float(row["t2m"])
                     records_stored += 1
                 else:
                     # Create new record
                     climate_record = ClimateData(
-                        date=row['date'].date(),
-                        location_lat=float(row.get('latitude', TANZANIA_LAT)),
-                        location_lon=float(row.get('longitude', TANZANIA_LON)),
-                        temperature_avg=float(row['t2m']) if 't2m' in row else None
+                        date=row["date"].date(),
+                        location_lat=float(row.get("latitude", TANZANIA_LAT)),
+                        location_lon=float(row.get("longitude", TANZANIA_LON)),
+                        temperature_avg=float(row["t2m"]) if "t2m" in row else None,
                     )
                     db.add(climate_record)
                     records_stored += 1
-                    
+
             except Exception as e:
                 log_error(f"Failed to store NASA POWER record for {row['date']}: {e}")
                 continue
-        
+
         # Commit all changes
         db.commit()
         log_info(f"Successfully stored {records_stored} NASA POWER records to database")
-        
+
         return (records_fetched, records_stored)
-        
+
     except Exception as e:
         log_error(f"NASA POWER ingestion failed: {e}")
         db.rollback()

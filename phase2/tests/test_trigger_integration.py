@@ -440,7 +440,7 @@ class TestDataConsistency:
                 ), f"Column {col} has {missing_pct[col]:.1%} missing values (acceptable up to 90%)"
 
     def test_temporal_consistency(self, master_dataset_path):
-        """Test that data is temporally consistent."""
+        """Test that data is temporally consistent with no true duplicates."""
         if not master_dataset_path.exists():
             pytest.skip("Master dataset not found")
 
@@ -449,9 +449,30 @@ class TestDataConsistency:
         if "year" not in df.columns or "month" not in df.columns:
             pytest.skip("Temporal columns not found")
 
-        # Check for duplicate year-month combinations
-        duplicates = df.duplicated(subset=["year", "month"], keep=False)
-        assert duplicates.sum() == 0, f"Found {duplicates.sum()} duplicate year-month records"
+        # Check for true duplicate records based on data structure
+        if "location" in df.columns:
+            # Multi-location data: check (location, year, month) uniqueness
+            duplicates = df.duplicated(subset=["location", "year", "month"], keep=False)
+            assert duplicates.sum() == 0, (
+                f"Found {duplicates.sum()} duplicate (location, year, month) records. "
+                f"Each location should have exactly one record per time period."
+            )
+
+            # Verify multi-location structure is correct
+            n_locations = df["location"].nunique()
+            n_year_months = df[["year", "month"]].drop_duplicates().shape[0]
+            expected_records = n_locations * n_year_months
+            assert len(df) == expected_records, (
+                f"Expected {expected_records} records ({n_locations} locations × {n_year_months} time periods), "
+                f"but found {len(df)} records"
+            )
+        else:
+            # Single-location data: check (year, month) uniqueness
+            duplicates = df.duplicated(subset=["year", "month"], keep=False)
+            assert duplicates.sum() == 0, (
+                f"Found {duplicates.sum()} duplicate (year, month) records. "
+                f"Each time period should appear exactly once."
+            )
 
         # Check for temporal gaps
         df_sorted = df.sort_values(["year", "month"])
@@ -459,11 +480,19 @@ class TestDataConsistency:
             df_sorted["year"].astype(str) + "-" + df_sorted["month"].astype(str).str.zfill(2) + "-01"
         )
 
-        date_diff = df_sorted["date"].diff()
-        # Most gaps should be 1 month (allowing for some missing data)
-        large_gaps = date_diff[date_diff > pd.Timedelta(days=60)]
-
-        assert len(large_gaps) < 5, f"Found {len(large_gaps)} large temporal gaps in data"
+        # For multi-location data, check gaps per location
+        if "location" in df.columns:
+            for location in df["location"].unique():
+                loc_df = df_sorted[df_sorted["location"] == location].copy()
+                date_diff = loc_df["date"].diff()
+                # Most gaps should be 1 month (allowing for some missing data)
+                large_gaps = date_diff[date_diff > pd.Timedelta(days=60)]
+                assert len(large_gaps) < 5, f"Location {location} has {len(large_gaps)} large temporal gaps in data"
+        else:
+            date_diff = df_sorted["date"].diff()
+            # Most gaps should be 1 month (allowing for some missing data)
+            large_gaps = date_diff[date_diff > pd.Timedelta(days=60)]
+            assert len(large_gaps) < 5, f"Found {len(large_gaps)} large temporal gaps in data"
 
 
 class TestSeasonalPatterns:

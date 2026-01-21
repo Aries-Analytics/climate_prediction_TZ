@@ -6,7 +6,7 @@ Transforms raw NASA POWER data with real climate indices and quality filtering.
 import numpy as np
 import pandas as pd
 
-from utils.config import get_output_path, get_data_path
+from utils.config import get_data_path, get_output_path
 from utils.logger import log_info
 from utils.validator import validate_dataframe
 
@@ -235,16 +235,16 @@ def process(data):
     # Only validate if we have the expected structure
     # Create date column for easier manipulation
     df["date"] = pd.to_datetime(df[["year", "month"]].assign(day=1))
-    
+
     # Process by location if 'location' column exists
-    if 'location' in df.columns:
+    if "location" in df.columns:
         log_info(f"Processing data for {df['location'].nunique()} locations...")
         # Most operations in NASA POWER are row-wise (heat index, GDD, filters)
         # However, outlier detection (mean + 3*std) should ideally be per-location
         # We'll stick to global processing for now as it's efficient, unless specific rolling stats are added.
         # But we must ensure validation is happy.
         pass
-    
+
     # Drop temporary date column
     df = df.drop(columns=["date"])
 

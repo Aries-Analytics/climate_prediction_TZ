@@ -23,7 +23,9 @@ from app.models import (
     forecast,
     model_metric,
     model_prediction,
-    pipeline_execution
+    pipeline_execution,
+    climate_forecast,
+    trigger_alert
 )
 
 # this is the Alembic Config object

@@ -15,8 +15,8 @@ class Settings(BaseSettings):
     ALLOWED_ORIGINS: str = '["http://localhost:3000"]'
     
     # File Paths
-    OUTPUTS_DIR: str = "../outputs"
-    MODELS_DIR: str = "../outputs/models"
+    OUTPUTS_DIR: str = "/outputs"
+    MODELS_DIR: str = "/outputs/models"
     DATA_DIR: Optional[str] = "data"
     RAW_DATA_DIR: Optional[str] = "/raw"
     PROCESSED_DATA_DIR: Optional[str] = "/processed"

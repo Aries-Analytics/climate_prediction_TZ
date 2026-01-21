@@ -22,8 +22,10 @@ def test_merge_creates_master(tmp_path):
     assert hasattr(merged, "shape")
     assert merged.shape[0] > 0
 
-    # check files created
-    csv_p = get_output_path("processed", "master_dataset.csv")
-    parquet_p = get_output_path("processed", "master_dataset.parquet")
+    # check files created - master dataset is saved to data/processed, not outputs/processed
+    from utils.config import get_data_path
+
+    csv_p = get_data_path("processed", "master_dataset.csv")
+    parquet_p = get_data_path("processed", "master_dataset.parquet")
     assert Path(csv_p).exists()
     assert Path(parquet_p).exists()

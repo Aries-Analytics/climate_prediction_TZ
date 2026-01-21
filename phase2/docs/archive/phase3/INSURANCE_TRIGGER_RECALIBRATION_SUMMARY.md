@@ -3,6 +3,8 @@
 **Completed**: December 30, 2025  
 **Status**: ✅ **Production-Ready**
 
+> **Note on Methodology**: This document describes the calibration of **insurance trigger thresholds** (e.g., "What rainfall level = drought?"), NOT the training of ML prediction models. The ML models (R²=0.849) predict **climate variables** (rainfall mm, NDVI), which are then compared to these calibrated thresholds to determine if an insurance payout occurs. See [PARAMETRIC_INSURANCE_FINAL.md](../references/PARAMETRIC_INSURANCE_FINAL.md#trigger-detection-methodology) for the complete two-step process.
+
 ---
 
 ## 🎯 Final Achievements
@@ -93,13 +95,15 @@
    
 3. Insurance Pipeline (pipelines/insurance_business_pipeline.py)
    ↓ Auto-detects data
-   ├─ Calculates payouts
+   ├─ Calculatespayouts (based on threshold breaches)
    ├─ Generates reports
    └─ Creates visualizations
    
 4. ML Training (INDEPENDENT - pipelines/model_development_pipeline.py)
-   ↓ Predicts rainfall (forward-looking)
-   └─ Does NOT use triggers (backward-looking)
+   ↓ Predicts climate variables (rainfall mm, NDVI, soil moisture)
+   ├─ Uses ensemble regression (Random Forest, XGBoost, Gradient Boosting)
+   ├─ Output: Climate variable forecasts (NOT trigger probabilities)
+   └─ These forecasts are then compared to thresholds from step 2
 ```
 
 ### Key Scripts Used
@@ -201,10 +205,14 @@ Estimated Total Payouts: $125,706.59 USD
 - **After**: AND logic → requires multiple conditions
 - **Impact**: 77 percentage point reduction in flood triggers
 
-### 3. ML ≠ Insurance Triggers
-- **ML Models**: Forward-looking predictions (rainfall forecast)
-- **Triggers**: Backward-looking rules (payout decisions)
-- **Why Separate**: Legal, financial, regulatory requirements
+### 3. ML Predictions ≠ Insurance Triggers
+- **ML Models**: Predict future climate variables ("What will rainfall be in 3 months?")
+  - Output: 150mm, 200mm, 80mm (actual values)
+  - Performance: R²=0.849 (84.9% of variance explained)
+- **Trigger Thresholds**: Rules for when to pay out ("If rainfall < 120mm = drought")
+  - Output: Drought trigger, Flood trigger, or No trigger
+  - Calibration: Based on 26-year historical data to achieve sustainable rates
+- **Why Separate**: Legal/regulatory compliance requires fixed, transparent thresholds disclosed upfront
 
 ### 4. Automation Pays Off
 - **Before**: 6+ manual scripts

@@ -600,6 +600,12 @@ def split_temporal_data(
     2. Preventing year overlap that could leak through lag features
     3. Maintaining strict chronological ordering
     4. For multi-location: Stratifying by location (each location split separately)
+    
+    Handles small datasets gracefully by:
+    - Validating minimum sample size requirements
+    - Adjusting gaps when data is insufficient
+    - Ensuring all splits have at least one sample when possible
+    - Falling back to simple splits without gaps for very small datasets
 
     Args:
         df: Input DataFrame (must have year and month columns)
@@ -610,9 +616,13 @@ def split_temporal_data(
     Returns:
         Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]: train, validation, test DataFrames
 
-    Requirements: 1.8
+    Requirements: 1.8, 8.1, 8.2, 8.3, 8.4, 8.5
     """
     has_location = 'location' in df.columns
+    
+    # Minimum sample size validation
+    MIN_SAMPLES_TOTAL = 3  # Absolute minimum to create 3 splits
+    MIN_SAMPLES_PER_SPLIT = 1  # Each split should have at least 1 sample
     
     if has_location:
         logger.info(f"Multi-location data detected - using location-stratified splitting")
@@ -630,12 +640,27 @@ def split_temporal_data(
             loc_df = df[df['location'] == location].sort_values(['year', 'month']).reset_index(drop=True)
             n_samples = len(loc_df)
             
-            # Calculate split indices
-            train_end = int(n_samples * train_pct)
-            val_size = int(n_samples * val_pct)
+            # Validate minimum samples for this location
+            if n_samples < MIN_SAMPLES_TOTAL:
+                logger.warning(
+                    f"Location {location} has only {n_samples} samples (minimum {MIN_SAMPLES_TOTAL} required). "
+                    f"Assigning all to train set."
+                )
+                train_dfs.append(loc_df.copy())
+                val_dfs.append(loc_df.iloc[0:0].copy())  # Empty dataframe with same structure
+                test_dfs.append(loc_df.iloc[0:0].copy())
+                continue
             
-            # Simple time-based split for each location (no gaps needed within location)
-            # Since we're working with different locations, spatial leakage is already prevented
+            # Calculate split indices ensuring minimum samples per split
+            train_end = max(MIN_SAMPLES_PER_SPLIT, int(n_samples * train_pct))
+            val_size = max(MIN_SAMPLES_PER_SPLIT, int(n_samples * val_pct))
+            
+            # Ensure we don't exceed available samples
+            if train_end + val_size + MIN_SAMPLES_PER_SPLIT > n_samples:
+                # Adjust to fit: prioritize train, then val, then test
+                train_end = max(MIN_SAMPLES_PER_SPLIT, n_samples - val_size - MIN_SAMPLES_PER_SPLIT)
+                val_size = max(MIN_SAMPLES_PER_SPLIT, n_samples - train_end - MIN_SAMPLES_PER_SPLIT)
+            
             val_end = train_end + val_size
             
             train_loc = loc_df.iloc[:train_end].copy()
@@ -665,29 +690,81 @@ def split_temporal_data(
         return train_df, val_df, test_df
     
     else:
-        # Single-location: Original logic with gaps
-        logger.info(f"Single-location data - using time-based splitting with {gap_months}-month gaps")
+        # Single-location: Original logic with gaps and small dataset handling
+        logger.info(f"Single-location data - using time-based splitting")
         logger.info(f"Split ratios: train={train_pct}, val={val_pct}, test={1-train_pct-val_pct}")
         
         # Ensure data is sorted by time
         df_sorted = df.sort_values(["year", "month"]).reset_index(drop=True)
-
         n_samples = len(df_sorted)
-
-        # Calculate split indices with gaps
-        train_end = int(n_samples * train_pct)
-        gap1_end = min(train_end + gap_months, n_samples)
-        val_size = int(n_samples * val_pct)
-        val_end = min(gap1_end + val_size, n_samples)
-        gap2_end = min(val_end + gap_months, n_samples)
         
-        # If we don't have enough data after gaps, reduce gap sizes
+        # Validate minimum sample size
+        if n_samples < MIN_SAMPLES_TOTAL:
+            logger.warning(
+                f"Dataset has only {n_samples} samples (minimum {MIN_SAMPLES_TOTAL} required for proper splitting). "
+                f"Assigning all to train set."
+            )
+            train_df = df_sorted.copy()
+            val_df = df_sorted.iloc[0:0].copy()  # Empty dataframe with same structure
+            test_df = df_sorted.iloc[0:0].copy()
+            return train_df, val_df, test_df
+        
+        # Calculate initial split indices
+        train_end = max(MIN_SAMPLES_PER_SPLIT, int(n_samples * train_pct))
+        val_size = max(MIN_SAMPLES_PER_SPLIT, int(n_samples * val_pct))
+        test_size = max(MIN_SAMPLES_PER_SPLIT, n_samples - train_end - val_size)
+        
+        # Check if we have enough samples for gaps
+        total_needed_with_gaps = train_end + gap_months + val_size + gap_months + test_size
+        
+        if total_needed_with_gaps > n_samples:
+            # Not enough data for full gaps - calculate what we can afford
+            available_for_gaps = n_samples - (train_end + val_size + test_size)
+            
+            if available_for_gaps >= 2:
+                # We can afford some gaps, split them between the two gaps
+                adjusted_gap = available_for_gaps // 2
+                logger.warning(
+                    f"Dataset too small for {gap_months}-month gaps. "
+                    f"Reducing to {adjusted_gap}-month gaps."
+                )
+                gap_months = adjusted_gap
+            else:
+                # No room for gaps at all
+                logger.warning(
+                    f"Dataset too small for temporal gaps ({n_samples} samples). "
+                    f"Using simple chronological split without gaps."
+                )
+                gap_months = 0
+        
+        # Calculate split indices with adjusted gaps
+        gap1_end = train_end + gap_months
+        val_end = gap1_end + val_size
+        gap2_end = val_end + gap_months
+        
+        # Ensure we don't exceed bounds and each split has at least one sample
         if gap2_end >= n_samples:
-            logger.warning(f"Not enough data for {gap_months}-month gaps. Reducing gaps...")
-            gap_months = max(6, gap_months // 2)
-            gap1_end = min(train_end + gap_months, n_samples)
-            val_end = min(gap1_end + val_size, n_samples)
-            gap2_end = min(val_end + gap_months, n_samples)
+            # Recalculate to ensure test set has samples
+            test_size = max(MIN_SAMPLES_PER_SPLIT, n_samples - val_end - gap_months)
+            gap2_end = n_samples - test_size
+            
+            # If still problematic, remove second gap
+            if gap2_end <= val_end:
+                gap2_end = val_end
+                logger.warning("Removed second gap to ensure test set has samples")
+        
+        # Ensure validation set is not empty when we have sufficient data
+        if gap1_end >= val_end and n_samples >= MIN_SAMPLES_TOTAL:
+            # Adjust: reduce first gap to ensure val set has samples
+            gap1_end = train_end
+            val_end = min(train_end + val_size, n_samples - test_size)
+            logger.warning("Removed first gap to ensure validation set has samples")
+        
+        # Final bounds check
+        train_end = min(train_end, n_samples)
+        gap1_end = min(gap1_end, n_samples)
+        val_end = min(val_end, n_samples)
+        gap2_end = min(gap2_end, n_samples)
         
         # Split data
         train_df = df_sorted.iloc[:train_end].copy()
@@ -705,8 +782,10 @@ def split_temporal_data(
                 f"({safe_int(train_df['year'].min())}-{safe_int(train_df['month'].min()):02d} to "
                 f"{safe_int(train_df['year'].max())}-{safe_int(train_df['month'].max()):02d})"
             )
+        else:
+            logger.warning("Train set is empty!")
         
-        if gap1_end > train_end and gap1_end <= len(df_sorted):
+        if gap1_end > train_end and gap1_end < len(df_sorted):
             logger.info(
                 f"Gap 1: {gap1_end - train_end} months "
                 f"({safe_int(df_sorted.iloc[train_end]['year'])}-{safe_int(df_sorted.iloc[train_end]['month']):02d} to "
@@ -719,8 +798,10 @@ def split_temporal_data(
                 f"({safe_int(val_df['year'].min())}-{safe_int(val_df['month'].min()):02d} to "
                 f"{safe_int(val_df['year'].max())}-{safe_int(val_df['month'].max()):02d})"
             )
+        else:
+            logger.warning("Validation set is empty!")
         
-        if gap2_end > val_end and gap2_end <= len(df_sorted):
+        if gap2_end > val_end and gap2_end < len(df_sorted):
             logger.info(
                 f"Gap 2: {gap2_end - val_end} months "
                 f"({safe_int(df_sorted.iloc[val_end]['year'])}-{safe_int(df_sorted.iloc[val_end]['month']):02d} to "
@@ -733,22 +814,25 @@ def split_temporal_data(
                 f"({safe_int(test_df['year'].min())}-{safe_int(test_df['month'].min()):02d} to "
                 f"{safe_int(test_df['year'].max())}-{safe_int(test_df['month'].max()):02d})"
             )
+        else:
+            logger.warning("Test set is empty!")
         
-        # Verify no year overlap
-        train_years = set(train_df['year'].unique())
-        val_years = set(val_df['year'].unique())
-        test_years = set(test_df['year'].unique())
-        
-        overlap_train_val = train_years & val_years
-        overlap_val_test = val_years & test_years
-        
-        if overlap_train_val:
-            logger.warning(f"⚠️  Year overlap between train and val: {sorted(overlap_train_val)}")
-        if overlap_val_test:
-            logger.warning(f"⚠️  Year overlap between val and test: {sorted(overlap_val_test)}")
-        
-        if not overlap_train_val and not overlap_val_test:
-            logger.info("✓ No year overlap detected - temporal leakage prevented")
+        # Verify no year overlap (only if we have data in all splits)
+        if len(train_df) > 0 and len(val_df) > 0 and len(test_df) > 0:
+            train_years = set(train_df['year'].unique())
+            val_years = set(val_df['year'].unique())
+            test_years = set(test_df['year'].unique())
+            
+            overlap_train_val = train_years & val_years
+            overlap_val_test = val_years & test_years
+            
+            if overlap_train_val:
+                logger.warning(f"⚠️  Year overlap between train and val: {sorted(overlap_train_val)}")
+            if overlap_val_test:
+                logger.warning(f"⚠️  Year overlap between val and test: {sorted(overlap_val_test)}")
+            
+            if not overlap_train_val and not overlap_val_test:
+                logger.info("✓ No year overlap detected - temporal leakage prevented")
 
         return train_df, val_df, test_df
 

@@ -65,16 +65,17 @@ def _initialize_gee():
 def _extract_ndvi_from_collection(collection, region, data_source, scale_factor=1.0):
     """
     Extract NDVI data from an Earth Engine ImageCollection.
-    
+
     Parameters:
         collection: ee.ImageCollection with NDVI data
         region: ee.Geometry for spatial aggregation
         data_source: String identifier for data source
         scale_factor: Factor to divide raw NDVI values (e.g., 10000 for MODIS)
-    
+
     Returns:
         list: List of dictionaries with NDVI records
     """
+
     # Function to extract NDVI for each image
     def extract_ndvi(image):
         # Get the date
@@ -83,13 +84,8 @@ def _extract_ndvi_from_collection(collection, region, data_source, scale_factor=
         # Calculate mean NDVI over the region
         # Use appropriate scale based on dataset (1km for MODIS, 8km for AVHRR)
         scale = 1000 if "MODIS" in data_source else 8000
-        
-        stats = image.reduceRegion(
-            reducer=ee.Reducer.mean(), 
-            geometry=region, 
-            scale=scale, 
-            maxPixels=1e9
-        )
+
+        stats = image.reduceRegion(reducer=ee.Reducer.mean(), geometry=region, scale=scale, maxPixels=1e9)
 
         # Return feature with date and NDVI
         return ee.Feature(
@@ -99,7 +95,7 @@ def _extract_ndvi_from_collection(collection, region, data_source, scale_factor=
                 "year": date.get("year"),
                 "month": date.get("month"),
                 "ndvi": stats.get("NDVI"),
-                "data_source": data_source
+                "data_source": data_source,
             },
         )
 
@@ -128,7 +124,7 @@ def _extract_ndvi_from_collection(collection, region, data_source, scale_factor=
                     "month": int(props["month"]),
                     "ndvi": round(ndvi_value, 4),
                     "date": props["date"],
-                    "data_source": props["data_source"]
+                    "data_source": props["data_source"],
                 }
             )
 
@@ -138,7 +134,7 @@ def _extract_ndvi_from_collection(collection, region, data_source, scale_factor=
 def _fetch_gee_ndvi(start_year, end_year, bounds):
     """
     Fetch real NDVI data from Google Earth Engine using hybrid AVHRR+MODIS approach.
-    
+
     Uses AVHRR for 1985-1999 (historical) and MODIS for 2000-present (higher quality).
 
     Parameters:
@@ -155,14 +151,14 @@ def _fetch_gee_ndvi(start_year, end_year, bounds):
     region = ee.Geometry.Rectangle([bounds["lon_min"], bounds["lat_min"], bounds["lon_max"], bounds["lat_max"]])
 
     all_records = []
-    
+
     # PART 1: AVHRR NDVI for historical data (1985-1999)
     if start_year < 2000:
         avhrr_start = max(start_year, 1981)  # AVHRR starts in 1981
         avhrr_end = min(end_year, 1999)
-        
+
         log_info(f"Fetching AVHRR NDVI for {avhrr_start}-{avhrr_end} (historical data)")
-        
+
         try:
             # Use NOAA CDR AVHRR NDVI V5 (8km resolution, 1981-present)
             avhrr_collection = (
@@ -171,22 +167,22 @@ def _fetch_gee_ndvi(start_year, end_year, bounds):
                 .filterBounds(region)
                 .select("NDVI")
             )
-            
+
             avhrr_records = _extract_ndvi_from_collection(avhrr_collection, region, "AVHRR_CDR_V5")
             all_records.extend(avhrr_records)
             log_info(f"Retrieved {len(avhrr_records)} AVHRR records")
-            
+
         except Exception as e:
             log_error(f"Failed to fetch AVHRR data: {e}")
             log_warning("Continuing with MODIS data only...")
-    
+
     # PART 2: MODIS NDVI for modern data (2000-present)
     if end_year >= 2000:
         modis_start = max(start_year, 2000)  # MODIS starts in 2000
         modis_end = end_year
-        
+
         log_info(f"Fetching MODIS NDVI for {modis_start}-{modis_end} (high-quality modern data)")
-        
+
         try:
             # Use MODIS Terra Vegetation Indices 16-Day Global 1km (MOD13A2)
             # Using the latest version (061) instead of deprecated 006
@@ -196,19 +192,19 @@ def _fetch_gee_ndvi(start_year, end_year, bounds):
                 .filterBounds(region)
                 .select("NDVI")
             )
-            
+
             modis_records = _extract_ndvi_from_collection(modis_collection, region, "MODIS_MOD13A2", scale_factor=10000)
             all_records.extend(modis_records)
             log_info(f"Retrieved {len(modis_records)} MODIS records")
-            
+
         except Exception as e:
             log_error(f"Failed to fetch MODIS data: {e}")
             if not all_records:  # If we have no AVHRR data either, raise error
                 raise
-    
+
     if not all_records:
         raise ValueError("No NDVI data retrieved from Google Earth Engine")
-    
+
     # Convert to DataFrame
     df = pd.DataFrame(all_records)
 
@@ -537,17 +533,14 @@ def fetch_data(*args, **kwargs):
 
 
 def ingest_ndvi(
-    db: Session,
-    start_date: Optional[datetime] = None,
-    end_date: Optional[datetime] = None,
-    incremental: bool = True
+    db: Session, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None, incremental: bool = True
 ) -> Tuple[int, int]:
     """
     Ingest NDVI data and store to database (orchestrator-compatible interface).
-    
+
     This function is designed to be called by the pipeline orchestrator.
     It fetches NDVI data for the specified date range and stores it in the database.
-    
+
     Parameters
     ----------
     db : Session
@@ -558,7 +551,7 @@ def ingest_ndvi(
         End date for data retrieval. If None, defaults to current date
     incremental : bool, optional
         Whether to use incremental ingestion (only fetch new data). Default is True.
-        
+
     Returns
     -------
     Tuple[int, int]
@@ -568,75 +561,75 @@ def ingest_ndvi(
     """
     from backend.app.models.climate_data import ClimateData
     from sqlalchemy import and_
-    
+
     # Set default date range
     if start_date is None:
         start_date = datetime(2010, 1, 1)
     if end_date is None:
         end_date = datetime.now()
-    
+
     log_info(f"Ingesting NDVI data from {start_date.date()} to {end_date.date()}")
-    
+
     try:
         # Fetch data using existing function
-        df = fetch_ndvi_data(
-            start_year=start_date.year,
-            end_year=end_date.year,
-            dry_run=False
-        )
-        
+        df = fetch_ndvi_data(start_year=start_date.year, end_year=end_date.year, dry_run=False)
+
         if df.empty:
             log_info("No NDVI data fetched")
             return (0, 0)
-        
+
         records_fetched = len(df)
         log_info(f"Fetched {records_fetched} NDVI records")
-        
+
         # Filter to exact date range (month-level granularity)
-        df['date'] = pd.to_datetime(df[['year', 'month']].assign(day=1))
-        df = df[(df['date'] >= start_date) & (df['date'] <= end_date)]
-        
+        df["date"] = pd.to_datetime(df[["year", "month"]].assign(day=1))
+        df = df[(df["date"] >= start_date) & (df["date"] <= end_date)]
+
         # Store to database (use Tanzania center point)
         records_stored = 0
         tanzania_lat = -6.369028
         tanzania_lon = 34.888822
-        
+
         for _, row in df.iterrows():
             try:
                 # Check if record already exists
-                existing = db.query(ClimateData).filter(
-                    and_(
-                        ClimateData.date == row['date'].date(),
-                        ClimateData.location_lat == tanzania_lat,
-                        ClimateData.location_lon == tanzania_lon
+                existing = (
+                    db.query(ClimateData)
+                    .filter(
+                        and_(
+                            ClimateData.date == row["date"].date(),
+                            ClimateData.location_lat == tanzania_lat,
+                            ClimateData.location_lon == tanzania_lon,
+                        )
                     )
-                ).first()
-                
+                    .first()
+                )
+
                 if existing:
                     # Update existing record with NDVI data
-                    existing.ndvi = float(row['ndvi'])
+                    existing.ndvi = float(row["ndvi"])
                     records_stored += 1
                 else:
                     # Create new record
                     climate_record = ClimateData(
-                        date=row['date'].date(),
+                        date=row["date"].date(),
                         location_lat=tanzania_lat,
                         location_lon=tanzania_lon,
-                        ndvi=float(row['ndvi'])
+                        ndvi=float(row["ndvi"]),
                     )
                     db.add(climate_record)
                     records_stored += 1
-                    
+
             except Exception as e:
                 log_error(f"Failed to store NDVI record for {row['date']}: {e}")
                 continue
-        
+
         # Commit all changes
         db.commit()
         log_info(f"Successfully stored {records_stored} NDVI records to database")
-        
+
         return (records_fetched, records_stored)
-        
+
     except Exception as e:
         log_error(f"NDVI ingestion failed: {e}")
         db.rollback()

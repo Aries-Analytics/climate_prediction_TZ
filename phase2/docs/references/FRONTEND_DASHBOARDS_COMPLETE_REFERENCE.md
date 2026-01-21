@@ -1,12 +1,35 @@
-# Frontend Dashboards - Complete Feature Reference
-**Last Updated**: January 3, 2026  
-**Status**: ✅ Production Ready
+# Frontend Dashboards - Complete Reference
 
-This document serves as the comprehensive reference for all frontend dashboard capabilities, consolidating enhancements across Executive Snapshot, Model Performance, Trigger Events, and Climate Insights dashboards.
+**Last Updated**: January 10, 2026
+**Version**: 2.1 (Climate Index Pivot)
+
+## 📌 Overview
+This document serves as the single source of truth for all frontend dashboards in the HewaSense Early Warning System.
+
+> **Note**: For detailed architecture and backend logic of the Climate Pivot, see [Climate Index Pivot Reference](../climate_pivot/climate_index_pivot_reference.md).
+
+## 1. Climate Index Insurance Dashboard (New!)
+**Route**: `/forecast` (Replaces legacy Forecast Dashboard)
+
+The primary operational dashboard for monitoring climate risks (Rainfall) against parametric insurance thresholds.
+
+### Key Components
+1.  **Active Payout Triggers**:
+    *   Real-time list of locations where projected rainfall fails to meet thresholds.
+    *   Shows **Phenology Stage** (e.g., Flowering) and **Deviation** metrics.
+2.  **Climate Forecast Chart**:
+    *   **Visualization**: Line chart with Confidence Intervals (Shaded Area).
+    *   **Thresholds**: Dynamic red/green zones indicating Required Rainfall for the specific crop stage.
+    *   **Interactive Tooltips**: Shows stage-specific advice.
+
+### Data Sources
+- **Forecasts**: `/api/climate-forecasts/` (Rainfall predictions)
+- **Alerts**: `/api/climate-forecasts/alerts` (Trigger logic)
 
 ---
 
-## 🎯 1. Executive Command Center
+## 2. Executive Command Center
+**Route**: `/executive`
 
 **Purpose**: Strategic overview of crop insurance portfolio health, operational efficiency, and financial sustainability.
 
@@ -150,6 +173,83 @@ All KPI cards now feature **visible color-coded info blocks** instead of hidden 
 - **Color**: Gradient (light to dark blue)
 - **Tooltips**: Exact importance values
 - **Top Drivers**: Identifies key climate predictors
+
+### 2.5 Forecast Validation & Model Performance (NEW - Jan 2026)
+
+#### Validation Metrics Section
+- **Purpose**: Track model accuracy in predicting actual trigger events
+- **Data Source**: `GET /api/forecasts/validation`
+- **Metrics Displayed**:
+  - **Accuracy**: % of correct predictions (trigger occurred when predicted)
+  - **Precision**: Of high-probability forecasts, how many actually triggered
+  - **Recall**: Of actual events, how many were predicted
+  - **Brier Score**: Probabilistic accuracy (0 = perfect, 1 = worst)
+- **Breakdown**: By trigger type (drought, flood, crop_failure) and horizon (3-6 months)
+- **Color Coding**:
+  - 🟢 Green (≥75%): Excellent performance
+  - 🟡 Yellow (60-75%): Good performance
+  - 🔴 Red (<60%): Needs retraining
+
+#### Drift Detection & Retraining Alerts
+- **Automatic Monitoring**: Compares accuracy against 60% threshold
+- **Alert Banner**: Displays when models need retraining
+- **Specific Recommendations**: Lists exact trigger type + horizon combinations
+- **Status Indicators**: Visual green checkmark or red warning per model
+
+---
+
+## 🚨 5. Early Warning System Dashboard
+
+**Purpose**: 3-6 month probabilistic forecasts for climate-related insurance triggers.
+
+### 5.1 Forecast Freshness Indicator (NEW - Jan 2026)
+
+**Color-Coded Status Banner**:
+- 🟢 **Green** (Success): Forecasts < 3 days old
+- 🟡 **Yellow** (Warning): Forecasts 3-7 days old
+- 🔴 **Red** (Error): Forecasts > 7 days old (stale, need updating)
+
+**Information Displayed**:
+- Last update timestamp (localized)
+- Total forecasts in database
+- Next scheduled auto-update time
+- Staleness warning when forecasts exceed 7 days
+
+**Data Source**: `GET /api/forecasts/scheduler/status`
+
+### 5.2 Validation Metrics Summary (NEW - Jan 2026)
+
+**Quick Accuracy Overview**: Displayed before forecast timeline chart
+
+**Features**:
+- Shows up to 6 most recent validation metrics
+- Compact cards with trigger type chips
+- Accuracy percentage (color-coded)
+- Precision and Recall summary
+- Link to full details in Model Performance dashboard
+
+**Purpose**: Build user confidence in forecast reliability
+
+### 5.3 Core Forecast Features
+
+#### Forecast Timeline Chart
+- **Horizon**: 3, 4, 5, and 6-month ahead predictions
+- **Trigger Types**: Drought, flood, crop_failure
+- **Probability Display**: 0-1 scale with confidence intervals
+- **Risk Threshold**: Red dashed line at 75% probability (Severe Risk)
+- **Color Coding**: Orange (drought), Blue (flood), Red (crop failure)
+- **Line Styles**: Solid (3mo), Dash (4mo), Dot (5mo), Dash-Dot (6mo)
+
+#### High-Risk Forecasts Summary
+- **Filter**: Probability > 75%
+- **Display**: Cards showing trigger type, horizon, target date
+- **Confidence Intervals**: Lower and upper bounds displayed
+
+#### Recommendations Panel
+- **Trigger**: Auto-generated when probability > 75%
+- **Priority Levels**: High, Medium, Low (color-coded)
+- **Content**: Actionable advice specific to trigger type
+- **Timeline**: Action deadlines included
 
 ---
 
@@ -327,6 +427,13 @@ All KPI cards now feature **visible color-coded info blocks** instead of hidden 
 ---
 
 ## 📋 Consolidated Feature Changelog
+
+### January 5, 2026
+- ✅ Model Performance Dashboard: Added forecast validation metrics section
+- ✅ Model Performance Dashboard: Implemented drift detection and retraining alerts
+- ✅ Early Warning Dashboard: Added forecast freshness indicator
+- ✅ Early Warning Dashboard: Added validation metrics summary cards
+- ✅ Both Dashboards: Integrated validation API endpoints
 
 ### January 3, 2026
 - ✅ Executive Dashboard: Added Capital Utilization chart

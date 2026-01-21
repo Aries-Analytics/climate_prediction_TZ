@@ -5,7 +5,7 @@ Data source: Google Earth Engine (UCSB-CHG/CHIRPS/DAILY)
 """
 
 import os
-from datetime import datetime, date
+from datetime import date, datetime
 from typing import Optional, Tuple
 
 import pandas as pd
@@ -305,7 +305,7 @@ def fetch_chirps_data(
         log_warning("=" * 70)
         log_warning("⚠️  WARNING: USING SYNTHETIC CHIRPS DATA - NOT REAL SATELLITE DATA")
         log_warning("=" * 70)
-        
+
         if not use_gee:
             log_warning("GEE disabled by user, generating synthetic climatological data")
         elif not GEE_AVAILABLE:
@@ -318,7 +318,7 @@ def fetch_chirps_data(
             log_warning("  1. CHIRPS has 1-2 week data lag")
             log_warning("  2. Recent months not yet available")
             log_warning("  3. GEE authentication or access issues")
-        
+
         log_warning("Generating synthetic climatological data based on Tanzania climate patterns")
         log_warning("THIS DATA IS MODELED, NOT OBSERVED!")
         log_warning("=" * 70)
@@ -421,17 +421,14 @@ def fetch_data(*args, **kwargs):
 
 
 def ingest_chirps(
-    db: Session,
-    start_date: Optional[datetime] = None,
-    end_date: Optional[datetime] = None,
-    incremental: bool = True
+    db: Session, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None, incremental: bool = True
 ) -> Tuple[int, int]:
     """
     Ingest CHIRPS data and store to database (orchestrator-compatible interface).
-    
+
     This function is designed to be called by the pipeline orchestrator.
     It fetches CHIRPS data for the specified date range and stores it in the database.
-    
+
     Parameters
     ----------
     db : Session
@@ -442,19 +439,19 @@ def ingest_chirps(
         End date for data retrieval. If None, defaults to current date
     incremental : bool, optional
         Whether to use incremental ingestion (only fetch new data). Default is True.
-        
+
     Returns
     -------
     Tuple[int, int]
         Tuple of (records_fetched, records_stored)
         - records_fetched: Number of records retrieved from source
         - records_stored: Number of records successfully stored to database
-        
+
     Examples
     --------
     >>> from sqlalchemy.orm import Session
     >>> from datetime import datetime
-    >>> 
+    >>>
     >>> # Full refresh for 2020-2023
     >>> records_fetched, records_stored = ingest_chirps(
     ...     db=db_session,
@@ -466,72 +463,72 @@ def ingest_chirps(
     """
     from backend.app.models.climate_data import ClimateData
     from sqlalchemy import and_
-    
+
     # Set default date range
     if start_date is None:
         start_date = datetime(2010, 1, 1)
     if end_date is None:
         end_date = datetime.now()
-    
+
     log_info(f"Ingesting CHIRPS data from {start_date.date()} to {end_date.date()}")
-    
+
     try:
         # Fetch data using existing function
-        df = fetch_chirps_data(
-            start_year=start_date.year,
-            end_year=end_date.year,
-            dry_run=False
-        )
-        
+        df = fetch_chirps_data(start_year=start_date.year, end_year=end_date.year, dry_run=False)
+
         if df.empty:
             log_warning("No CHIRPS data fetched")
             return (0, 0)
-        
+
         records_fetched = len(df)
         log_info(f"Fetched {records_fetched} CHIRPS records")
-        
+
         # Filter to exact date range (month-level granularity)
-        df['date'] = pd.to_datetime(df[['year', 'month']].assign(day=1))
-        df = df[(df['date'] >= start_date) & (df['date'] <= end_date)]
-        
+        df["date"] = pd.to_datetime(df[["year", "month"]].assign(day=1))
+        df = df[(df["date"] >= start_date) & (df["date"] <= end_date)]
+
         # Store to database
         records_stored = 0
         for _, row in df.iterrows():
             try:
                 # Check if record already exists
-                existing = db.query(ClimateData).filter(
-                    and_(
-                        ClimateData.date == row['date'].date(),
-                        ClimateData.location_lat == float(row.get('lat_min', -6.369028)),
-                        ClimateData.location_lon == float(row.get('lon_min', 34.888822))
+                existing = (
+                    db.query(ClimateData)
+                    .filter(
+                        and_(
+                            ClimateData.date == row["date"].date(),
+                            ClimateData.location_lat == float(row.get("lat_min", -6.369028)),
+                            ClimateData.location_lon == float(row.get("lon_min", 34.888822)),
+                        )
                     )
-                ).first()
-                
+                    .first()
+                )
+
                 if existing:
                     # Update existing record
-                    existing.rainfall_mm = float(row['rainfall_mm'])
+                    existing.rainfall_mm = float(row["rainfall_mm"])
                     records_stored += 1
                 else:
                     # Create new record
                     climate_record = ClimateData(
-                        date=row['date'].date(),
-                        location_lat=float(row.get('lat_min', -6.369028)),
-                        location_lon=float(row.get('lon_min', 34.888822)),
-                        rainfall_mm=float(row['rainfall_mm'])
+                        date=row["date"].date(),
+                        location_lat=float(row.get("lat_min", -6.369028)),
+                        location_lon=float(row.get("lon_min", 34.888822)),
+                        rainfall_mm=float(row["rainfall_mm"]),
                     )
                     db.add(climate_record)
                     records_stored += 1
-                    
+
             except Exception as e:
                 log_error(f"Failed to store CHIRPS record for {row['date']}: {e}")
                 continue
-        
+
         # Commit all changes
         db.commit()
         log_info(f"Successfully stored {records_stored} CHIRPS records to database")
-        
+
         return (records_fetched, records_stored)
-        
+
     except Exception as e:
         log_error(f"CHIRPS ingestion failed: {e}")
         db.rollback()

@@ -30,7 +30,7 @@ const menuItems = [
   { text: 'Model Performance', icon: <ModelTrainingIcon />, path: '/dashboard/models', roles: ['analyst', 'manager', 'admin'] },
   { text: 'Trigger Events', icon: <WarningIcon />, path: '/dashboard/triggers', roles: ['analyst', 'manager', 'admin'] },
   { text: 'Climate Insights', icon: <CloudIcon />, path: '/dashboard/climate', roles: ['analyst', 'manager', 'admin'] },
-  { text: 'Risk Management', icon: <AssessmentIcon />, path: '/dashboard/risk', roles: ['manager', 'admin'] },
+  { text: 'Risk Management', icon: <AssessmentIcon />, path: '/dashboard/risk', roles: ['analyst', 'manager', 'admin'] },
   { text: 'Early Warnings', icon: <TrendingUpIcon />, path: '/dashboard/forecasts', roles: ['analyst', 'manager', 'admin'] },
   { text: 'Admin Panel', icon: <AdminPanelSettingsIcon />, path: '/dashboard/admin', roles: ['admin'] },
 ]

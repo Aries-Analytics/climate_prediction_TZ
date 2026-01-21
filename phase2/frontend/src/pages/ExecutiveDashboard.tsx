@@ -8,20 +8,21 @@ import { useAuth } from '../contexts/AuthContext'
 import KPICard from '../components/common/KPICard'
 import LoadingSpinner from '../components/common/LoadingSpinner'
 
-// --- MOCK DATA GENERATOR (Temporary until backend ready) ---
+// --- MOCK DATA GENERATOR (Demo Mode - Shows Strategic Vision) ---
+// Updated to reflect Morogoro Rice Pilot parameters (1000 farmers, $150k reserves)
 const generateMockData = (year: number) => {
-  // 1. Solvency History (5 Year Trend)
-  // PROPER ACCOUNTING: Loss Ratio drives Payout, which depletes Reserves
-  const STARTING_CAPITAL = 20000000; // $20M initial fund
-  const ANNUAL_PREMIUMS = 10000000; // $10M premiums/year (assumed constant)
+  // 1. Solvency History (5 Year Trend) - Scaled to Pilot Size
+  // MOROGORO PILOT: $150k reserves, ~$60-90k max annual payout exposure
+  const STARTING_CAPITAL = 150000; // $150k - Morogoro pilot reserves
+  const ANNUAL_PREMIUMS = 75000; // ~$75/farmer × 1000 farmers (estimated)
 
   let cumulativeReserves = STARTING_CAPITAL;
   const solvencyTrend = Array.from({ length: 5 }, (_, i) => {
     const y = year - 4 + i;
 
-    // Generate Loss Ratio (40% - 120% to include BANKRUPTCY scenarios)
-    // > 100% = Paying out more than income = Reserves shrink
-    const lossRatio = 0.40 + (Math.random() * 0.80); // 40% - 120%
+    // Generate Loss Ratio (30% - 110% to show sustainable and stress scenarios)
+    // Pilot-scale: More volatile due to smaller portfolio
+    const lossRatio = 0.30 + (Math.random() * 0.80); // 30% - 110%
 
     // Calculate Payout based on Loss Ratio
     const payout = ANNUAL_PREMIUMS * lossRatio;
@@ -38,20 +39,20 @@ const generateMockData = (year: number) => {
   });
 
   // 2. Basis Risk Data (Scatter: VHI vs Payout)
-  // INCLUDES: 6 Pilot Regions + Extra regions for Scale Demo
-  const regions = ['Arusha', 'Dar es Salaam', 'Dodoma', 'Mbeya', 'Mwanza', 'Morogoro', 'Singida', 'Tabora', 'Shinyanga', 'Kigoma'];
-  const basisRiskPoints = regions.map(r => ({
+  // MOROGORO PILOT: Focus on single location, but show expansion vision
+  const regions = ['Morogoro (Pilot)', 'Mbeya', 'Dodoma', 'Arusha', 'Mwanza', 'Dar es Salaam'];
+  const basisRiskPoints = regions.map((r, idx) => ({
     region: r,
-    vhi: 0.2 + Math.random() * 0.6, // 0.2 to 0.8
+    vhi: idx === 0 ? 0.45 + Math.random() * 0.35 : 0.2 + Math.random() * 0.6, // Morogoro more stable
     payoutStatus: Math.random() > 0.6 ? 'Paid' : 'No Payout',
-    severity: Math.random() * 100
+    severity: idx === 0 ? Math.random() * 60 : Math.random() * 100 // Morogoro less severe
   }));
 
   return {
     kpis: {
-      farmers_protected: 12500 + Math.floor(Math.random() * 5000),
-      hectares_insured: 45000 + Math.floor(Math.random() * 10000),
-      avg_payout_days: 12 + Math.floor(Math.random() * 15), // 12-27 days
+      farmers_protected: 1000, // MOROGORO PILOT: Exactly 1000 farmers
+      hectares_insured: 1000, // ~1 hectare per farmer average
+      avg_payout_days: 12 + Math.floor(Math.random() * 10), // 12-22 days
       loss_ratio_ytd: solvencyTrend[4].ratio
     },
     solvency_history: solvencyTrend,
@@ -73,6 +74,46 @@ export default function ExecutiveDashboard() {
       setLoading(false);
     }, 800);
   }, [selectedYear]);
+
+  // --- REAL DATA INTEGRATION ---
+  // Moved before loading check to respect Rules of Hooks
+  useEffect(() => {
+    const fetchRealAlerts = async () => {
+      try {
+        const token = localStorage.getItem('token')
+        if (!token) return; // Skip if no token (e.g. dev mode)
+
+        const response = await axios.get(`${API_BASE_URL}/climate-forecasts/alerts`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        const alerts = response.data;
+
+        // Calculate Liability from Real Alerts
+        // Assuming each alert represents a payout event for a location (~$50k per location for pilot)
+        const PAYOUT_PER_LOCATION = 50000;
+        const realLiability = alerts.length * PAYOUT_PER_LOCATION;
+
+        // Update state if data exists
+        if (data) {
+          setData((prevData: any) => ({
+            ...prevData,
+            kpis: {
+              ...prevData.kpis,
+              // Update Loss Ratio YTD based on real liability vs Mock Premium ($10M)
+              loss_ratio_ytd: Math.max(prevData.kpis.loss_ratio_ytd, realLiability / 10000000)
+            },
+            real_alerts: alerts
+          }))
+        }
+      } catch (err) {
+        console.error("Failed to fetch real alerts for Executive Dashboard", err)
+      }
+    }
+
+    if (data) {
+      fetchRealAlerts()
+    }
+  }, [data?.solvency_history]) // Run once after mock data loads
 
   if (loading) return <LoadingSpinner message="Loading Command Center metrics..." />;
 
@@ -109,11 +150,13 @@ export default function ExecutiveDashboard() {
     height: 300,
     margin: { l: 60, r: 20, t: 30, b: 40 },
     showlegend: false,
+    dragmode: false,
     xaxis: { title: 'Year', fixedrange: true },
     yaxis: {
       title: { text: 'Loss Ratio', standoff: 15 },
       tickformat: '.0%',
       range: [0, 1.2],
+      fixedrange: true,
       shapes: [
         { type: 'line', y0: 0.6, y1: 0.6, x0: 0, x1: 1, xref: 'paper', line: { color: '#ed6c02', width: 2, dash: 'dot' } }, // Warning Orange
         { type: 'line', y0: 0.8, y1: 0.8, x0: 0, x1: 1, xref: 'paper', line: { color: '#d32f2f', width: 2, dash: 'dot' } }  // Error Red
@@ -126,18 +169,22 @@ export default function ExecutiveDashboard() {
     height: 300,
     margin: { l: 60, r: 20, t: 30, b: 40 },
     barmode: 'group', // Changed from 'stack' to 'group' for better comparison
+    dragmode: false,
     xaxis: { title: 'Year', fixedrange: true },
-    yaxis: { title: 'Amount (USD)', tickprefix: '$', tickformat: 's' }, // Added tickformat 's' for SI prefix
+    yaxis: { title: 'Amount (USD)', tickprefix: '$', tickformat: 's', fixedrange: true }, // Added tickformat 's' for SI prefix
     showlegend: true,
     legend: { orientation: 'h', y: 1.1 }
   };
+
+
 
   const basisRiskChartLayout = {
     autosize: true,
     height: 300,
     margin: { l: 50, r: 20, t: 30, b: 40 },
-    xaxis: { title: 'Vegetation Health Index (VHI)', range: [0, 1] },
-    yaxis: { title: 'Severity (%)' },
+    dragmode: false,
+    xaxis: { title: 'Vegetation Health Index (VHI)', range: [0, 1], fixedrange: true },
+    yaxis: { title: 'Severity (%)', fixedrange: true },
     showlegend: true,
     legend: { orientation: 'h', y: 1.1 }
   };
@@ -259,7 +306,7 @@ export default function ExecutiveDashboard() {
                 }}
                 useResizeHandler={true}
                 style={{ width: '100%', height: '100%' }}
-                config={{ displayModeBar: false }}
+                config={{ displayModeBar: false, scrollZoom: false }}
               />
             </Box>
             {/* STRATEGIC INSIGHT BLOCK */}
@@ -297,7 +344,7 @@ export default function ExecutiveDashboard() {
                 layout={{ ...capitalChartLayout, height: 300 }}
                 useResizeHandler={true}
                 style={{ width: '100%', height: '100%' }}
-                config={{ displayModeBar: false }}
+                config={{ displayModeBar: false, scrollZoom: false }}
               />
             </Box>
             <Alert severity="info" sx={{ mt: 2, bgcolor: '#e3f2fd' }}>
@@ -352,41 +399,70 @@ export default function ExecutiveDashboard() {
         </Grid>
       </Grid>
 
-      {/* BOTTOM ROW: WATCHLIST */}
-      <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>Priority Watchlist (Low VHI Regions)</Typography>
+      <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
+        {data.real_alerts ? "Active Trigger Alerts (Real-Time)" : "Priority Watchlist (Low VHI Regions)"}
+      </Typography>
       <TableContainer component={Paper}>
         <Table size="small">
           <TableHead sx={{ bgcolor: '#eee' }}>
             <TableRow>
               <TableCell><strong>Region</strong></TableCell>
-              <TableCell><strong>Current VHI</strong></TableCell>
-              <TableCell><strong>Severity %</strong></TableCell>
-              <TableCell align="center"><strong>Pre-Trigger Status</strong></TableCell>
+              <TableCell><strong>Indicator</strong></TableCell>
+              <TableCell><strong>Status</strong></TableCell>
+              <TableCell align="center"><strong>Stage</strong></TableCell>
               <TableCell align="right"><strong>Est. Payout Needed</strong></TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {data.watchlist.map((row: any) => (
-              <TableRow key={row.region}>
-                <TableCell>{row.region}</TableCell>
-                <TableCell sx={{
-                  color: row.vhi < 0.3 ? 'error.main' : 'warning.main',
-                  fontWeight: 'bold'
-                }}>
-                  {row.vhi.toFixed(2)}
-                </TableCell>
-                <TableCell>{row.severity.toFixed(1)}%</TableCell>
-                <TableCell align="center">
-                  <Chip
-                    label={row.vhi < 0.3 ? "CRITICAL" : "MONITOR"}
-                    color={row.vhi < 0.3 ? "error" : "warning"}
-                    size="small"
-                  />
-                </TableCell>
-                <TableCell align="right">${(row.severity * 1500).toLocaleString()}</TableCell>
-              </TableRow>
-            ))}
-            {data.watchlist.length === 0 && (
+            {data.real_alerts ? (
+              // RENDER REAL ALERTS
+              data.real_alerts.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} align="center">No active triggers detected in real-time monitoring.</TableCell>
+                </TableRow>
+              ) : (
+                data.real_alerts.map((alert: any, idx: number) => (
+                  <TableRow key={idx}>
+                    <TableCell>{alert.location_name}</TableCell>
+                    <TableCell>Rainfall: {alert.forecast_value}mm (vs {alert.threshold_value}mm)</TableCell>
+                    <TableCell sx={{ color: 'error.main', fontWeight: 'bold' }}>
+                      {alert.deviation.toFixed(1)} Deviation
+                    </TableCell>
+                    <TableCell align="center">
+                      <Chip
+                        label={alert.phenology_stage?.toUpperCase()}
+                        color="warning"
+                        size="small"
+                      />
+                    </TableCell>
+                    <TableCell align="right">$50,000</TableCell>
+                  </TableRow>
+                ))
+              )
+            ) : (
+              // RENDER MOCK WATCHLIST
+              data.watchlist.map((row: any) => (
+                <TableRow key={row.region}>
+                  <TableCell>{row.region}</TableCell>
+                  <TableCell sx={{
+                    color: row.vhi < 0.3 ? 'error.main' : 'warning.main',
+                    fontWeight: 'bold'
+                  }}>
+                    VHI: {row.vhi.toFixed(2)}
+                  </TableCell>
+                  <TableCell>{row.severity.toFixed(1)}% Sev</TableCell>
+                  <TableCell align="center">
+                    <Chip
+                      label={row.vhi < 0.3 ? "CRITICAL" : "MONITOR"}
+                      color={row.vhi < 0.3 ? "error" : "warning"}
+                      size="small"
+                    />
+                  </TableCell>
+                  <TableCell align="right">${(row.severity * 1500).toLocaleString()}</TableCell>
+                </TableRow>
+              ))
+            )}
+            {!data.real_alerts && data.watchlist.length === 0 && (
               <TableRow>
                 <TableCell colSpan={5} align="center">No critical regions detected.</TableCell>
               </TableRow>

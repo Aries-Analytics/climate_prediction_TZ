@@ -14,7 +14,8 @@ def to_camel(string: str) -> str:
 class ForecastBase(BaseModel):
     model_config = ConfigDict(
         alias_generator=to_camel,
-        populate_by_name=True
+        populate_by_name=True,
+        by_alias=True  # CRITICAL: Serialize using camelCase aliases
     )
     
     forecast_date: date
@@ -25,6 +26,7 @@ class ForecastBase(BaseModel):
     confidence_lower: float = Field(..., ge=0, le=1, description="Lower confidence bound")
     confidence_upper: float = Field(..., ge=0, le=1, description="Upper confidence bound")
     model_version: Optional[str] = None
+    location_id: int
 
     @field_validator('confidence_lower', 'confidence_upper')
     @classmethod
@@ -43,10 +45,16 @@ class ForecastResponse(ForecastBase):
     created_at: datetime
     is_stale: bool = False
     
+    # UI Helpers (Dynamic)
+    expected_deficit: Optional[float] = None
+    threshold_value: Optional[float] = None
+    stage: Optional[str] = None
+    
     model_config = ConfigDict(
         from_attributes=True,
         alias_generator=to_camel,
-        populate_by_name=True
+        populate_by_name=True,
+        by_alias=True
     )
 
 
@@ -54,7 +62,8 @@ class ForecastResponse(ForecastBase):
 class RecommendationBase(BaseModel):
     model_config = ConfigDict(
         alias_generator=to_camel,
-        populate_by_name=True
+        populate_by_name=True,
+        by_alias=True
     )
     
     recommendation_text: str
@@ -74,7 +83,8 @@ class RecommendationResponse(RecommendationBase):
     model_config = ConfigDict(
         from_attributes=True,
         alias_generator=to_camel,
-        populate_by_name=True
+        populate_by_name=True,
+        by_alias=True
     )
 
 
@@ -85,7 +95,8 @@ class ForecastWithRecommendations(ForecastResponse):
     model_config = ConfigDict(
         from_attributes=True,
         alias_generator=to_camel,
-        populate_by_name=True
+        populate_by_name=True,
+        by_alias=True
     )
 
 
@@ -93,7 +104,8 @@ class ForecastWithRecommendations(ForecastResponse):
 class ValidationBase(BaseModel):
     model_config = ConfigDict(
         alias_generator=to_camel,
-        populate_by_name=True
+        populate_by_name=True,
+        by_alias=True
     )
     
     forecast_id: int
@@ -114,7 +126,8 @@ class ValidationResponse(ValidationBase):
     model_config = ConfigDict(
         from_attributes=True,
         alias_generator=to_camel,
-        populate_by_name=True
+        populate_by_name=True,
+        by_alias=True
     )
 
 
@@ -122,7 +135,8 @@ class ValidationResponse(ValidationBase):
 class ForecastGenerateRequest(BaseModel):
     model_config = ConfigDict(
         alias_generator=to_camel,
-        populate_by_name=True
+        populate_by_name=True,
+        by_alias=True
     )
     
     start_date: Optional[date] = None
@@ -139,7 +153,8 @@ class ForecastGenerateRequest(BaseModel):
 class ForecastQueryParams(BaseModel):
     model_config = ConfigDict(
         alias_generator=to_camel,
-        populate_by_name=True
+        populate_by_name=True,
+        by_alias=True
     )
     
     trigger_type: Optional[str] = Field(None, pattern="^(drought|flood|crop_failure)$")
@@ -152,7 +167,8 @@ class ForecastQueryParams(BaseModel):
 class ValidationMetrics(BaseModel):
     model_config = ConfigDict(
         alias_generator=to_camel,
-        populate_by_name=True
+        populate_by_name=True,
+        by_alias=True
     )
     
     trigger_type: str
@@ -163,3 +179,37 @@ class ValidationMetrics(BaseModel):
     precision: Optional[float] = None
     recall: Optional[float] = None
     avg_brier_score: Optional[float] = None
+
+
+# NEW: Location Risk Summary Schemas
+class LocationRiskSummary(BaseModel):
+    """Schema for location risk summary response"""
+    model_config = ConfigDict(
+        alias_generator=to_camel,
+        populate_by_name=True,
+        by_alias=True
+    )
+    
+    location_id: int
+    location_name: str
+    latitude: float
+    longitude: float
+    drought_probability: float = Field(..., ge=0, le=1)
+    flood_probability: float = Field(..., ge=0, le=1)
+    crop_failure_probability: float = Field(..., ge=0, le=1)
+    overall_risk_index: float = Field(..., ge=0, le=1)
+    risk_level: str = Field(..., pattern="^(low|medium|high)$")
+    estimated_payout: float = Field(0.0, ge=0)
+
+
+class LocationRiskSummaryResponse(BaseModel):
+    """Response wrapper for location risk summary endpoint"""
+    model_config = ConfigDict(
+        alias_generator=to_camel,
+        populate_by_name=True,
+        by_alias=True
+    )
+    
+    locations: List[LocationRiskSummary]
+    horizon_months: int
+    total_locations: int

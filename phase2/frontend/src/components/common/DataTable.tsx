@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, ReactNode } from 'react'
 import {
   Table,
   TableBody,
@@ -25,7 +25,7 @@ interface Column {
   label: string
   sortable?: boolean
   filterable?: boolean
-  format?: (value: any) => string
+  format?: (value: any, row?: any) => ReactNode
 }
 
 interface DataTableProps {
@@ -57,11 +57,11 @@ export default function DataTable({ columns, rows, searchable = false, exportFil
   // Filter rows based on search term
   const filteredRows = searchTerm
     ? rows.filter((row) =>
-        columns.some((column) => {
-          const value = row[column.id]
-          return value?.toString().toLowerCase().includes(searchTerm.toLowerCase())
-        })
-      )
+      columns.some((column) => {
+        const value = row[column.id]
+        return value?.toString().toLowerCase().includes(searchTerm.toLowerCase())
+      })
+    )
     : rows
 
   const sortedRows = [...filteredRows].sort((a, b) => {
@@ -104,10 +104,10 @@ export default function DataTable({ columns, rows, searchable = false, exportFil
       metadataRows.push(`# Total Records: ${sortedRows.length}`)
       metadataRows.push('') // Empty line
     }
-    
+
     // Create CSV content
     const headers = columns.map(col => col.label).join(',')
-    const csvRows = sortedRows.map(row => 
+    const csvRows = sortedRows.map(row =>
       columns.map(col => {
         const value = col.format ? col.format(row[col.id]) : row[col.id]
         // Escape quotes and wrap in quotes if contains comma
@@ -115,9 +115,9 @@ export default function DataTable({ columns, rows, searchable = false, exportFil
         return stringValue.includes(',') ? `"${stringValue.replace(/"/g, '""')}"` : stringValue
       }).join(',')
     )
-    
+
     const csvContent = [...metadataRows, headers, ...csvRows].join('\n')
-    
+
     // Download
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
     const link = document.createElement('a')
@@ -142,16 +142,16 @@ export default function DataTable({ columns, rows, searchable = false, exportFil
         </table>
       `
     }
-    
+
     // Create HTML table for Excel
     const headers = columns.map(col => `<th>${col.label}</th>`).join('')
-    const rows = sortedRows.map(row => 
+    const rows = sortedRows.map(row =>
       `<tr>${columns.map(col => {
         const value = col.format ? col.format(row[col.id]) : row[col.id]
         return `<td>${value || ''}</td>`
       }).join('')}</tr>`
     ).join('')
-    
+
     const htmlContent = `
       <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel">
         <head><meta charset="UTF-8"></head>
@@ -164,7 +164,7 @@ export default function DataTable({ columns, rows, searchable = false, exportFil
         </body>
       </html>
     `
-    
+
     // Download
     const blob = new Blob([htmlContent], { type: 'application/vnd.ms-excel' })
     const link = document.createElement('a')
@@ -238,7 +238,7 @@ export default function DataTable({ columns, rows, searchable = false, exportFil
                 {columns.map((column) => (
                   <TableCell key={column.id}>
                     {column.format
-                      ? column.format(row[column.id])
+                      ? column.format(row[column.id], row)
                       : row[column.id]}
                   </TableCell>
                 ))}

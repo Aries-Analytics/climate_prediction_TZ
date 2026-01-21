@@ -11,7 +11,8 @@ import {
   Select,
   MenuItem,
   Chip,
-  SelectChangeEvent
+  SelectChangeEvent,
+  Stack
 } from '@mui/material'
 import axios from 'axios'
 import { API_BASE_URL } from '../config/api'
@@ -21,16 +22,30 @@ import DataTable from '../components/common/DataTable'
 import Chart from '../components/charts/Chart'
 import { ModelMetrics, FeatureImportance } from '../types'
 
+interface ValidationMetric {
+  triggerType: string
+  horizonMonths: number
+  totalForecasts: number
+  correctForecasts: number
+  accuracy: number
+  precision: number | null
+  recall: number | null
+  avgBrierScore: number | null
+}
+
 export default function ModelPerformanceDashboard() {
   const [models, setModels] = useState<ModelMetrics[]>([])
   const [selectedModel, setSelectedModel] = useState<string>('') // Will be set to best model after loading
   const [featureImportance, setFeatureImportance] = useState<FeatureImportance[]>([])
+  const [validationMetrics, setValidationMetrics] = useState<ValidationMetric[]>([])
+  const [retrainingNeeded, setRetrainingNeeded] = useState<string[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [driftAlert, setDriftAlert] = useState<string | null>(null)
 
   useEffect(() => {
     fetchModels()
+    fetchValidationMetrics()
   }, [])
 
   // Models that support feature importance (tree-based models)
@@ -84,6 +99,32 @@ export default function ModelPerformanceDashboard() {
     } catch (err) {
       // Silently handle - feature importance may not be available
       setFeatureImportance([])
+    }
+  }
+
+  const fetchValidationMetrics = async () => {
+    try {
+      const token = localStorage.getItem('token')
+      const response = await axios.get(`${API_BASE_URL}/forecasts/validation`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      setValidationMetrics(response.data)
+
+      // Check for low accuracy (< 60%) and set drift alerts
+      const lowAccuracyMetrics = response.data.filter((m: ValidationMetric) => m.accuracy < 0.6)
+      if (lowAccuracyMetrics.length > 0) {
+        const triggers = lowAccuracyMetrics.map((m: ValidationMetric) =>
+          `${m.triggerType} (${m.horizonMonths}mo)`
+        ).join(', ')
+        setDriftAlert(`⚠️ Model retraining recommended for: ${triggers}. Accuracy below 60% threshold.`)
+        setRetrainingNeeded(lowAccuracyMetrics.map((m: ValidationMetric) =>
+          `${m.triggerType}_${m.horizonMonths}m`
+        ))
+      }
+    } catch (err) {
+      console.error('Failed to fetch validation metrics:', err)
+      // Silently handle - validation may not be available yet
+      setValidationMetrics([])
     }
   }
 
@@ -1071,6 +1112,115 @@ export default function ModelPerformanceDashboard() {
             </CardContent>
           </Card>
         </Grid>
+
+        {/* Forecast Validation & Model Retraining */}
+        {validationMetrics.length > 0 && (
+          <>
+            <Grid item xs={12}>
+              <Card sx={{ bgcolor: retrainingNeeded.length > 0 ? 'warning.50' : 'success.50', border: '2px solid', borderColor: retrainingNeeded.length > 0 ? 'warning.main' : 'success.main' }}>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom>
+                    📊 Forecast Validation & Model Performance
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                    Track how well models predict actual trigger events. Based on {validationMetrics.reduce((sum, m) => sum + m.totalForecasts, 0)} validated forecasts.
+                  </Typography>
+
+                  {retrainingNeeded.length > 0 && (
+                    <Alert severity="warning" sx={{ mb: 2 }}>
+                      <Typography variant="body2" fontWeight="bold">
+                        🔴 Retraining Recommended
+                      </Typography>
+                      <Typography variant="body2">
+                        The following models have accuracy below 60% and should be retrained: {retrainingNeeded.join(', ')}
+                      </Typography>
+                    </Alert>
+                  )}
+
+                  {retrainingNeeded.length === 0 && (
+                    <Alert severity="success" sx={{ mb: 2 }}>
+                      <Typography variant="body2">
+                        ✅ All models meeting accuracy threshold (≥60%). No retraining needed at this time.
+                      </Typography>
+                    </Alert>
+                  )}
+
+                  <Grid container spacing={2}>
+                    {validationMetrics.map((metric) => (
+                      <Grid item xs={12} md={6} lg={4} key={`${metric.triggerType}_${metric.horizonMonths}`}>
+                        <Card
+                          variant="outlined"
+                          sx={{
+                            height: '100%',
+                            bgcolor: metric.accuracy < 0.6 ? 'error.50' : metric.accuracy < 0.75 ? 'warning.50' : 'success.50',
+                            borderColor: metric.accuracy < 0.6 ? 'error.main' : metric.accuracy < 0.75 ? 'warning.main' : 'success.main',
+                            borderWidth: 2
+                          }}
+                        >
+                          <CardContent>
+                            <Stack direction="row" spacing={1} sx={{ mb: 1 }}>
+                              <Chip
+                                label={metric.triggerType.toUpperCase()}
+                                size="small"
+                                color={metric.accuracy < 0.6 ? 'error' : metric.accuracy < 0.75 ? 'warning' : 'success'}
+                              />
+                              <Chip
+                                label={`${metric.horizonMonths}mo`}
+                                size="small"
+                                variant="outlined"
+                              />
+                            </Stack>
+
+                            <Typography variant="h4" sx={{ mb: 1 }}>
+                              {(metric.accuracy * 100).toFixed(1)}%
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 2 }}>
+                              Accuracy ({metric.correctForecasts}/{metric.totalForecasts} forecasts)
+                            </Typography>
+
+                            <Grid container spacing={1}>
+                              <Grid item xs={6}>
+                                <Typography variant="caption" color="text.secondary">Precision:</Typography>
+                                <Typography variant="body2" fontWeight="bold">
+                                  {metric.precision !== null ? `${(metric.precision * 100).toFixed(1)}%` : 'N/A'}
+                                </Typography>
+                              </Grid>
+                              <Grid item xs={6}>
+                                <Typography variant="caption" color="text.secondary">Recall:</Typography>
+                                <Typography variant="body2" fontWeight="bold">
+                                  {metric.recall !== null ? `${(metric.recall * 100).toFixed(1)}%` : 'N/A'}
+                                </Typography>
+                              </Grid>
+                              <Grid item xs={12}>
+                                <Typography variant="caption" color="text.secondary">Brier Score:</Typography>
+                                <Typography variant="body2" fontWeight="bold">
+                                  {metric.avgBrierScore !== null ? metric.avgBrierScore.toFixed(4) : 'N/A'}
+                                  <Typography variant="caption" sx={{ ml: 1 }} color="text.secondary">
+                                    (lower is better)
+                                  </Typography>
+                                </Typography>
+                              </Grid>
+                            </Grid>
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                    ))}
+                  </Grid>
+
+                  <Alert severity="info" sx={{ mt: 2 }}>
+                    <Typography variant="caption">
+                      <strong>Metrics Explained:</strong><br />
+                      • <strong>Accuracy</strong>: Percentage of correct predictions (trigger occurred when predicted, or didn't occur when not predicted)<br />
+                      • <strong>Precision</strong>: Of all high-probability forecasts, how many actually triggered<br />
+                      • <strong>Recall</strong>: Of all actual trigger events, how many were predicted<br />
+                      • <strong>Brier Score</strong>: Probabilistic accuracy measure (0 = perfect, 1 = worst). Penalizes wrong probabilities.
+                    </Typography>
+                  </Alert>
+                </CardContent>
+              </Card>
+            </Grid>
+          </>
+        )}
 
         {/* All Models Table */}
         <Grid item xs={12}>

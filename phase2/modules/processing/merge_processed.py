@@ -5,6 +5,44 @@ Merge all processed CSV outputs into a single master dataset.
 Saves:
  - outputs/processed/master_dataset.csv
  - outputs/processed/master_dataset.parquet
+
+## Deduplication Strategy
+
+This module implements a **validation-based** approach to duplicates rather than 
+automatic deduplication:
+
+### Multi-Location Data (Current System)
+- **Structure**: Multiple locations × time periods (e.g., 6 locations × 312 months = 1872 records)
+- **Validation**: Checks (location, year, month) uniqueness
+- **Behavior**: RAISES ERROR if true duplicates found (same location-year-month appearing multiple times)
+- **Rationale**: Each location should have exactly one record per time period
+
+### Single-Location Data
+- **Structure**: Single time series (e.g., 312 months = 312 records)
+- **Validation**: Checks (year, month) uniqueness
+- **Behavior**: RAISES ERROR if duplicates found (same year-month appearing multiple times)
+- **Rationale**: Each time period should appear exactly once
+
+### Why Validation Instead of Automatic Deduplication?
+
+1. **Data Integrity**: Duplicates indicate upstream processing errors that should be fixed at source
+2. **Transparency**: Explicit errors are better than silent data loss
+3. **Debugging**: Helps identify which processing module is creating duplicates
+4. **Correctness**: Prevents masking data quality issues
+
+### If True Duplicates Are Found
+
+If validation fails, investigate the source:
+1. Check which processing module created the duplicates
+2. Fix the root cause in that module
+3. Re-run the pipeline to regenerate clean data
+
+### Merge Strategy
+
+The merge operation uses pandas outer joins which naturally handle:
+- **Missing data**: Preserves records even if not all sources have data for that time period
+- **Multiple sources**: Combines data from different sources using suffixes (_left, _right)
+- **Spatial joins**: Merges on location when available to maintain multi-location structure
 """
 
 import pandas as pd
@@ -33,6 +71,13 @@ def _load_if_exists(fname: str):
             df = pd.read_csv(p)
             # normalize column names
             df.columns = [c.strip().lower().replace(" ", "_") for c in df.columns]
+
+            # Validate that year and month columns exist
+            if "year" not in df.columns or "month" not in df.columns:
+                log_error(f"File {fname} is missing required 'year' and/or 'month' columns")
+                log_error(f"Available columns: {list(df.columns)}")
+                raise ValueError(f"File {fname} missing required temporal columns (year, month)")
+
             return df
         except Exception as e:
             log_error(f"Failed to read {p}: {e}")
@@ -40,6 +85,58 @@ def _load_if_exists(fname: str):
     else:
         log_info(f"Processed file not found (skipping): {fname}")
         return None
+
+
+def _validate_no_true_duplicates(df: pd.DataFrame) -> None:
+    """
+    Validate that there are no true duplicate records in the merged dataset.
+
+    For multi-location data, checks (location, year, month) uniqueness.
+    For single-location data, checks (year, month) uniqueness.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Merged dataset to validate
+
+    Raises
+    ------
+    ValueError
+        If true duplicate records are found
+
+    Notes
+    -----
+    This function distinguishes between:
+    - **Multi-location data**: Multiple locations with same year-month (VALID)
+    - **True duplicates**: Same location-year-month appearing multiple times (INVALID)
+    """
+    if "location" in df.columns:
+        # Multi-location data: check (location, year, month) uniqueness
+        duplicates = df.duplicated(subset=["location", "year", "month"], keep=False)
+        if duplicates.sum() > 0:
+            dup_count = duplicates.sum()
+            sample = df[duplicates][["location", "year", "month"]].head(10)
+            log_error(f"Found {dup_count} true duplicate (location, year, month) records")
+            log_error(f"Sample duplicates:\n{sample}")
+            raise ValueError(f"Dataset contains {dup_count} duplicate (location, year, month) records")
+        else:
+            # Log info about multi-location structure
+            n_locations = df["location"].nunique()
+            n_year_months = df[["year", "month"]].drop_duplicates().shape[0]
+            log_info(
+                f"Multi-location dataset validated: {n_locations} locations × {n_year_months} time periods = {len(df)} records"
+            )
+    else:
+        # Single-location data: check (year, month) uniqueness
+        duplicates = df.duplicated(subset=["year", "month"], keep=False)
+        if duplicates.sum() > 0:
+            dup_count = duplicates.sum()
+            sample = df[duplicates][["year", "month"]].head(10)
+            log_error(f"Found {dup_count} duplicate (year, month) records")
+            log_error(f"Sample duplicates:\n{sample}")
+            raise ValueError(f"Dataset contains {dup_count} duplicate (year, month) records")
+        else:
+            log_info(f"Single-location dataset validated: {len(df)} unique time periods")
 
 
 def merge_all():
@@ -60,6 +157,8 @@ def merge_all():
     ------
     FileNotFoundError
         If no processed files are found in data/processed/ directory.
+    ValueError
+        If duplicate records are found after merging.
     Exception
         If merging fails due to data incompatibility or other errors.
 
@@ -69,18 +168,34 @@ def merge_all():
 
     The function uses intelligent merging based on available columns:
 
-    1. **Year-based merge** (if 2+ datasets have 'year' column):
+    1. **Location-Year-Month merge** (if 2+ datasets have location, year, month):
+       - Outer join on ['location', 'year', 'month']
+       - Best for multi-location time-series data
+       - Preserves spatial and temporal structure
+
+    2. **Year-Month merge** (if 2+ datasets have year, month but no location):
+       - Outer join on ['year', 'month']
+       - For single-location time-series data
+
+    3. **Year-only merge** (fallback if month not available):
        - Outer join on 'year' column
        - Preserves all data from all sources
        - Columns from different sources may have suffixes (_left, _right)
 
-    2. **Geo-based merge** (if datasets have latitude/longitude):
+    4. **Geo-based merge** (if datasets have latitude/longitude):
        - Outer join on ['latitude', 'longitude']
        - Aligns data by spatial location
 
-    3. **Concatenation fallback** (if no common keys):
+    5. **Concatenation fallback** (if no common keys):
        - Concatenates rows with _source_file column
        - Used when no common merge keys exist
+
+    **Duplicate Detection:**
+
+    After merging, validates that no true duplicates exist:
+    - For multi-location data: Checks (location, year, month) uniqueness
+    - For single-location data: Checks (year, month) uniqueness
+    - Note: Multiple locations with same year-month is VALID, not a duplicate
 
     **Output Files:**
 
@@ -140,7 +255,7 @@ def merge_all():
             for fname, df in dfs.items():
                 # Check for location column availability
                 has_location = "location" in df.columns
-                
+
                 if merged is None:
                     merged = df.copy()
                     provenance.append(fname)
@@ -152,8 +267,8 @@ def merge_all():
                     elif has_location:
                         # If merged doesn't have location but new df does, we might have issues
                         # But typically 'merged' starts with first df.
-                        pass 
-                    
+                        pass
+
                     if set(merge_keys).issubset(set(df.columns)):
                         # Avoid duplicate coordinate columns causing merge errors
                         for coord_col in ["location_lat", "location_lon", "latitude", "longitude"]:
@@ -200,6 +315,9 @@ def merge_all():
 
         # add provenance column summarizing sources used
         merged["_provenance_files"] = ",".join(provenance)
+
+        # Validate no true duplicates exist
+        _validate_no_true_duplicates(merged)
 
         # Basic validation: ensure it's a DataFrame and non-empty
         validate_dataframe(merged, expected_columns=None, dataset_name="Master Dataset")

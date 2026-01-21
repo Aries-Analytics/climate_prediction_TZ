@@ -16,7 +16,7 @@ Features created:
 import numpy as np
 import pandas as pd
 
-from utils.config import get_output_path, get_data_path
+from utils.config import get_data_path, get_output_path
 from utils.logger import log_error, log_info
 from utils.validator import validate_dataframe
 
@@ -66,14 +66,14 @@ def process(data):
 
     # Create date column for easier manipulation
     df["date"] = pd.to_datetime(df[["year", "month"]].assign(day=1))
-    
+
     # Handle missing values in ocean indices
     # Forward fill is appropriate because ENSO/IOD phases persist for months
     # This is scientifically sound: ocean patterns are slow-moving (3-6 month persistence)
     if "oni" in df.columns:
         df["oni"] = df["oni"].ffill()  # Forward fill: use last known value
         df["oni"] = df["oni"].bfill()  # Backfill any remaining NaN at start
-        
+
     if "iod" in df.columns:
         df["iod"] = df["iod"].ffill()  # Forward fill: use last known value
         df["iod"] = df["iod"].bfill()  # Backfill any remaining NaN at start
@@ -148,7 +148,7 @@ def _add_enso_indicators(df):
 
     # Numeric ENSO phase (-2 to 2)
     enso_phase_raw = pd.cut(df["oni"], bins=[-np.inf, -1.5, -0.5, 0.5, 1.5, np.inf], labels=[-2, -1, 0, 1, 2])
-    df["enso_phase"] = pd.to_numeric(enso_phase_raw, errors='coerce').fillna(0).astype(int)
+    df["enso_phase"] = pd.to_numeric(enso_phase_raw, errors="coerce").fillna(0).astype(int)
 
     # ENSO impact score for East Africa (-1 to 1, positive = more rain)
     df["enso_impact_score"] = np.clip(df["oni"] / 2, -1, 1)
@@ -195,7 +195,7 @@ def _add_iod_indicators(df):
 
     # Numeric IOD phase (-2 to 2)
     iod_phase_raw = pd.cut(df["iod"], bins=[-np.inf, -0.8, -0.4, 0.4, 0.8, np.inf], labels=[-2, -1, 0, 1, 2])
-    df["iod_phase"] = pd.to_numeric(iod_phase_raw, errors='coerce').fillna(0).astype(int)
+    df["iod_phase"] = pd.to_numeric(iod_phase_raw, errors="coerce").fillna(0).astype(int)
 
     # IOD impact score for East Africa (-1 to 1, positive = more rain)
     df["iod_impact_score"] = np.clip(df["iod"] / 1.5, -1, 1)
@@ -251,8 +251,8 @@ def _add_combined_climate_impacts(df):
 
     # Conflicting signals (ENSO and IOD in opposite phases)
     df["conflicting_signals"] = (
-        ((df["oni"] > 0.5) & (df["iod"] < -0.4)) | ((df["oni"] < -0.5) & (df["iod"] > 0.4))
-    ).fillna(0).astype(int)
+        (((df["oni"] > 0.5) & (df["iod"] < -0.4)) | ((df["oni"] < -0.5) & (df["iod"] > 0.4))).fillna(0).astype(int)
+    )
 
     # Climate uncertainty score (0-1, higher = more uncertain)
     df["climate_uncertainty"] = _calculate_climate_uncertainty(df)
@@ -359,9 +359,13 @@ def _add_climate_risk_indicators(df):
 
     # Early warning indicator (risk developing in next 3 months)
     if "enso_3month_ahead" in df.columns and "iod_3month_ahead" in df.columns:
-        df["early_warning_drought"] = ((df["enso_3month_ahead"] < -0.5) & (df["iod_3month_ahead"] < -0.4)).fillna(0).astype(int)
+        df["early_warning_drought"] = (
+            ((df["enso_3month_ahead"] < -0.5) & (df["iod_3month_ahead"] < -0.4)).fillna(0).astype(int)
+        )
 
-        df["early_warning_flood"] = ((df["enso_3month_ahead"] > 1.0) & (df["iod_3month_ahead"] > 0.6)).fillna(0).astype(int)
+        df["early_warning_flood"] = (
+            ((df["enso_3month_ahead"] > 1.0) & (df["iod_3month_ahead"] > 0.6)).fillna(0).astype(int)
+        )
 
     return df
 
@@ -376,8 +380,8 @@ def _add_insurance_triggers(df):
     # Trigger if: La Niña + Negative IOD persisting for 3+ months
     if "oni" in df.columns and "iod" in df.columns:
         df["climate_drought_trigger"] = (
-            (df["oni"] < -0.5) & (df["iod"] < -0.4) & (df["enso_persistence"] >= 3)
-        ).fillna(0).astype(int)
+            ((df["oni"] < -0.5) & (df["iod"] < -0.4) & (df["enso_persistence"] >= 3)).fillna(0).astype(int)
+        )
 
         # Drought trigger confidence
         drought_signals = [

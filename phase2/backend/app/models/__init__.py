@@ -8,6 +8,8 @@ from app.models.audit_log import AuditLog
 from app.models.forecast import Forecast, ForecastRecommendation, ForecastValidation
 from app.models.pipeline_execution import PipelineExecution, DataQualityMetrics, SourceIngestionTracking
 from app.models.location import Location
+from app.models.climate_forecast import ClimateForecast
+from app.models.trigger_alert import TriggerAlert
 
 __all__ = [
     "User",
@@ -23,4 +25,6 @@ __all__ = [
     "DataQualityMetrics",
     "SourceIngestionTracking",
     "Location",
+    "ClimateForecast",
+    "TriggerAlert",
 ]
