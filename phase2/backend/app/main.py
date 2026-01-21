@@ -16,7 +16,7 @@ from app.middleware.security import (
     InputSanitizationMiddleware,
     SecurityHeadersMiddleware
 )
-from app.api import auth, dashboard, models, triggers, climate, risk, admin, forecasts, pipeline, geo, locations
+from app.api import auth, dashboard, models, triggers, climate, risk, admin, forecasts, pipeline, geo, locations, climate_forecasts, claims
 from app.core.cache import cache_manager
 
 app = FastAPI(
@@ -64,6 +64,8 @@ app.include_router(admin.router, prefix="/api")
 app.include_router(forecasts.router, prefix="/api")
 app.include_router(pipeline.router, prefix="/api")
 app.include_router(locations.router, prefix="/api")
+app.include_router(climate_forecasts.router, prefix="/api")
+app.include_router(claims.router, prefix="/api")
 app.include_router(geo.router)
 
 @app.get("/")
