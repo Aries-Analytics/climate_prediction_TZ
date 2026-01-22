@@ -15,13 +15,6 @@ from unittest.mock import patch, MagicMock
 import pandas as pd
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.ext.compiler import compiles
-from sqlalchemy.dialects.postgresql import ARRAY
-
-# Register compilation rule for PostgreSQL ARRAY type in SQLite
-@compiles(ARRAY, "sqlite")
-def compile_array(element, compiler, **kw):
-    return "JSON"
 
 from tests.mocks import (
     get_mock_chirps,

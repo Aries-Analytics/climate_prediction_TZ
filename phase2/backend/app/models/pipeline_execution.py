@@ -3,9 +3,39 @@ Pipeline execution tracking models
 
 Tracks automated pipeline runs, data quality metrics, and source ingestion status.
 """
-from sqlalchemy import Column, Integer, String, DateTime, Text, ARRAY, Numeric, Date, ForeignKey, JSON
+from sqlalchemy import Column, Integer, String, DateTime, Text, Numeric, Date, ForeignKey, JSON, TypeDecorator
+from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.sql import func
 from app.core.database import Base
+import json
+
+
+class StringListType(TypeDecorator):
+    """Custom type that stores string arrays as ARRAY in PostgreSQL and JSON in SQLite"""
+    impl = JSON
+    cache_ok = True
+    
+    def load_dialect_impl(self, dialect):
+        if dialect.name == 'postgresql':
+            return dialect.type_descriptor(ARRAY(String))
+        else:
+            return dialect.type_descriptor(JSON())
+    
+    def process_bind_param(self, value, dialect):
+        if value is None:
+            return value
+        if dialect.name == 'postgresql':
+            return value  # PostgreSQL handles lists natively
+        else:
+            return json.dumps(value) if value else None  # Store as JSON string in SQLite
+    
+    def process_result_value(self, value, dialect):
+        if value is None:
+            return []
+        if dialect.name == 'postgresql':
+            return value if value else []
+        else:
+            return json.loads(value) if isinstance(value, str) else (value if value else [])
 
 
 class PipelineExecution(Base):
@@ -22,8 +52,8 @@ class PipelineExecution(Base):
     # Ingestion metrics
     records_fetched = Column(Integer, default=0)
     records_stored = Column(Integer, default=0)
-    sources_succeeded = Column(ARRAY(String), default=[])
-    sources_failed = Column(ARRAY(String), default=[])
+    sources_succeeded = Column(StringListType, default=list)
+    sources_failed = Column(StringListType, default=list)
     
     # Forecast metrics
     forecasts_generated = Column(Integer, default=0)
