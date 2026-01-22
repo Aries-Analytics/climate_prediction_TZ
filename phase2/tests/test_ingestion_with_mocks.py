@@ -15,6 +15,14 @@ from unittest.mock import patch, MagicMock
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 import pandas as pd
+from sqlalchemy.dialects.sqlite.base import SQLiteDialect
+from sqlalchemy.dialects import postgresql
+
+# Monkeypatch SQLite to handle PostgreSQL ARRAY type
+def visit_ARRAY(self, type_, **kw):
+    return "JSON"
+
+SQLiteDialect.visit_ARRAY = visit_ARRAY
 
 from tests.mocks import (
     get_mock_chirps,
