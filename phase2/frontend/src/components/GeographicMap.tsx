@@ -1,7 +1,7 @@
 import React, { useMemo, useState, useEffect, useRef } from 'react';
-import { MapContainer, TileLayer, GeoJSON, Tooltip as LeafletTooltip } from 'react-leaflet';
-import { Card, CardContent, Typography, Box, IconButton, Slider, ToggleButton, ToggleButtonGroup, Paper, Button, GlobalStyles, Alert } from '@mui/material';
-import { PlayArrow, Pause, Replay, Layers, AttachMoney, Warning, ShowChart } from '@mui/icons-material';
+import { MapContainer, GeoJSON } from 'react-leaflet';
+import { Card, Typography, Box, IconButton, Slider, ToggleButton, ToggleButtonGroup, Paper, Button, GlobalStyles, Alert } from '@mui/material';
+import { PlayArrow, Pause, Replay, AttachMoney, Warning, ShowChart } from '@mui/icons-material';
 import 'leaflet/dist/leaflet.css';
 import { TriggerEvent } from '../types';
 import tanzaniaRegions from '../assets/tanzania-regions.json';
@@ -90,6 +90,7 @@ const getMetricColor = (value: number, type: 'payout' | 'frequency' | 'severity'
     }
 };
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface RegionProperties {
     shapeName: string;
     shapeISO: string;
@@ -106,13 +107,13 @@ interface RegionProperties {
     };
     locationId?: number;
     totalPayout?: number;
-    totalPayout?: number;
     triggerCount?: number;
     triggerStatus?: 'critical' | 'warning' | 'safe';
     triggerDeviation?: number;
     triggerThreshold?: number;
     triggerType?: string;
 }
+
 interface LocationRiskData {
     locationId: number
     locationName: string
@@ -127,9 +128,10 @@ interface LocationRiskData {
 }
 
 interface GeographicMapProps {
-    mode?: 'historical' | 'forecast'
+    mode?: 'historical' | 'forecast' | 'trigger'
     events?: TriggerEvent[]
     locations?: LocationRiskData[]
+    triggers?: any[]
     onLocationClick?: (locationId: number) => void
     showLegend?: boolean
 }
@@ -139,8 +141,8 @@ const GeographicMap: React.FC<GeographicMapProps> = ({
     events = [],
     locations = [],
     triggers = [],
-    onLocationClick,
-    showLegend = false
+    onLocationClick: _onLocationClick,
+    showLegend: _showLegend = false
 }) => {
     // State for Animation and Layers
     const [isPlaying, setIsPlaying] = useState(false);
@@ -199,12 +201,12 @@ const GeographicMap: React.FC<GeographicMapProps> = ({
         setPlaybackSpeed(prev => prev === 1 ? 2 : 1);
     };
 
-    const handleSliderChange = (event: Event, newValue: number | number[]) => {
+    const handleSliderChange = (_event: Event, newValue: number | number[]) => {
         setSliderValue(newValue as number);
         setIsPlaying(false); // Pause on manual scrub
     };
 
-    const handleLayerChange = (event: React.MouseEvent<HTMLElement>, newLayer: 'payout' | 'frequency' | 'severity' | null) => {
+    const handleLayerChange = (_event: React.MouseEvent<HTMLElement>, newLayer: 'payout' | 'frequency' | 'severity' | null) => {
         if (newLayer !== null) setActiveLayer(newLayer);
     };
 
@@ -263,7 +265,7 @@ const GeographicMap: React.FC<GeographicMapProps> = ({
                 ...tanzaniaRegions,
                 type: 'FeatureCollection' as const,
                 features: tanzaniaRegions.features.map(feature => {
-                    const regionName = normalize(feature.properties.shapeName || feature.properties.name || feature.properties.Name || "");
+                    const regionName = normalize(feature.properties.shapeName || (feature.properties as any).name || (feature.properties as any).Name || "");
                     const stats = regionStats[regionName];
 
                     return {
@@ -337,7 +339,7 @@ const GeographicMap: React.FC<GeographicMapProps> = ({
                 ...tanzaniaRegions,
                 type: 'FeatureCollection' as const,
                 features: tanzaniaRegions.features.map(feature => {
-                    const regionNameRaw = feature.properties.shapeName || feature.properties.name || feature.properties.Name || "";
+                    const regionNameRaw = feature.properties.shapeName || (feature.properties as any).name || (feature.properties as any).Name || "";
                     const regionName = normalize(regionNameRaw);
 
                     // Try exact match on normalized names
@@ -480,7 +482,9 @@ const GeographicMap: React.FC<GeographicMapProps> = ({
 
         // Disable click interaction (map is locked)
         // Interactive must be true for tooltips to work
-        layer.options.interactive = true;
+        if (layer instanceof L.Path) {
+            layer.options.interactive = true;
+        }
 
         // Determine main metric based on Active Layer
         let metricRow = '';
@@ -593,8 +597,8 @@ const GeographicMap: React.FC<GeographicMapProps> = ({
                     dragging={false}
                     touchZoom={false}
                     keyboard={false}
-                    zoomSnap={false}
-                    zoomDelta={false}
+                    zoomSnap={0}
+                    zoomDelta={0}
                     trackResize={false}
                     boxZoom={false}
                     minZoom={DEFAULT_ZOOM}

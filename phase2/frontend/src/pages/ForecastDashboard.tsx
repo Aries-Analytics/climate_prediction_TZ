@@ -196,8 +196,7 @@ export default function ForecastDashboard() {
       await Promise.all([
         fetchForecasts(),
         fetchRecommendations(),
-        fetchPortfolioRisk(),
-        fetchLocationRisk()
+        fetchPortfolioRisk()
       ])
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Failed to generate forecasts')
@@ -493,7 +492,7 @@ export default function ForecastDashboard() {
                 totalExposure={totalFinancialExposure}
                 reserves={portfolioRisk?.reserves || 150000}
                 loading={isLoading}
-                highestRiskForecast={highestRiskForecast}
+                highestRiskForecast={highestRiskForecast || undefined}
               />
             </CardContent>
           </Card>

@@ -20,13 +20,17 @@ import {
   FormControl,
   InputLabel,
   Select,
-  MenuItem
+  MenuItem,
+  Tabs,
+  Tab,
+  Paper
 } from '@mui/material'
 import axios from 'axios'
 import { API_BASE_URL } from '../config/api'
 import LoadingSpinner from '../components/common/LoadingSpinner'
 import KPICard from '../components/common/KPICard'
 import Chart from '../components/charts/Chart'
+import BacktestingValidation from '../components/risk/BacktestingValidation'
 import { PortfolioMetrics, ScenarioResult } from '../types'
 import WarningIcon from '@mui/icons-material/Warning'
 
@@ -56,6 +60,12 @@ export default function RiskManagementDashboard() {
   const [scenarioName, setScenarioName] = useState('')
   const [rainfallReduction, setRainfallReduction] = useState(0)
   const [temperatureIncrease, setTemperatureIncrease] = useState(0)
+  const [currentTab, setCurrentTab] = useState(0)
+
+  // Handle Tab Change
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
+    setCurrentTab(newValue)
+  }
 
   // Auto-populate parameters when template changes
   const handleTemplateChange = (templateIndex: number) => {
@@ -113,7 +123,8 @@ export default function RiskManagementDashboard() {
         },
         { headers: { Authorization: `Bearer ${token}` } }
       )
-      setScenarioResults([...scenarioResults, response.data])
+      // Show only the latest scenario (Single-Scenario Mode) to prevent chart clutter
+      setScenarioResults([response.data])
       setScenarioDialogOpen(false)
       // Reset form
       setSelectedTemplate(0)
@@ -151,22 +162,37 @@ export default function RiskManagementDashboard() {
     return 'error'
   }
 
-  // Scenario comparison chart
+  // Enhanced Scenario comparison chart with insights
   const scenarioChartData = scenarioResults.length > 0 ? [
     {
       x: scenarioResults.map(s => s.scenarioName),
-      y: scenarioResults.map(s => s.lossRatio),
-      name: 'Loss Ratio',
+      y: scenarioResults.map(s => s.lossRatio * 100), // Convert to percentage
+      name: 'Loss Ratio (%)',
       type: 'bar' as const,
-      marker: { color: '#ff9800' }
+      marker: {
+        color: scenarioResults.map(s =>
+          s.lossRatio > 1.0 ? '#d32f2f' :  // Red for unsustainable
+            s.lossRatio > 0.8 ? '#ed6c02' :  // Orange for concerning
+              s.lossRatio > 0.6 ? '#ffa726' :  // Light orange for acceptable
+                '#2e7d32'  // Green for healthy
+        )
+      },
+      text: scenarioResults.map(s => `${(s.lossRatio * 100).toFixed(0)}%`),
+      textposition: 'outside' as const,
+      hovertemplate: '<b>%{x}</b><br>Loss Ratio: %{y:.1f}%<extra></extra>'
     },
+    // Trigger Probability
     {
       x: scenarioResults.map(s => s.scenarioName),
-      y: scenarioResults.map(s => s.triggerProbability),
-      name: 'Trigger Probability',
+      y: scenarioResults.map(s => s.triggerProbability * 100),
+      name: 'Trigger Probability (%)',
       type: 'bar' as const,
-      marker: { color: '#2196f3' }
-    }
+      marker: { color: '#2196f3' },
+      text: scenarioResults.map(s => `${(s.triggerProbability * 100).toFixed(0)}%`),
+      textposition: 'outside' as const,
+      hovertemplate: '<b>%{x}</b><br>Trigger Probability: %{y:.1f}%<extra></extra>'
+    },
+
   ] : []
 
   return (
@@ -176,247 +202,373 @@ export default function RiskManagementDashboard() {
           Risk Management Dashboard
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          Monitor portfolio risk, run scenarios, and get recommendations
+          Monitor portfolio risk, validate models against history, and run future scenarios
         </Typography>
       </Box>
 
-      <Grid container spacing={3}>
-        {/* Portfolio Metrics */}
-        <Grid item xs={12} md={3}>
-          <KPICard
-            title="Total Premium Income"
-            value={`$${(portfolio.totalPremiumIncome || 0).toLocaleString()}`}
-            status="success"
-            subtitle="Annual (1000 farmers × $75)"
-            insight="Revenue from all active insurance policies in the Morogoro pilot."
-            insightSeverity="info"
-          />
-        </Grid>
+      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+        <Tabs value={currentTab} onChange={handleTabChange}>
+          <Tab label="Current Risk Monitor" />
+          <Tab label="Historical Validation" />
+        </Tabs>
+      </Box>
 
-        <Grid item xs={12} md={3}>
-          <KPICard
-            title="Expected Payouts"
-            value={`$${(portfolio.expectedPayouts || 0).toLocaleString()}`}
-            status={
-              (portfolio.expectedPayouts || 0) > (portfolio.reserves || 0) * 0.8 ? 'error' :
-                (portfolio.expectedPayouts || 0) > (portfolio.reserves || 0) * 0.5 ? 'warning' :
-                  'success'
-            }
-            subtitle="6-Month Projection"
-            insight={
-              (portfolio.expectedPayouts || 0) > (portfolio.reserves || 0)
-                ? "⚠️ Payouts exceed reserves - urgent action required"
-                : "Projected payouts based on high-risk forecasts (≥75% probability)"
-            }
-            insightSeverity={
-              (portfolio.expectedPayouts || 0) > (portfolio.reserves || 0) ? 'error' :
-                (portfolio.expectedPayouts || 0) > (portfolio.reserves || 0) * 0.8 ? 'warning' :
-                  'success'
-            }
-          />
-        </Grid>
+      {/* TAB 1: HISTORICAL VALIDATION */}
+      {currentTab === 1 && (
+        <BacktestingValidation />
+      )}
 
-        <Grid item xs={12} md={3}>
-          <KPICard
-            title="Loss Ratio"
-            value={`${((portfolio.lossRatio || 0) * 100).toFixed(1)}%`}
-            status={getLossRatioStatus(portfolio.lossRatio || 0)}
-            subtitle={
-              (portfolio.lossRatio || 0) > 0.8 ? 'CRITICAL - Unsustainable' :
-                (portfolio.lossRatio || 0) > 0.6 ? 'At Risk - Monitor' :
-                  'Healthy Range'
-            }
-            insight={
-              (portfolio.lossRatio || 0) > 0.8
-                ? "🔴 Payouts exceed 80% of premiums - consider reserve increase or coverage adjustment"
-                : (portfolio.lossRatio || 0) > 0.6
-                  ? "🟡 Approaching break-even - monitor forecast trends closely"
-                  : "🟢 Sustainable ratio - portfolio health good"
-            }
-            insightSeverity={getLossRatioStatus(portfolio.lossRatio || 0)}
-          />
-        </Grid>
-
-        <Grid item xs={12} md={3}>
-          <KPICard
-            title="Number of Policies"
-            value={portfolio.numberOfPolicies || 0}
-            status="success"
-            subtitle="Morogoro Pilot"
-            insight="Active insurance policies covering 1000 smallholder rice farmers in Kilombero Basin."
-            insightSeverity="info"
-          />
-        </Grid>
-
-        {/* Early Warnings */}
-        {recommendations.length > 0 && (
-          <Grid item xs={12}>
-            <Alert severity="warning" icon={<WarningIcon />}>
-              <Typography variant="subtitle2" gutterBottom>
-                Risk Alerts & Recommendations
-              </Typography>
-              <List dense>
-                {recommendations.slice(0, 5).map((rec, index) => (
-                  <ListItem key={index}>
-                    <ListItemText primary={rec} />
-                  </ListItem>
-                ))}
-              </List>
-            </Alert>
+      {/* TAB 0: CURRENT RISK MONITOR */}
+      {currentTab === 0 && (
+        <Grid container spacing={3}>
+          {/* Portfolio Metrics */}
+          <Grid item xs={12} md={3}>
+            <KPICard
+              title="Total Premium Income"
+              value={`$${(portfolio.totalPremiumIncome || 0).toLocaleString()}`}
+              status="success"
+              subtitle="Annual (1000 farmers × $75)"
+              insight="Revenue from all active insurance policies in the Morogoro pilot."
+              insightSeverity="info"
+            />
           </Grid>
-        )}
 
-        {/* Scenario Analysis */}
-        <Grid item xs={12}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Typography variant="h6">
-                  Scenario Analysis
+          <Grid item xs={12} md={3}>
+            <KPICard
+              title="Expected Payouts"
+              value={`$${(portfolio.expectedPayouts || 0).toLocaleString()}`}
+              status={
+                (portfolio.expectedPayouts || 0) > (portfolio.reserves || 0) * 0.8 ? 'error' :
+                  (portfolio.expectedPayouts || 0) > (portfolio.reserves || 0) * 0.5 ? 'warning' :
+                    'success'
+              }
+              subtitle="6-Month Projection"
+              insight={
+                (portfolio.expectedPayouts || 0) > (portfolio.reserves || 0)
+                  ? "⚠️ Payouts exceed reserves - urgent action required"
+                  : "Projected payouts based on high-risk forecasts (≥75% probability)"
+              }
+              insightSeverity={
+                (portfolio.expectedPayouts || 0) > (portfolio.reserves || 0) ? 'error' :
+                  (portfolio.expectedPayouts || 0) > (portfolio.reserves || 0) * 0.8 ? 'warning' :
+                    'success'
+              }
+            />
+          </Grid>
+
+          <Grid item xs={12} md={3}>
+            <KPICard
+              title="Loss Ratio"
+              value={`${((portfolio.lossRatio || 0) * 100).toFixed(1)}%`}
+              status={getLossRatioStatus(portfolio.lossRatio || 0)}
+              subtitle={
+                (portfolio.lossRatio || 0) > 0.8 ? 'CRITICAL - Unsustainable' :
+                  (portfolio.lossRatio || 0) > 0.6 ? 'At Risk - Monitor' :
+                    'Healthy Range'
+              }
+              insight={
+                (portfolio.lossRatio || 0) > 0.8
+                  ? "🔴 Payouts exceed 80% of premiums - consider reserve increase or coverage adjustment"
+                  : (portfolio.lossRatio || 0) > 0.6
+                    ? "🟡 Approaching break-even - monitor forecast trends closely"
+                    : "🟢 Sustainable ratio - portfolio health good"
+              }
+              insightSeverity={getLossRatioStatus(portfolio.lossRatio || 0)}
+            />
+          </Grid>
+
+          <Grid item xs={12} md={3}>
+            <KPICard
+              title="Number of Policies"
+              value={portfolio.numberOfPolicies || 0}
+              status="success"
+              subtitle="Morogoro Pilot"
+              insight="Active insurance policies covering 1000 smallholder rice farmers in Kilombero Basin."
+              insightSeverity="info"
+            />
+          </Grid>
+
+          {/* Early Warnings */}
+          {recommendations.length > 0 && (
+            <Grid item xs={12}>
+              <Alert severity="warning" icon={<WarningIcon />}>
+                <Typography variant="subtitle2" gutterBottom>
+                  Risk Alerts & Recommendations
                 </Typography>
-                <Button
-                  variant="contained"
-                  onClick={() => setScenarioDialogOpen(true)}
-                >
-                  Run New Scenario
-                </Button>
-              </Box>
+                <List dense>
+                  {recommendations.slice(0, 5).map((rec, index) => (
+                    <ListItem key={index}>
+                      <ListItemText primary={rec} />
+                    </ListItem>
+                  ))}
+                </List>
+              </Alert>
+            </Grid>
+          )}
 
-              {scenarioResults.length > 0 ? (
-                <>
-                  <Chart
-                    data={scenarioChartData}
-                    layout={{
-                      height: 400,
-                      barmode: 'group',
-                      xaxis: { title: 'Scenario' },
-                      yaxis: { title: 'Value' },
-                      autosize: true
-                    }}
-                    config={{
-                      responsive: true
-                    }}
-                  />
-                  <Box sx={{ mt: 2 }}>
-                    {scenarioResults.map((result, index) => (
-                      <Card key={index} sx={{ mb: 1, bgcolor: 'background.default' }}>
-                        <CardContent>
-                          <Typography variant="subtitle1" gutterBottom>
-                            {result.scenarioName}
-                          </Typography>
-                          <Grid container spacing={2}>
-                            <Grid item xs={4}>
-                              <Typography variant="body2" color="text.secondary">
-                                Expected Payouts
-                              </Typography>
-                              <Typography variant="h6">
-                                ${result.expectedPayouts.toLocaleString()}
-                              </Typography>
+          {/* Scenario Analysis */}
+          <Grid item xs={12}>
+            <Card>
+              <CardContent>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                  <Typography variant="h6">
+                    Scenario Analysis
+                  </Typography>
+                  <Button
+                    variant="contained"
+                    onClick={() => setScenarioDialogOpen(true)}
+                    disabled={portfolio.lossRatio > 0 && scenarioResults.length >= 3}
+                    startIcon={isLoading ? <LoadingSpinner size={20} /> : null}
+                  >
+                    Run Stress Test
+                  </Button>
+                </Box>
+
+                <Alert severity="info" sx={{ mb: 3 }}>
+                  Run hypothetical climate scenarios to stress-test your portfolio's financial resilience.
+                </Alert>
+
+                {scenarioResults.length > 0 ? (
+                  <>
+                    <Chart
+                      data={scenarioChartData}
+                      layout={{
+                        height: 400,
+                        barmode: 'group',
+                        xaxis: { title: 'Scenario' },
+                        yaxis: { title: 'Value' },
+                        autosize: true
+                      }}
+                      config={{
+                        responsive: true
+                      }}
+                    />
+                    <Box sx={{ mt: 2 }}>
+                      {scenarioResults.map((result, index) => (
+                        <Card key={index} sx={{ mb: 1, bgcolor: 'background.default' }}>
+                          <CardContent>
+                            <Typography variant="subtitle1" gutterBottom>
+                              {result.scenarioName}
+                            </Typography>
+                            <Grid container spacing={2}>
+                              <Grid item xs={4}>
+                                <Typography variant="body2" color="text.secondary">
+                                  Expected Payouts
+                                </Typography>
+                                <Typography variant="h6">
+                                  ${result.expectedPayouts.toLocaleString()}
+                                </Typography>
+                              </Grid>
+                              <Grid item xs={4}>
+                                <Typography variant="body2" color="text.secondary">
+                                  Loss Ratio
+                                </Typography>
+                                <Typography variant="h6">
+                                  {(result.lossRatio * 100).toFixed(1)}%
+                                </Typography>
+                              </Grid>
+                              <Grid item xs={4}>
+                                <Typography variant="body2" color="text.secondary">
+                                  Trigger Probability
+                                </Typography>
+                                <Typography variant="h6">
+                                  {(result.triggerProbability * 100).toFixed(1)}%
+                                </Typography>
+                              </Grid>
                             </Grid>
-                            <Grid item xs={4}>
-                              <Typography variant="body2" color="text.secondary">
-                                Loss Ratio
-                              </Typography>
-                              <Typography variant="h6">
-                                {(result.lossRatio * 100).toFixed(1)}%
-                              </Typography>
-                            </Grid>
-                            <Grid item xs={4}>
-                              <Typography variant="body2" color="text.secondary">
-                                Trigger Probability
-                              </Typography>
-                              <Typography variant="h6">
-                                {(result.triggerProbability * 100).toFixed(1)}%
-                              </Typography>
-                            </Grid>
-                          </Grid>
-                          <Box sx={{ mt: 1 }}>
-                            <Chip
-                              label={result.impact}
-                              color={
+                            <Box sx={{ mt: 1 }}>
+                              <Chip
+                                label={result.impact}
+                                color={
+                                  result.impact.toLowerCase().includes('high') ? 'error' :
+                                    result.impact.toLowerCase().includes('medium') ? 'warning' :
+                                      'success'
+                                }
+                                size="small"
+                              />
+                            </Box>
+
+                            {/* Contextual Insight */}
+                            <Alert
+                              severity={
                                 result.impact.toLowerCase().includes('high') ? 'error' :
                                   result.impact.toLowerCase().includes('medium') ? 'warning' :
                                     'success'
                               }
-                              size="small"
-                            />
-                          </Box>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </Box>
-                </>
-              ) : (
-                <Typography variant="body2" color="text.secondary" textAlign="center" py={4}>
-                  No scenarios run yet. Click "Run New Scenario" to start.
-                </Typography>
-              )}
-            </CardContent>
-          </Card>
-        </Grid>
+                              sx={{ mt: 2, py: 0.5 }}
+                            >
+                              <Typography variant="caption">
+                                {result.lossRatio > 1.0 ? (
+                                  <>
+                                    <strong>Unsustainable:</strong> Payouts exceed premiums by {((result.lossRatio - 1) * 100).toFixed(0)}%.
+                                    This scenario would deplete ${(result.expectedPayouts - (portfolio.totalPremiumIncome / 2)).toLocaleString()} from reserves ({portfolio.reserves && portfolio.reserves > 0 ? ((result.expectedPayouts / portfolio.reserves) * 100).toFixed(0) + '%' : 'exceeds'} of total reserves).
+                                  </>
+                                ) : result.lossRatio > 0.8 ? (
+                                  <>
+                                    <strong>Concerning:</strong> At {(result.lossRatio * 100).toFixed(0)}% loss ratio,
+                                    this scenario leaves minimal profit margins and requires close monitoring.
+                                  </>
+                                ) : result.lossRatio > 0.6 ? (
+                                  <>
+                                    <strong>Acceptable:</strong> {(result.lossRatio * 100).toFixed(0)}% loss ratio is within industry norms.
+                                    Portfolio can handle this scenario with existing reserves.
+                                  </>
+                                ) : (
+                                  <>
+                                    <strong>Low Risk:</strong> At {(result.lossRatio * 100).toFixed(0)}% loss ratio,
+                                    this scenario is well within sustainable bounds.
+                                  </>
+                                )}
+                              </Typography>
+                            </Alert>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </Box>
 
-        {/* Portfolio Distribution */}
-        <Grid item xs={12} md={6}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Risk Exposure
-              </Typography>
-              <Box sx={{ textAlign: 'center', py: 4 }}>
-                <Typography variant="h3" color="primary">
-                  ${(portfolio.totalExposure || 0).toLocaleString()}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Total Risk Exposure
-                </Typography>
-              </Box>
-              <Alert severity="info" sx={{ mt: 2, py: 0.5, bgcolor: '#e3f2fd' }}>
-                <Typography variant="body2">
-                  <strong>Worst-case scenario:</strong> All 1000 farmers affected by crop failure ($90/farmer).
-                  Current reserves: ${(portfolio.reserves || 0).toLocaleString()}
-                </Typography>
-              </Alert>
-            </CardContent>
-          </Card>
-        </Grid>
+                    {/* Loss Ratio Guide */}
+                    <Box sx={{ mt: 4 }}>
+                      <Typography variant="h6" gutterBottom>
+                        Understanding Loss Ratio & Impact
+                      </Typography>
+                      <Grid container spacing={2}>
+                        {[
+                          {
+                            range: '< 60%',
+                            label: 'Profitable',
+                            description: 'Healthy margins. Portfolio generating surplus.',
+                            color: '#2e7d32',
+                            bg: '#e8f5e9'
+                          },
+                          {
+                            range: '60-80%',
+                            label: 'Sustainable',
+                            description: 'Industry standard. Acceptable with reserves.',
+                            color: '#ed6c02',
+                            bg: '#fff3e0'
+                          },
+                          {
+                            range: '80-100%',
+                            label: 'Concerning',
+                            description: 'Payouts nearing premiums. Intervention needed.',
+                            color: '#d32f2f',
+                            bg: '#ffebee'
+                          },
+                          {
+                            range: '> 100%',
+                            label: 'Unsustainable',
+                            description: 'Losing money. Immediate action required.',
+                            color: '#b71c1c',
+                            bg: '#ffcdd2'
+                          }
+                        ].map((tier, i) => (
+                          <Grid item xs={12} md={3} key={i}>
+                            <Paper
+                              variant="outlined"
+                              sx={{
+                                p: 2,
+                                height: '100%',
+                                bgcolor: tier.bg,
+                                borderColor: tier.bg,
+                                position: 'relative',
+                                overflow: 'hidden'
+                              }}
+                            >
+                              <Box sx={{ position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', bgcolor: tier.color }} />
+                              <Typography variant="subtitle2" fontWeight="bold" sx={{ color: tier.color, mb: 0.5 }}>
+                                {tier.range}
+                              </Typography>
+                              <Typography variant="caption" display="block" color="text.secondary" fontWeight="bold" sx={{ mb: 1, fontSize: '0.7rem' }}>
+                                {tier.label}
+                              </Typography>
+                              <Typography variant="caption" display="block" color="text.secondary" sx={{ lineHeight: 1.2 }}>
+                                {tier.description}
+                              </Typography>
+                            </Paper>
+                          </Grid>
+                        ))}
+                      </Grid>
 
-        {/* Sustainability Status */}
-        <Grid item xs={12} md={6}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Sustainability Status
-              </Typography>
-              <Box sx={{ textAlign: 'center', py: 4 }}>
-                <Chip
-                  label={
-                    portfolio.lossRatio <= 0.6 ? 'Sustainable' :
-                      portfolio.lossRatio <= 0.8 ? 'Monitor' :
-                        'At Risk'
-                  }
-                  color={getLossRatioStatus(portfolio.lossRatio)}
-                  sx={{ fontSize: '1.2rem', py: 3, px: 2 }}
-                />
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-                  Based on current loss ratio of {((portfolio.lossRatio || 0) * 100).toFixed(1)}%
+                      <Alert severity="info" sx={{ mt: 2 }}>
+                        <Typography variant="body2">
+                          <strong>Loss Ratio = Payouts ÷ Premiums.</strong> This is the industry standard metric for insurance portfolio health.
+                          "High Impact" scenarios (&gt;80% loss ratio) indicate significant financial stress requiring reserve adjustments or coverage changes.
+                        </Typography>
+                      </Alert>
+                    </Box>
+                  </>
+                ) : (
+                  <Typography variant="body2" color="text.secondary" textAlign="center" py={4}>
+                    No scenarios run yet. Click "Run Stress Test" to start.
+                  </Typography>
+                )}
+              </CardContent>
+            </Card>
+          </Grid>
+
+          {/* Portfolio Distribution */}
+          <Grid item xs={12} md={6}>
+            <Card>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>
+                  Risk Exposure
                 </Typography>
-              </Box>
-              <Alert
-                severity={getLossRatioStatus(portfolio.lossRatio || 0)}
-                sx={{ mt: 2, py: 0.5 }}
-              >
-                <Typography variant="body2">
-                  {(portfolio.lossRatio || 0) <= 0.6
-                    ? '✅ Portfolio is financially sustainable with healthy reserve margins'
-                    : (portfolio.lossRatio || 0) <= 0.8
-                      ? '⚠️ Monitor closely - approaching break-even threshold'
-                      : '🚨 Portfolio at risk - immediate reserve increase or coverage reduction needed'}
+                <Box sx={{ textAlign: 'center', py: 4 }}>
+                  <Typography variant="h3" color="primary">
+                    ${(portfolio.totalExposure || 0).toLocaleString()}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Total Risk Exposure
+                  </Typography>
+                </Box>
+                <Alert severity="info" sx={{ mt: 2, py: 0.5, bgcolor: '#e3f2fd' }}>
+                  <Typography variant="body2">
+                    <strong>Worst-case scenario:</strong> All 1000 farmers affected by crop failure ($90/farmer).
+                    Current reserves: ${(portfolio.reserves || 0).toLocaleString()}
+                  </Typography>
+                </Alert>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          {/* Sustainability Status */}
+          <Grid item xs={12} md={6}>
+            <Card>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>
+                  Sustainability Status
                 </Typography>
-              </Alert>
-            </CardContent>
-          </Card>
+                <Box sx={{ textAlign: 'center', py: 4 }}>
+                  <Chip
+                    label={
+                      portfolio.lossRatio <= 0.6 ? 'Sustainable' :
+                        portfolio.lossRatio <= 0.8 ? 'Monitor' :
+                          'At Risk'
+                    }
+                    color={getLossRatioStatus(portfolio.lossRatio)}
+                    sx={{ fontSize: '1.2rem', py: 3, px: 2 }}
+                  />
+                  <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+                    Based on current loss ratio of {((portfolio.lossRatio || 0) * 100).toFixed(1)}%
+                  </Typography>
+                </Box>
+                <Alert
+                  severity={getLossRatioStatus(portfolio.lossRatio || 0)}
+                  sx={{ mt: 2, py: 0.5 }}
+                >
+                  <Typography variant="body2">
+                    {(portfolio.lossRatio || 0) <= 0.6
+                      ? '✅ Portfolio is financially sustainable with healthy reserve margins'
+                      : (portfolio.lossRatio || 0) <= 0.8
+                        ? '⚠️ Monitor closely - approaching break-even threshold'
+                        : '🚨 Portfolio at risk - immediate reserve increase or coverage reduction needed'}
+                  </Typography>
+                </Alert>
+              </CardContent>
+            </Card>
+          </Grid>
         </Grid>
-      </Grid>
+      )}
 
       {/* Scenario Dialog */}
       <Dialog open={scenarioDialogOpen} onClose={() => setScenarioDialogOpen(false)} maxWidth="sm" fullWidth>
@@ -517,8 +669,8 @@ export default function RiskManagementDashboard() {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setScenarioDialogOpen(false)}>Cancel</Button>
-          <Button onClick={handleRunScenario} variant="contained" disabled={!scenarioName}>
-            Run Scenario
+          <Button onClick={handleRunScenario} variant="contained" disabled={!scenarioName || isLoading}>
+            {isLoading ? 'Simulating...' : 'Run Scenario'}
           </Button>
         </DialogActions>
       </Dialog>

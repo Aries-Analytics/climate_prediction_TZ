@@ -15,7 +15,8 @@ import {
   TextField,
   InputAdornment,
   Menu,
-  MenuItem
+  MenuItem,
+  LinearProgress
 } from '@mui/material'
 import DownloadIcon from '@mui/icons-material/Download'
 import SearchIcon from '@mui/icons-material/Search'
@@ -32,6 +33,7 @@ interface DataTableProps {
   columns: Column[]
   rows: any[]
   searchable?: boolean
+  loading?: boolean
   exportFilename?: string
   exportMetadata?: {
     dateRange?: string
@@ -40,7 +42,7 @@ interface DataTableProps {
   }
 }
 
-export default function DataTable({ columns, rows, searchable = false, exportFilename = 'data', exportMetadata }: DataTableProps) {
+export default function DataTable({ columns, rows, searchable = false, loading = false, exportFilename = 'data', exportMetadata }: DataTableProps) {
   const [page, setPage] = useState(0)
   const [rowsPerPage, setRowsPerPage] = useState(10)
   const [orderBy, setOrderBy] = useState<string>('')
@@ -233,6 +235,13 @@ export default function DataTable({ columns, rows, searchable = false, exportFil
             </TableRow>
           </TableHead>
           <TableBody>
+            {loading && (
+              <TableRow>
+                <TableCell colSpan={columns.length} sx={{ p: 0 }}>
+                  <LinearProgress />
+                </TableCell>
+              </TableRow>
+            )}
             {paginatedRows.map((row, index) => (
               <TableRow key={row.id || index} hover>
                 {columns.map((column) => (

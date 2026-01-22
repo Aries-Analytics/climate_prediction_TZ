@@ -141,6 +141,7 @@ export interface PortfolioMetrics {
   lossRatio: number;
   totalExposure: number;
   numberOfPolicies: number;
+  reserves?: number; // Added for dashboard
 }
 
 export interface ScenarioResult {
