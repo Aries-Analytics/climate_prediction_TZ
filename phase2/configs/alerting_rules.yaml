@@ -1,0 +1,318 @@
+# Alerting Rules Configuration
+# 
+# Defines thresholds and severity levels for automated alerts
+# Used by monitoring scripts to determine when to send notifications
+
+# ============================================================================
+# Data Freshness Thresholds
+# ============================================================================
+
+data_freshness:
+  description: "Defines how old data can be before triggering alerts"
+  
+  thresholds:
+    fresh:
+      days: 7
+      severity: "info"
+      description: "Data is fresh and up-to-date"
+    
+    stale:
+      days: 14
+      severity: "warning"
+      description: "Data is getting old, consider refresh"
+      action: "Schedule pipeline run"
+    
+    very_stale:
+      days: 30
+      severity: "error"
+      description: "Data is very old, immediate action required"
+      action: "Run pipeline immediately, investigate delay"
+  
+  # Per-source overrides (some sources update less frequently)
+  source_overrides:
+    ERA5:
+      stale_days: 21  # ERA5 has slight delay in availability
+    OCEAN_INDICES:
+      stale_days: 45  # Monthly updates
+
+# ============================================================================
+# Data Quality Thresholds
+# ============================================================================
+
+data_quality:
+  description: "Data quality metric thresholds"
+  
+  missing_values:
+    acceptable:
+      percentage: 5
+      severity: "info"
+    
+    concerning:
+      percentage: 10
+      severity: "warning"
+      action: "Review data source, check API"
+    
+    critical:
+      percentage: 20
+      severity: "error"
+      action: "Stop automated processing, manual review required"
+  
+  outliers:
+    acceptable:
+      percentage: 2
+      severity: "info"
+    
+    concerning:
+      percentage: 5
+      severity: "warning"
+      action: "Investigate data source"
+    
+    critical:
+      percentage: 10
+      severity: "error"
+      action: "Validate extreme events, check for data corruption"
+  
+  temporal_consistency:
+    max_gap_days: 60
+    severity: "warning"
+    action: "Check for missing data uploads"
+
+# ============================================================================
+# Performance Thresholds
+# ============================================================================
+
+performance:
+  description: "Pipeline and system performance thresholds"
+  
+  ingestion_duration:
+    description: "Maximum acceptable duration per data source (seconds)"
+    
+    thresholds:
+      CHIRPS:
+        target: 180        # 3 minutes
+        warning: 300       # 5 minutes
+        critical: 600      # 10 minutes
+      
+      NASA_POWER:
+        target: 120        # 2 minutes
+        warning: 180       # 3 minutes
+        critical: 300      # 5 minutes
+      
+      ERA5:
+        target: 300        # 5 minutes
+        warning: 600       # 10 minutes
+        critical: 1200     # 20 minutes
+      
+      NDVI:
+        target: 180        # 3 minutes
+        warning: 300       # 5 minutes
+        critical: 600      # 10 minutes
+      
+      OCEAN_INDICES:
+        target: 30         # 30 seconds
+        warning: 60        # 1 minute
+        critical: 120      # 2 minutes
+  
+  api_response_time:
+    target_seconds: 10
+    warning_seconds: 30
+    critical_seconds: 60
+    action_critical: "Check API health, network connectivity"
+  
+  database_performance:
+    write_rate_min: 100      # records/second
+    read_time_max_ms: 1000   # milliseconds
+    index_time_max_ms: 500   # milliseconds
+    
+    actions:
+      slow_writes: "Check database connections, consider bulk inserts"
+      slow_reads: "Review indexes, optimize queries"
+      slow_index: "Rebuild indexes, analyze query plans"
+
+# ============================================================================
+# Pipeline Health Score
+# ============================================================================
+
+health_score:
+  description: "Overall pipeline health scoring system"
+  
+  ranges:
+    excellent:
+      min: 90
+      max: 100
+      severity: "success"
+      action: "No action required"
+      color: "green"
+    
+    good:
+      min: 75
+      max: 89
+      severity: "info"
+      action: "Monitor trends, address warnings"
+      color: "yellow"
+    
+    fair:
+      min: 50
+      max: 74
+      severity: "warning"
+      action: "Investigate issues, schedule maintenance"
+      color: "orange"
+    
+    poor:
+      min: 0
+      max: 49
+      severity: "error"
+      action: "Immediate investigation required"
+      color: "red"
+  
+  # Point deductions for various issues
+  deductions:
+    no_data: 20
+    very_stale: 15
+    stale: 5
+    high_missing_values: 10
+    moderate_missing_values: 3
+    data_quality_issues: 10
+    performance_issues: 5
+
+# ============================================================================
+# Alert Frequency Limits (Prevent Alert Fatigue)
+# ============================================================================
+
+alert_frequency:
+  description: "Limits on how often to send alerts for same issue"
+  
+  # Minimum time between alerts for the same issue (minutes)
+  min_interval:
+    info: 1440        # 24 hours
+    warning: 360      # 6 hours
+    error: 60         # 1 hour
+    critical: 15      # 15 minutes
+  
+  # Escalation rules
+  escalation:
+    enabled: true
+    description: "Escalate severity if issue persists"
+    
+    rules:
+      - initial_severity: "warning"
+        escalate_to: "error"
+        after_hours: 24
+      
+      - initial_severity: "error"
+        escalate_to: "critical"
+        after_hours: 6
+
+# ============================================================================
+# Notification Channels
+# ============================================================================
+
+notification_channels:
+  description: "Which channels to use for different severity levels"
+  
+  routing:
+    info:
+      - slack     # Daily summaries to Slack
+    
+    success:
+      - slack     # Successful runs to Slack
+    
+    warning:
+      - slack     # Warnings to Slack
+    
+    error:
+      - slack     # Errors to Slack
+      - email     # Errors to email (if configured)
+    
+    critical:
+      - slack     # Critical to Slack
+      - email     # Critical to email
+      - pagerduty # Critical to PagerDuty (if configured)
+
+# ============================================================================
+# Automated Actions
+# ============================================================================
+
+automated_actions:
+  description: "Actions to take automatically based on alerts"
+  
+  enabled: false  # Set to true to enable automated remediation
+  
+  actions:
+    stale_data:
+      condition: "data older than 14 days"
+      action: "trigger_pipeline_run"
+      enabled: false  # Manual approval required
+    
+    database_slow:
+      condition: "index query > 1000ms"
+      action: "rebuild_indexes"
+      enabled: false  # Manual approval required
+    
+    api_timeout:
+      condition: "API response > 60s"
+      action: "retry_with_backoff"
+      enabled: true   # Safe to auto-enable
+    
+    high_error_rate:
+      condition: "error rate > 10%"
+      action: "pause_pipeline"
+      enabled: false  # Manual intervention required
+
+# ============================================================================
+# Business Hours
+# ============================================================================
+
+business_hours:
+  description: "Define business hours for alert routing"
+  
+  timezone: "Africa/Dar_es_Salaam"
+  
+  weekday:
+    start: "08:00"
+    end: "18:00"
+  
+  weekend:
+    # Send critical alerts only
+    critical_only: true
+  
+  # Outside business hours, only send critical alerts via PagerDuty
+  after_hours_routing:
+    info: []
+    warning: ["slack"]
+    error: ["slack"]
+    critical: ["slack", "pagerduty"]
+
+# ============================================================================
+# Custom Rules (Environment-Specific)
+# ============================================================================
+
+custom_rules:
+  description: "Add environment-specific rules here"
+  
+  development:
+    alert_everything: true      # See all alerts in dev
+    min_alert_interval: 5       # 5 minutes between alerts
+    slack_only: true            # No email/pagerduty in dev
+  
+  staging:
+    alert_everything: false
+    min_alert_interval: 30      # 30 minutes
+    enable_email: true
+  
+  production:
+    alert_everything: false
+    min_alert_interval: 60      # 1 hour for routine alerts
+    enable_email: true
+    enable_pagerduty: true
+    escalation_enabled: true
+
+# ============================================================================
+# Metadata
+# ============================================================================
+
+metadata:
+  version: "1.0"
+  last_updated: "2026-01-22"
+  maintained_by: "Tanzania Climate Prediction Team"
+  documentation: "docs/MONITORING_GUIDE.md"

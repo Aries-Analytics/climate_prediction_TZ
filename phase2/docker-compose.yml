@@ -1,0 +1,133 @@
+# Docker Compose for Automated Forecasting Pipeline
+# Morogoro Pilot - Kilombero Basin
+#
+# Services:
+# - postgres: PostgreSQL database
+# - scheduler: Daily pipeline execution (6 AM EAT)
+# - monitoring: Prometheus metrics & health checks
+
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:13
+    container_name: climate_postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-climate_dev}
+      POSTGRES_USER: ${POSTGRES_USER:-user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-user}" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+
+  # Pipeline Scheduler Service
+  scheduler:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.scheduler
+    container_name: climate_scheduler
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # Database
+      DATABASE_URL: postgresql://${POSTGRES_USER:-user}:${POSTGRES_PASSWORD:-password}@postgres:5432/${POSTGRES_DB:-climate_dev}
+
+      # Scheduler Configuration
+      ENABLE_SCHEDULER: ${ENABLE_SCHEDULER:-true}
+      PIPELINE_SCHEDULE: ${PIPELINE_SCHEDULE:-0 3 * * *} # 6 AM EAT = 3 AM UTC
+      PIPELINE_TIMEZONE: ${PIPELINE_TIMEZONE:-Africa/Dar_es_Salaam}
+      PIPELINE_TIMEOUT: ${PIPELINE_TIMEOUT:-3600}
+      ALLOW_MANUAL_TRIGGER: ${ALLOW_MANUAL_TRIGGER:-true}
+
+      # Morogoro Pilot Configuration
+      PILOT_MODE: ${PILOT_MODE:-true}
+      PILOT_LOCATION: ${PILOT_LOCATION:-Morogoro}
+      PILOT_BASIN: ${PILOT_BASIN:-Kilombero}
+      PILOT_COORDINATES: ${PILOT_COORDINATES:--8.0,36.5}
+      FORECAST_HORIZON_DAYS: ${FORECAST_HORIZON_DAYS:-31}
+      PILOT_CROP: ${PILOT_CROP:-Rice}
+      PILOT_FARMERS: ${PILOT_FARMERS:-1000}
+
+      # Slack Alerts
+      ALERT_SLACK_ENABLED: ${ALERT_SLACK_ENABLED:-true}
+      ALERT_SLACK_WEBHOOK_URL: ${ALERT_SLACK_WEBHOOK_URL}
+
+      # Email Alerts (optional)
+      ALERT_EMAIL_ENABLED: ${ALERT_EMAIL_ENABLED:-false}
+      ALERT_EMAIL_SMTP_HOST: ${ALERT_EMAIL_SMTP_HOST:-smtp.gmail.com}
+      ALERT_EMAIL_SMTP_PORT: ${ALERT_EMAIL_SMTP_PORT:-587}
+      ALERT_EMAIL_FROM: ${ALERT_EMAIL_FROM}
+      ALERT_EMAIL_RECIPIENTS: ${ALERT_EMAIL_RECIPIENTS}
+
+      # Data Quality Thresholds
+      DATA_STALENESS_THRESHOLD_DAYS: ${DATA_STALENESS_THRESHOLD_DAYS:-7}
+      DATA_QUALITY_MISSING_THRESHOLD: ${DATA_QUALITY_MISSING_THRESHOLD:-0.10}
+      DATA_QUALITY_OUTLIER_THRESHOLD: ${DATA_QUALITY_OUTLIER_THRESHOLD:-0.05}
+
+      # Retry Configuration
+      RETRY_MAX_ATTEMPTS: ${RETRY_MAX_ATTEMPTS:-5}
+      RETRY_INITIAL_DELAY: ${RETRY_INITIAL_DELAY:-3}
+      RETRY_BACKOFF_FACTOR: ${RETRY_BACKOFF_FACTOR:-2}
+
+      # API Keys
+      GOOGLE_CLOUD_PROJECT: ${GOOGLE_CLOUD_PROJECT}
+      GEE_SERVICE_ACCOUNT_KEY: ${GEE_SERVICE_ACCOUNT_KEY}
+      ERA5_API_KEY: ${ERA5_API_KEY}
+      NASA_API_KEY: ${NASA_API_KEY}
+
+      # Logging
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+
+    volumes:
+      - ./backend/app:/app/app:ro
+      - ./backend/alembic:/app/alembic:ro
+      - ./logs:/app/logs
+      - ./data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "python", "-c", "import sys; sys.exit(0)" ]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+
+  # Monitoring Service
+  monitoring:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.monitoring
+    container_name: climate_monitoring
+    depends_on:
+      - postgres
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-user}:${POSTGRES_PASSWORD:-password}@postgres:5432/${POSTGRES_DB:-climate_dev}
+      MONITORING_METRICS_PORT: ${MONITORING_METRICS_PORT:-9090}
+      MONITORING_HEALTH_PORT: ${MONITORING_HEALTH_PORT:-8080}
+      ENABLE_MONITORING: ${ENABLE_MONITORING:-true}
+    ports:
+      - "9090:9090" # Prometheus metrics
+      - "8080:8080" # Health check endpoint
+    volumes:
+      - ./backend/app:/app/app:ro
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  default:
+    name: climate_network
