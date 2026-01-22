@@ -1,8 +1,13 @@
 # Automated Forecasting Pipeline - Deployment Guide
 
 **Last Updated**: January 22, 2026  
-**Status**: Production Ready  
+**Status**: ✅ **PRODUCTION ACTIVE**  
 **Version**: 1.0
+
+> [!IMPORTANT]
+> **Scheduler Enabled**: January 22, 2026 @ 19:00 EAT  
+> **Next Run**: January 23, 2026 @ 06:00 AM EAT  
+> **Configuration**: Daily automated execution at 6:00 AM EAT for Morogoro pilot
 
 ---
 
