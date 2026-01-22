@@ -33,7 +33,14 @@ def test_db():
     
     # Create tables (import from your models)
     try:
-        from backend.app.models.climate_data import Base
+        import sys
+        import os
+        # Ensure backend is in path for imports
+        backend_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "backend"))
+        if backend_path not in sys.path:
+            sys.path.insert(0, backend_path)
+            
+        from app.models.climate_data import Base
         Base.metadata.create_all(engine)
     except ImportError:
         # If models not available, skip table creation

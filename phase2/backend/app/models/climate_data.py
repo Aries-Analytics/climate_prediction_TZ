@@ -12,6 +12,7 @@ class ClimateData(Base):
         # Composite indexes for common query patterns
         Index('idx_climate_date_location', 'date', 'location_lat', 'location_lon'),
         Index('idx_climate_created_at', 'created_at'),
+        {'extend_existing': True}
     )
 
     id = Column(Integer, primary_key=True, index=True)
