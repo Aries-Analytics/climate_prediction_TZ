@@ -12,17 +12,16 @@ Usage:
 import pytest
 from datetime import datetime
 from unittest.mock import patch, MagicMock
+import pandas as pd
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-import pandas as pd
-from sqlalchemy.dialects.sqlite.base import SQLiteDialect
-from sqlalchemy.dialects import postgresql
+from sqlalchemy.ext.compiler import compiles
+from sqlalchemy.dialects.postgresql import ARRAY
 
-# Monkeypatch SQLite to handle PostgreSQL ARRAY type
-def visit_ARRAY(self, type_, **kw):
+# Register compilation rule for PostgreSQL ARRAY type in SQLite
+@compiles(ARRAY, "sqlite")
+def compile_array(element, compiler, **kw):
     return "JSON"
-
-SQLiteDialect.visit_ARRAY = visit_ARRAY
 
 from tests.mocks import (
     get_mock_chirps,
