@@ -40,6 +40,9 @@
 | **[BUSINESS_REPORTS_GUIDE.md](./guides/BUSINESS_REPORTS_GUIDE.md)** | Business reporting features |
 | **[MODEL_PIPELINE_README.md](./guides/MODEL_PIPELINE_README.md)** | ML pipeline usage guide |
 | **[QUICK_START_PROCESSING.md](./guides/QUICK_START_PROCESSING.md)** | Data processing quick start |
+| **[AUTOMATED_PIPELINE_DEPLOYMENT.md](./AUTOMATED_PIPELINE_DEPLOYMENT.md)** | Production deployment guide |
+| **[SLACK_ALERT_STRATEGY.md](./SLACK_ALERT_STRATEGY.md)** | Comprehensive alert strategy |
+| **[MOROGORO_PILOT_CONFIGURATION.md](./MOROGORO_PILOT_CONFIGURATION.md)** | Pilot setup & configuration |
 
 ### Current Status & Verification (All in [current/](./current/))
 
@@ -156,6 +159,8 @@
   - [BUSINESS_REPORTS_GUIDE.md](./guides/BUSINESS_REPORTS_GUIDE.md) - Business reporting
   - [MODEL_PIPELINE_README.md](./guides/MODEL_PIPELINE_README.md) - ML pipeline usage
   - [QUICK_START_PROCESSING.md](./guides/QUICK_START_PROCESSING.md) - Data processing
+  - [AUTOMATED_PIPELINE_DEPLOYMENT.md](./AUTOMATED_PIPELINE_DEPLOYMENT.md) - Production deployment
+  - [MOROGORO_PILOT_CONFIGURATION.md](./MOROGORO_PILOT_CONFIGURATION.md) - Pilot setup
 
 - **[references/](./references/)** - Core reference documents (sources of truth)
   - [PROJECT_OVERVIEW_CONSOLIDATED.md](./references/PROJECT_OVERVIEW_CONSOLIDATED.md) - Complete overview
@@ -258,6 +263,35 @@ Please create an issue or update the relevant core document.
 
 ## 🆕 What's New
 
+### January 22, 2026 - Testing & Monitoring Infrastructure
+
+- ✅ **Mock API implementations** - All 5 data sources (100x faster testing)
+- ✅ **Slack integration** - Real-time pipeline alerts (tested and working)
+- ✅ **Monitoring scripts** - Health checks, quality validation, dev dashboard
+- ✅ **Comprehensive documentation** - Dev deployment, monitoring guide, testing reference
+- ✅ **Integration tests** - Full test suite with mocked external APIs
+- ✅ **Retry best practices** - Documented optimal configurations for dev (3) and prod (5-7)
+
+**New Documentation**:
+- [DEV_DEPLOYMENT.md](DEV_DEPLOYMENT.md) - Development environment setup
+- [MONITORING_GUIDE.md](MONITORING_GUIDE.md) - Monitoring and alerting
+- [TESTING_MONITORING_REFERENCE.md](TESTING_MONITORING_REFERENCE.md) - Quick reference
+- [Mock API Guide](../tests/mocks/README.md) - Integration testing with mocks
+
+### January 22, 2026 (PM) - Automated Pipeline Configuration
+
+- ✅ **Pipeline scheduler configured** - Daily execution at 6:00 AM EAT
+- ✅ **Morogoro pilot focus** - Kilombero Basin, 1,000 rice farmers
+- ✅ **Slack alert strategy** - 7 alert categories with clear examples
+- ✅ **Pipeline strategy assessment** - Comparison of 5 approaches, current approach optimal
+- ✅ **Deployment documentation** - Complete production deployment guide
+- ✅ **Configuration validated** - Pilot mode, coordinates, crop parameters
+
+**New Documentation**:
+- [AUTOMATED_PIPELINE_DEPLOYMENT.md](AUTOMATED_PIPELINE_DEPLOYMENT.md) - Production deployment
+- [SLACK_ALERT_STRATEGY.md](SLACK_ALERT_STRATEGY.md) - Comprehensive alert strategy
+- [MOROGORO_PILOT_CONFIGURATION.md](MOROGORO_PILOT_CONFIGURATION.md) - Pilot setup guide
+- [PIPELINE_STRATEGY_ASSESSMENT.md](PIPELINE_STRATEGY_ASSESSMENT.md) - Approach comparison
 ### January 5, 2026 - Data Pipeline Robustness Improvements
 
 - ✅ **Resolved 10 critical test failures** - 100% test pass rate achieved

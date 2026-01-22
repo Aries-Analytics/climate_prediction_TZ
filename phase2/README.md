@@ -102,32 +102,47 @@ phase2/
 │
 ├── docs/                       # Documentation
 │   ├── README.md
+│   ├── DEV_DEPLOYMENT.md        #  🆕 Dev environment setup guide
+│   ├── MONITORING_GUIDE.md      # 🆕 Monitoring & alerting guide
+│   ├── TESTING_MONITORING_REFERENCE.md  # 🆕 Quick reference
 │   ├── MODEL_DEVELOPMENT_GUIDE.md
 │   ├── BUSINESS_REPORTS_GUIDE.md
 │   ├── pipeline_overview.md
 │   └── IMPLEMENTATION_STATUS.md
-│
+
+├── tests/                      # Comprehensive testing
+│   ├── mocks/                  # 🆕 Mock APIs for integration testing
+│   │   ├── mock_base.py        # Base classes and data generators
+│   │   ├── mock_chirps.py      # CHIRPS rainfall mock
+│   │   ├── mock_nasa_power.py  # NASA POWER climate mock
+│   │   ├── mock_era5.py        # ERA5 reanalysis mock
+│   │   ├── mock_ndvi.py        # NDVI vegetation mock
+│   │   ├── mock_ocean_indices.py  # Ocean indices mock
+│   │   └── README.md           # Mock API usage guide
+│   ├── test_ingestion_with_mocks.py  # 🆕 Integration tests with mocks
+│   ├── test_pipeline.py
+│   ├── test_merge_processed.py
+│   ├── test_chirps_processing.py
+│   └── ...
 ├── scripts/                    # Utility scripts
+│   ├── monitor_pipeline_health.py  # 🆕 Pipeline health monitoring
+│   ├── validate_data_quality.py    # 🆕 Data quality validation
+│   ├── dev_dashboard_summary.py    # 🆕 Dev environment dashboard
 │   ├── analysis/              # EDA and visualization scripts
 │   ├── demos/                 # Demo scripts for testing
 │   ├── reporting/             # Business report generation
 │   │   └── generate_business_reports.py
 │   └── verification/          # Testing and verification utilities
 │
-├── reporting/                  # Report generation modules
-│   ├── business_metrics.py    # Business metrics engine
-│   └── visualize_business_metrics.py  # Visualization generator
-│
-├── outputs/                    # Generated outputs
-│   ├── processed/             # Processed datasets
-│   ├── models/                # Trained models
-│   ├── evaluation/            # Evaluation reports
-│   └── experiments/           # Experiment logs
-│
-├── run_pipeline.py            # Convenience wrapper
-├── model_development_pipeline.py # Root-level ML pipeline
-├── requirements.txt           # Python dependencies
-└── pytest.ini                # Pytest configuration
+├── utils/                      # Shared utilities
+│   ├── slack_notifier.py      # 🆕 Slack alerting integration
+│   ├── config.py              # Configuration management
+│   ├── logger.py              # Logging utilities
+│   ├── validator.py           # Data validation
+│   ├── validation.py          # Additional validators
+│   ├── cache.py               # Caching utilities
+│   ├── versioning.py          # Data versioning
+│   └── performance.py         # Performance monitoring
 ```
 
 ## Data Sources
@@ -284,6 +299,60 @@ pytest tests/test_chirps_processing.py -v
 pytest --cov=modules --cov=utils --cov=models --cov=preprocessing -v
 ```
 
+### 🆕 Integration Testing with Mock APIs
+
+**Fast, reliable testing without network calls:**
+```bash
+# Run all mock integration tests (100x faster than real APIs)
+pytest tests/test_ingestion_with_mocks.py -v
+
+# Test specific data source mock
+pytest tests/test_ingestion_with_mocks.py::test_mock_chirps_basic -v
+
+# Test full pipeline with all mocks
+pytest tests/test_ingestion_with_mocks.py::test_full_pipeline_with_mocks -v
+```
+
+**Benefits:**
+- ✅ No external API dependencies
+- ✅ Deterministic test results  
+- ✅ < 1 second execution time
+- ✅ Test error scenarios easily
+- ✅ Works offline
+
+See [tests/mocks/README.md](tests/mocks/README.md) for mock API usage guide.
+
+### 🆕 Development Monitoring & Health Checks
+
+**Monitor pipeline health:**
+```bash
+# Check data freshness and completeness
+python scripts/monitor_pipeline_health.py
+
+# With Slack alerts
+python scripts/monitor_pipeline_health.py --send-alerts
+
+# Validate data quality
+python scripts/validate_data_quality.py --source CHIRPS
+
+# View dev environment dashboard
+python scripts/dev_dashboard_summary.py
+```
+
+**Slack Integration (Automated Alerts):**
+- ✅ Pipeline status notifications
+- ✅ Error alerts with stack traces
+- ✅ Data quality warnings
+- ✅ Real-time monitoring
+
+See [docs/DEV_DEPLOYMENT.md](docs/DEV_DEPLOYMENT.md) and [docs/MONITORING_GUIDE.md](docs/MONITORING_GUIDE.md) for complete guides.
+
+**Perfect for Automated Forecasting Pipeline:**
+- Monitor scheduled pipeline runs automatically
+- Get instant Slack alerts for failures
+- Validate forecast data quality
+- Track pipeline performance over time
+
 ## Configuration
 
 ### Environment Variables
@@ -309,7 +378,23 @@ OCEAN_INDICES_SOURCE=https://psl.noaa.gov/data/climateindices/list/
 # Project Settings
 DEFAULT_REGION=Tanzania
 DEFAULT_CRS=EPSG:4326
+
+# 🆕 Development & Monitoring Configuration
+DATABASE_URL=postgresql://user:password@localhost:5432/climate_dev
+ALERT_SLACK_ENABLED=true
+ALERT_SLACK_WEBHOOK_URL=https://hooks.slack.com/services/YOUR/WEBHOOK/URL
+RETRY_MAX_ATTEMPTS=3
+DATA_STALENESS_THRESHOLD_DAYS=7
+MONITORING_METRICS_PORT=9090
 ```
+
+**New in January 2026:**
+- **Mock APIs**: Test all data sources without network calls
+- **Slack Alerts**: Real-time notifications for pipeline status
+- **Monitoring Scripts**: Health checks and quality validation
+- **Retry Configuration**: Best practices documented (3 for dev, 5-7 for production)
+
+See [docs/DEV_DEPLOYMENT.md](docs/DEV_DEPLOYMENT.md) for complete setup guide.
 
 ## Pipeline Workflows
 
@@ -506,6 +591,10 @@ Logs are stored in `logs/` directory:
 - **[Model Development Guide](docs/MODEL_DEVELOPMENT_GUIDE.md)** - ML pipeline usage
 - **[Implementation Status](docs/IMPLEMENTATION_STATUS.md)** - Project progress
 - **[Pipeline README](pipelines/README.md)** - Pipeline comparison and usage
+- **🆕 [Dev Deployment Guide](docs/DEV_DEPLOYMENT.md)** - Development environment setup
+- **🆕 [Monitoring Guide](docs/MONITORING_GUIDE.md)** - Health checks and alerting
+- **🆕 [Testing & Monitoring Reference](docs/TESTING_MONITORING_REFERENCE.md)** - Quick reference
+- **🆕 [Mock API Usage](tests/mocks/README.md)** - Integration testing guide
 - **[Spec Documents](.kiro/specs/)** - Requirements and design specs
 
 ## Development
