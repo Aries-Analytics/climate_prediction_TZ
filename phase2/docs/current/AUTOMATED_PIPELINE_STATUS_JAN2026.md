@@ -1,9 +1,9 @@
 # Automated Pipeline Deployment Status - January 22, 2026
 
-**Status**: ✅ Production Ready  
+**Status**: ✅ **PRODUCTION ACTIVE** - Scheduler Enabled  
 **Pilot**: Morogoro (Kilombero Basin)  
 **Version**: 3.1  
-**Date**: January 22, 2026
+**Last Updated**: January 22, 2026, 19:00 EAT
 
 ---
 
@@ -76,3 +76,53 @@ The infrastructure has been validated through a comprehensive new test suite:
 
 **Signed Off By**: Engineering Team  
 **Date**: Jan 22, 2026
+
+---
+
+## 🚀 **PRODUCTION ACTIVATION - January 22, 2026, 19:00 EAT**
+
+### ✅ Scheduler Enabled
+
+**Configuration**:
+- **Status**: ENABLED (`ENABLE_SCHEDULER=true` in `.env`)
+- **Schedule**: Daily at 6:00 AM EAT
+- **First Automated Run**: January 23, 2026 @ 06:00 AM
+- **Timezone**: Africa/Dar_es_Salaam
+
+**Pilot Details**:
+- **Location**: Morogoro (Kilombero Basin, -8.0, 36.5)
+- **Crop**: Rice
+- **Farmers**: 1,000
+- **Forecast Horizon**: 31 days
+
+**Alerting**:
+- **Slack**: ✅ Enabled
+- **Email**: ❌ Disabled (dev environment)
+
+### Daily Execution Timeline
+
+**6:00 AM EAT** - Pipeline executes automatically:
+
+1. **Data Ingestion** (10-15 min): CHIRPS, NASA POWER, ERA5, NDVI, Ocean Indices
+2. **Quality Validation** (1 min): Missing values, ranges, gaps
+3. **Forecast Generation** (3-5 min): 31-day forecasts + recommendations
+4. **Notifications** (30 sec): Slack alert with execution summary
+
+**Expected Completion**: ~6:20 AM EAT daily
+
+### Success Criteria
+
+- ✅ Executes daily at 6:00 AM EAT
+- ✅ Ingests data from ≥4 of 5 sources
+- ✅ Data quality score ≥ 0.70
+- ✅ Generates 31 forecasts for Morogoro
+- ✅ Sends Slack completion notification
+
+### Verification Milestones
+
+- [ ] **Jan 23, 06:00 AM**: First automated run
+- [ ] **Jan 23, 06:20 AM**: Verify Slack notification
+- [ ] **Jan 24-26**: Monitor daily execution
+- [ ] **Jan 29**: First weekly review
+- [ ] **Feb 22**: First monthly report
+
