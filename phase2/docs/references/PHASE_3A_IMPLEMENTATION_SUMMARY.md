@@ -39,7 +39,7 @@ Initial spec didn't account for Tanzania TIRA regulatory requirements (100% CAR 
 
 **Files Modified:**
 - `backend/app/api/forecasts.py` (Line 307)
-- `docs/references/MOROGORO_RICE_PILOT_SPECIFICATION.md` (Lines 45-94)
+- `docs/references/KILOMBERO_BASIN_PILOT_SPECIFICATION.md` (Lines 45-94)
 - `frontend/src/pages/ExecutiveDashboard.tsx` (Lines 15, 51-56)
 
 ---
@@ -276,7 +276,7 @@ PAYOUT_RATES = {
    - Lines 15-16: Added pilot_location_id/name to interface
 
 ### Documentation
-5. `docs/references/MOROGORO_RICE_PILOT_SPECIFICATION.md`
+5. `docs/references/KILOMBERO_BASIN_PILOT_SPECIFICATION.md`
    - Lines 45-94: Updated financial parameters
    - Lines 235-283: Updated configuration constants section
 

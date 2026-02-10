@@ -301,60 +301,13 @@ def fetch_chirps_data(
             except Exception as e:
                 log_warning(f"Failed to load cached data: {e}")
 
-        # TIER 3: Generate synthetic climatological data (realistic patterns)
-        log_warning("=" * 70)
-        log_warning("⚠️  WARNING: USING SYNTHETIC CHIRPS DATA - NOT REAL SATELLITE DATA")
-        log_warning("=" * 70)
+        if use_gee and not GEE_AVAILABLE:
+             raise ImportError("Google Earth Engine not available. Install 'earthengine-api' and authenticate.")
+        
+        raise RuntimeError("Failed to fetch CHIRPS data from Google Earth Engine and no cached data available.")
 
-        if not use_gee:
-            log_warning("GEE disabled by user, generating synthetic climatological data")
-        elif not GEE_AVAILABLE:
-            log_warning("Google Earth Engine not available")
-            log_warning("To use real satellite data, install: pip install earthengine-api")
-        else:
-            log_warning("Real CHIRPS data not available from GEE for requested period")
-            log_warning(f"Requested: {start_year}-{end_year}")
-            log_warning("Possible reasons:")
-            log_warning("  1. CHIRPS has 1-2 week data lag")
-            log_warning("  2. Recent months not yet available")
-            log_warning("  3. GEE authentication or access issues")
-
-        log_warning("Generating synthetic climatological data based on Tanzania climate patterns")
-        log_warning("THIS DATA IS MODELED, NOT OBSERVED!")
-        log_warning("=" * 70)
-
-        df = _generate_sample_chirps_data(start_year, end_year, bounds)
-
-        # Validate the dataframe
-        expected_cols = ["year", "month", "rainfall_mm"]
-        validate_dataframe(df, expected_columns=expected_cols, dataset_name="CHIRPS")
-
-        # Save synthetic data (don't overwrite real cached data)
-        csv_path = get_data_path("raw", "chirps_synthetic.csv")
-        os.makedirs(os.path.dirname(csv_path), exist_ok=True)
-        df.to_csv(csv_path, index=False)
-        log_info(f"✓ Synthetic CHIRPS data saved to: {csv_path}")
-
-        return df
-
-    except Exception as e:
-        log_error(f"All CHIRPS data fetch strategies failed: {e}")
-
-        # TIER 4: Last resort - minimal dummy data for testing
-        log_warning("Returning minimal dummy data as last resort")
-        df = pd.DataFrame(
-            {
-                "year": [start_year],
-                "month": [1],
-                "rainfall_mm": [100.0],
-                "lat_min": [bounds["lat_min"]],
-                "lat_max": [bounds["lat_max"]],
-                "lon_min": [bounds["lon_min"]],
-                "lon_max": [bounds["lon_max"]],
-                "data_source": ["dummy_fallback"],
-            }
-        )
-        return df
+    except Exception:
+        raise
 
 
 def _generate_sample_chirps_data(start_year, end_year, bounds):
@@ -461,7 +414,10 @@ def ingest_chirps(
     ... )
     >>> print(f"Fetched {records_fetched}, stored {records_stored}")
     """
-    from backend.app.models.climate_data import ClimateData
+    try:
+        from app.models.climate_data import ClimateData
+    except ImportError:
+        from backend.app.models.climate_data import ClimateData
     from sqlalchemy import and_
 
     # Set default date range
@@ -470,7 +426,11 @@ def ingest_chirps(
     if end_date is None:
         end_date = datetime.now()
 
-    log_info(f"Ingesting CHIRPS data from {start_date.date()} to {end_date.date()}")
+    # Ensure dates are pandas-compatible timestamps for comparison
+    start_date = pd.to_datetime(start_date)
+    end_date = pd.to_datetime(end_date)
+
+    log_info(f"Ingesting CHIRPS data from {start_date} to {end_date}")
 
     try:
         # Fetch data using existing function

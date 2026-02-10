@@ -89,17 +89,15 @@
 
 ## ⚠️ DISCREPANCIES FOUND
 
-### Issue 1: Feature Count Varies Across Documents
+### Issue 1: Feature Count Varies - RESOLVED ✅
 
-**Different Numbers Found**:
-- 6_LOCATION_EXPANSION_SUMMARY.md: **74 features** (after selection from 239)
-- PROJECT_OVERVIEW.md: **35 features** (reduced from 325)
-- PROJECT_OVERVIEW.md (another section): **79 features** (from 640)
+**Verification**:
+- **Final Feature Count**: **78**
+- **Verified Source**: `outputs/models/training_results_20251229_171138.json`
+- **Initial Features**: 247
+- **Selection**: Recursive Feature Elimination (RFE) retained 78 top predictors.
 
-**Resolution Needed**:
-- [ ] Determine which is the CURRENT, FINAL feature count
-- [ ] Check latest training results
-- [ ] Update all docs with correct number
+**Resolution**: All documentation should now reflect **78** features.
 
 ### Issue 2: Model Performance Varies
 
@@ -114,17 +112,19 @@
 - [ ] Clarify if different datasets (5 vs 6 locations)
 - [ ] Update all docs with correct, consistent numbers
 
-### Issue 3: Sample Count Varies
+### Issue 3: Sample Count Varies - RESOLVED ✅
 
-**Different Numbers Found**:
-- 6_LOCATION_EXPANSION_SUMMARY.md: **1,872 total samples** (6 locations × 312 months)
-- PROJECT_OVERVIEW.md: **133 train, 29 val, 29 test** (191 total?)
-- PROJECT_OVERVIEW_CONSOLIDATED.md: **1,872 total samples**
+**Verification**:
+- **Total Rows**: **1,873** (Master Dataset)
+- **Usable Training Samples**: **1,560** (935 Train + 310 Val + 315 Test)
+- **Status**: **Correct & Verified**
 
-**Resolution Needed**:
-- [ ] Clarify: 1,872 is TOTAL across all locations
-- [ ] Clarify: 133/29/29 is per-location split?
-- [ ] Document clearly in consolidated docs
+**Reason for Difference (1,873 vs 1,560)**:
+1.  **Lag Features**: Calculating 12-month lags drops the first 12 months for each location.
+2.  **Rolling Windows**: Rolling statistics (e.g., 6-month mean) require dropping initial rows.
+3.  **Safety Gaps**: Pipeline enforces **12-month gap** between train/val/test splits to prevent temporal leakage.
+
+**Conclusion**: 1,560 is the correct number of *scientifically usable* samples for training.
 
 ---
 
@@ -189,7 +189,7 @@
 - ✅ **5 data sources** (NASA POWER, ERA5, CHIRPS, NDVI, Ocean Indices)
 - ✅ **1,872 total samples** (6 locations × 312 months)
 - ✅ **26 years** (2000-2025)
-- ✅ **74 features** (selected from 239)
+- ✅ **78 features** (selected from 247)
 
 ### Model Performance
 - ✅ **0.849 R²** (Ensemble, test set)

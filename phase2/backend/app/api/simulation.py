@@ -270,11 +270,7 @@ def get_validation_report(
         
         "yearly_analysis": yearly,
         
-        "external_validation": {
-            "sources": ["FEWS NET Food Security Alerts", "WFP Reports", "Tanzania Meteorological Authority"],
-            "validated_events": sum(1 for y in yearly.values() if y.get("validated")),
-            "total_events": len([t for y in yearly.values() for t in y.get("triggers", [])])
-        },
+        "external_validation": summary["external_validation"],
         
         "sustainability_analysis": sustainability,
         

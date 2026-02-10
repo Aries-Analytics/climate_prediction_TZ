@@ -18,3 +18,14 @@ requests==2.31.0
 # Minimal data handling (needed by orchestrator/data_quality)
 pandas==2.0.3
 numpy==1.24.3
+
+# Data Ingestion (ADDED FIX)
+cdsapi>=0.7.0
+earthengine-api==0.1.370
+xarray==2023.10.1
+netCDF4==1.6.5
+
+# ML Dependencies (Required for ForecastGenerator)
+tensorflow==2.15.0
+scikit-learn==1.3.2
+xgboost==2.0.3

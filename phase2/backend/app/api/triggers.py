@@ -135,7 +135,8 @@ def create_trigger_batch(
                 severity=record.get('severity'),
                 payout_amount=record.get('payout_amount'),
                 location_lat=record.get('location_lat'),
-                location_lon=record.get('location_lon')
+                location_lon=record.get('location_lon'),
+                location=record.get('location')  # CRITICAL: Save location name for filtering
             )
             db.add(trigger_event)
             created_count += 1

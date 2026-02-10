@@ -1,0 +1,15 @@
+{
+  "scenarios": 66,
+  "simple_model": {
+    "payout_freq": 0.3484848484848485,
+    "total_payout": 1380.0
+  },
+  "moderate_model": {
+    "payout_freq": 0.7272727272727273,
+    "total_payout": 875.7
+  },
+  "improvement": {
+    "basis_risk_reduction": "Higher frequency implies detecting localized stress (reduced false negatives)",
+    "net_difference": -504.3
+  }
+}

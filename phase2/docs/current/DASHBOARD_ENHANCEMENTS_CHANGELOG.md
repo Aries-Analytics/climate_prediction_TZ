@@ -250,7 +250,7 @@ const calculateExpectedPayout = (triggerType: string, probability: number) => {
 ```
 
 **Rationale:**
-- ✅ Uses documented rates from `MOROGORO_RICE_PILOT_SPECIFICATION.md`
+- ✅ Uses documented rates from `KILOMBERO_BASIN_PILOT_SPECIFICATION.md`
 - ✅ Aligns with ACRE Africa, Jubilee Insurance Tanzania models
 - ✅ TIRA compliant (transparent, fixed rates)
 - ✅ Simple for farmers to understand
@@ -336,7 +336,7 @@ const calculateExpectedPayout = (triggerType: string, probability: number) => {
 ## References
 
 **Documentation:**
-- `MOROGORO_RICE_PILOT_SPECIFICATION.md` - Pilot parameters
+- `KILOMBERO_BASIN_PILOT_SPECIFICATION.md` - Pilot parameters
 - `PARAMETRIC_INSURANCE_FINAL.md` - Insurance model specs
 - `PAYOUT_CALCULATION_MODEL.md` - Detailed payout analysis
 
@@ -347,6 +347,140 @@ const calculateExpectedPayout = (triggerType: string, probability: number) => {
 
 ---
 
+## Phase 4: Climate Data Pipeline Fix (Feb 5, 2026)
+
+### 11. Climate Dashboard Data Source Restoration
+**Status:** ✅ Completed  
+**Files:** 
+- `modules/processing/orchestrator.py`
+- `data/raw/ocean_indices_raw.csv`
+- `data/processed/master_dataset.csv`
+
+**Problem 1:** Dashboard displaying normalized z-scores instead of raw climate values
+- Temperature showing `0.776` instead of `25°C`
+- Rainfall showing `-0.747` instead of `125mm`
+- All climate variables displayed as normalized features
+
+**Root Cause:** 
+- Processed data files in `data/processed/` contained only test data (3-7 rows)
+- Processing pipeline had never been run to generate production data from raw sources
+- Raw combined files existed in `data/raw/` but were never processed
+
+**Problem 2:** Ocean indices (ENSO/IOD) missing 20 years of data
+- ENSO and IOD time series only showing 2020-2025
+- Missing historical data from 2000-2020 (240 months)
+
+**Root Cause:**
+- `ocean_indices_raw.csv` only had 72 records (2020-2025)
+- Ocean indices ingestion was incomplete
+- No `ocean_indices_combined.csv` file existed
+
+**Problem 3:** Ocean indices processing bug
+- Orchestrator checked for `ocean_indices_combined.csv` before special case handling
+- Special case code for `ocean_indices_raw.csv` never executed
+- Caused FileNotFoundError when processing ocean indices
+
+**Fix 1:** Regenerate Complete Ocean Indices Data
+```python
+# Downloaded 312 records (2000-2025) from NOAA
+from modules.ingestion.ocean_indices_ingestion import fetch_ocean_indices_data
+df = fetch_ocean_indices_data(start_year=2000, end_year=2025, dry_run=False)
+```
+
+**Fix 2:** Fix Orchestrator Path Bug
+```python
+# BEFORE (line 69-109): Generic check blocked ocean_indices
+raw_data_path = Path(f"data/raw/{source_name}_combined.csv")
+if not raw_data_path.exists():
+    raise FileNotFoundError(...)
+
+# AFTER (line 67-120): Ocean indices handled FIRST
+if source_name == "ocean_indices":
+    raw_data_path = Path("data/raw/ocean_indices_raw.csv")
+    # ... processing logic
+else:
+    raw_data_path = Path(f"data/raw/{source_name}_combined.csv")
+    # ... processing logic
+```
+
+**Fix 3:** Regenerate All Processed Data
+```bash
+python modules/processing/orchestrator.py
+```
+
+**Results:**
+- ✅ All 5 sources processed successfully
+- ✅ ocean_indices_processed.csv: 312 records (2000-2025)
+- ✅ chirps_processed.csv: 1,866 records
+- ✅ nasa_power_processed.csv: 1,872 records
+- ✅ era5_processed.csv: 1,866 records
+- ✅ ndvi_processed.csv: 1,866 records
+- ✅ master_dataset.csv: 1,872 rows with RAW values
+
+**Fix 4:** Reload Dashboard Database
+```bash
+python scripts/load_dashboard_data.py --clear
+```
+
+**Results:**
+- ✅ 1,872 climate records loaded (6 locations, 2000-2025)
+- ✅ Temperature: 15-30°C (raw values)
+- ✅ Rainfall: 0-300mm (raw values)
+- ✅ NDVI: 0.15-0.76 (raw values)
+- ✅ Ocean indices: Complete 2000-2025 time series
+
+**Impact:**
+- Dashboard now displays interpretable climate data
+- 25 years of ocean indices data available for analysis
+- Correct seasonal patterns visible in all variables
+- Data suitable for stakeholder decision-making
+
+**Documentation:**
+- See detailed fix in conversation Feb 5, 2026
+- Ocean indices path handling documented in DATA_PIPELINE_REFERENCE.md
+
+---
+
+## Phase 5: Forecast Logic Correction & Dashboard Cleanup (Feb 10, 2026)
+
+### 12. Forecast Generation Logic Fix
+**Status:** ✅ Completed  
+**File:** `backend/app/services/forecast_service.py`
+
+**Problem:** 
+- Forecasting engine failed to generate predictions because it required 30+ records (assuming daily data).
+- System actually uses monthly data (so 6 months = 6 records).
+- Result: "Insufficient data" error for all locations.
+
+**Fix:**
+- Changed lookback logic from `days=180` to `months=6`.
+- Adjusted minimum data threshold from 30 records to 6 records.
+- Updated feature generation to use monthly rolling windows.
+
+**Impact:**
+- Successfully generated 12 forecasts for Morogoro pilot (Drought, Flood, Crop Failure).
+- Validated probabilities against seasonal trends.
+
+---
+
+### 13. Climate Insights Dashboard Cleanup
+**Status:** ✅ Completed  
+**File:** `frontend/src/pages/ClimateInsightsDashboard.tsx`
+
+**Problem:**
+- "Show Forecast" toggle caused crashes and visual clutter.
+- Forecast traces were broken and confusing on the historical chart.
+- UX Best Practice violation: Mixing operational forecasts with historical analysis.
+
+**Fix:**
+- Removed ability to toggle forecasts on this specific dashboard.
+- Stripped all forecast-related code (traces, state, UI elements).
+- Dedicated this dashboard to **Historical Analysis** only (2000-Present).
+- Forecasts are now exclusively on the **Early Warning Dashboard**.
+
+---
+
 **Document Status:** ✅ Current  
-**Last Updated:** January 19, 2026  
+**Last Updated:** February 10, 2026  
 **Next Review:** March 2026 (post-pilot launch)
+

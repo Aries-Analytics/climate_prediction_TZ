@@ -5,8 +5,8 @@
 **Version**: 1.0
 
 > [!IMPORTANT]
-> **Scheduler Enabled**: January 22, 2026 @ 19:00 EAT  
-> **Next Run**: January 23, 2026 @ 06:00 AM EAT  
+> **Scheduler Enabled**: January 23, 2026 @ 23:45 EAT  
+> **Next Run**: January 24, 2026 @ 06:00 AM EAT  
 > **Configuration**: Daily automated execution at 6:00 AM EAT for Morogoro pilot
 
 ---
@@ -157,7 +157,7 @@ LOG_LEVEL=INFO                  # DEBUG, INFO, WARNING, ERROR
 
 **Pipeline Schedule:**
 ```bash
-PIPELINE_SCHEDULE=0 6 * * *     # Cron expression (daily at 6 AM)
+PIPELINE_SCHEDULE="0 3 * * *"     # Cron expression (3 AM UTC = 6 AM EAT)
 PIPELINE_TIMEZONE=UTC           # Timezone for schedule
 ENABLE_SCHEDULER=true           # Enable/disable automatic runs
 ```

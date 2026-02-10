@@ -159,6 +159,7 @@ def fetch_era5_data(
             "surface_pressure",
             "10m_u_component_of_wind",
             "10m_v_component_of_wind",
+            "volumetric_soil_water_layer_1",  # Soil moisture (0-7cm depth)
         ]
 
     try:
@@ -166,7 +167,7 @@ def fetch_era5_data(
         # This prevents warnings about deprecated API endpoints
         api_key = os.getenv("ERA5_API_KEY")
         if api_key:
-            c = cdsapi.Client(url="https://cds.climate.copernicus.eu/api", key=api_key)
+            c = cdsapi.Client(key=api_key)
         else:
             # Fall back to .cdsapirc configuration
             c = cdsapi.Client()
@@ -297,6 +298,7 @@ def fetch_era5_data(
                 "sp": "surface_pressure",
                 "u10": "wind_u_10m",
                 "v10": "wind_v_10m",
+                "swvl1": "soil_moisture",  # Volumetric soil water layer 1
             }
             df = df.rename(columns=column_mapping)
 
@@ -353,7 +355,10 @@ def ingest_era5(
         - records_fetched: Number of records retrieved from source
         - records_stored: Number of records successfully stored to database
     """
-    from backend.app.models.climate_data import ClimateData
+    try:
+        from app.models.climate_data import ClimateData
+    except ImportError:
+        from backend.app.models.climate_data import ClimateData
     from sqlalchemy import and_
 
     # Set default date range
@@ -362,7 +367,11 @@ def ingest_era5(
     if end_date is None:
         end_date = datetime.now()
 
-    log_info(f"Ingesting ERA5 data from {start_date.date()} to {end_date.date()}")
+    # Ensure dates are pandas-compatible timestamps for comparison
+    start_date = pd.to_datetime(start_date)
+    end_date = pd.to_datetime(end_date)
+
+    log_info(f"Ingesting ERA5 data from {start_date} to {end_date}")
 
     try:
         # Fetch data using existing function
@@ -404,6 +413,8 @@ def ingest_era5(
                     if "temp_2m" in row:
                         # Convert Kelvin to Celsius
                         existing.temperature_avg = float(row["temp_2m"]) - 273.15
+                    if "soil_moisture" in row:
+                        existing.soil_moisture = float(row["soil_moisture"])
                     records_stored += 1
                 else:
                     # Create new record
@@ -412,6 +423,7 @@ def ingest_era5(
                         location_lat=tanzania_lat,
                         location_lon=tanzania_lon,
                         temperature_avg=float(row["temp_2m"]) - 273.15 if "temp_2m" in row else None,
+                        soil_moisture=float(row["soil_moisture"]) if "soil_moisture" in row else None,
                     )
                     db.add(climate_record)
                     records_stored += 1

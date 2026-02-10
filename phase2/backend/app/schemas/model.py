@@ -30,6 +30,11 @@ class ModelMetricsBase(BaseModel):
     # Feature selection info
     n_features: Optional[int] = Field(None, serialization_alias="nFeatures")
     feature_to_sample_ratio: Optional[float] = Field(None, serialization_alias="featureToSampleRatio")
+    
+    # Sample counts (from training data)
+    n_train_samples: Optional[int] = Field(None, serialization_alias="trainingSamples")
+    n_val_samples: Optional[int] = Field(None, serialization_alias="valSamples")
+    n_test_samples: Optional[int] = Field(None, serialization_alias="testSamples")
 
 class ModelMetricsCreate(ModelMetricsBase):
     pass

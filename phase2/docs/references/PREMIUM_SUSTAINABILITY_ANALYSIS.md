@@ -1,4 +1,8 @@
 # Premium Rate Analysis - Kilombero Basin Simulation
+> [!IMPORTANT]
+> **SUPERSEDED:** This analysis supported the initial "Lump Sum" model which required a $91 premium. 
+> The project has shifted to a **Phase-Based Model** which allows for a sustainable **$20/year premium**. 
+> See `BACKTESTING_SUMMARY.md` for the current validated model.
 
 ## Historical Facts (Fixed)
 
@@ -144,3 +148,4 @@ For **1000 farmers** (our simulation):
 **Your original $20/year spec is correct for:**
 - 100-farmer pilot, OR
 - 1000 farmers with 80% government subsidy ($20 × 5 = $100 full premium)
+- **UPDATE:** Or using the **Phase-Based Model** (see `BACKTESTING_SUMMARY.md`) which enables $20 premium without subsidy.

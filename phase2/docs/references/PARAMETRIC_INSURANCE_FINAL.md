@@ -10,7 +10,16 @@
 
 Implemented true parametric insurance with market-competitive rates aligned with successful African programs (Pula Zambia, KLIP Kenya, IBLI Ethiopia). The system provides multi-peril coverage (drought, flood, crop failure) at affordable rates while maintaining financial sustainability.
 
-**Key Achievement**: Reduced premium from $66/year to **$10/year** (with 50% subsidy) while delivering 3x more coverage than competitors.
+**Key Achievement**: Reduced sustainable premium from **$91/year** (Lump Sum Model) to **$20/year** (Phase-Based Model) without requiring heavy subsidies. This was achieved by moving from binary "all-or-nothing" payouts to weighted, phase-specific coverage.
+
+## 1. Product Summary
+- **Type**: Hybrid Parametric Insurance (Drought + Flood)
+- **Target**: Smallholder Rice Farmers (0.5 - 2 hectares)
+- **Region**: Kilombero Basin (Morogoro)
+- **Premium**: **$20 / season** (Affordable for smallholders)
+- **Sum Insured**: Up to $90 / season (Input cost coverage)
+
+**Platform**: HewaSense™ - Tanzania Climate Intelligence & Parametric Insurance Platform
 
 ---
 
@@ -111,6 +120,11 @@ PAYOUT_RATES = {"drought": 60, "flood": 75, "crop": 90}
 - **Result**: $10/year premium (competitive)
 - **Status**: ✅ **PILOT-READY**
 
+### Iteration 4: Phase-Based Precision (Jan 23, 2026) ✅
+Aligned triggers with **Rice Growth Phases** (Germination, Vegetative, Flowering, Maturity).
+- **Benefit**: Removes "basis risk" by ensuring payouts match biological reality (e.g., critical flowering deficits).
+- **Implementation**: Fixed rules applied to variable forecasts.
+
 ---
 
 ## Trigger Detection Methodology
@@ -150,6 +164,14 @@ THEN trigger = "flood" → Payout = $75
 IF predicted_NDVI < -1.56σ OR predicted_VCI < 3.33
 THEN trigger = "crop_failure" → Payout = $90
 ```
+
+#### Step 3: Phase-Based Logic (The "Decider")
+**Crucial Distinction**: The insurance payout is determined by a **Phase-Based Logic Layer** that sits on TOP of the ML forecasts.
+
+*   **ML Models** (Step 1): Predict rainfall/NDVI.
+*   **Phase Logic** (Step 3): Checks if the prediction breaches the threshold for the *specific biological phase* (e.g., Flowering).
+
+> **Note**: You do NOT need to retrain ML models to adjust these rules. The logic is parametric (rule-based).
 
 ### Why This Approach?
 
@@ -354,5 +376,5 @@ INSURANCE_TRIGGERS = outputs/business_reports/insurance_triggers_detailed.csv
 ---
 
 **Document Owner**: Climate Prediction & Insurance Team  
-**Last Updated**: January 1, 2026  
+**Last Updated**: January 23, 2026  
 **Next Review**: March 2026 (post-pilot launch)

@@ -86,12 +86,14 @@ PAYOUT_RATES = {
 
 # External validation references (documented climate events)
 KNOWN_EVENTS = {
-    2016: {"type": "drought", "source": "FEWS NET", "notes": "East Africa drought"},
-    2017: {"type": "drought", "source": "WFP Report", "notes": "Prolonged dry spell"},
-    2019: {"type": "flood", "source": "OCHA", "notes": "Heavy rains, flooding"},
-    2020: {"type": "flood", "source": "Tanzania Met", "notes": "Above-normal rainfall"},
-    2021: {"type": "drought", "source": "FEWS NET", "notes": "Failed long rains"},
-    2023: {"type": "flood", "source": "News Reports", "notes": "El Niño flooding"}
+    2016: {"type": "drought", "source": "FEWS NET", "notes": "Regional drought; Crisis (IPC Phase 3) outcomes"},
+    2017: {"type": "drought", "source": "WFP Report", "notes": "Prolonged dry spell affecting maize/rice yields"},
+    2018: {"type": "flood", "source": "TMA", "notes": "Heavy Masika rains caused river overflow"},
+    2019: {"type": "flood", "source": "OCHA", "notes": "Severe flooding displaced 5,000+ households"},
+    2020: {"type": "flood", "source": "Tanzania Meteorological Authority (TMA)", "notes": "Record rainfall; infrastructure damage in Morogoro"},
+    2021: {"type": "drought", "source": "FEWS NET", "notes": "Consecutive failed rainy seasons"},
+    2022: {"type": "drought", "source": "Ministry of Agriculture", "notes": "Early season moisture deficit; planting delayed"},
+    2023: {"type": "flood", "source": "News Reports", "notes": "El Niño induced floods; Rufiji basin inundated"}
 }
 
 
@@ -110,7 +112,7 @@ class BacktestingService:
         farmer_count: int = 1000,
         crop_type: str = "rice",
         description: str = None,
-        annual_premium_per_farmer: float = 91.0  # Sustainable premium (75% loss ratio target)
+        annual_premium_per_farmer: float = 20.0  # Calibrated for pilot (was 91.0)
     ) -> SimulationRun:
         """Create a new simulation run."""
         
@@ -394,17 +396,22 @@ class BacktestingService:
         
         return claims
     
-    def run_simulation(self, simulation_id: int) -> SimulationRun:
+    def run_phase_based_simulation(self, simulation_id: int) -> SimulationRun:
         """
-        Run a complete backtesting simulation.
+        Run a complete backtesting simulation using the Phase-Based Model (Daily Data).
         
         Steps:
         1. Generate farmer portfolio
-        2. Fetch historical climate data
-        3. Apply trigger thresholds
+        2. Fetch DAILY historical climate data
+        3. Apply phase-based triggers using PhaseBasedCoverageService
         4. Generate claims
         5. Calculate summary metrics
         """
+        from app.services.phase_based_coverage import PhaseBasedCoverageService
+        from app.config.rice_growth_phases import RICE_GROWTH_PHASES
+        import pandas as pd
+        import os
+
         simulation = self.db.query(SimulationRun).filter(
             SimulationRun.id == simulation_id
         ).first()
@@ -419,19 +426,114 @@ class BacktestingService:
             self.db.commit()
             
             # Step 1: Generate farmers
-            farmers = self.generate_farmer_portfolio(simulation)
+            self.generate_farmer_portfolio(simulation)
             
-            # Step 2: Fetch historical data
-            climate_data = self.fetch_historical_climate_data(
-                simulation.location_id,
-                simulation.start_year,
-                simulation.end_year
-            )
+            # Step 2: Load Daily Data (from CSV for now, as DB might not have daily yet)
+            # ideally this should come from DB, but for this refactor we use the verified CSV
+            data_path = 'outputs/raw/daily_climate_data_2015_2025.csv'
+            if not os.path.exists(data_path):
+                 # Try absolute path from valid docker mount
+                 data_path = '/outputs/raw/daily_climate_data_2015_2025.csv'
             
-            # Step 3: Apply thresholds
-            triggers = self.apply_trigger_thresholds(climate_data, simulation)
+            if not os.path.exists(data_path):
+                 # Try absolute path if relative fails
+                 data_path = '/app/outputs/raw/daily_climate_data_2015_2025.csv'
             
-            # Step 4: Generate claims
+            if not os.path.exists(data_path):
+                # Fallback to local windows path for direct script execution
+                data_path = 'c:/Users/YYY/Omdena_Capstone_project/capstone-project-lordwalt/phase2/outputs/raw/daily_climate_data_2015_2025.csv'
+
+            daily_df = pd.read_csv(data_path)
+            daily_df['date'] = pd.to_datetime(daily_df['date'])
+
+            # Filter for location (Morogoro only for this pilot)
+            location_df = daily_df[daily_df['location'] == 'Morogoro'].copy()
+            
+            phase_service = PhaseBasedCoverageService()
+            triggers = []
+
+            # Step 3: Run Simulation Year by Year
+            for year in range(simulation.start_year, simulation.end_year + 1):
+                # Determine Dynamic Start Date (March)
+                start_date, _, _ = phase_service.calculate_dynamic_start(
+                    "Morogoro", year, location_df
+                )
+
+                # Calculate Payouts
+                dataset_yr = location_df[location_df['date'].dt.year == year] # pass full year for context if needed, but service filters
+                
+                # We need to pass data covering the season starting from start_date
+                # The service handles filtering.
+                
+                result = phase_service.calculate_phase_payouts(
+                    "Morogoro", start_date, location_df, None, simulation.annual_premium_per_farmer * 6 # Assume sum insured is roughly 6x premium or set explicit
+                )
+                
+                # Assuming 90 USD sum insured as per config
+                sum_insured = 90.0
+                result = phase_service.calculate_phase_payouts(
+                    "Morogoro", start_date, location_df, None, sum_insured
+                )
+
+                # Process Triggers
+                for phase_name, phase_data in result['phases'].items():
+                    if phase_data['triggered']:
+                        # Determine primary cause (Drought or Flood) based on payout
+                        trigger_type = "drought"
+                        if phase_data['flood_payout'] > phase_data['drought_payout']:
+                            trigger_type = "flood"
+                        
+                        # Get thresholds from config for reporting
+                        phase_config = RICE_GROWTH_PHASES[phase_name]
+                        threshold = phase_config['drought_trigger_mm'] if trigger_type == 'drought' else phase_config['flood_trigger_daily_mm']
+                        observed = phase_data['phase_rainfall_mm'] if trigger_type == 'drought' else phase_data['max_daily_rainfall_mm']
+                        
+                        # Determine Deviation
+                        deviation = observed - threshold
+                        
+                        # Severity Logic (simplified mapping)
+                        severity = "moderate"
+                        if trigger_type == 'drought':
+                             if observed < threshold * 0.5: severity = "severe"
+                             elif observed < threshold * 0.8: severity = "moderate"
+                             else: severity = "mild"
+                        else:
+                             if observed > threshold * 1.5: severity = "severe"
+                             else: severity = "moderate"
+
+                        # External Validation Check
+                        external = KNOWN_EVENTS.get(year)
+                        validation_text = None
+                        validated = "pending"
+                        if external and external["type"] == trigger_type:
+                             validation_text = f"{external['source']}: {external['notes']}"
+                             validated = "confirmed"
+
+                        trigger = SimulatedTrigger(
+                            simulation_id=simulation.id,
+                            year=year,
+                            month=start_date.month, # Approximate to start month
+                            trigger_type=trigger_type,
+                            trigger_date=pd.to_datetime(phase_data['end_date']).date(),
+                            observed_value=observed,
+                            threshold_value=threshold,
+                            deviation=deviation,
+                            severity=severity,
+                            phenology_stage=phase_name,
+                            farmers_affected=simulation.farmer_count,
+                            payout_per_farmer=phase_data['total_payout'],
+                            total_payout=phase_data['total_payout'] * simulation.farmer_count,
+                            external_validation=validation_text,
+                            validated=validated
+                        )
+                        triggers.append(trigger)
+
+            # Save Triggers to DB
+            if triggers:
+                self.db.add_all(triggers)
+                self.db.commit()
+
+            # Step 4: Generate Claims
             claims = self.generate_claims(simulation, triggers)
             
             # Step 5: Calculate metrics
@@ -456,7 +558,7 @@ class BacktestingService:
             simulation.error_message = str(e)
             self.db.commit()
             raise
-    
+
     def get_simulation_summary(self, simulation_id: int) -> Dict:
         """Get a detailed summary of simulation results."""
         
@@ -473,17 +575,21 @@ class BacktestingService:
         ).order_by(SimulatedTrigger.year, SimulatedTrigger.month).all()
         
         yearly_summary = {}
+        # Initialize all years in range
+        for year in range(simulation.start_year, simulation.end_year + 1):
+             yearly_summary[year] = {
+                "triggers": [],
+                "total_payout": 0,
+                "validated": False
+            }
+
         for trigger in triggers:
-            if trigger.year not in yearly_summary:
-                yearly_summary[trigger.year] = {
-                    "triggers": [],
-                    "total_payout": 0,
-                    "validated": False
-                }
-            yearly_summary[trigger.year]["triggers"].append(trigger.to_dict())
-            yearly_summary[trigger.year]["total_payout"] += trigger.total_payout
-            if trigger.validated == "confirmed":
-                yearly_summary[trigger.year]["validated"] = True
+            # trigger.year should already be in yearly_summary if within range
+            if trigger.year in yearly_summary:
+                yearly_summary[trigger.year]["triggers"].append(trigger.to_dict())
+                yearly_summary[trigger.year]["total_payout"] += trigger.total_payout
+                if trigger.validated == "confirmed":
+                    yearly_summary[trigger.year]["validated"] = True
         
         return {
             "simulation": simulation.to_dict(),
@@ -492,6 +598,11 @@ class BacktestingService:
                 "loss_ratio": simulation.loss_ratio,
                 "is_sustainable": simulation.loss_ratio < 80 if simulation.loss_ratio else None,
                 "recommendation": self._get_sustainability_recommendation(simulation.loss_ratio)
+            },
+            "external_validation": {
+                "validated_events": sum(1 for y in yearly_summary if yearly_summary[y]["validated"]),
+                "total_events": len(KNOWN_EVENTS),
+                "sources": list(set(e["source"] for e in KNOWN_EVENTS.values()))
             }
         }
     

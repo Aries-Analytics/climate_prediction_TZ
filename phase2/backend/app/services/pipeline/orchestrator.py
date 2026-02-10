@@ -356,20 +356,16 @@ class PipelineOrchestrator:
         
         # Determine date range based on incremental flag
         if incremental:
-            # Get last ingestion date for this source
-            date_range = self.incremental_manager.get_date_range(source)
-            if date_range:
-                start_date, end_date = date_range
-            else:
-                # No previous ingestion, fetch last 30 days
-                end_date = datetime.now()
-                start_date = end_date - timedelta(days=30)
+            # Get last ingestion date for this source using correct method
+            date_range = self.incremental_manager.calculate_fetch_range(source)
+            start_date = date_range.start_date
+            end_date = date_range.end_date
         else:
             # Full refresh - fetch all available data
             start_date = datetime(2010, 1, 1)
             end_date = datetime.now()
         
-        logger.info(f"Date range for {source}: {start_date.date()} to {end_date.date()}")
+        logger.info(f"Date range for {source}: {start_date} to {end_date}")
         
         # Call appropriate ingestion module
         try:

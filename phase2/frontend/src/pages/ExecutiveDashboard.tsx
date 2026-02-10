@@ -205,6 +205,12 @@ export default function ExecutiveDashboard() {
               color="info"
               sx={{ fontWeight: 'bold', borderRadius: 1 }}
             />
+            <Chip
+              label="PARAMETRIC MODEL ACTIVE"
+              size="small"
+              color="success"
+              sx={{ fontWeight: 'bold', borderRadius: 1 }}
+            />
           </Box>
           <Typography variant="body1" color="text.secondary">
             Crop Insurance Portfolio Performance & Strategic Risks

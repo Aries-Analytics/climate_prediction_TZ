@@ -1,7 +1,7 @@
 # Data Pipeline Reference
 
-**Last Updated**: January 5, 2026  
-**Version**: 2.0  
+**Last Updated**: February 5, 2026  
+**Version**: 2.1  
 **Status**: ✅ Production Ready
 
 ---
@@ -127,6 +127,7 @@ Tracks pipeline performance:
 - Precipitation
 - Humidity
 - Wind speed
+- **Soil moisture (GWETPROF)** - Profile soil moisture (0-1 fraction) ⭐ *Added Feb 2026*
 
 ### 2. ERA5
 **Type**: Atmospheric Reanalysis  
@@ -143,6 +144,7 @@ Tracks pipeline performance:
 - Humidity
 - Precipitation
 - Cloud cover
+- **Soil moisture (SWVL1)** - Volumetric soil water layer 1 (0-7cm depth) ⭐ *Added Feb 2026*
 
 ### 3. CHIRPS
 **Type**: Satellite Precipitation  
@@ -178,7 +180,7 @@ Tracks pipeline performance:
 **API**: NOAA Climate Prediction Center  
 **Authentication**: None required  
 **Update Frequency**: Monthly  
-**Coverage**: Global ocean-atmosphere patterns
+**Coverage**: Global ocean-atmosphere patterns (2000-Present)
 
 **Key Variables**:
 - Oceanic Niño Index (ONI)
@@ -269,8 +271,12 @@ def process(data):
 - Multiple output formats (CSV, Parquet)
 
 **Outputs**:
-- `outputs/processed/master_dataset.csv`
-- `outputs/processed/master_dataset.parquet`
+- `outputs/processed/master_dataset_6loc_2000_2025.csv` ⭐ **AUTHORITATIVE DATASET**
+  - 1,872 records (6 locations × 312 months)
+  - 6 locations: Arusha, Dar es Salaam, Dodoma, Mbeya, Morogoro, Mwanza
+  - Years: 2000-2025 (26 years)
+  - 379 features
+- `outputs/processed/master_dataset.csv` (legacy, may be subset)
 - Merge metadata and quality reports
 
 ---
@@ -642,6 +648,20 @@ Comprehensive fixes to improve pipeline reliability and data quality:
 - Zero duplicate records in merged data
 - Consistent temporal columns across all data sources
 - Robust handling of edge cases
+
+### February 2026 - Historical Data Recovery
+**Status**: ✅ Complete
+**Details**: [FEBRUARY_2026_FIX_SUMMARY.md](../current/FEBRUARY_2026_FIX_SUMMARY.md)
+
+**Improvements**:
+1. **Ocean Indices Recovery**:
+   - Identified missing historical ENSO/IOD data (2000-2020)
+   - Executed targeted ingestion to recover 26 years of data (312 months)
+   - Verified integration with master dataset
+
+2. **Orchestrator Path Logic**:
+   - Fixed bug where `ocean_indices` was incorrectly looking for `_combined.csv` format
+   - Implemented special handling for global raw data sources
 - Production-ready data pipeline
 
 **Files Modified**:
@@ -653,7 +673,157 @@ Comprehensive fixes to improve pipeline reliability and data quality:
 
 ---
 
+## Troubleshooting
+
+### Common Issues
+
+#### Ocean Indices Processing Fails
+
+**Symptom:**
+```
+FileNotFoundError: Raw data not found: data/raw/ocean_indices_combined.csv
+```
+
+**Root Cause:**
+Ocean indices uses a different file path (`ocean_indices_raw.csv`) than other sources (`*_combined.csv`). The orchestrator must handle this special case before checking the generic path.
+
+**Solution:**
+Ensure ocean indices is processed with special case handling in `modules/processing/orchestrator.py`:
+
+```python
+# CORRECT: Check ocean_indices FIRST
+if source_name == "ocean_indices":
+    raw_data_path = Path("data/raw/ocean_indices_raw.csv")
+    # ... process
+else:
+    raw_data_path = Path(f"data/raw/{source_name}_combined.csv")
+    # ... process
+```
+
+**Verification:**
+```bash
+# Check if ocean indices file exists
+ls data/raw/ocean_indices_raw.csv
+
+# Re-download if missing
+python -c "from modules.ingestion.ocean_indices_ingestion import fetch_ocean_indices_data; \
+fetch_ocean_indices_data(start_year=2000, end_year=2025, dry_run=False)"
+```
+
+#### Dashboard Showing Normalized Values
+
+**Symptom:**
+- Temperature showing values like `0.776` instead of `25°C`
+- Rainfall showing values like `-0.747` instead of `125mm`
+- All values appear to be z-scores (mean≈0, std≈1)
+
+**Root Cause:**
+Dashboard is loading from normalized/engineered features instead of raw processed data.
+
+**Solution:**
+1. **Verify data source configuration:**
+   ```python
+   # In utils/config.py
+   MASTER_DATASET = "data/processed/master_dataset.csv"  # NOT outputs/processed/*
+   ```
+
+2. **Check master dataset has raw values:**
+   ```bash
+   # Temperature should be 15-30°C, not -2 to +2
+   python -c "import pandas as pd; df = pd.read_csv('data/processed/master_dataset.csv'); \
+   print(f'Temp range: {df.temp_mean_c.min()}-{df.temp_mean_c.max()}')"
+   ```
+
+3. **Regenerate if needed:**
+   ```bash
+   python modules/processing/orchestrator.py
+   python scripts/load_dashboard_data.py --clear
+   ```
+
+#### Missing Historical Ocean Indices Data
+
+**Symptom:**
+- ENSO (ONI) and IOD time series only showing recent years (e.g., 2020-2025)
+- Missing 15-20 years of historical data
+
+**Root Cause:**
+Ocean indices file was ingested with limited date range.
+
+**Solution:**
+```bash
+# Re-download complete time series (2000-2025)
+python -c "from modules.ingestion.ocean_indices_ingestion import fetch_ocean_indices_data; \
+df = fetch_ocean_indices_data(start_year=2000, end_year=2025, dry_run=False); \
+print(f'Downloaded {len(df)} records from {df.year.min()}-{df.year.max()}')"
+
+# Reprocess and reload
+python modules/processing/orchestrator.py
+python scripts/load_dashboard_data.py --clear
+```
+
+#### Processed Files Empty or Missing
+
+**Symptom:**
+- `outputs/processed/*.csv` files don't exist
+- Files have only 3-7 test rows
+
+**Root Cause:**
+Processing pipeline was never run on production data.
+
+**Solution:**
+1. **Verify raw combined files exist:**
+   ```bash
+   ls data/raw/*_combined.csv
+   ```
+
+2. **Run processing pipeline:**
+   ```bash
+   python modules/processing/orchestrator.py
+   ```
+
+3. **Verify output:**
+   ```bash
+   # Should show ~1,800-1,900 rows each
+   wc -l outputs/processed/*.csv
+   ```
+
+### Data Validation Checklist
+
+Before loading data into dashboard:
+
+```python
+import pandas as pd
+
+df = pd.read_csv("data/processed/master_dataset.csv")
+
+# 1. Check row count (should be ~1,800-1,900 for 6 locations × 25 years)
+assert len(df) > 1000, f"Too few rows: {len(df)}"
+
+# 2. Check for RAW values (not normalized)
+assert df['temp_mean_c'].between(10, 40).all(), "Temperature appears normalized"
+assert df['rainfall_mm'].between(0, 500).all(), "Rainfall appears normalized"
+assert df['ndvi'].between(0, 1).all(), "NDVI out of range"
+
+# 3. Check ocean indices coverage
+ocean_data = df[df['oni'].notna()]
+assert ocean_data['year'].min() <= 2000, f"Ocean indices missing early data: starts {ocean_data['year'].min()}"
+assert ocean_data['year'].max() >= 2025, f"Ocean indices missing recent data: ends {ocean_data['year'].max()}"
+
+print("✅ All validation checks passed")
+```
+
+### Prevention Best Practices
+
+1. **Always validate data ranges** before dashboard loading
+2. **Document special-case file paths** (ocean indices, etc.)
+3. **Run processing pipeline** after any raw data updates
+4. **Test with data validation script** before production deployment
+5. **Monitor dashboard** for z-score-like values (±3 range)
+
+---
+
 ## Related Documentation
+
 
 - **[GETTING_STARTED.md](./GETTING_STARTED.md)** - Quick start guide
 - **[ML_MODEL_REFERENCE.md](./ML_MODEL_REFERENCE.md)** - ML model details
@@ -663,7 +833,7 @@ Comprehensive fixes to improve pipeline reliability and data quality:
 
 ---
 
-**Document Version**: 2.0  
-**Last Updated**: January 4, 2026  
+**Document Version**: 2.1  
+**Last Updated**: February 5, 2026  
 **Status**: ✅ Production Ready  
 **Consolidates**: pipeline_overview.md, AUTOMATED_PIPELINE_GUIDE.md, PIPELINE_EXECUTION_SUMMARY.md, PIPELINE_REPLACEMENT_COMPLETE.md, PIPELINE_REPLACEMENT_SUMMARY.md, PIPELINE_RUN_SUMMARY_2010_2025.md

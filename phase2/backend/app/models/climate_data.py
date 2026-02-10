@@ -22,6 +22,7 @@ class ClimateData(Base):
     temperature_avg = Column(Numeric(5, 2), nullable=True)
     rainfall_mm = Column(Numeric(7, 2), nullable=True)
     ndvi = Column(Numeric(4, 3), nullable=True)
+    soil_moisture = Column(Numeric(5, 3), nullable=True)  # Volumetric soil moisture (0-1 fraction)
     enso_index = Column(Numeric(5, 3), nullable=True)
     iod_index = Column(Numeric(5, 3), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())

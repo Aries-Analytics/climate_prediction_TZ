@@ -299,7 +299,10 @@ def ingest_ocean_indices(
         - records_fetched: Number of records retrieved from source
         - records_stored: Number of records successfully stored to database
     """
-    from backend.app.models.climate_data import ClimateData
+    try:
+        from app.models.climate_data import ClimateData
+    except ImportError:
+        from backend.app.models.climate_data import ClimateData
     from sqlalchemy import and_
 
     # Set default date range
@@ -308,7 +311,11 @@ def ingest_ocean_indices(
     if end_date is None:
         end_date = datetime.now()
 
-    log_info(f"Ingesting ocean indices data from {start_date.date()} to {end_date.date()}")
+    # Ensure dates are pandas-compatible timestamps for comparison
+    start_date = pd.to_datetime(start_date)
+    end_date = pd.to_datetime(end_date)
+
+    log_info(f"Ingesting ocean indices data from {start_date} to {end_date}")
 
     try:
         # Fetch data using existing function

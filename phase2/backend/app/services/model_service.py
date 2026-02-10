@@ -85,11 +85,14 @@ def get_all_models(db: Session) -> List[ModelMetricsResponse]:
                 "cv_n_splits": cv.get("n_splits"),
             })
         
-        # Add feature selection data
+        # Add feature selection data and sample counts
         if feature_data:
             metric_dict.update({
                 "n_features": feature_data.get("selected_features"),
                 "feature_to_sample_ratio": feature_data.get("feature_to_sample_ratio"),
+                "n_train_samples": feature_data.get("n_train_samples"),
+                "n_val_samples": feature_data.get("n_val_samples"),
+                "n_test_samples": feature_data.get("n_test_samples"),
             })
         
         enhanced_metrics.append(ModelMetricsResponse(**metric_dict))
@@ -132,8 +135,17 @@ def _load_latest_training_results():
                 "original_features": fs.get("original_features"),
             }
             
+            # Add sample counts from data_shapes
+            if "data_shapes" in results:
+                shapes = results["data_shapes"]
+                if "train" in shapes:
+                    feature_data["n_train_samples"] = shapes["train"][0]
+                if "val" in shapes:
+                    feature_data["n_val_samples"] = shapes["val"][0]
+                if "test" in shapes:
+                    feature_data["n_test_samples"] = shapes["test"][0]
+            
             # Calculate feature-to-sample ratio
-            # Assuming 133 training samples (from data_shapes)
             if "data_shapes" in results and "train" in results["data_shapes"]:
                 n_train_samples = results["data_shapes"]["train"][0]
                 n_features = fs.get("selected_features", 1)

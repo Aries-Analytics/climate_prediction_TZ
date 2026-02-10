@@ -141,6 +141,7 @@ export interface PortfolioMetrics {
   lossRatio: number;
   totalExposure: number;
   numberOfPolicies: number;
+  totalFarmers?: number; // Mapped from total_farmers
   reserves?: number; // Added for dashboard
 }
 

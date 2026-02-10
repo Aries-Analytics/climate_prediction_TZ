@@ -12,7 +12,8 @@ import {
   Select,
   MenuItem,
   Tooltip,
-  Paper
+  Paper,
+  Stack
 } from '@mui/material'
 import axios from 'axios'
 import { API_BASE_URL } from '../config/api'
@@ -39,7 +40,14 @@ interface TriggerAlert {
   history?: number[]
 }
 
-// ... existing code ...
+// Phase Importance Mapping (Aligned with Parametric Logic)
+const getPhaseImportance = (stage: string) => {
+  const s = stage?.toLowerCase() || '';
+  if (s.includes('flowering')) return { label: 'CRITICAL PHASE', color: 'error' as const };
+  if (s.includes('vegetative')) return { label: 'HIGH PRIORITY', color: 'warning' as const };
+  if (s.includes('germination')) return { label: 'MODERATE', color: 'info' as const };
+  return { label: 'LOW PRIORITY', color: 'default' as const };
+}
 
 const formatCurrency = (value: number) => {
   return '$' + Math.round(value).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
@@ -107,36 +115,69 @@ export default function TriggersDashboard() {
     },
     {
       id: 'alert_date',
-      label: 'Date',
+      label: 'Forecast Date',
       format: (val: string) => new Date(val).toLocaleDateString()
     },
     {
       id: 'phenology_stage',
-      label: 'Stage',
-      format: (val: string) => <Chip label={val?.toUpperCase()} size="small" variant="outlined" />
+      label: 'Growth Phase',
+      format: (val: string) => {
+        const importance = getPhaseImportance(val);
+        return (
+          <Stack direction="column" spacing={0.5}>
+            <Typography variant="body2" fontWeight="bold">{val?.toUpperCase()}</Typography>
+            <Chip
+              label={importance.label}
+              color={importance.color}
+              size="small"
+              sx={{ height: 20, fontSize: '0.65rem', width: 'fit-content' }}
+            />
+          </Stack>
+        )
+      }
     },
     {
       id: 'alert_type',
-      label: 'Alert Type',
-      format: (value: string) => (
+      label: 'Trigger Type',
+      format: (value: string, row: TriggerAlert) => (
         <Chip
-          label={value?.replace('_', ' ').toUpperCase()}
+          label={`${row.phenology_stage?.toUpperCase()} ${value?.replace('_', ' ').toUpperCase()}`}
           color={value?.includes('CRITICAL') ? 'error' : 'warning'}
           size="small"
+          variant="outlined"
         />
       )
     },
     {
       id: 'forecast_value',
-      label: 'Forecast (mm)',
+      label: 'Status (mm)',
       numeric: true,
       format: (val: number, row: any) => (
-        <Tooltip title={`Threshold: ${row.threshold_value}mm`}>
-          <span>{val}mm <Typography variant="caption" color="text.secondary">vs {row.threshold_value}</Typography></span>
+        <Tooltip title={`Phase Threshold: ${row.threshold_value}mm`}>
+          <Box>
+            <Typography variant="body2" fontWeight="bold">
+              {val}mm
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Target: {row.threshold_value}mm
+            </Typography>
+          </Box>
         </Tooltip>
       )
     },
-    { id: 'deviation', label: 'Deviation', numeric: true, format: (val: number) => <span style={{ color: val > 0 ? 'green' : 'red' }}>{val > 0 ? '+' : ''}{val.toFixed(1)}</span> },
+    {
+      id: 'deviation',
+      label: 'Deficit/Gap',
+      numeric: true,
+      format: (val: number) => (
+        <Typography
+          fontWeight="bold"
+          color={val < 0 ? 'error.main' : 'success.main'}
+        >
+          {val > 0 ? '+' : ''}{val.toFixed(1)}mm
+        </Typography>
+      )
+    },
     {
       id: 'trend',
       label: 'Trend (3 Mo)',
@@ -166,13 +207,13 @@ export default function TriggersDashboard() {
     },
     {
       id: 'recommended_action',
-      label: 'Recommended Action',
-      minWidth: 250,
+      label: 'Protocol Action',
+      minWidth: 200,
       format: (val: string) => <Typography variant="body2" sx={{ fontStyle: 'italic' }}>{val}</Typography>
     }
   ]
 
-  if (isLoading) return <LoadingSpinner message="Loading active triggers..." />
+  if (isLoading) return <LoadingSpinner message="Loading parametric triggers..." />
 
   if (error) {
     return (
@@ -195,10 +236,10 @@ export default function TriggersDashboard() {
     <Box>
       <Box sx={{ mb: 3 }}>
         <Typography variant="h4" gutterBottom>
-          Trigger Events & Alerts
+          Parametric Trigger Events
         </Typography>
         <Typography variant="body1" color="text.secondary">
-          Real-time monitoring of active parametric insurance triggers based on climate index forecasts.
+          Monitoring active insurance triggers based on <strong>Phase-Specific Logic</strong>. Payouts are triggered when environmental conditions breach phase thresholds.
         </Typography>
       </Box>
 
@@ -212,13 +253,13 @@ export default function TriggersDashboard() {
           <Card sx={{ height: '100%' }}>
             <CardContent>
               <Typography variant="h6" color="text.secondary" gutterBottom>
-                Locations Affected
+                Impacted Zones
               </Typography>
               <Typography variant="h3" fontWeight="bold" color="warning.main">
                 {new Set(filteredAlerts.map(a => a.location_id)).size}
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                Unique locations
+                Locations with active phase triggers
               </Typography>
             </CardContent>
           </Card>
@@ -228,15 +269,15 @@ export default function TriggersDashboard() {
           <Card sx={{ height: '100%' }}>
             <CardContent>
               <Typography variant="h6" color="text.secondary" gutterBottom>
-                Avg Deviation
+                Avg Deficit
               </Typography>
-              <Typography variant="h3" fontWeight="bold" color="primary">
+              <Typography variant="h3" fontWeight="bold" color="error.main">
                 {filteredAlerts.length > 0
-                  ? (filteredAlerts.reduce((sum, a) => sum + Math.abs(a.deviation || 0), 0) / filteredAlerts.length).toFixed(1)
+                  ? (filteredAlerts.reduce((sum, a) => sum + (a.deviation < 0 ? Math.abs(a.deviation || 0) : 0), 0) / (filteredAlerts.filter(a => a.deviation < 0).length || 1)).toFixed(1)
                   : '0'}mm
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                From thresholds
+                Average rainfall gap in triggered zones
               </Typography>
             </CardContent>
           </Card>
@@ -247,12 +288,15 @@ export default function TriggersDashboard() {
           <Paper sx={{ p: 2, minHeight: 600 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
               <Typography variant="h6">
-                Geospatial Trigger Analysis
+                Phase-Based Geospatial Analysis
               </Typography>
-              <Chip label="Live Data" color="success" size="small" variant="outlined" />
+              <Stack direction="row" spacing={1}>
+                <Chip label="Phase Logic Active" color="primary" size="small" />
+                <Chip label="Live Data" color="success" size="small" variant="outlined" />
+              </Stack>
             </Box>
             <Alert severity="info" sx={{ mb: 2, py: 0 }}>
-              Data visualized represents active trigger events. <strong>Red</strong> regions indicate critical deficits requiring immediate attention.
+              <strong>Visualization Guide:</strong> Red regions indicate locations where rainfall is below the specific threshold for the current growth phase (e.g., Flowering &lt; 120mm).
             </Alert>
             <GeographicMap
               mode="trigger"
@@ -266,17 +310,17 @@ export default function TriggersDashboard() {
           <Card>
             <CardContent>
               <Typography variant="h6" fontWeight="bold" gutterBottom>
-                Critical Threshold Analysis (Top Risks)
+                Critical Phase Analysis (Top Risks)
               </Typography>
               <Alert severity="info" variant="outlined" sx={{ mb: 2 }}>
                 <Typography variant="body2">
-                  <strong>Threshold Analysis:</strong> Radial gauges display the severity of deviation from safety thresholds.
-                  Red zones indicate confirmed payout conditions.
+                  <strong>Parametric Evaluation:</strong> These gauges show the deviation from the <strong>Phase Threshold</strong> (not annual average).
+                  Red zones indicate a confirmed payout condition for that specific biological stage.
                 </Typography>
               </Alert>
 
               {filteredAlerts.filter(a => a.deviation < 0).length === 0 ? (
-                <Alert severity="success" variant="outlined">No critical deficits detected. All locations are above safety thresholds.</Alert>
+                <Alert severity="success" variant="outlined">No critical deficits detected. All locations are safely within phase thresholds.</Alert>
               ) : (
                 <Grid container spacing={2} justifyContent="center" alignItems="center">
                   {filteredAlerts
@@ -287,18 +331,20 @@ export default function TriggersDashboard() {
                       <Grid item key={alert.id} xs={12} sm={6} md={3} sx={{ display: 'flex', justifyContent: 'center' }}>
                         <Box sx={{ textAlign: 'center' }}>
                           <GaugeChart
-                            title={alert.location_name || `Location ${alert.location_id}`}
+                            title={`${alert.location_name} (${alert.phenology_stage})`}
                             value={alert.forecast_value}
                             threshold={alert.threshold_value}
                             min={0}
                             max={alert.threshold_value * 1.5} // Scale max to 150% of threshold
                           />
-                          <Typography variant="body2" color="error" fontWeight="bold">
+                          <Typography variant="subtitle2" color="error" fontWeight="bold">
                             {Math.abs(alert.deviation).toFixed(1)}mm Deficit
                           </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            Stage: {alert.phenology_stage}
-                          </Typography>
+                          <Chip
+                            size="small"
+                            label={`Target: >${alert.threshold_value}mm`}
+                            sx={{ mt: 0.5, bgcolor: 'background.paper', border: '1px solid #ddd' }}
+                          />
                         </Box>
                       </Grid>
                     ))}
@@ -331,7 +377,8 @@ export default function TriggersDashboard() {
 
               <Alert severity="warning" variant="outlined" sx={{ mb: 3 }}>
                 <Typography variant="body2">
-                  <strong>Payout Protocol:</strong> Verify trend data (3-month trajectory) before authorizing payouts. Critical alerts (Red) imply conditions have breached the payout threshold.
+                  <strong>Payout Protocol:</strong> Triggers listed below have breached the specific threshold for their current biological phase.
+                  "Recommended Action" derives from the severity of the phase-specific deficit.
                 </Typography>
               </Alert>
 

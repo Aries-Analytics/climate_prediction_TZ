@@ -53,7 +53,7 @@ OCEAN_INDICES_SOURCE = os.getenv("OCEAN_INDICES_SOURCE", "https://psl.noaa.gov/d
 # Canonical File Paths (Single Source of Truth)
 # ---------------------------------------------------------------------
 # Input Data
-MASTER_DATASET = DATA_DIR / "processed" / "master_dataset.csv"
+MASTER_DATASET = DATA_DIR / "processed" / "master_dataset.csv"  # RAW climate data (actual mm/°C), not ML features
 
 # Model Outputs
 MODELS_DIR = OUTPUT_DIR / "models"

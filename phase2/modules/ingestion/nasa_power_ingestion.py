@@ -132,6 +132,7 @@ def fetch_nasa_power_data(
             "PRECTOTCORR",  # Precipitation Corrected
             "RH2M",  # Relative Humidity at 2 Meters
             "ALLSKY_SFC_SW_DWN",  # All Sky Surface Shortwave Downward Irradiance
+            "GWETPROF",  # Profile Soil Moisture (0-1 fraction)
         ]
 
     # Build API request
@@ -289,7 +290,10 @@ def ingest_nasa_power(
         - records_fetched: Number of records retrieved from source
         - records_stored: Number of records successfully stored to database
     """
-    from backend.app.models.climate_data import ClimateData
+    try:
+        from app.models.climate_data import ClimateData
+    except ImportError:
+        from backend.app.models.climate_data import ClimateData
     from sqlalchemy import and_
 
     # Set default date range
@@ -298,7 +302,11 @@ def ingest_nasa_power(
     if end_date is None:
         end_date = datetime.now()
 
-    log_info(f"Ingesting NASA POWER data from {start_date.date()} to {end_date.date()}")
+    # Ensure dates are pandas-compatible timestamps for comparison
+    start_date = pd.to_datetime(start_date)
+    end_date = pd.to_datetime(end_date)
+
+    log_info(f"Ingesting NASA POWER data from {start_date} to {end_date}")
 
     try:
         # Fetch data using existing function
@@ -336,6 +344,8 @@ def ingest_nasa_power(
                     # Update existing record with NASA POWER data
                     if "t2m" in row:
                         existing.temperature_avg = float(row["t2m"])
+                    if "gwetprof" in row:
+                        existing.soil_moisture = float(row["gwetprof"])
                     records_stored += 1
                 else:
                     # Create new record
@@ -344,6 +354,7 @@ def ingest_nasa_power(
                         location_lat=float(row.get("latitude", TANZANIA_LAT)),
                         location_lon=float(row.get("longitude", TANZANIA_LON)),
                         temperature_avg=float(row["t2m"]) if "t2m" in row else None,
+                        soil_moisture=float(row["gwetprof"]) if "gwetprof" in row else None,
                     )
                     db.add(climate_record)
                     records_stored += 1

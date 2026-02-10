@@ -56,8 +56,9 @@ locations:
 # Data collection period
 time_period:
   start_year: 2000
-  end_year: 2025
-  total_months: 312  # 26 years * 12 months
+  end_year: null  # null = use current year dynamically
+  update_mode: "incremental"  # "incremental" = only fetch missing data, "full" = re-fetch all
+  total_months: null  # Calculated dynamically based on date range
 
 # Expected sample counts
 sample_counts:

@@ -71,7 +71,7 @@ earthengine authenticate --force
 3. Authentication completed
 4. Project registered with Earth Engine
 
-**Fallback**: Pipeline automatically uses cached or synthetic data
+**Fallback**: None. The pipeline strictly enforces data integrity and will raise an error if real data cannot be fetched.
 
 ---
 
@@ -83,8 +83,8 @@ All fetched data includes a `data_source` column:
 |-------|---------|
 | `CHIRPS_GEE` | Real rainfall data from Earth Engine |
 | `MODIS_MOD13A2_GEE` | Real NDVI data from Earth Engine |
-| `climatology_based` | Synthetic data (fallback) |
-| `dummy_fallback` | Emergency minimal data |
+
+> **Note**: Synthetic data generation has been removed. Pipeline will fail if data sources are unavailable.
 
 ---
 

@@ -23,8 +23,6 @@ import {
   Tooltip
 } from '@mui/material'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
-import InfoIcon from '@mui/icons-material/Info'
-import RestartAltIcon from '@mui/icons-material/RestartAlt'
 import axios from 'axios'
 import { API_BASE_URL } from '../config/api'
 import LoadingSpinner from '../components/common/LoadingSpinner'
@@ -40,9 +38,6 @@ const VARIABLES = [
 ]
 
 export default function ClimateInsightsDashboard() {
-  const [climateForecasts, setClimateForecasts] = useState<any[]>([])
-  const [showForecast, setShowForecast] = useState(false)
-
   // Data States
   const [timeSeries, setTimeSeries] = useState<ClimateTimeSeries[]>([])
   const [allTimeSeries, setAllTimeSeries] = useState<ClimateTimeSeries[]>([])
@@ -55,24 +50,6 @@ export default function ClimateInsightsDashboard() {
   const [selectedVariables, setSelectedVariables] = useState<string[]>(['temperature', 'rainfall', 'ndvi'])
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
-
-  // Forecast Effect
-  useEffect(() => {
-    let isMounted = true;
-    const fetchForecastData = async () => {
-      try {
-        const response = await axios.get(`${API_BASE_URL}/climate-forecasts/?location_id=6`); // Morogoro pilot
-        if (isMounted) setClimateForecasts(response.data);
-      } catch (err) {
-        console.error("Failed to fetch forecasts", err);
-      }
-    }
-
-    if (showForecast && climateForecasts.length === 0) {
-      fetchForecastData();
-    }
-    return () => { isMounted = false };
-  }, [showForecast, climateForecasts.length])
 
   // Climate Data Effect
   useEffect(() => {
@@ -233,7 +210,12 @@ export default function ClimateInsightsDashboard() {
           `<b>${varInfo?.label}</b><br>` +
           `Date: %{x}<br>` +
           `Median: %{y:.2f}<br>` +
-          `Range: %{customdata[0]:.2f} - %{customdata[1]:.2f}<extra></extra>`, // Removed long description
+          (
+            ['enso', 'iod'].includes(series.variable)
+              ? `Range: N/A (Global Index)`
+              : `Range: %{customdata[0]:.2f} - %{customdata[1]:.2f}`
+          ) +
+          `<extra></extra>`,
         customdata: series.data.map(d => [d.min, d.max])
       },
       // Lower bound (invisible line, creates bottom of shaded area)
@@ -253,30 +235,9 @@ export default function ClimateInsightsDashboard() {
     return traces;
   })
 
-  // Add Forecast Trace if enabled and rainfall selected
-  const forecastTraces: any[] = [];
-  if (showForecast && selectedVariables.includes('rainfall') && climateForecasts.length > 0) {
-    const dates = climateForecasts.map(f => f.target_date);
-    const values = climateForecasts.map(f => f.rainfall_mm);
+  // Forecast traces removed - forecasts now only in Early Warning Dashboard
+  const finalChartData = [...timeSeriesChartData];
 
-    forecastTraces.push({
-      x: dates,
-      y: values,
-      name: 'Forecast Rainfall (mm)',
-      type: 'scatter',
-      mode: 'lines+markers',
-      line: {
-        color: '#1a237e', // Dark Blue
-        width: 3,
-        dash: 'dot'
-      },
-      marker: { size: 6 },
-      yaxis: 'y'
-    });
-  }
-
-  // Combine data
-  const finalChartData = [...timeSeriesChartData, ...forecastTraces];
 
 
   // Prepare anomaly markers
@@ -317,6 +278,7 @@ export default function ClimateInsightsDashboard() {
     }
   }] : []
 
+
   return (
     <Box>
       <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -325,21 +287,9 @@ export default function ClimateInsightsDashboard() {
             Climate Insights Dashboard
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Analyze historical climate trends and future forecasts
+            Analyze historical climate trends, patterns, and correlations.
           </Typography>
         </div>
-        <Box>
-          <FormControl component="fieldset">
-            <Button
-              variant={showForecast ? "contained" : "outlined"}
-              color="secondary"
-              onClick={() => setShowForecast(!showForecast)}
-              startIcon={showForecast ? <RestartAltIcon /> : <InfoIcon />} // Re-using icons simply
-            >
-              {showForecast ? "Hide Forecast" : "Show Forecast"}
-            </Button>
-          </FormControl>
-        </Box>
       </Box>
 
       <Grid container spacing={3}>
@@ -404,8 +354,7 @@ export default function ClimateInsightsDashboard() {
             <Card>
               <CardContent>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="h6" gutterBottom>Climate Time Series {showForecast ? '& Forecast' : '(2000-2025)'}</Typography>
-                  {showForecast && <Chip label="Forecast Enabled" color="secondary" size="small" />}
+                  <Typography variant="h6" gutterBottom>Climate Time Series (Historical Data)</Typography>
                 </Box>
 
                 <Chart
@@ -438,15 +387,15 @@ export default function ClimateInsightsDashboard() {
                       overlaying: 'y',
                       side: 'right',
                       showgrid: false,
-                      fixedrange: true,
-                      rangemode: 'tozero'
+                      fixedrange: true
+                      // Removed rangemode:'tozero' - ENSO/IOD indices can have negative values
                     },
                     hovermode: 'x unified',
                     showlegend: true,
                     legend: {
                       orientation: 'h',
                       yanchor: 'bottom',
-                      y: 1.02,
+                      y: 1.05,
                       xanchor: 'right',
                       x: 1
                     },
@@ -474,11 +423,11 @@ export default function ClimateInsightsDashboard() {
         )}
 
         {/* EDA Section - Educational Information */}
+
         <Grid item xs={12}>
           <Card sx={{ bgcolor: 'info.50' }}>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                <InfoIcon color="info" />
                 <Typography variant="h6">
                   Understanding Climate Data Sources
                 </Typography>

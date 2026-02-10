@@ -484,48 +484,13 @@ def fetch_ndvi_data(
             except Exception as e:
                 log_warning(f"Failed to load cached data: {e}")
 
-        # TIER 3: Generate synthetic climatological data (realistic patterns)
-        if not use_gee:
-            log_info("GEE disabled by user, generating synthetic climatological data")
-        elif not GEE_AVAILABLE:
-            log_info("Google Earth Engine not available")
-            log_info("To use real satellite data, install: pip install earthengine-api")
-            log_info("Generating synthetic climatological data based on Tanzania climate patterns")
-        else:
-            log_info("Generating synthetic climatological data as fallback")
-
-        df = _fetch_synthetic_ndvi(start_year, end_year, bounds)
-
-        # Validate the dataframe
-        expected_cols = ["year", "month", "ndvi"]
-        validate_dataframe(df, expected_columns=expected_cols, dataset_name="NDVI")
-
-        # Save synthetic data (don't overwrite real cached data)
-        csv_path = get_data_path("raw", "ndvi_synthetic.csv")
-        os.makedirs(os.path.dirname(csv_path), exist_ok=True)
-        df.to_csv(csv_path, index=False)
-        log_info(f"✓ Synthetic NDVI data saved to: {csv_path}")
-
-        return df
-
-    except Exception as e:
-        log_error(f"All NDVI data fetch strategies failed: {e}")
-
-        # TIER 4: Last resort - minimal dummy data for testing
-        log_warning("Returning minimal dummy data as last resort")
-        df = pd.DataFrame(
-            {
-                "year": [start_year],
-                "month": [1],
-                "ndvi": [0.65],
-                "lat_min": [bounds["lat_min"]],
-                "lat_max": [bounds["lat_max"]],
-                "lon_min": [bounds["lon_min"]],
-                "lon_max": [bounds["lon_max"]],
-                "data_source": ["dummy_fallback"],
-            }
-        )
-        return df
+        if use_gee and not GEE_AVAILABLE:
+            raise ImportError("Google Earth Engine not available. Install 'earthengine-api' and authenticate.")
+            
+        raise RuntimeError("Failed to fetch NDVI data from Google Earth Engine and no cached data available.")
+        
+    except Exception:
+        raise
 
 
 def fetch_data(*args, **kwargs):
@@ -559,7 +524,10 @@ def ingest_ndvi(
         - records_fetched: Number of records retrieved from source
         - records_stored: Number of records successfully stored to database
     """
-    from backend.app.models.climate_data import ClimateData
+    try:
+        from app.models.climate_data import ClimateData
+    except ImportError:
+        from backend.app.models.climate_data import ClimateData
     from sqlalchemy import and_
 
     # Set default date range
@@ -568,7 +536,11 @@ def ingest_ndvi(
     if end_date is None:
         end_date = datetime.now()
 
-    log_info(f"Ingesting NDVI data from {start_date.date()} to {end_date.date()}")
+    # Ensure dates are pandas-compatible timestamps for comparison
+    start_date = pd.to_datetime(start_date)
+    end_date = pd.to_datetime(end_date)
+
+    log_info(f"Ingesting NDVI data from {start_date} to {end_date}")
 
     try:
         # Fetch data using existing function

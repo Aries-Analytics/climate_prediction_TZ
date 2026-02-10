@@ -25,10 +25,12 @@ services:
       - DATABASE_URL=postgresql://user:pass@db:5432/climate_dev
       - JWT_SECRET=dev_secret_change_in_production
       - ALLOWED_ORIGINS=["http://localhost:3000","http://localhost:3001"]
+      - GOOGLE_APPLICATION_CREDENTIALS=/root/.config/earthengine/credentials
     volumes:
       - ./backend:/app
       - ./outputs:/outputs
       - ./data:/app/data # Mount data directory for scripts
+      - ~/.config/earthengine/credentials:/root/.config/earthengine/credentials:ro
     command: uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
     depends_on:
       db:
@@ -54,15 +56,21 @@ services:
       context: ./backend
       dockerfile: Dockerfile.scheduler
     container_name: climate_pipeline_scheduler_dev
+    env_file: .env
     environment:
       - DATABASE_URL=postgresql://user:pass@db:5432/climate_dev
-      - PIPELINE_SCHEDULE=0 6 * * *
+      - PIPELINE_SCHEDULE=0 3 * * *
+      - GOOGLE_APPLICATION_CREDENTIALS=/root/.config/earthengine/credentials
       - PIPELINE_TIMEZONE=UTC
       - ALERT_EMAIL_ENABLED=false
-      - ALERT_SLACK_ENABLED=false
+      - ALERT_SLACK_ENABLED=true
+      - SLACK_WEBHOOK_URL=${SLACK_WEBHOOK_URL}B0AADU3GHC4/tFsTGpjysRI9uDSpFeKF0AT8
     volumes:
       - ./backend:/app
       - ./outputs:/outputs
+      - ./modules:/app/modules:ro
+      - ./utils:/app/utils:ro
+      - ~/.config/earthengine/credentials:/root/.config/earthengine/credentials:ro
     depends_on:
       db:
         condition: service_healthy

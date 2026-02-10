@@ -85,7 +85,7 @@ export default function ForecastDashboard() {
   // Transform forecasts into location risk data for map (MUST be before conditional returns)
   const locationRisk = useMemo(() => {
     if (forecasts.length === 0) return [];
-    const morogoroLocation = { locationId: 6, locationName: 'Morogoro', latitude: -6.8211, longitude: 37.6595 };
+    const morogoroLocation = { locationId: 1, locationName: 'Morogoro', latitude: -6.8211, longitude: 37.6595 };
     const droughtProb = forecasts.filter(f => f.triggerType === 'drought').reduce((max, f) => Math.max(max, f.probability), 0);
     const floodProb = forecasts.filter(f => f.triggerType === 'flood').reduce((max, f) => Math.max(max, f.probability), 0);
     const cropFailureProb = forecasts.filter(f => f.triggerType === 'crop_failure').reduce((max, f) => Math.max(max, f.probability), 0);
@@ -116,7 +116,7 @@ export default function ForecastDashboard() {
         headers: { Authorization: `Bearer ${token}` },
         params: {
           days: 180,  // 6-month horizon
-          location_id: 6  // Morogoro pilot only
+          location_id: 1  // Morogoro pilot only (updated after DB reseed)
         }
       })
       setForecasts(response.data)
@@ -268,6 +268,27 @@ export default function ForecastDashboard() {
       crop_failure: 'CROP FAILURE'
     }
     return labels[triggerType] || triggerType.toUpperCase()
+  }
+
+  // --- Phase Logic Helper ---
+  // Uses backend-provided 'stage' to ensure single source of truth
+  const getPhaseImportance = (stage?: string) => {
+    const s = stage?.toLowerCase() || 'off_season';
+
+    switch (s) {
+      case 'flowering':
+        return { label: 'FLOWERING (CRIT)', color: '#d32f2f', priority: 'CRITICAL' };
+      case 'vegetative':
+        return { label: 'VEGETATIVE', color: '#ed6c02', priority: 'HIGH' };
+      case 'germination':
+        return { label: 'GERMINATION', color: '#0288d1', priority: 'MODERATE' };
+      case 'grain_fill':
+        return { label: 'MATURITY', color: '#7b1fa2', priority: 'LOW' };
+      case 'harvesting':
+        return { label: 'HARVEST', color: '#388e3c', priority: 'RISK' };
+      default:
+        return { label: 'OFF-SEASON', color: '#9e9e9e', priority: 'NONE' };
+    }
   }
 
   // --- Analytics Helpers ---
@@ -777,6 +798,20 @@ export default function ForecastDashboard() {
                           size="small"
                           sx={{ bgcolor: getTriggerTypeColor(forecast.triggerType), color: '#fff', fontWeight: 700, fontSize: '0.7rem', borderRadius: 1 }}
                         />
+                        {/* Phase Indicator */}
+                        <Chip
+                          label={getPhaseImportance(forecast.stage).label}
+                          size="small"
+                          sx={{
+                            bgcolor: `${getPhaseImportance(forecast.stage).color}15`,
+                            color: getPhaseImportance(forecast.stage).color,
+                            fontWeight: 700,
+                            fontSize: '0.7rem',
+                            border: '1px solid',
+                            borderColor: getPhaseImportance(forecast.stage).color
+                          }}
+                        />
+
                         <Chip
                           label={
                             forecast.probability >= 0.90 ? 'CRITICAL' :

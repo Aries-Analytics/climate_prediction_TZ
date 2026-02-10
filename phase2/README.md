@@ -17,9 +17,12 @@ A comprehensive end-to-end machine learning system for climate prediction in Tan
 
 **Quick Start**:
 ```powershell
+# Local development (use docker-compose.dev.yml)
 docker compose -f docker-compose.dev.yml up -d
 # Access at http://localhost:3000
 ```
+
+> **Note**: This project uses `docker-compose.dev.yml` for local development. See [GETTING_STARTED.md](docs/guides/GETTING_STARTED.md) for full setup instructions.
 
 See **[PROJECT_SUMMARY.md](PROJECT_SUMMARY.md)** for complete dashboard documentation.
 

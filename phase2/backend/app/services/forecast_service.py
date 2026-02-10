@@ -77,8 +77,10 @@ class ForecastGenerator:
         Returns:
             DataFrame with features or None if insufficient data
         """
-        # Get recent climate data (last 6 months)
-        lookback_date = start_date - timedelta(days=180)
+        # Get recent climate data (last 6 months for monthly data)
+        # Using relativedelta for month-based lookback (monthly data cadence)
+        from dateutil.relativedelta import relativedelta
+        lookback_date = start_date - relativedelta(months=6)
         
         query = db.query(ClimateData).filter(
             and_(
@@ -100,8 +102,15 @@ class ForecastGenerator:
             
         climate_data = query.order_by(ClimateData.date).all()
         
-        if len(climate_data) < 30:  # Need at least 30 days of data
+        # For monthly data: need at least 6 months (6 records)
+        # Previously was 30 (assumed daily data)
+        if len(climate_data) < 6:
+            print(f"   Insufficient data for {location.name if location else 'location'}: "
+                  f"found {len(climate_data)} records, need 6+ months")
             return None
+        
+        print(f"   {location.name if location else 'location'}: Using {len(climate_data)} monthly records "
+              f"from {climate_data[0].date} to {climate_data[-1].date}")
         
         # Convert to DataFrame
         df = pd.DataFrame([{
@@ -113,15 +122,16 @@ class ForecastGenerator:
             'iod': float(cd.iod_index) if cd.iod_index else None,
         } for cd in climate_data])
         
-        # Calculate aggregate features
+        # Calculate aggregate features (using all available months in lookback)
+        # For monthly data, use last 3 and 6 months instead of 30/90 days
         features = {
-            'avg_temp_30d': df['temperature'].tail(30).mean(),
-            'avg_rainfall_30d': df['rainfall'].tail(30).mean(),
-            'avg_ndvi_30d': df['ndvi'].tail(30).mean(),
-            'avg_temp_90d': df['temperature'].tail(90).mean(),
-            'avg_rainfall_90d': df['rainfall'].tail(90).mean(),
-            'total_rainfall_30d': df['rainfall'].tail(30).sum(),
-            'total_rainfall_90d': df['rainfall'].tail(90).sum(),
+            'avg_temp_3mo': df['temperature'].tail(3).mean(),
+            'avg_rainfall_3mo': df['rainfall'].tail(3).mean(),
+            'avg_ndvi_3mo': df['ndvi'].tail(3).mean(),
+            'avg_temp_6mo': df['temperature'].tail(6).mean(),
+            'avg_rainfall_6mo': df['rainfall'].tail(6).mean(),
+            'total_rainfall_3mo': df['rainfall'].tail(3).sum(),
+            'total_rainfall_6mo': df['rainfall'].tail(6).sum(),
             'enso_latest': df['enso'].iloc[-1] if not df['enso'].isna().all() else 0,
             'iod_latest': df['iod'].iloc[-1] if not df['iod'].isna().all() else 0,
             'horizon_months': horizon_months,
@@ -187,17 +197,18 @@ class ForecastGenerator:
         features = features_df.iloc[0]
         horizon_months = features['horizon_months']
         
+        # Updated to use monthly feature names (3mo instead of 30d)
         if trigger_type == "drought":
-            rainfall_score = 1.0 - min(1.0, features['avg_rainfall_30d'] / 100.0)
-            temp_score = min(1.0, max(0.0, (features['avg_temp_30d'] - 25) / 10.0))
-            ndvi_score = 1.0 - min(1.0, max(0.0, features['avg_ndvi_30d']))
+            rainfall_score = 1.0 - min(1.0, features['avg_rainfall_3mo'] / 100.0)
+            temp_score = min(1.0, max(0.0, (features['avg_temp_3mo'] - 25) / 10.0))
+            ndvi_score = 1.0 - min(1.0, max(0.0, features['avg_ndvi_3mo']))
             base_probability = (rainfall_score * 0.5 + temp_score * 0.3 + ndvi_score * 0.2)
         elif trigger_type == "flood":
-            rainfall_score = min(1.0, features['total_rainfall_30d'] / 300.0)
+            rainfall_score = min(1.0, features['total_rainfall_3mo'] / 300.0)
             base_probability = rainfall_score * 0.7 + 0.1
         elif trigger_type == "crop_failure":
-            rainfall_score = abs(features['avg_rainfall_30d'] - 50) / 50.0
-            ndvi_score = 1.0 - min(1.0, max(0.0, features['avg_ndvi_30d']))
+            rainfall_score = abs(features['avg_rainfall_3mo'] - 50) / 50.0
+            ndvi_score = 1.0 - min(1.0, max(0.0, features['avg_ndvi_3mo']))
             base_probability = (rainfall_score * 0.5 + ndvi_score * 0.5)
         else:
             base_probability = 0.2
@@ -262,8 +273,11 @@ def generate_forecasts_all_locations(
                         db.commit()
                         db.refresh(forecast)
                         forecasts.append(ForecastResponse.model_validate(forecast))
-                        
     return forecasts
+
+
+# Alias for compatibility with orchestrator
+generate_forecasts = generate_forecasts_all_locations
 
 
 def get_latest_forecasts(db: Session) -> List[ForecastResponse]:

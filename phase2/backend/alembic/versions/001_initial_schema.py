@@ -32,6 +32,21 @@ def upgrade() -> None:
     op.create_index('idx_users_username', 'users', ['username'], unique=True)
     op.create_index('idx_users_email', 'users', ['email'], unique=True)
 
+    # Create locations table
+    op.create_table('locations',
+        sa.Column('id', sa.Integer(), nullable=False),
+        sa.Column('name', sa.String(length=100), nullable=False),
+        sa.Column('latitude', sa.Float(), nullable=False),
+        sa.Column('longitude', sa.Float(), nullable=False),
+        sa.Column('region', sa.String(length=50), nullable=True),
+        sa.Column('population', sa.Integer(), nullable=True),
+        sa.Column('climate_zone', sa.String(length=50), nullable=True),
+        sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()')),
+        sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()')),
+        sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index('idx_locations_name', 'locations', ['name'], unique=True)
+
     # Create climate_data table
     op.create_table('climate_data',
         sa.Column('id', sa.Integer(), nullable=False),
@@ -117,6 +132,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    op.drop_table('locations')
     op.drop_table('audit_logs')
     op.drop_table('model_predictions')
     op.drop_table('model_metrics')

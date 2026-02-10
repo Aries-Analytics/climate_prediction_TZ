@@ -280,7 +280,7 @@ export default function RiskManagementDashboard() {
           <Grid item xs={12} md={3}>
             <KPICard
               title="Number of Policies"
-              value={portfolio.numberOfPolicies || 0}
+              value={portfolio.totalFarmers || portfolio.numberOfPolicies || 0}
               status="success"
               subtitle="Morogoro Pilot"
               insight="Active insurance policies covering 1000 smallholder rice farmers in Kilombero Basin."

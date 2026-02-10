@@ -22,7 +22,7 @@ from pathlib import Path
 # Add project root and utils to path
 project_root = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(project_root))
-sys.path.insert(0, str(project_root / 'backend'))
+# Don't add backend to path - it breaks relative path resolution in config.py
 
 # Import canonical paths
 from utils.config import MASTER_DATASET, PAYOUT_ESTIMATES, INSURANCE_TRIGGERS, TRAINING_RESULTS_CANONICAL
@@ -56,7 +56,7 @@ def get_auth_token():
     """Login and get authentication token"""
     response = requests.post(
         f"{API_BASE}/api/auth/login",
-        json={"username": "admin", "password": "admin123"}
+        json={"username": "admin", "password": "AdminPass2025!"}
     )
     if response.status_code == 200:
         return response.json()["access_token"]
@@ -180,6 +180,13 @@ def load_trigger_events(token):
     
     # Filter only main trigger types and remove duplicates
     main_triggers = df[df['trigger_type'].isin(['Drought', 'Flood', 'Crop Failure'])].copy()
+    
+    # PILOT FILTER: Only load Morogoro (Kilombero Basin) triggers
+    # Climate Insights shows all 6 locations, but other dashboards focus on pilot
+    if 'location' in main_triggers.columns:
+        main_triggers = main_triggers[main_triggers['location'] == 'Morogoro'].copy()
+        print(f"[OK] Filtered to Morogoro (Kilombero pilot) only")
+    
     main_triggers = main_triggers.drop_duplicates(subset=['date', 'trigger_type', 'location'], keep='first')
     
     print(f"[OK] Filtered to {len(main_triggers)} unique trigger events")
@@ -402,13 +409,24 @@ def load_model_metrics(token):
         db.close()
 
 
+# Define project_root for path manipulation
+from pathlib import Path
+import sys
+project_root = Path(__file__).resolve().parents[2] # Adjust based on actual project structure
 
-def clear_triggers():
-    """Clear all trigger events from database"""
+
+def clear_data():
+    """Clear existing trigger events from database"""
     print("\n" + "=" * 60)
     print("CLEARING TRIGGER EVENTS FROM DATABASE")
     print("=" * 60)
+    
     try:
+        # Add backend to path for imports
+        backend_path = project_root / 'backend'
+        if str(backend_path) not in sys.path:
+            sys.path.insert(0, str(backend_path))
+        
         from app.core.database import SessionLocal
         from app.models.trigger_event import TriggerEvent
         
@@ -419,7 +437,7 @@ def clear_triggers():
         if count > 0:
             db.query(TriggerEvent).delete()
             db.commit()
-            print(f"[OK] Deleted {count} trigger events")
+            print(f"[OK] Cleared {count} trigger events")
         else:
             print("[OK] No triggers to clear")
         
@@ -427,6 +445,7 @@ def clear_triggers():
         return True
     except Exception as e:
         print(f"[ERROR] Failed to clear triggers: {e}")
+        print("[WARN] Clear failed, continuing anyway...")
         return False
 
 def main():
@@ -442,10 +461,10 @@ def main():
     print("=" * 60)
     print(f"Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     
-    # Clear triggers if requested
+    # Clear existing data if requested
     if args.clear:
-        if not clear_triggers():
-            print("[WARN] Clear failed, continuing anyway...")
+        if not clear_data():
+            print("[WARN] Could not clear existing data, continuing anyway...")
     
     # Verify files exist
     if not verify_data():

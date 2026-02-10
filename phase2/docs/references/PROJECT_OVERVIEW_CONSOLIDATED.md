@@ -23,6 +23,21 @@ A comprehensive climate intelligence platform for Tanzania that integrates multi
 
 ---
 
+## 📂 Authoritative Dataset
+
+**Location**: `outputs/processed/master_dataset_6loc_2000_2025.csv`
+
+**Specifications**:
+- **1,872 records** (6 locations × 312 months)
+- **6 locations**: Arusha, Dar es Salaam, Dodoma, Mbeya, **Morogoro** (NEW), Mwanza
+- **Time period**: 2000-2025 (26 years)
+- **Features**: 379 climate and vegetation variables
+- **Sources**: 5 authoritative data sources integrated
+
+This is THE definitive dataset for all model training, evaluation, and production forecasting.
+
+---
+
 ## 📍 Geographic Coverage Evolution
 
 The system has evolved through three distinct phases of geographic expansion, each improving model robustness and spatial generalization:

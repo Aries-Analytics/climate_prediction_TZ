@@ -1,6 +1,6 @@
 services:
   db:
-    image: postgres:15
+    image: postgres:15-alpine
     container_name: climate_db_prod
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-climate_prod}
@@ -8,8 +8,10 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - postgres_data_prod:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-user} -d ${POSTGRES_DB:-climate_prod}"]
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-user} -d ${POSTGRES_DB:-climate_prod}" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -19,19 +21,59 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: climate_backend_prod
     environment:
-      - DATABASE_URL=${DATABASE_URL}
-      - JWT_SECRET=${JWT_SECRET}
-      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      JWT_SECRET: ${JWT_SECRET}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
+    env_file:
+      - .env
+    volumes:
+      - ./outputs:/outputs
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+    deploy:
+      replicas: 2
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  scheduler:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: python -m app.services.pipeline.run_scheduler
+    container_name: climate_pipeline_scheduler_prod
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      PIPELINE_SCHEDULE: ${PIPELINE_SCHEDULE:-0 6 * * *}
+      PIPELINE_TIMEZONE: ${PIPELINE_TIMEZONE:-UTC}
+      ENABLE_SCHEDULER: ${ENABLE_SCHEDULER}
+      ALERT_EMAIL_ENABLED: ${ALERT_EMAIL_ENABLED:-false}
+      ALERT_EMAIL_SMTP_HOST: ${ALERT_EMAIL_SMTP_HOST}
+      ALERT_EMAIL_SMTP_PORT: ${ALERT_EMAIL_SMTP_PORT:-587}
+      ALERT_EMAIL_FROM: ${ALERT_EMAIL_FROM}
+      ALERT_EMAIL_RECIPIENTS: ${ALERT_EMAIL_RECIPIENTS}
+      ALERT_SLACK_ENABLED: ${ALERT_SLACK_ENABLED:-false}
+      ALERT_SLACK_WEBHOOK_URL: ${ALERT_SLACK_WEBHOOK_URL}
+    env_file:
+      - .env
     volumes:
       - ./outputs:/outputs
     depends_on:
       db:
         condition: service_healthy
     restart: unless-stopped
-    deploy:
-      replicas: 2
+    healthcheck:
+      test: [ "CMD-SHELL", "pgrep -f run_scheduler || exit 1" ]
+      interval: 60s
+      timeout: 10s
+      retries: 3
 
   frontend:
     build:
@@ -55,58 +97,6 @@ services:
       - frontend
       - backend
     restart: unless-stopped
-
-  pipeline-scheduler:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile.scheduler
-    container_name: climate_pipeline_scheduler_prod
-    environment:
-      - DATABASE_URL=${DATABASE_URL}
-      - PIPELINE_SCHEDULE=${PIPELINE_SCHEDULE:-0 6 * * *}
-      - PIPELINE_TIMEZONE=${PIPELINE_TIMEZONE:-UTC}
-      - ALERT_EMAIL_ENABLED=${ALERT_EMAIL_ENABLED:-false}
-      - ALERT_EMAIL_SMTP_HOST=${ALERT_EMAIL_SMTP_HOST}
-      - ALERT_EMAIL_SMTP_PORT=${ALERT_EMAIL_SMTP_PORT:-587}
-      - ALERT_EMAIL_FROM=${ALERT_EMAIL_FROM}
-      - ALERT_EMAIL_RECIPIENTS=${ALERT_EMAIL_RECIPIENTS}
-      - ALERT_SLACK_ENABLED=${ALERT_SLACK_ENABLED:-false}
-      - ALERT_SLACK_WEBHOOK_URL=${ALERT_SLACK_WEBHOOK_URL}
-    volumes:
-      - ./outputs:/outputs
-    depends_on:
-      db:
-        condition: service_healthy
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
-      interval: 60s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
-
-  pipeline-monitor:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile.monitoring
-    container_name: climate_pipeline_monitor_prod
-    ports:
-      - "9090:9090"
-      - "8080:8080"
-    environment:
-      - DATABASE_URL=${DATABASE_URL}
-      - MONITORING_METRICS_PORT=${MONITORING_METRICS_PORT:-9090}
-      - MONITORING_HEALTH_PORT=${MONITORING_HEALTH_PORT:-8080}
-    depends_on:
-      db:
-        condition: service_healthy
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8080/health', timeout=5)"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
 
 volumes:
   postgres_data_prod:

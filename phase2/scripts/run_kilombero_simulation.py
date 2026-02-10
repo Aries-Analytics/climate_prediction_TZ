@@ -85,7 +85,7 @@ def run_simulation():
         print("     - Applying trigger thresholds...")
         print("     - Generating claims...")
         
-        result = service.run_simulation(simulation.id)
+        result = service.run_phase_based_simulation(simulation.id)
         
         print()
         print(f"     Status: {result.status}")

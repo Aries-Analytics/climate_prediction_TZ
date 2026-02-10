@@ -231,11 +231,19 @@ docs/
 5. ⏭️ Run insurance pipeline to generate 6-location business reports
 6. ⏭️ Deploy updated models to production (Q1 2026)
 
+### Dataset Location
+
+**AUTHORITATIVE 6-LOCATION DATASET**: `outputs/processed/master_dataset_6loc_2000_2025.csv`
+- **1,872 records** (6 locations × 312 months)
+- **6 locations**: Arusha, Dar es Salaam, Dodoma, Mbeya, **Morogoro**, Mwanza
+- **Years**: 2000-2025 (26 years)
+- **Features**: 379
+
 ### How to Generate 6-Location Insurance Reports
 
-**Option 1: Using combined dataset** (if available):
+**Option 1: Using authoritative dataset**:
 ```bash
-python pipelines/insurance_business_pipeline.py --input outputs/processed/master_dataset.csv
+python pipelines/insurance_business_pipeline.py --input outputs/processed/master_dataset_6loc_2000_2025.csv
 ```
 
 **Option 2: Using train+val+test** (current setup):

@@ -27,8 +27,10 @@ if os.path.exists(backend_dir):
     sys.path.insert(0, backend_dir)
 
 from datetime import date
+from sqlalchemy import func
 from app.core.database import SessionLocal
 from app.services.forecast_service import generate_forecasts_all_locations, generate_all_recommendations
+from app.models.climate_data import ClimateData
 from app.models.climate_forecast import ClimateForecast
 from app.models.forecast import Forecast
 from app.models.trigger_alert import TriggerAlert
@@ -42,9 +44,35 @@ def main():
     db = SessionLocal()
     
     try:
-        # Cleanup existing forecasts for today to avoid duplicates
-        forecast_date = date.today()
-        print(f"\n🧹 Cleaning up existing data for {forecast_date}...")
+        # OPTION A: Use latest available climate data date as forecast base
+        # This handles data latency where some sources may not have current month data
+        print("\nDetermining forecast base date...")
+        latest_climate_date = db.query(func.max(ClimateData.date)).scalar()
+        
+        if latest_climate_date is None:
+            print("ERROR: No climate data found in database!")
+            print("Run: python scripts/load_dashboard_data.py --clear")
+            return
+        
+        today = date.today()
+        data_age_days = (today - latest_climate_date).days
+        
+        print(f"   Today: {today}")
+        print(f"   Latest climate data: {latest_climate_date}")
+        print(f"   Data age: {data_age_days} days")
+        
+        if data_age_days > 90:
+            print(f"   WARNING: Climate data is {data_age_days} days old!")
+            print(f"   Consider updating data sources.")
+        
+        # Use latest available data as forecast base (industry best practice)
+        forecast_base_date = latest_climate_date
+        print(f"\n   Using forecast base date: {forecast_base_date}")
+        print(f"   (Industry standard: use latest complete validated data)\n")
+        
+        # Cleanup existing forecasts for this base date
+        forecast_date = forecast_base_date
+        print(f"Cleaning up existing forecasts for {forecast_date}...")
         try:
              # Delete related alerts first (foreign key constraint)
             db.query(TriggerAlert).filter(TriggerAlert.date_generated == forecast_date).delete()
@@ -62,29 +90,30 @@ def main():
             print(f"   Cleanup failed (might be empty): {e}")
 
         # Generate forecasts for all locations with 3-6 month horizons
-        print("\n📊 Generating forecasts for all locations...")
-        print(f"   Forecast date: {date.today()}")
+        print("\nGenerating forecasts for all locations...")
+        print(f"   Forecast base date: {forecast_base_date}")
         print(f"   Horizons: 3, 4, 5, 6 months")
+        print(f"   Target dates: {forecast_base_date.replace(month=forecast_base_date.month+3 if forecast_base_date.month<=9 else forecast_base_date.month-9)} to {forecast_base_date.replace(month=forecast_base_date.month+6 if forecast_base_date.month<=6 else forecast_base_date.month-6)}" if forecast_base_date.month <= 6 else f"(varies by location)")
         print(f"   Trigger types: Drought, Flood, Crop Failure")
         print(f"   Generating for ALL locations in database...\n")
         
         forecasts = generate_forecasts_all_locations(
             db=db,
-            start_date=date.today(),
+            start_date=forecast_base_date,  # Use latest available data, not today
             horizons=[3, 4, 5, 6]
         )
         
-        print(f"\n✅ Generated {len(forecasts)} forecasts")
+        print(f"\nGenerated {len(forecasts)} forecasts")
         
         # Show forecast summary
         for i, f in enumerate(forecasts, 1):
             print(f"   {i}. {f.trigger_type} ({f.horizon_months}mo): {f.probability:.1%} probability")
         
         # Generate recommendations for high-risk forecasts
-        print(f"\n📋 Generating recommendations (threshold: >30% probability)...")
+        print(f"\nGenerating recommendations (threshold: >30% probability)...")
         recommendations = generate_all_recommendations(db, min_probability=0.3)
         
-        print(f"✅ Generated {len(recommendations)} recommendations")
+        print(f"Generated {len(recommendations)} recommendations")
         
         for i, rec in enumerate(recommendations, 1):
             print(f"   {i}. Priority: {rec.priority.upper()} - {rec.recommendation_text[:60]}...")
@@ -92,16 +121,16 @@ def main():
         print("\n" + "=" * 60)
         print("SUCCESS!")
         print("=" * 60)
-        print(f"\n✅ Database updated with:")
+        print(f"\nDatabase updated with:")
         print(f"   - {len(forecasts)} forecasts")
         print(f"   - {len(recommendations)} recommendations")
-        print("\n💡 Next steps:")
+        print("\nNext steps:")
         print("   1. Refresh the Early Warning dashboard")
         print("   2. View forecasts at http://localhost:3000")
         print("   3. Check recommendations panel")
         
     except Exception as e:
-        print(f"\n❌ Error generating forecasts: {e}")
+        print(f"\nError generating forecasts: {e}")
         import traceback
         traceback.print_exc()
         db.rollback()

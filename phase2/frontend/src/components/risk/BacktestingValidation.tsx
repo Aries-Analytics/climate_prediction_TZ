@@ -67,16 +67,41 @@ export default function BacktestingValidation() {
     const [loading, setLoading] = useState(true);
     const theme = useTheme();
 
-    // Hardcoded simulation ID 5 (Latest Sustainable Run)
-    const SIMULATION_ID = 5;
+    // State for dynamic simulation ID
+    const [latestSimulationId, setLatestSimulationId] = useState<number | null>(null);
 
     useEffect(() => {
-        fetchReport();
+        fetchLatestSimulation();
     }, []);
 
-    const fetchReport = async () => {
+    useEffect(() => {
+        if (latestSimulationId) {
+            fetchReport(latestSimulationId);
+        }
+    }, [latestSimulationId]);
+
+    const fetchLatestSimulation = async () => {
         try {
-            const response = await axios.get(`${API_BASE_URL}/simulation/${SIMULATION_ID}/report`);
+            const response = await axios.get(`${API_BASE_URL}/simulation/`);
+            // Find the latest completed simulation
+            const completed = response.data
+                .filter((sim: any) => sim.status === 'completed' || sim.status === 'COMPLETED')
+                .sort((a: any, b: any) => b.id - a.id);
+
+            if (completed.length > 0) {
+                setLatestSimulationId(completed[0].id);
+            } else {
+                setLoading(false); // No simulations found
+            }
+        } catch (error) {
+            console.error('Failed to fetch simulations:', error);
+            setLoading(false);
+        }
+    };
+
+    const fetchReport = async (id: number) => {
+        try {
+            const response = await axios.get(`${API_BASE_URL}/simulation/${id}/report`);
             setReport(response.data);
         } catch (error) {
             console.error('Failed to fetch validation report:', error);
@@ -90,7 +115,7 @@ export default function BacktestingValidation() {
     if (!report) {
         return (
             <Alert severity="warning">
-                Could not load validation report. Please ensure Simulation #{SIMULATION_ID} exists.
+                Could not load validation report. {latestSimulationId ? `Please ensure Simulation #${latestSimulationId} exists.` : 'No completed simulations found.'}
             </Alert>
         );
     }
@@ -126,7 +151,7 @@ export default function BacktestingValidation() {
     const validatedEvents = report.external_validation?.validated_events || years.filter(y => summaryData[y].validated).length;
 
     // Hardcoded known event years for 2015-2025
-    const EXPECTED_EVENT_YEARS = 6;
+    const EXPECTED_EVENT_YEARS = report.external_validation?.total_events || 6;
     const validationScore = Math.min(100, Math.round((validatedEvents / EXPECTED_EVENT_YEARS) * 100));
 
     return (
@@ -144,8 +169,8 @@ export default function BacktestingValidation() {
                     <Card sx={{ height: '100%', bgcolor: 'success.50', border: '1px solid', borderColor: 'success.200' }}>
                         <CardContent>
                             <Typography color="text.secondary" variant="overline">Validation Score</Typography>
-                            <Typography variant="h3" color="success.dark">100%</Typography>
-                            <Chip label={`${validatedEvents}/6 Major Events Matched`} size="small" color="success" sx={{ mt: 1 }} />
+                            <Typography variant="h3" color="success.dark">{validationScore}%</Typography>
+                            <Chip label={`${validatedEvents}/${EXPECTED_EVENT_YEARS} Major Events Matched`} size="small" color="success" sx={{ mt: 1 }} />
                             <Typography variant="caption" display="block" sx={{ mt: 1 }}>
                                 Matched FEWS NET, WFP & OCHA reports
                             </Typography>
@@ -179,10 +204,10 @@ export default function BacktestingValidation() {
                         <CardContent>
                             <Typography color="text.secondary" variant="overline">Model Sensitivity</Typography>
                             <Typography variant="h3">{triggersDetected}</Typography>
-                            <Typography variant="body2" color="text.secondary" gutterBottom>Triggers over 10 Years</Typography>
+                            <Typography variant="body2" color="text.secondary" gutterBottom>Triggers over {totalYears} Years</Typography>
                             <Divider sx={{ my: 1 }} />
                             <Typography variant="caption">
-                                Avg <strong>1.6 events/year</strong> • Not too sensitive (false positives), not too strict (missed events).
+                                Avg <strong>{(triggersDetected / totalYears).toFixed(1)} events/year</strong> • Not too sensitive (false positives), not too strict (missed events).
                             </Typography>
                         </CardContent>
                     </Card>

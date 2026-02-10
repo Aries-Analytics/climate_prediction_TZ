@@ -185,3 +185,36 @@ def get_sustainability_status(db: Session) -> SustainabilityStatus:
         threshold=LOSS_RATIO_THRESHOLD,
         message=message
     )
+
+
+def get_hewasense_seasonal_forecast(location: str = "Morogoro") -> dict:
+    """Get HewaSense phase-based seasonal forecast for dashboard"""
+    import json
+    from pathlib import Path
+    
+    # Read from stored forecast file
+    forecast_file = Path('outputs/dashboard/hewasense_forecast.json')
+    
+    if not forecast_file.exists():
+        # Return default/empty forecast
+        return {
+            "location": location,
+            "season": "Mar-Jun 2026",
+            "predicted_rainfall_mm": 0,
+            "drought_probability": 0,
+            "flood_probability": 0,
+            "expected_payout_per_farmer": 0,
+            "risk_level": "UNKNOWN",
+            "model_comparison": {
+                "simple_payout": 0,
+                "simple_method": "400mm threshold",
+                "phase_based_payout": 0,
+                "phase_based_method": "HewaSense 4-phase",
+                "payout_difference": 0,
+                "recommended_model": "phase_based"
+            },
+            "phase_breakdown": []
+        }
+    
+    with open(forecast_file, 'r') as f:
+        return json.load(f)

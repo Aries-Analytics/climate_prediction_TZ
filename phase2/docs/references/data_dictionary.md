@@ -22,6 +22,7 @@ This document describes the data schemas for all datasets in the Tanzania Climat
 | prectotcorr | float | mm | Total monthly precipitation | 0 to 1000+ |
 | rh2m | float | % | Relative humidity at 2m | 0 to 100 |
 | allsky_sfc_sw_dwn | float | W/m² | Solar radiation | 0 to 400 |
+| gwetprof | float | fraction | Profile soil moisture (0-1) | 0 to 1 |
 
 **Missing Values:** Represented as `None` or `NaN`
 
@@ -43,6 +44,7 @@ This document describes the data schemas for all datasets in the Tanzania Climat
 | surface_pressure | float | Pa | Surface pressure | 50000 to 110000 |
 | wind_u_10m | float | m/s | U-component of wind at 10m | -50 to 50 |
 | wind_v_10m | float | m/s | V-component of wind at 10m | -50 to 50 |
+| swvl1 | float | m³/m³ | Volumetric soil water layer 1 (0-7cm) | 0 to 1 |
 
 **Notes:**
 - Temperature in Kelvin (convert to Celsius: K - 273.15)
@@ -336,6 +338,43 @@ Varies based on merge strategy and available data sources. May include:
 - Empty DataFrame
 - Missing required columns
 - All values are null
+
+---
+
+## Database Schema
+
+### climate_data Table
+
+**Purpose**: Stores all ingested climate data from multiple sources
+
+**Location**: PostgreSQL database (`climate_dev` / `climate_prod`)
+
+| Column | Type | Nullable | Description | Source |
+|--------|------|----------|-------------|--------|
+| id | integer | NO | Primary key | Auto-generated |
+| date | date | NO | Observation date | All sources |
+| location_lat | numeric(10,6) | YES | Latitude coordinate | All sources |
+| location_lon | numeric(10,6) | YES | Longitude coordinate | All sources |
+| temperature_avg | numeric(5,2) | YES | Average temperature (°C) | NASA POWER, ERA5 |
+| rainfall_mm | numeric(7,2) | YES | Total rainfall (mm) | CHIRPS, NASA POWER |
+| ndvi | numeric(4,3) | YES | Vegetation index (0-1) | MODIS NDVI |
+| enso_index | numeric(5,3) | YES | Oceanic Niño Index | Ocean Indices |
+| iod_index | numeric(5,3) | YES | Indian Ocean Dipole | Ocean Indices |
+| soil_moisture | numeric(5,3) | YES | Volumetric soil moisture (0-1) ⭐ *Added Feb 2026* | ERA5, NASA POWER |
+| created_at | timestamp | YES | Record creation time | Auto-generated |
+
+**Indexes**:
+- `climate_data_pkey` - Primary key on `id`
+- `ix_climate_data_date` - Index on `date`
+- `idx_climate_date_location` - Composite index on `date, location_lat, location_lon`
+- `uix_date_location` - Unique constraint on `date, location_lat, location_lon`
+- `idx_climate_soil_moisture` - Index on `soil_moisture` ⭐ *Added Feb 2026*
+
+**Notes**:
+- Soil moisture column added February 2, 2026 via migration `006_add_soil_moisture`
+- Historical records have `NULL` for soil_moisture (to be backfilled later)
+- New ingestion automatically populates soil_moisture from ERA5 (swvl1) and NASA POWER (gwetprof)
+- See [`SOIL_MOISTURE_FUTURE_ENHANCEMENT.md`](../SOIL_MOISTURE_FUTURE_ENHANCEMENT.md) for usage roadmap
 
 ---
 

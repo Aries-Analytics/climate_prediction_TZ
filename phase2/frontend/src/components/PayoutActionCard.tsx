@@ -38,7 +38,7 @@ const PayoutActionCard: React.FC<PayoutActionCardProps> = ({
         if (type.includes('flood') || type.includes('excess')) rate = 75;
         else if (type.includes('fail') || type.includes('critical')) rate = 90;
 
-        const estimatedPayout = rate * 100;
+        const estimatedPayout = rate * totalFarmers;
 
         const locId = trigger.location_id || 0;
         const currentMax = locationLiability.get(locId) || 0;
@@ -102,7 +102,7 @@ const PayoutActionCard: React.FC<PayoutActionCardProps> = ({
                             ${totalLiability.toLocaleString()}
                         </Typography>
                         <Typography variant="caption" sx={{ display: 'block', mt: 0.5 }}>
-                            *Based on 100 farmers per alert location
+                            *Based on {totalFarmers.toLocaleString()} farmers per alert location
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
                             (Model A: Per-Farmer Fixed Rate)
@@ -147,7 +147,7 @@ const PayoutActionCard: React.FC<PayoutActionCardProps> = ({
                                 ${totalLiability.toLocaleString()}
                             </Typography>
                             <Typography variant="caption" display="block" sx={{ mt: 1 }}>
-                                Based on {activeTriggers.length} trigger{activeTriggers.length > 1 ? 's' : ''} × 100 farmers per location
+                                Based on {activeTriggers.length} trigger{activeTriggers.length > 1 ? 's' : ''} × {totalFarmers.toLocaleString()} farmers per location
                             </Typography>
                         </Box>
                         <Alert severity="warning" sx={{ mt: 2 }}>

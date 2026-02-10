@@ -45,7 +45,7 @@ payout = highestRiskForecast.probability × PAYOUT_UNIT
 
 ## Documentation Specifications
 
-### From MOROGORO_RICE_PILOT_SPECIFICATION.md
+### From KILOMBERO_BASIN_PILOT_SPECIFICATION.md
 
 **Official Payout Rates** (Lines 46-52):
 | Trigger | Rate per Farmer |
@@ -394,7 +394,7 @@ function calculateExpectedPayout(
 ---
 
 **References:**
-- MOROGORO_RICE_PILOT_SPECIFICATION.md
+- KILOMBERO_BASIN_PILOT_SPECIFICATION.md
 - PARAMETRIC_INSURANCE_FINAL.md
 - ACRE Africa Tanzania operations
 - TIRA Guidelines 2023

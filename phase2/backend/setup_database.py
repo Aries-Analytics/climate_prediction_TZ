@@ -60,11 +60,11 @@ def create_database(admin_user, admin_password):
         exists = cursor.fetchone()
         
         if exists:
-            print("✓ Database 'climate_dev' already exists")
+            print("[OK] Database 'climate_dev' already exists")
         else:
             # Create database
             cursor.execute("CREATE DATABASE climate_dev")
-            print("✓ Created database 'climate_dev'")
+            print("[OK] Created database 'climate_dev'")
         
         # Create user if needed
         cursor.execute("SELECT 1 FROM pg_roles WHERE rolname='user'")
@@ -72,18 +72,18 @@ def create_database(admin_user, admin_password):
         
         if not user_exists:
             cursor.execute("CREATE USER \"user\" WITH PASSWORD 'pass'")
-            print("✓ Created user 'user'")
+            print("[OK] Created user 'user'")
         
         # Grant privileges
         cursor.execute("GRANT ALL PRIVILEGES ON DATABASE climate_dev TO \"user\"")
-        print("✓ Granted privileges to user")
+        print("[OK] Granted privileges to user")
         
         cursor.close()
         conn.close()
         return True
         
     except Exception as e:
-        print(f"✗ Error creating database: {e}")
+        print(f"[X] Error creating database: {e}")
         return False
 
 def run_migrations():
@@ -98,14 +98,14 @@ def run_migrations():
         )
         
         if result.returncode == 0:
-            print("✓ Migrations completed successfully")
+            print("[OK] Migrations completed successfully")
             return True
         else:
-            print(f"✗ Migration failed: {result.stderr}")
+            print(f"[X] Migration failed: {result.stderr}")
             return False
             
     except Exception as e:
-        print(f"✗ Error running migrations: {e}")
+        print(f"[X] Error running migrations: {e}")
         return False
 
 def verify_setup():
@@ -120,11 +120,11 @@ def verify_setup():
         count = db.query(ClimateData).count()
         db.close()
         
-        print(f"✓ Database verified - {count} climate records found")
+        print(f"[OK] Database verified - {count} climate records found")
         return True
         
     except Exception as e:
-        print(f"✗ Verification failed: {e}")
+        print(f"[X] Verification failed: {e}")
         return False
 
 def main():
@@ -137,7 +137,7 @@ def main():
     running, admin_user, error = check_postgres_running()
     
     if not running:
-        print(f"✗ PostgreSQL is not running: {error}")
+        print(f"[X] PostgreSQL is not running: {error}")
         print("\nPlease start PostgreSQL:")
         print("  Windows: net start postgresql-x64-15")
         print("  Linux:   sudo systemctl start postgresql")
@@ -145,7 +145,7 @@ def main():
         print("  Docker:  docker run -d -p 5432:5432 -e POSTGRES_PASSWORD=pass postgres:15")
         return False
     
-    print(f"✓ PostgreSQL is running")
+    print(f"[OK] PostgreSQL is running")
     
     # Get admin password if needed
     admin_password = None
@@ -158,7 +158,7 @@ def main():
     # Step 2: Create database
     print("\n[2/4] Creating database...")
     if not create_database(admin_user, admin_password):
-        print("\n⚠️  Could not create database automatically.")
+        print("\n[!] Could not create database automatically.")
         print("Please create it manually:")
         print("  psql -U postgres -c 'CREATE DATABASE climate_dev'")
         return False
@@ -166,7 +166,7 @@ def main():
     # Step 3: Run migrations
     print("\n[3/4] Setting up tables...")
     if not run_migrations():
-        print("\n⚠️  Migrations failed. Try running manually:")
+        print("\n[!] Migrations failed. Try running manually:")
         print("  cd backend")
         print("  alembic upgrade head")
         return False
@@ -174,10 +174,10 @@ def main():
     # Step 4: Verify
     print("\n[4/4] Verifying setup...")
     if not verify_setup():
-        print("\n⚠️  Verification failed but database might still work.")
+        print("\n[!] Verification failed but database might still work.")
     
     print("\n" + "=" * 60)
-    print("✓ DATABASE SETUP COMPLETE!")
+    print("[OK] DATABASE SETUP COMPLETE!")
     print("=" * 60)
     print("\nYou can now run the forecast generation script:")
     print("  cd backend")
@@ -193,7 +193,7 @@ if __name__ == "__main__":
         print("\n\nSetup cancelled by user")
         sys.exit(1)
     except Exception as e:
-        print(f"\n✗ Unexpected error: {e}")
+        print(f"\n[X] Unexpected error: {e}")
         import traceback
         traceback.print_exc()
         sys.exit(1)
