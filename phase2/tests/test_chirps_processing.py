@@ -10,7 +10,8 @@ This test demonstrates the new CHIRPS processing capabilities including:
 import numpy as np
 import pandas as pd
 
-from modules.ingestion.chirps_ingestion import fetch_chirps_data
+import pytest
+from modules.ingestion.chirps_ingestion import GEE_AVAILABLE, fetch_chirps_data
 from modules.processing.process_chirps import process
 
 
@@ -20,9 +21,30 @@ def test_chirps_processing_with_real_data():
     print("TEST: CHIRPS Processing with Drought/Flood Indicators")
     print("=" * 70)
 
-    # Fetch real CHIRPS data (or use dry-run for testing)
-    print("\n1. Fetching CHIRPS data...")
-    raw_data = fetch_chirps_data(dry_run=False, start_year=2020, end_year=2023)
+    from unittest.mock import patch, MagicMock
+    import sys
+
+    # Mock ee module if not present
+    if 'ee' not in sys.modules:
+        sys.modules['ee'] = MagicMock()
+
+    # Patch the initialization and ingestion
+    with patch('modules.ingestion.chirps_ingestion._initialize_gee', return_value=True), \
+         patch('modules.ingestion.chirps_ingestion._fetch_gee_chirps') as mock_fetch:
+        
+        # Configure mock to return realistic data
+        # Only generating a few records to verify the flow
+        mock_data = pd.DataFrame([
+            {"year": 2020, "month": 1, "rainfall_mm": 150.5, "lat_min": -11.75, "lat_max": -0.99, "lon_min": 29.34, "lon_max": 40.44, "data_source": "CHIRPS_GEE"},
+            {"year": 2020, "month": 2, "rainfall_mm": 120.0, "lat_min": -11.75, "lat_max": -0.99, "lon_min": 29.34, "lon_max": 40.44, "data_source": "CHIRPS_GEE"},
+            {"year": 2020, "month": 3, "rainfall_mm": 200.0, "lat_min": -11.75, "lat_max": -0.99, "lon_min": 29.34, "lon_max": 40.44, "data_source": "CHIRPS_GEE"}
+        ])
+        mock_fetch.return_value = mock_data
+
+        # Fetch real CHIRPS data (which will now use the mocked GEE path)
+        print("\n1. Fetching CHIRPS data (Mocked GEE)...")
+        # Force dry_run=False to test the Real Data path
+        raw_data = fetch_chirps_data(dry_run=False, start_year=2020, end_year=2020, use_gee=True)
     print(f"   ✓ Fetched {len(raw_data)} records")
     print(f"   Columns: {list(raw_data.columns)}")
 
