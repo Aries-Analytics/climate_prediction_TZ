@@ -28,8 +28,9 @@ def test_chirps_processing_with_real_data():
     if 'ee' not in sys.modules:
         sys.modules['ee'] = MagicMock()
 
-    # Patch the initialization and ingestion
-    with patch('modules.ingestion.chirps_ingestion._initialize_gee', return_value=True), \
+    # Patch the initialization, ingestion, AND the availability flag
+    with patch('modules.ingestion.chirps_ingestion.GEE_AVAILABLE', True), \
+         patch('modules.ingestion.chirps_ingestion._initialize_gee', return_value=True), \
          patch('modules.ingestion.chirps_ingestion._fetch_gee_chirps') as mock_fetch:
         
         # Configure mock to return realistic data
