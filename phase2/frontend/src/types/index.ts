@@ -66,6 +66,10 @@ export interface ModelMetrics {
   trainingSamples?: number;
   valSamples?: number;
   testSamples?: number;
+  // Temporal split date ranges (e.g., "2000-01 to 2015-07")
+  trainDateRange?: string;
+  valDateRange?: string;
+  testDateRange?: string;
   // Model configuration
   hyperparameters?: Record<string, any>;
 }

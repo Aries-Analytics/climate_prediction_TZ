@@ -16,6 +16,7 @@ const ClimateInsightsDashboard = lazy(() => import('./pages/ClimateInsightsDashb
 const RiskManagementDashboard = lazy(() => import('./pages/RiskManagementDashboard'))
 const ForecastDashboard = lazy(() => import('./pages/ForecastDashboard'))
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'))
+const EvidencePackDashboard = lazy(() => import('./pages/EvidencePackDashboard'))
 
 // Loading component
 const LoadingFallback = () => (
@@ -58,6 +59,7 @@ function App() {
               <Route path="climate" element={<Suspense fallback={<LoadingFallback />}><ClimateInsightsDashboard /></Suspense>} />
               <Route path="risk" element={<Suspense fallback={<LoadingFallback />}><RiskManagementDashboard /></Suspense>} />
               <Route path="forecasts" element={<Suspense fallback={<LoadingFallback />}><ForecastDashboard /></Suspense>} />
+              <Route path="evidence" element={<Suspense fallback={<LoadingFallback />}><EvidencePackDashboard /></Suspense>} />
               <Route path="admin" element={<Suspense fallback={<LoadingFallback />}><AdminDashboard /></Suspense>} />
             </Route>
             <Route path="/" element={<Navigate to="/dashboard/executive" replace />} />

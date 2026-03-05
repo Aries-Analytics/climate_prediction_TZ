@@ -150,6 +150,20 @@ export default function ModelPerformanceDashboard() {
   const selectedModelData = models.find((m: ModelMetrics) => m.modelName === selectedModel)
 
   // Calculate dynamic metadata from model data (top-level fields with hyperparameters fallback)
+  const formatDateRange = (raw: string | undefined): string => {
+    // Convert "2000-01 to 2015-07" → "Jan 2000 – Jul 2015"
+    if (!raw) return 'N/A'
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+    const parts = raw.split(' to ')
+    if (parts.length !== 2) return raw
+    const format = (d: string) => {
+      const [y, m] = d.split('-')
+      const mi = parseInt(m, 10)
+      return mi >= 1 && mi <= 12 ? `${months[mi - 1]} ${y}` : d
+    }
+    return `${format(parts[0])} – ${format(parts[1])}`
+  }
+
   const getTrainingMetadata = (model: ModelMetrics | undefined) => {
     if (!model) return null
 
@@ -174,7 +188,10 @@ export default function ModelPerformanceDashboard() {
       nFeatures,
       originalFeatures: hp.original_features || 0,
       featureReductionPct: hp.feature_reduction_pct || 0,
-      featureToSampleRatio
+      featureToSampleRatio,
+      trainDateRange: formatDateRange(model.trainDateRange),
+      valDateRange: formatDateRange(model.valDateRange),
+      testDateRange: formatDateRange(model.testDateRange),
     }
   }
 
@@ -316,7 +333,7 @@ export default function ModelPerformanceDashboard() {
         </Typography>
         <Typography variant="body2">
           <strong>Data Splits:</strong> Train: {metadata?.trainingSamples || 'N/A'} samples, Val: {metadata?.valSamples || 'N/A'} samples, Test: {metadata?.testSamples || 'N/A'} samples |
-          <strong>Test Period:</strong> 2019-2025 (unseen data) |
+          <strong>Test Period:</strong> {metadata?.testDateRange || 'N/A'} (unseen data) |
           <strong>Temporal Integrity:</strong> 12-month gaps prevent data leakage
         </Typography>
       </Alert>
@@ -463,7 +480,7 @@ export default function ModelPerformanceDashboard() {
                         <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.8 }}>
                           <strong>{selectedModelData?.modelName || 'N/A'}:</strong> Test R² = {selectedModelData?.r2Score?.toFixed(4) || 'N/A'}<br />
                           Test RMSE: {selectedModelData?.rmse?.toFixed(4) || 'N/A'} mm | Test MAE: {selectedModelData?.mae?.toFixed(4) || 'N/A'} mm<br />
-                          {metadata?.testSamples || 'N/A'} test samples (2019-2025)
+                          {metadata?.testSamples || 'N/A'} test samples ({metadata?.testDateRange || 'N/A'})
                         </Typography>
                         <Box sx={{ mt: 1.5, p: 1, bgcolor: '#e3f2fd', borderRadius: 0.5 }}>
                           <Typography variant="caption" color="primary.dark" sx={{ fontStyle: 'italic' }}>
@@ -485,7 +502,7 @@ export default function ModelPerformanceDashboard() {
                         </Typography>
                         <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.8 }}>
                           • 12-month gaps prevent temporal leakage<br />
-                          • {metadata?.testSamples || 'N/A'} test samples (2019-2025) unseen during training<br />
+                          • {metadata?.testSamples || 'N/A'} test samples ({metadata?.testDateRange || 'N/A'}) unseen during training<br />
                           • {metadata?.featureToSampleRatio || 'N/A'}:1 feature-to-sample ratio ({metadata?.trainingSamples || 'N/A'} samples / {metadata?.nFeatures || 'N/A'} features)<br />
                           • Strong linear patterns in climate data
                         </Typography>
@@ -656,7 +673,7 @@ export default function ModelPerformanceDashboard() {
                     <Alert severity="info" sx={{ mt: 2 }}>
                       <Typography variant="caption">
                         <strong>Supplementary metric:</strong> Cross-validation provides additional validation across multiple splits.
-                        However, the <strong>Test R² Score</strong> ({metadata?.testSamples || 'N/A'} samples, 2019-2025) is the primary metric for evaluating final model performance on truly unseen data.
+                        However, the <strong>Test R² Score</strong> ({metadata?.testSamples || 'N/A'} samples, {metadata?.testDateRange || 'N/A'}) is the primary metric for evaluating final model performance on truly unseen data.
                       </Typography>
                     </Alert>
                   </CardContent>
@@ -1058,7 +1075,7 @@ export default function ModelPerformanceDashboard() {
                       <Typography color="text.secondary" variant="body2" gutterBottom>
                         Training Period
                       </Typography>
-                      <Typography variant="h6">2000-2018</Typography>
+                      <Typography variant="h6">{metadata?.trainDateRange || 'N/A'}</Typography>
                       <Typography variant="body2" sx={{ mt: 1 }}>
                         {metadata?.trainingSamples || 'N/A'} samples
                       </Typography>
@@ -1074,7 +1091,7 @@ export default function ModelPerformanceDashboard() {
                       <Typography color="text.secondary" variant="body2" gutterBottom>
                         Validation Period
                       </Typography>
-                      <Typography variant="h6">2018-2019</Typography>
+                      <Typography variant="h6">{metadata?.valDateRange || 'N/A'}</Typography>
                       <Typography variant="body2" sx={{ mt: 1 }}>
                         {metadata?.valSamples || 'N/A'} samples
                       </Typography>
@@ -1090,7 +1107,7 @@ export default function ModelPerformanceDashboard() {
                       <Typography color="text.secondary" variant="body2" gutterBottom>
                         Test Period
                       </Typography>
-                      <Typography variant="h6">2019-2025</Typography>
+                      <Typography variant="h6">{metadata?.testDateRange || 'N/A'}</Typography>
                       <Typography variant="body2" sx={{ mt: 1 }}>
                         {metadata?.testSamples || 'N/A'} samples
                       </Typography>
@@ -1103,7 +1120,7 @@ export default function ModelPerformanceDashboard() {
                 <Grid item xs={12}>
                   <Alert severity="info">
                     <Typography variant="body2">
-                      <strong>Temporal Robustness:</strong> Model maintains {selectedModelData?.r2Score && (selectedModelData.r2Score * 100).toFixed(1)}% accuracy on 2019-2025 data.
+                      <strong>Temporal Robustness:</strong> Model maintains {selectedModelData?.r2Score && (selectedModelData.r2Score * 100).toFixed(1)}% accuracy on {metadata?.testDateRange || 'N/A'} data.
                       12-month temporal gaps ensure scientifically valid results.
                     </Typography>
                   </Alert>

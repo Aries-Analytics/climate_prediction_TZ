@@ -85,7 +85,7 @@ export default function ForecastDashboard() {
   // Transform forecasts into location risk data for map (MUST be before conditional returns)
   const locationRisk = useMemo(() => {
     if (forecasts.length === 0) return [];
-    const morogoroLocation = { locationId: 1, locationName: 'Morogoro', latitude: -6.8211, longitude: 37.6595 };
+    const morogoroLocation = { locationId: 6, locationName: 'Morogoro', latitude: -6.8211, longitude: 37.6595 };
     const droughtProb = forecasts.filter(f => f.triggerType === 'drought').reduce((max, f) => Math.max(max, f.probability), 0);
     const floodProb = forecasts.filter(f => f.triggerType === 'flood').reduce((max, f) => Math.max(max, f.probability), 0);
     const cropFailureProb = forecasts.filter(f => f.triggerType === 'crop_failure').reduce((max, f) => Math.max(max, f.probability), 0);
@@ -115,8 +115,7 @@ export default function ForecastDashboard() {
       const response = await axios.get(`${API_BASE_URL}/forecasts`, {
         headers: { Authorization: `Bearer ${token}` },
         params: {
-          days: 180,  // 6-month horizon
-          location_id: 1  // Morogoro pilot only (updated after DB reseed)
+          days: 180  // 6-month horizon
         }
       })
       setForecasts(response.data)

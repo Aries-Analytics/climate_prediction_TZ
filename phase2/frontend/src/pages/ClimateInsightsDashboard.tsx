@@ -19,8 +19,6 @@ import {
   AccordionSummary,
   AccordionDetails,
   Chip,
-  Button,
-  Tooltip
 } from '@mui/material'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import axios from 'axios'
@@ -130,7 +128,7 @@ export default function ClimateInsightsDashboard() {
   }, [selectedVariables, allTimeSeries])
 
   // Handler to capture when user changes the time range via range selector buttons
-  const handleRelayout = (event: any) => {
+  const handleRelayout = (_event: any) => {
     // ... existing handler ...
   }
 
@@ -236,7 +234,7 @@ export default function ClimateInsightsDashboard() {
   })
 
   // Forecast traces removed - forecasts now only in Early Warning Dashboard
-  const finalChartData = [...timeSeriesChartData];
+  const finalChartData: any[] = [...timeSeriesChartData];
 
 
 

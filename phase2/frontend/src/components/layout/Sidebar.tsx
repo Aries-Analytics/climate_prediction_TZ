@@ -19,6 +19,7 @@ import AssessmentIcon from '@mui/icons-material/Assessment'
 import TrendingUpIcon from '@mui/icons-material/TrendingUp'
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings'
 import LogoutIcon from '@mui/icons-material/Logout'
+import ScienceIcon from '@mui/icons-material/Science'
 import { useAuth } from '../../contexts/AuthContext'
 
 interface SidebarProps {
@@ -32,6 +33,7 @@ const menuItems = [
   { text: 'Climate Insights', icon: <CloudIcon />, path: '/dashboard/climate', roles: ['analyst', 'manager', 'admin'] },
   { text: 'Risk Management', icon: <AssessmentIcon />, path: '/dashboard/risk', roles: ['analyst', 'manager', 'admin'] },
   { text: 'Early Warnings', icon: <TrendingUpIcon />, path: '/dashboard/forecasts', roles: ['analyst', 'manager', 'admin'] },
+  { text: 'Evidence Pack', icon: <ScienceIcon />, path: '/dashboard/evidence', roles: ['analyst', 'manager', 'admin'] },
   { text: 'Admin Panel', icon: <AdminPanelSettingsIcon />, path: '/dashboard/admin', roles: ['admin'] },
 ]
 
