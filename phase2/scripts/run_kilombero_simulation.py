@@ -15,7 +15,7 @@ Output:
 """
 import sys
 import os
-import json
+import argparse
 from datetime import datetime
 
 # Add project paths
@@ -27,11 +27,15 @@ from app.models.location import Location
 from app.services.backtesting_service import BacktestingService
 
 
-def run_simulation():
-    """Run the Kilombero Basin historical backtesting simulation."""
+def run_simulation(is_historic=False):
+    """Run the Kilombero Basin backtesting simulation."""
+    
+    start_year = 2000 if is_historic else 2015
+    end_year = 2014 if is_historic else 2025
+    mode_name = "OUT-OF-SAMPLE (2000-2014)" if is_historic else "IN-SAMPLE (2015-2025)"
     
     print("=" * 60)
-    print("KILOMBERO BASIN RICE PILOT - HISTORICAL SIMULATION")
+    print(f"KILOMBERO BASIN RICE PILOT - {mode_name} SIMULATION")
     print("=" * 60)
     print()
     
@@ -54,23 +58,17 @@ def run_simulation():
         # Create simulation
         print("[1/4] Creating simulation...")
         simulation = service.create_simulation(
-            name="Kilombero Rice Pilot - Historical Validation (2015-2025)",
-            description="""
+            name=f"Kilombero Rice Pilot - Validation ({start_year}-{end_year})",
+            description=f"""
             Historical backtesting simulation to validate the parametric insurance
-            model for 1000 rice farmers in the Kilombero Basin. This simulation
-            applies trigger thresholds to actual historical climate data to
-            determine what payouts would have been made if the insurance product
-            had been active during this period.
+            model for 1000 rice farmers in the Kilombero Basin.
             
-            Purpose:
-            - Validate trigger thresholds against documented climate events
-            - Calculate loss ratio and sustainability metrics
-            - Generate validation report for insurtech accelerator demo
-            - Provide evidence for capstone project publication
+            Mode: {mode_name}
+            Purpose: Calculate loss ratio and validate basis risk structural integrity.
             """,
             location_id=location.id,
-            start_year=2015,
-            end_year=2025,
+            start_year=start_year,
+            end_year=end_year,
             farmer_count=1000,
             crop_type="rice"
         )
@@ -106,7 +104,7 @@ def run_simulation():
         
         for year, data in sorted(summary["yearly_summary"].items()):
             triggers = data.get("triggers", [])
-            validated = "✓ Validated" if data.get("validated") else ""
+            validated = "[v] Validated" if data.get("validated") else ""
             print(f"\n{year}: {len(triggers)} trigger(s), ${data['total_payout']:,.0f} payout {validated}")
             for t in triggers:
                 print(f"  - {t['trigger_type'].upper()} ({t['severity']}): {t['observed_value']:.0f}mm vs {t['threshold_value']:.0f}mm threshold")
@@ -139,9 +137,10 @@ def run_simulation():
         print()
         print("[4/4] Saving validation report...")
         
+        filename = 'KILOMBERO_BACKTESTING_REPORT_OUT_OF_SAMPLE.md' if is_historic else 'KILOMBERO_BACKTESTING_REPORT_IN_SAMPLE.md'
         report_path = os.path.join(
             os.path.dirname(__file__), 
-            '../docs/reports/KILOMBERO_BACKTESTING_REPORT.md'
+            f'../docs/reports/{filename}'
         )
         
         generate_markdown_report(simulation, summary, report_path)
@@ -200,21 +199,23 @@ def generate_markdown_report(simulation, summary, output_path):
 - NASA POWER (temperature, solar radiation)
 - ERA5 Reanalysis (humidity, wind)
 
-### Trigger Thresholds
+### Trigger Thresholds (Dynamic Phase-Based)
 
-| Trigger Type | Threshold | Phenology Stage |
-|--------------|-----------|-----------------|
-| Drought (vegetative) | <50mm/month | Nov-Jan |
-| Drought (flowering) | <80mm/month | Feb-Mar |
-| Flood | >300mm/month | Any |
+| Growth Phase | required_gdd | Drought Trigger (<) | Flood Trigger (>) | Payout Weight |
+|--------------|----------|---------------------|-------------------|---------------|
+"""
+    from app.config.rice_growth_phases import RICE_GROWTH_PHASES, PAYOUT_RATES
+    for phase, config in RICE_GROWTH_PHASES.items():
+        report += f"| {phase.capitalize()} | {config['required_gdd']} gdd | {config['drought_trigger_mm']}mm/phase | {config['flood_trigger_daily_mm']}mm/day | {config['payout_weight']*100:.0f}% |\n"
+        
+    report += f"""
+### Payout Rules
 
-### Payout Rates
+| Event Type | Calculation | Max Sum Insured |
+|------------|-------------|-----------------|
+| Drought | Dynamic (Phase Weight * Severity) | ${PAYOUT_RATES.get('crop_failure', 90)} |
+| Flood | Fixed (50% of Phase Weight) | ${PAYOUT_RATES.get('crop_failure', 90)} |
 
-| Severity | Drought | Flood |
-|----------|---------|-------|
-| Mild | $30 | $40 |
-| Moderate | $45 | $55 |
-| Severe | $60 | $75 |
 
 ---
 
@@ -224,7 +225,7 @@ def generate_markdown_report(simulation, summary, output_path):
     
     for year, data in sorted(summary["yearly_summary"].items()):
         triggers = data.get("triggers", [])
-        validated = "✓ *Externally Validated*" if data.get("validated") else ""
+        validated = "[v] *Externally Validated*" if data.get("validated") else ""
         
         report += f"\n### {year} {validated}\n\n"
         
@@ -311,4 +312,8 @@ The model is ready for real-world pilot deployment pending:
 
 
 if __name__ == "__main__":
-    run_simulation()
+    parser = argparse.ArgumentParser(description="Run Kilombero Basin backtesting simulation.")
+    parser.add_argument("--historic", action="store_true", help="Run in out-of-sample mode (2000-2014)")
+    args = parser.parse_args()
+    
+    run_simulation(is_historic=args.historic)

@@ -229,8 +229,8 @@ python train_pipeline.py
 # Skip feature selection (not recommended)
 python train_pipeline.py --skip-feature-selection
 
-# Custom feature count (default: 75)
-python train_pipeline.py --target-features 100
+# Custom feature count (default: 75, actual selected: 77 after source diversity)
+python train_pipeline.py --target-features 75
 
 # Skip preprocessing if features exist
 python train_pipeline.py --skip-preprocessing
@@ -254,7 +254,7 @@ python model_development_pipeline.py --experiment-name rainfall_v2
 ```
 
 **Note**: `train_pipeline.py` includes scientifically sound improvements:
-- Feature selection (640 → 75 features)
+- Feature selection (594 → 77 features, Feb 2026 retraining)
 - Baseline model comparison
 - Enhanced regularization
 - Automated validation checks

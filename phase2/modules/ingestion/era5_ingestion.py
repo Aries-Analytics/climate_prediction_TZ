@@ -136,15 +136,15 @@ def fetch_era5_data(
         log_info("Dry run mode: returning placeholder data")
         return df
 
-    # Check if cdsapi is installed
+    # Check if ecmwf-datastores-client is installed (replaces deprecated cdsapi)
     try:
-        import cdsapi
+        from ecmwf.datastores import Client as ECMWFClient
     except ImportError:
         log_error(
-            "cdsapi package not installed. Install with: pip install cdsapi\n"
-            "Also configure credentials: https://cds.climate.copernicus.eu/api-how-to"
+            "ecmwf-datastores-client package not installed. Install with: pip install ecmwf-datastores-client\n"
+            "Configure credentials: https://ecmwf.github.io/ecmwf-datastores-client/README.html#configuration"
         )
-        raise ImportError("cdsapi package required for ERA5 data fetching")
+        raise ImportError("ecmwf-datastores-client package required for ERA5 data fetching")
 
     # Use default bounds if not specified
     if bounds is None:
@@ -163,14 +163,17 @@ def fetch_era5_data(
         ]
 
     try:
-        # Initialize CDS API client with explicit endpoint
-        # This prevents warnings about deprecated API endpoints
-        api_key = os.getenv("ERA5_API_KEY")
+        # Initialize the new ECMWF Data Stores client
+        # Reads from env vars: ECMWF_DATASTORES_URL, ECMWF_DATASTORES_KEY
+        # Or from config file: ~/.ecmwfdatastoresrc
+        api_url = os.getenv("ECMWF_DATASTORES_URL", "https://cds.climate.copernicus.eu/api")
+        api_key = os.getenv("ECMWF_DATASTORES_KEY") or os.getenv("ERA5_API_KEY")
+        
         if api_key:
-            c = cdsapi.Client(key=api_key)
+            c = ECMWFClient(url=api_url, key=api_key)
         else:
-            # Fall back to .cdsapirc configuration
-            c = cdsapi.Client()
+            # Fall back to ~/.ecmwfdatastoresrc configuration
+            c = ECMWFClient()
 
         # Prepare download path
         nc_file = get_data_path("raw", "era5_raw.nc")
@@ -182,22 +185,23 @@ def fetch_era5_data(
         # Build year list
         years = [str(year) for year in range(start_year, end_year + 1)]
 
-        # Request data from CDS
+        # Request data from CDS using new client
+        # New API requires list values for most parameters
         c.retrieve(
             "reanalysis-era5-single-levels-monthly-means",
             {
-                "product_type": "monthly_averaged_reanalysis",
+                "product_type": ["monthly_averaged_reanalysis"],
                 "variable": variables,
                 "year": years,
                 "month": ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"],
-                "time": "00:00",
+                "time": ["00:00"],
                 "area": [
                     bounds["north"],
                     bounds["west"],
                     bounds["south"],
                     bounds["east"],
                 ],
-                "format": "netcdf",
+                "data_format": "netcdf",
             },
             nc_file,
         )
@@ -415,15 +419,43 @@ def ingest_era5(
                         existing.temperature_avg = float(row["temp_2m"]) - 273.15
                     if "soil_moisture" in row:
                         existing.soil_moisture = float(row["soil_moisture"])
+                    if "dewpoint_2m" in row and row["dewpoint_2m"] is not None:
+                        existing.dewpoint_2m = float(row["dewpoint_2m"]) - 273.15
+                    if "surface_pressure" in row and row["surface_pressure"] is not None:
+                        existing.surface_pressure = float(row["surface_pressure"])
+                    if "wind_u_10m" in row and row["wind_u_10m"] is not None:
+                        existing.wind_u_10m = float(row["wind_u_10m"])
+                    if "wind_v_10m" in row and row["wind_v_10m"] is not None:
+                        existing.wind_v_10m = float(row["wind_v_10m"])
+                    # Derive wind speed and direction from u/v components
+                    if "wind_u_10m" in row and "wind_v_10m" in row and row["wind_u_10m"] is not None and row["wind_v_10m"] is not None:
+                        import math
+                        u, v = float(row["wind_u_10m"]), float(row["wind_v_10m"])
+                        existing.wind_speed_ms = math.sqrt(u**2 + v**2)
+                        existing.wind_direction_deg = (math.degrees(math.atan2(-u, -v)) + 360) % 360
                     records_stored += 1
                 else:
                     # Create new record
+                    # Derive wind speed and direction from u/v components
+                    ws = None
+                    wd = None
+                    if "wind_u_10m" in row and "wind_v_10m" in row and row["wind_u_10m"] is not None and row["wind_v_10m"] is not None:
+                        import math
+                        u, v = float(row["wind_u_10m"]), float(row["wind_v_10m"])
+                        ws = math.sqrt(u**2 + v**2)
+                        wd = (math.degrees(math.atan2(-u, -v)) + 360) % 360
                     climate_record = ClimateData(
                         date=row["date"].date(),
                         location_lat=tanzania_lat,
                         location_lon=tanzania_lon,
                         temperature_avg=float(row["temp_2m"]) - 273.15 if "temp_2m" in row else None,
                         soil_moisture=float(row["soil_moisture"]) if "soil_moisture" in row else None,
+                        dewpoint_2m=float(row["dewpoint_2m"]) - 273.15 if "dewpoint_2m" in row and row["dewpoint_2m"] is not None else None,
+                        surface_pressure=float(row["surface_pressure"]) if "surface_pressure" in row and row["surface_pressure"] is not None else None,
+                        wind_u_10m=float(row["wind_u_10m"]) if "wind_u_10m" in row and row["wind_u_10m"] is not None else None,
+                        wind_v_10m=float(row["wind_v_10m"]) if "wind_v_10m" in row and row["wind_v_10m"] is not None else None,
+                        wind_speed_ms=ws,
+                        wind_direction_deg=wd,
                     )
                     db.add(climate_record)
                     records_stored += 1

@@ -346,6 +346,10 @@ def ingest_nasa_power(
                         existing.temperature_avg = float(row["t2m"])
                     if "gwetprof" in row:
                         existing.soil_moisture = float(row["gwetprof"])
+                    if "rh2m" in row and row["rh2m"] is not None:
+                        existing.rel_humidity_pct = float(row["rh2m"])
+                    if "allsky_sfc_sw_dwn" in row and row["allsky_sfc_sw_dwn"] is not None:
+                        existing.solar_rad_wm2 = float(row["allsky_sfc_sw_dwn"])
                     records_stored += 1
                 else:
                     # Create new record
@@ -355,6 +359,8 @@ def ingest_nasa_power(
                         location_lon=float(row.get("longitude", TANZANIA_LON)),
                         temperature_avg=float(row["t2m"]) if "t2m" in row else None,
                         soil_moisture=float(row["gwetprof"]) if "gwetprof" in row else None,
+                        rel_humidity_pct=float(row["rh2m"]) if "rh2m" in row and row["rh2m"] is not None else None,
+                        solar_rad_wm2=float(row["allsky_sfc_sw_dwn"]) if "allsky_sfc_sw_dwn" in row and row["allsky_sfc_sw_dwn"] is not None else None,
                     )
                     db.add(climate_record)
                     records_stored += 1

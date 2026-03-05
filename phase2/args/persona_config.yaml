@@ -1,0 +1,43 @@
+# HewaSense — Active Persona & Behavior Settings
+
+# ─── Current State ───
+active_persona: orchestrator            # orchestrator | backend_architect | frontend_engineer | auditor
+current_phase: commercial_pilot_prep    # feature_expansion (DONE) | commercial_pilot_prep
+current_branch: phase2/feature-expansion
+sprint_phase: 0                         # 0 = sprint complete, 1-5 from stabilization_sprint.md
+
+# ─── Project Paths ───
+skill_md: .agent/rules/SKILL.md
+state_json: state.json
+goals_manifest: goals/manifest.md
+tools_manifest: tools/manifest.md
+
+# ─── Forbidden Patterns (audit.py reads this) ───
+forbidden_patterns:
+  - predict_proba
+  - dummy_data
+  - synthetic
+  - np.random.normal
+  - "datetime.now()"           # Naive datetime — must use datetime.now(timezone.utc)
+
+# ─── Allowed in test files only ───
+test_allowed_patterns:
+  - mock                       # mock is OK in test files, forbidden in production code
+
+# ─── Model Handover ───
+handover_prompt_path: hardprompts/handover_prompt.md
+
+# ─── Contract Constants (canonical source: state.json → shared_contract) ───
+pilot_location_id: 6
+payout_threshold: 0.75
+pilot_region: Morogoro (Kilombero Basin)
+pilot_crop: Rice
+pilot_farmers: 1000
+
+# ─── ML Configuration ───
+expected_feature_count: 83
+feature_schema_path: feature_schema.json
+model_method: predict            # NEVER predict_proba
+active_model_config: outputs/models/active_model.json  # Source of truth for model selection
+# Training pipeline auto-generates active_model.json (STEP 7)
+# forecast_service.py reads it at startup — NO hardcoded model names allowed (GOTCHA Law #1)

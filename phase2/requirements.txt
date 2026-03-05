@@ -37,7 +37,7 @@ pytest-cov>=4.1.0
 requests>=2.31.0
 
 # Climate data APIs
-cdsapi>=0.6.1  # For ERA5 data from Copernicus Climate Data Store
+ecmwf-datastores-client>=0.4.0  # New ECMWF Data Stores client for ERA5 data
 xarray>=2023.1.0  # For processing NetCDF files
 netCDF4>=1.6.0  # NetCDF file support
 
