@@ -1,20 +1,20 @@
 {
-  "timestamp": "2025-12-29T17:11:38.742168",
+  "timestamp": "2026-02-23T14:29:10.534082",
   "model_name": "ensemble",
-  "feature_to_sample_ratio": 11.987179487179487,
+  "feature_to_sample_ratio": 14.571428571428571,
   "train_val_gap": 0,
-  "test_set_size": 315,
+  "test_set_size": 378,
   "overfitting_severity": "low",
   "baseline_comparison": {
-    "model_r2": 0.8438270719826827,
-    "baseline_r2": 0.6985446060327795,
-    "improvement": 0.14528246594990324
+    "model_r2": 0.8311384092893106,
+    "baseline_r2": 0.6729005130842478,
+    "improvement": 0.1582378962050628
   },
   "checks_passed": [
-    "Excellent feature-to-sample ratio: 11.99:1 (>= 10:1 is ideal)",
+    "Excellent feature-to-sample ratio: 14.57:1 (>= 10:1 is ideal)",
     "Excellent train-val gap: 0.00% (<= 2%)",
-    "Good test set size: 315 samples (>= 100)",
-    "Good improvement over baseline: +14.53% (>= 10%)"
+    "Good test set size: 378 samples (>= 100)",
+    "Good improvement over baseline: +15.82% (>= 10%)"
   ],
   "checks_failed": [],
   "checks_warning": [],
@@ -25,8 +25,8 @@
       "name": "Feature-to-Sample Ratio",
       "passed": true,
       "severity": "pass",
-      "message": "Excellent feature-to-sample ratio: 11.99:1 (>= 10:1 is ideal)",
-      "value": 11.987179487179487,
+      "message": "Excellent feature-to-sample ratio: 14.57:1 (>= 10:1 is ideal)",
+      "value": 14.571428571428571,
       "threshold": 5.0,
       "recommendation": null
     },
@@ -43,8 +43,8 @@
       "name": "Test Set Size",
       "passed": true,
       "severity": "pass",
-      "message": "Good test set size: 315 samples (>= 100)",
-      "value": 315.0,
+      "message": "Good test set size: 378 samples (>= 100)",
+      "value": 378.0,
       "threshold": 50.0,
       "recommendation": null
     },
@@ -52,8 +52,8 @@
       "name": "Baseline Improvement",
       "passed": true,
       "severity": "pass",
-      "message": "Good improvement over baseline: +14.53% (>= 10%)",
-      "value": 0.14528246594990324,
+      "message": "Good improvement over baseline: +15.82% (>= 10%)",
+      "value": 0.1582378962050628,
       "threshold": 0.1,
       "recommendation": null
     }

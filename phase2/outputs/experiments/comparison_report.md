@@ -1,6 +1,6 @@
 # Experiment Comparison Report
-Generated: 2025-12-31 14:06:49
-Total Experiments: 27
+Generated: 2026-03-05 10:40:45
+Total Experiments: 29
 
 ---
 
@@ -23,7 +23,7 @@ Total Experiments: 27
 
 ## All Experiments
 
-Total: 27 experiments
+Total: 29 experiments
 
 | experiment_id | timestamp | model_type | n_features | train_samples | val_samples | test_samples | train_r2 |
 |---|---|---|---|---|---|---|---|
@@ -54,3 +54,5 @@ Total: 27 experiments
 | morogoro_6loc_COMPLETE_AUTOMATED_20251229_231557 | 2025-12-29T23:15:57.321010 | nan | nan | nan | nan | nan | nan |
 | morogoro_6loc_NO_LEAKAGE_20251229_235252 | 2025-12-29T23:52:52.748127 | nan | nan | nan | nan | nan | nan |
 | ml_pipeline_20251231_140649 | 2025-12-31T14:06:49.092968 | nan | nan | nan | nan | nan | nan |
+| temporal_gap_fix_20260304_223220 | 2026-03-04T22:32:20.801997 | nan | nan | nan | nan | nan | nan |
+| leakage_fix_20260305_104045 | 2026-03-05T10:40:45.576846 | nan | nan | nan | nan | nan | nan |

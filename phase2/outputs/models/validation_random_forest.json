@@ -1,22 +1,22 @@
 {
-  "timestamp": "2025-12-29T17:11:38.726064",
+  "timestamp": "2026-02-23T14:29:10.507967",
   "model_name": "random_forest",
-  "feature_to_sample_ratio": 11.987179487179487,
-  "train_val_gap": 0.14241034820716048,
-  "test_set_size": 315,
+  "feature_to_sample_ratio": 14.571428571428571,
+  "train_val_gap": 0.14732067084504674,
+  "test_set_size": 378,
   "overfitting_severity": "high",
   "baseline_comparison": {
-    "model_r2": 0.7997316599433059,
-    "baseline_r2": 0.6985446060327795,
-    "improvement": 0.1011870539105264
+    "model_r2": 0.7851361290446142,
+    "baseline_r2": 0.6729005130842478,
+    "improvement": 0.11223561596036635
   },
   "checks_passed": [
-    "Excellent feature-to-sample ratio: 11.99:1 (>= 10:1 is ideal)",
-    "Good test set size: 315 samples (>= 100)",
-    "Good improvement over baseline: +10.12% (>= 10%)"
+    "Excellent feature-to-sample ratio: 14.57:1 (>= 10:1 is ideal)",
+    "Good test set size: 378 samples (>= 100)",
+    "Good improvement over baseline: +11.22% (>= 10%)"
   ],
   "checks_failed": [
-    "Severe overfitting detected: 14.24% gap (> 10%)"
+    "Severe overfitting detected: 14.73% gap (> 10%)"
   ],
   "checks_warning": [],
   "recommendations": [
@@ -28,8 +28,8 @@
       "name": "Feature-to-Sample Ratio",
       "passed": true,
       "severity": "pass",
-      "message": "Excellent feature-to-sample ratio: 11.99:1 (>= 10:1 is ideal)",
-      "value": 11.987179487179487,
+      "message": "Excellent feature-to-sample ratio: 14.57:1 (>= 10:1 is ideal)",
+      "value": 14.571428571428571,
       "threshold": 5.0,
       "recommendation": null
     },
@@ -37,8 +37,8 @@
       "name": "Train-Validation Gap",
       "passed": false,
       "severity": "fail",
-      "message": "Severe overfitting detected: 14.24% gap (> 10%)",
-      "value": 0.14241034820716048,
+      "message": "Severe overfitting detected: 14.73% gap (> 10%)",
+      "value": 0.14732067084504674,
       "threshold": 0.05,
       "recommendation": "URGENT: Apply strong regularization, reduce features, or simplify model"
     },
@@ -46,8 +46,8 @@
       "name": "Test Set Size",
       "passed": true,
       "severity": "pass",
-      "message": "Good test set size: 315 samples (>= 100)",
-      "value": 315.0,
+      "message": "Good test set size: 378 samples (>= 100)",
+      "value": 378.0,
       "threshold": 50.0,
       "recommendation": null
     },
@@ -55,8 +55,8 @@
       "name": "Baseline Improvement",
       "passed": true,
       "severity": "pass",
-      "message": "Good improvement over baseline: +10.12% (>= 10%)",
-      "value": 0.1011870539105264,
+      "message": "Good improvement over baseline: +11.22% (>= 10%)",
+      "value": 0.11223561596036635,
       "threshold": 0.1,
       "recommendation": null
     }

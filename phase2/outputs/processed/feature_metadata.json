@@ -2,17 +2,17 @@
   "input_file": "data/processed/master_dataset.csv",
   "output_directory": "outputs\\processed",
   "initial_shape": [
-    1872,
-    179
+    1878,
+    181
   ],
   "final_shape": [
-    1872,
-    381
+    1878,
+    380
   ],
-  "features_added": 202,
+  "features_added": 199,
   "train_samples": 1122,
   "val_samples": 372,
-  "test_samples": 378,
+  "test_samples": 240,
   "lag_periods": [
     1,
     3,
@@ -21,12 +21,12 @@
   "rolling_windows": [
     3
   ],
-  "missing_values_before": 3340,
-  "missing_values_after": 11298,
-  "normalized_features": 368,
+  "missing_values_before": 11352,
+  "missing_values_after": 28850,
+  "normalized_features": 367,
   "date_range": {
-    "train": "2000-1 to 2015-12",
-    "val": "2015-1 to 2020-12",
-    "test": "2020-1 to 2025-12"
+    "train": "2000-01 to 2015-07",
+    "val": "2016-08 to 2021-09",
+    "test": "2022-10 to 2026-01"
   }
 }
