@@ -1,76 +1,50 @@
-# ERA5 API Configuration Update Guide
+# ERA5 API Configuration Guide
 
-## Issue
-You're seeing a warning about "Climate Data Store API endpoint not found" even though your API key works correctly.
+## Current Setup (March 2026)
 
-## Root Cause
-The Copernicus Climate Data Store migrated to a new API endpoint. The old endpoint format is deprecated.
+ERA5 data is fetched via the **`ecmwf-datastores-client`** library (v0.4.2), the official ECMWF Data Stores API client.
 
-## Solution
+> **Note:** The old `cdsapi` library is deprecated and had DNS/connection failures. Migrated March 4, 2026.
 
-### Step 1: Locate Your `.cdsapirc` File
+## Configuration
 
-The configuration file is typically located at:
-- **Windows**: `C:\Users\YYY\.cdsapirc`
-- **Linux/Mac**: `~/.cdsapirc`
+### Environment Variables (preferred)
 
-### Step 2: Update the Configuration
+```
+ECMWF_DATASTORES_URL=https://cds.climate.copernicus.eu/api
+ECMWF_DATASTORES_KEY=your-api-key-here
+```
 
-Your `.cdsapirc` file should look like this:
+These are set in `docker-compose.dev.yml` for the pipeline-scheduler service.
+
+### Config File (fallback)
+
+Create `~/.ecmwfdatastoresrc`:
 
 ```
 url: https://cds.climate.copernicus.eu/api
-key: YOUR_API_KEY_HERE
+key: your-api-key-here
 ```
 
-**Important Changes:**
-- ✓ Use `https://cds.climate.copernicus.eu/api` (NOT `/api/v2`)
-- ✓ Remove any `<UID>:` prefix from your key (just use the key directly)
+### Getting Credentials
 
-### Step 3: Update cdsapi Package
+1. Register at: https://cds.climate.copernicus.eu
+2. API key page: https://cds.climate.copernicus.eu/how-to-api
+3. Key format: UUID only (no `UID:` prefix)
 
-Make sure you have the latest version:
+## Installation
 
 ```bash
-pip install --upgrade cdsapi
+pip install ecmwf-datastores-client
 ```
 
-### Step 4: Verify the Fix
+## Code Location
 
-Run the API verification script again:
-
-```bash
-python scripts/verify_api_connections.py
-```
-
-The warning should disappear, and you'll see:
-```
-✓ ERA5 CDS API client initialized successfully
-```
-
-## Alternative: Use Environment Variable Only
-
-If you prefer not to use the `.cdsapirc` file, you can configure ERA5 directly in your code using environment variables. Update your `modules/ingestion/era5_ingestion.py` to include:
-
-```python
-import cdsapi
-
-# Initialize with explicit configuration
-c = cdsapi.Client(
-    url="https://cds.climate.copernicus.eu/api",
-    key=os.getenv("ERA5_API_KEY")
-)
-```
-
-## Current Status
-
-✓ **Your API key is valid and working**
-✓ **Data downloads will work correctly**
-⚠ **The warning is cosmetic and can be ignored**
-
-The warning doesn't affect functionality - it's just the library checking for old endpoints. You can safely proceed with data ingestion.
+- **Ingestion module:** `modules/ingestion/era5_ingestion.py`
+- **Import:** `from ecmwf.datastores import Client`
+- **Collection:** `reanalysis-era5-single-levels-monthly-means`
 
 ## Reference
 
-- New CDS API Documentation: https://cds.climate.copernicus.eu/how-to-api
-- Migration Guide: https://confluence.ecmwf.int/display/CKB/Please+read%3A+CDS+and+ADS+migrated+to+new+infrastructure
+- Documentation: https://ecmwf.github.io/ecmwf-datastores-client/
+- Migration guide: https://confluence.ecmwf.int/display/CKB/Please+read%3A+CDS+and+ADS+migrated+to+new+infrastructure

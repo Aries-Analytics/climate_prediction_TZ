@@ -205,9 +205,10 @@ HIGH_RISK_THRESHOLD = 0.75  # 75% probability
 ## Validation Against Model Performance
 
 **Model Accuracy Context**:
-- Overall ensemble R²: 98.3%
-- Morogoro-specific R²: 85.5%
-- Seasonal performance: 97.6-98.7%
+- Overall ensemble R²: 98.3% (historical benchmark — all-location test set)
+- **Production model (XGBoost) R²: 84.0%** (used for forward validation)
+- Morogoro-specific spatial CV R²: 85.5%
+- Seasonal performance: 97.6-98.7% (historical)
 
 **Implication for Thresholds**:
 - High model confidence supports **75% threshold** for financial decisions
@@ -395,8 +396,8 @@ IF actual_rainfall < 120mm:  # After April ends
 ### 5.5 Real-World Validation
 
 **Model Performance** (from PARAMETRIC_INSURANCE_FINAL.md):
-- R² Score: **84.9%** (85% of rainfall variance explained)
-- Spatial Cross-Validation: **81.2%** accuracy
+- R² Score: **84.0%** (84% of rainfall variance explained, XGBoost)
+- Temporal Cross-Validation: **84.6%** accuracy (5-fold temporal CV)
 - Forecast Horizon: **3-6 months**
 
 **Interpretation**:
@@ -466,7 +467,7 @@ vs Pula Zambia (most comparable):
 5. ✅ **Farmer-Friendly**: Simple, understandable, predictable payouts
 
 **Recommendation**: **Do NOT change** the core two-layer architecture. Focus optimization efforts on:
-- **Layer 1**: Improve ML model accuracy (current 84.9% → target 90%+)
+- **Layer 1**: Improve ML model accuracy (current 84.0% → target 90%+)
 - **Layer 2**: Refine phase-specific thresholds based on pilot data
 - **Integration**: Enhance early warning communication to farmers
 

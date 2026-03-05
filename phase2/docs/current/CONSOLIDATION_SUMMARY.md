@@ -48,13 +48,13 @@ Updated all documents with correct numbers from **6_LOCATION_EXPANSION_SUMMARY.m
 - **5 data sources** (NASA POWER, ERA5, CHIRPS, NDVI, Ocean Indices)
 - **1,872 total samples** (6 locations × 312 months)
 - **26 years** (2000-2025)
-- **74 features** (selected from 239)
+- **77 features** (selected from 594, Feb 2026 retraining)
 
-**Model Performance (6-Location Dataset)**:
-- **0.849 R²** (Ensemble, test set)
-- **0.832 R²** (XGBoost, test set)
-- **0.812 ± 0.046 R²** (XGBoost, spatial CV)
-- **25.3:1 sample-to-feature ratio** (healthy ML standard)
+**Model Performance (6-Location Dataset, Feb 2026 Retraining)**:
+- **0.840 R²** (XGBoost, test set — best performer)
+- **0.831 R²** (Ensemble, test set)
+- **0.846 ± 0.050 R²** (XGBoost, 5-fold temporal CV)
+- **24.3:1 sample-to-feature ratio** (healthy ML standard)
 
 **System Performance**:
 - **28 API endpoints**

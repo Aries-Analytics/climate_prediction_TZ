@@ -1,22 +1,22 @@
 # ML Model Reference
 
-**Last Updated**: January 4, 2026  
-**Version**: 2.0  
+**Last Updated**: March 5, 2026
+**Version**: 3.2
 **Status**: ✅ Production Ready
 
 ---
 
 ## Overview
 
-The Tanzania Climate Intelligence Platform employs an advanced ensemble machine learning approach combining four complementary models to predict climate variables with high accuracy. The system achieves 84.9% accuracy (R²) using the 6-location dataset with comprehensive spatial and temporal validation.
+The Tanzania Climate Intelligence Platform employs an advanced ensemble machine learning approach combining four complementary models to predict climate variables with high accuracy. The system achieves 86.7% accuracy (R²) using XGBoost on the 6-location dataset with proper temporal gap validation (12-month gaps between train/val/test splits). Following a data leakage fix (121 rainfall-derived features removed), the pipeline now uses `utils/data_leakage_prevention.py` for systematic leakage detection instead of hardcoded patterns.
 
 ### Key Achievements
 
 - **6-Location Dataset**: 1,872 monthly observations across 6 locations
-- **74 Optimized Features**: Selected from 239 through intelligent feature selection
+- **83 Optimized Features**: Selected from 245 through intelligent hybrid feature selection (121 leaky rainfall-derived features removed)
 - **4-Model Ensemble**: Random Forest, XGBoost, LSTM, and Weighted Ensemble
-- **Spatial Validation**: 81.2% ± 4.6% R² across locations (Leave-One-Location-Out CV)
-- **Temporal Validation**: Robust performance with 12-month gap prevention
+- **Temporal Validation**: 0.8566 ± 0.0575 R² (RF CV), 0.8396 ± 0.0603 R² (XGB CV, 5-fold temporal CV)
+- **Temporal Validation**: Robust performance with 12-month gap between train/val/test splits
 - **Uncertainty Quantification**: 95% prediction intervals for risk assessment
 
 ---
@@ -48,19 +48,23 @@ The system combines four complementary models to leverage their individual stren
 │                  │ Weighted Average│                      │
 │                  │   Ensemble      │                      │
 │                  │                 │                      │
-│                  │ Final R²: 0.849 │                      │
+│                  │ Final R²: 0.840 │                      │
 │                  └─────────────────┘                      │
 └─────────────────────────────────────────────────────────────┘
 ```
 
 ### Model Performance (6-Location Dataset)
 
-| Model | Test R² | RMSE | MAE | Training Time | Strengths |
-|-------|---------|------|-----|---------------|-----------|
-| **Ensemble** | **0.849** | 0.419 | 0.282 | ~10s | Best overall performance |
-| XGBoost | 0.832 | 0.442 | 0.293 | 2.4s | Fast, interpretable |
-| LSTM | 0.828 | 0.449 | 0.288 | 216s | Temporal dependencies |
-| Random Forest | 0.802 | 0.479 | 0.315 | 0.6s | Robust, feature importance |
+| Model | Test R² | RMSE | MAE | Strengths |
+|-------|---------|------|-----|-----------|
+| **XGBoost** | **0.8666** | **0.4008** | **0.2518** | **Best by R², fast, interpretable** |
+| Ensemble | 0.8402 | 0.4387 | 0.2784 | Robust generalization |
+| LSTM | 0.7866 | 0.5103 | 0.3286 | Temporal dependencies |
+| Random Forest | 0.7814 | 0.5131 | 0.3201 | Robust, feature importance |
+
+**Active Model for Serving**: Primary = XGBoost (R²=0.8666, highest test R²), Fallback = LSTM (R²=0.7866)
+
+> **Note (March 2026 Data Leakage Fix)**: 121 rainfall-derived features (precip_mm, flood_trigger, is_dry_day, consecutive_dry_days, heavy_rain_days_30day, cumulative_excess_7day, and all their lags/rolling variants) were identified as data leakage and removed. The pipeline now uses `utils/data_leakage_prevention.py` for systematic detection. Original features reduced from 279 to 245 before selection; selected features reduced from 84 to 83.
 
 ### Spatial Cross-Validation Results
 
@@ -75,7 +79,12 @@ The system combines four complementary models to leverage their individual stren
 | **Dar es Salaam** | 0.765 | 0.442 | Coastal | Good |
 | **Arusha** | 0.737 | 0.461 | Highland | Good |
 
-**Overall Spatial CV**: 0.812 ± 0.046 R² (83% success rate at R² ≥ 0.75)
+**Overall Temporal CV (5-fold, Mar 2026 Retraining with Data Leakage Fix)**:
+
+| Model | CV R² Mean ± Std | 95% CI |
+|-------|-------------------|--------|
+| **Random Forest** | **0.8566 ± 0.0575** | [0.7852, 0.9281] |
+| **XGBoost** | 0.8396 ± 0.0603 | [0.7647, 0.9145] |
 
 ---
 
@@ -116,7 +125,7 @@ RandomForestRegressor(
 - L1 (alpha=0.1) and L2 (lambda=1.0) regularization
 
 **Strengths**:
-- Highest individual model accuracy
+- Strong individual model accuracy
 - Excellent handling of complex interactions
 - Built-in regularization prevents overfitting
 - Fast training with GPU support
@@ -188,8 +197,8 @@ ensemble_prediction = (
 
 ### Feature Selection Process
 
-**Original Features**: 239 (after data leakage prevention)  
-**Selected Features**: 74 (69% reduction)  
+**Original Features**: 245 (after feature engineering with atmospheric data; reduced from 279 after removing 121 leaky rainfall-derived features)
+**Selected Features**: 83 (66% reduction)
 **Selection Method**: Hybrid approach combining:
 - Correlation analysis
 - Mutual information
@@ -200,11 +209,12 @@ ensemble_prediction = (
 
 | Category | Count | Examples |
 |----------|-------|----------|
-| **Climate Variables** | 25 | Temperature, rainfall, humidity, pressure |
-| **Vegetation Indices** | 18 | NDVI, VCI, crop stress indicators |
-| **Ocean Patterns** | 12 | ENSO, IOD, climate forecasts |
-| **Temporal Features** | 8 | Lag variables (1, 3, 6 months) |
-| **Derived Indicators** | 11 | Drought indices, flood risk, anomalies |
+| **ERA5 (Atmospheric)** | 15 | Temperature, humidity, pressure, wind, dewpoint |
+| **Vegetation (NDVI)** | 34 | NDVI, VCI, crop stress indicators, anomalies |
+| **NASA POWER** | 17 | Solar radiation, PET, temperature derivatives |
+| **CHIRPS (Rainfall)** | 0 | Removed (data leakage -- all rainfall-derived features excluded) |
+| **Ocean Indices** | 5 | ENSO intensity, critical period indicators |
+| **Other** | 12 | Soil moisture, seasonal indicators, temperature derivatives |
 
 ### Key Predictive Features
 
@@ -240,11 +250,11 @@ def engineer_features(df):
     # 4. Anomaly detection
     df = create_anomaly_features(df)
     
-    # 5. Data leakage prevention
-    df = remove_target_derived_features(df)
-    
+    # 5. Data leakage prevention (utils/data_leakage_prevention.py)
+    df = remove_leaky_features(df)  # Removes 121 rainfall-derived features
+
     # 6. Feature selection
-    df = select_optimal_features(df, n_features=74)
+    df = select_optimal_features(df, n_features=83)
     
     return df
 ```
@@ -255,14 +265,14 @@ def engineer_features(df):
 
 ### Data Preparation
 
-**Dataset Split**:
-- **Training**: 60% (temporal split with 12-month gap)
-- **Validation**: 20% (for hyperparameter tuning)
-- **Test**: 20% (held-out for final evaluation)
+**Dataset Split** (with 12-month gaps between splits to prevent temporal leakage):
+- **Training**: 1,122 samples, Jan 2000 -- Jul 2015
+- **Validation**: 372 samples, Aug 2016 -- Sep 2021 (12-month gap after train)
+- **Test**: 240 samples, Oct 2022 -- Jan 2026 (12-month gap after val)
 
 **Preprocessing Steps**:
-1. **Data Leakage Prevention**: Automatic exclusion of target-derived features
-2. **Feature Selection**: Intelligent selection of 74 optimal features
+1. **Data Leakage Prevention**: Automatic exclusion of 121 rainfall-derived features via `utils/data_leakage_prevention.py`
+2. **Feature Selection**: Intelligent selection of 83 optimal features from 245 candidates
 3. **Missing Value Handling**: Median imputation after feature selection
 4. **Normalization**: Z-score standardization
 5. **Sequence Preparation**: 6-month sequences for LSTM
@@ -404,7 +414,7 @@ predictions = predictor.predict_batch(features_batch)
 - Uncertainty calibration
 
 **Retraining Triggers**:
-- Performance degradation (R² < 0.80)
+- Performance degradation (R² < 0.75)
 - Significant data drift
 - New location additions
 - Seasonal recalibration
@@ -438,7 +448,8 @@ predictions = predictor.predict_batch(features_batch)
 - Persistence model: R² = -1.03 (poor)
 - Mean model: R² = 0.00 (poor)
 - Linear Ridge: R² = 0.973 (strong baseline)
-- **Ensemble**: R² = 0.849 (excellent with uncertainty)
+- **XGBoost**: R² = 0.8666 (best model after leakage fix)
+- **Ensemble**: R² = 0.8402 (robust with uncertainty)
 
 ---
 
@@ -446,28 +457,21 @@ predictions = predictor.predict_batch(features_batch)
 
 ### Data Leakage Prevention
 
-**Automatic Detection**:
+**Systematic Detection via `utils/data_leakage_prevention.py`**:
+
+In March 2026, a comprehensive audit identified 121 rainfall-derived features as data leakage (precip_mm, flood_trigger, is_dry_day, consecutive_dry_days, heavy_rain_days_30day, cumulative_excess_7day, and all their lag/rolling variants). These features were derived from the prediction target (rainfall) and artificially inflated model performance.
+
+The pipeline now uses a dedicated module instead of hardcoded regex patterns:
+
 ```python
-def detect_data_leakage(features, target):
-    """Detect features derived from target variable"""
-    
-    leakage_patterns = [
-        r'.*rainfall.*rolling.*',  # Rolling rainfall features
-        r'.*rainfall.*anomaly.*',  # Rainfall anomalies
-        r'.*target.*',             # Direct target references
-    ]
-    
-    leaky_features = []
-    for pattern in leakage_patterns:
-        leaky_features.extend(
-            [col for col in features.columns 
-             if re.match(pattern, col, re.IGNORECASE)]
-        )
-    
-    return leaky_features
+from utils.data_leakage_prevention import remove_leaky_features
+
+# Removes all rainfall-derived features systematically
+# 121 features removed, reducing candidates from 279 to 245
+df = remove_leaky_features(df)
 ```
 
-**Prevention**: Integrated into pipeline (Step 3.4) with pattern-based exclusion
+**Prevention**: Integrated into the training pipeline before feature selection. The `data_leakage_prevention` module maintains the canonical list of leaky feature patterns and is the single source of truth.
 
 ### Feature Importance Analysis
 
@@ -641,7 +645,7 @@ def optimize_hyperparameters(model_type, X_train, y_train):
 
 ---
 
-**Document Version**: 2.0  
-**Last Updated**: January 4, 2026  
-**Status**: ✅ Production Ready  
+**Document Version**: 3.2
+**Last Updated**: March 5, 2026
+**Status**: ✅ Production Ready
 **Consolidates**: MODEL_DEVELOPMENT_GUIDE.md, feature_engineering.md, UNCERTAINTY_QUANTIFICATION.md, MODEL_IMPROVEMENT_IMPLEMENTATION_GUIDE.md, MODEL_IMPROVEMENTS_RESULTS.md, TRAIN_PIPELINE_MIGRATION.md, RETRAINING_RESULTS_SUMMARY.md, SPATIAL_CV_RESULTS_TASK_15.md

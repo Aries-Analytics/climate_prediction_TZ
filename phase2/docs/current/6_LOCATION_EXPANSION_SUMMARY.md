@@ -24,18 +24,18 @@ Successfully expanded the climate prediction system from 5 to 6 locations by add
 
 | Model | R² | RMSE | MAE |
 |-------|-----|------|-----|
-| **Ensemble** | **0.849** ⭐ | 0.419 | 0.282 |
-| XGBoost | 0.832 | 0.442 | 0.293 |
-| LSTM | 0.828 | 0.449 | 0.288 |
-| Random Forest | 0.802 | 0.479 | 0.315 |
+| **XGBoost** | **0.840** ⭐ | 0.431 | 0.248 |
+| Ensemble | 0.831 | 0.442 | 0.264 |
+| LSTM | 0.809 | 0.472 | 0.299 |
+| Random Forest | 0.785 | 0.499 | 0.296 |
 
 ### 3. Spatial Generalization (Cross-Validation)
 
-**6-Location Results**:
-- **Mean R²**: 0.812 ± 0.046 (XGBoost)
-- **Best Location**: Morogoro & Mbeya (R²=0.855)
-- **Challenging**: Arusha (R²=0.737)
-- **Success Rate**: 83% of locations meet R²≥0.75 threshold
+**6-Location Results** (Feb 2026 Retraining, 77 features):
+- **Mean CV R²**: 0.846 ± 0.050 (XGBoost, 5-fold temporal CV)
+- **Ensemble CV R²**: 0.813 ± 0.094
+- **Best Model**: XGBoost (Test R²=0.840)
+- **Baseline Improvement**: +16.7% over linear regression
 
 **Comparison with 5-Location Baseline**:
 - **Improvement**: +9.0% mean R² (0.745 → 0.812)
@@ -62,7 +62,7 @@ Successfully expanded the climate prediction system from 5 to 6 locations by add
 1. Load preprocessed data
 2. Prepare model inputs (numeric filtering)
 3. **Step 3.4**: Data leakage prevention ⭐
-4. **Step 3.5**: Feature selection (239 → 74 features)
+4. **Step 3.5**: Feature selection (594 → 77 features)
 5. **Step 3.6**: NaN handling (median imputation)
 6. Train 4 models (RF, XGBoost, LSTM, Ensemble)
 7. Display test metrics
@@ -128,7 +128,7 @@ Successfully expanded the climate prediction system from 5 to 6 locations by add
 ### Features
 - **Original**: 365 numeric features (after removing 11 string columns)
 - **After Leakage Prevention**: 239 features (excluded 126 target-derived)
-- **After Selection**: 74 features (optimal set)
+- **After Selection**: 77 features (optimal set, Feb 2026 retraining)
 
 ### Model Training Times
 - Random Forest: 0.6 seconds
@@ -207,13 +207,13 @@ docs/
 ## Business Impact
 
 ### For Agricultural Insurance
-- **Better Risk Assessment**: 85% accuracy in rainfall prediction
+- **Better Risk Assessment**: 84% accuracy in rainfall prediction (XGBoost Test R²=0.840)
 - **Expanded Coverage**: 6 locations vs 5 (+20% geographic coverage)
 - **Improved Trust**: Robust spatial validation (83% success rate)
 - **Cost Efficiency**: Automated pipeline reduces operational costs
 
 ### For Publication
-- **Strong Results**: R²=0.849 (state-of-the-art for rainfall)
+- **Strong Results**: R²=0.840 (state-of-the-art for rainfall)
 - **Rigorous Validation**: Temporal + Spatial CV
 - **Honest Reporting**: Discovered and fixed data leakage
 - **Reproducibility**: Fully automated pipeline
@@ -294,5 +294,5 @@ The 6-location expansion was **highly successful**:
 ---
 
 **Document**: `docs/6_LOCATION_EXPANSION_SUMMARY.md`  
-**Last Updated**: December 30, 2025  
-**Status**: Complete ✅
+**Last Updated**: February 25, 2026  
+**Status**: Complete ✅ (Updated with 77-feature retraining results)

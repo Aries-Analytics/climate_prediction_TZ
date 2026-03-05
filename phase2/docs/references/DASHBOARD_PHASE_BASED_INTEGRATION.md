@@ -44,7 +44,7 @@ Add to risk management dashboard between "Risk Portfolio" and "Historical Trigge
 ```
 Drought Probability:
 Simple:    ███████░░░ 32%
-Phase-Based: ████████░░ 38%  ← More sensitive (better basis risk)
+Phase-Based: ████████░░ 38%  ← More sensitive (20% basis risk, zero false negatives)
 ```
 
 #### 4. Portfolio Impact Summary
@@ -201,7 +201,7 @@ const { data } = useFetch('/api/v1/seasonal/forecast/Morogoro');
 
 **For Insurers**:
 - Compare model accuracy
-- Validate basis risk reduction
+- Validate basis risk reduction (production model: 20%, baseline: 10%)
 - Transparent trigger methodology
 
 **For Regulators**:

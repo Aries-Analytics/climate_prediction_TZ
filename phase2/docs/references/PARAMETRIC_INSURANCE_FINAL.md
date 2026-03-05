@@ -140,8 +140,8 @@ Machine learning models forecast actual climate variables for the next 3-6 month
 - **Soil Moisture** (%): Predicted from ERA5 climate data
 
 **Model Performance**:
-- R² Score: 0.849 (84.9% of variance explained)
-- Spatial Cross-Validation: 81.2% accuracy
+- R² Score: 0.840 (84.0% of variance explained, XGBoost best performer)
+- Spatial Cross-Validation: 84.6% accuracy (XGBoost temporal CV)
 - 6-month forecasting horizon
 
 #### Step 2: Threshold Comparison
@@ -290,8 +290,8 @@ INSURANCE_TRIGGERS = outputs/business_reports/insurance_triggers_detailed.csv
 *These thresholds were calibrated using 26 years of historical data (2000-2025) to achieve sustainable trigger rates.*
 
 ### Climate Prediction Model Performance
-- **Rainfall Forecast R²**: 0.849 (explains 84.9% of variance in actual rainfall)
-- **Spatial Cross-Validation**: 81.2% (validated across 6 geographic locations)
+- **Rainfall Forecast R²**: 0.840 (explains 84.0% of variance in actual rainfall, XGBoost)
+- **Temporal Cross-Validation**: 84.6% (validated across 5 temporal CV folds)
 - **Forecast Horizon**: 3-6 months ahead
 - **Data Leakage**: Prevented and validated ✅
 

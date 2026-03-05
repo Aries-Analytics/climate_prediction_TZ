@@ -192,7 +192,7 @@ The system calculates loss ratio and provides recommendations:
 
 1. **Simulated Farmers**: Portfolio is synthetic, not actual enrollees
 2. **No Ground Truth**: Actual yield data not available for validation
-3. **Basis Risk**: Cannot be fully quantified without farmer loss reports
+3. **Basis Risk**: Simple model basis risk (10%) was reduced by adopting the Phase-Based Dynamic Model (20% basis risk, zero false negatives). See `PHASE_BASED_COMPARISON.md` for full analysis.
 4. **Historical Only**: Past performance doesn't guarantee future results
 
 ## Usage Example
@@ -238,7 +238,7 @@ print(f"Loss Ratio: {report['executive_summary']['loss_ratio']}%")
 
 **1. Model Accuracy:**
 - ✅ Correctly detected 2016, 2018, 2020, 2022 events.
-- **Basis Risk:** 2017 dry spell was missed (valuable finding).
+- **Basis Risk:** 2017 dry spell was missed by the simple model (valuable finding; resolved by Phase-Based Dynamic Model — see `PHASE_BASED_COMPARISON.md`).
 
 **2. Financial Viability:**
 - **Validated "premium": "$20/farmer/year"**

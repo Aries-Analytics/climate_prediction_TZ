@@ -1,8 +1,8 @@
 # Kilombero Basin Rice Pilot - Historical Validation Report
 
-**Generated:** 2026-01-23  
-**Simulation ID:** 13 (Phase-Based Calibration)  
-**Status:** Completed
+**Generated:** 2026-02-26 00:44  
+**Simulation ID:** 4  
+**Status:** completed
 
 ---
 
@@ -12,14 +12,14 @@
 |--------|-------|
 | **Location** | Kilombero Basin (Morogoro), Tanzania |
 | **Period** | 2015 - 2025 |
-| **Duration** | 10 years |
+| **Duration** | 11 years |
 | **Farmers Simulated** | 1,000 |
 | **Crop** | Rice |
-| **Annual Premium** | **$20/farmer** (Phase-Based Efficiency) |
-| **Total Premiums Collected** | **$220,000** |
-| **Total Payouts** | $45,280 |
-| **Loss Ratio** | **20.6%** |
-| **Sustainability** | ✅ **Sustainable (Excellent Health)** |
+| **Annual Premium** | $15/farmer |
+| **Total Premiums Collected** | $220,000.00 |
+| **Total Payouts** | $45,280.00 |
+| **Loss Ratio** | 20.6% |
+| **Sustainability** | Excellent - Premium may be too high, consider reduction |
 
 ---
 
@@ -30,153 +30,146 @@
 - NASA POWER (temperature, solar radiation)
 - ERA5 Reanalysis (humidity, wind)
 
-### Trigger Thresholds
+### Trigger Thresholds (Dynamic Phase-Based)
 
-| Trigger Type | Threshold | Phenology Stage |
-|--------------|-----------|-----------------|
-| Drought (vegetative) | <50mm/month | Nov-Jan |
-| Drought (flowering) | <80mm/month | Feb-Mar |
-| Flood | >300mm/month | Any |
+| Growth Phase | Duration | Drought Trigger (<) | Flood Trigger (>) | Payout Weight |
+|--------------|----------|---------------------|-------------------|---------------|
+| Germination | 21 days | 50mm/phase | 70mm/day | 20% |
+| Vegetative | 29 days | 60mm/phase | 80mm/day | 30% |
+| Flowering | 40 days | 80mm/phase | 90mm/day | 35% |
+| Ripening | 55 days | 0mm/phase | 60mm/day | 15% |
 
-### Payout Rates
+### Payout Rules
 
-| Severity | Drought | Flood |
-|----------|---------|-------|
-| Mild | $30 | $40 |
-| Moderate | $45 | $55 |
-| Severe | $60 | $75 |
+| Event Type | Calculation | Max Sum Insured |
+|------------|-------------|-----------------|
+| Drought | Dynamic (Phase Weight * Severity) | $90 |
+| Flood | Fixed (50% of Phase Weight) | $90 |
 
----
-
-## Key Findings
-
-### 1. Financial Sustainability Proven
-
-✅ **Loss Ratio: 20.6%**
-- This falls within the "excellent" range (<40%), allowing room for premium reduction or benefit expansion.
-- **Conclusion:** The program is fully sustainable at just **$20/year premium**.
-
-### 2. Trigger Detection Accuracy
-
-✅ **System correctly identified documented climate events:**
-- 2016 East Africa Drought (FEWS NET confirmed)
-- 2017 Prolonged Dry Spell (WFP Report confirmed)
-- 2019 Heavy Rains/Flooding (OCHA confirmed)
-- 2020 Above-Normal Rainfall (Tanzania Met confirmed)
-- 2021 Failed Long Rains (FEWS NET confirmed)
-
-### 3. Premium Pricing Validation
-
-- **Prior Spec:** $91/year (Lump Sum Model) → Too expensive for farmers
-- **Validated Rate:** $20/year (Phase-Based Model) → Affordable & Sustainable
-- **Recommendation:** Proceed with $20 premium. No subsidy required.
 
 ---
 
-## Results by Year
+## Year-by-Year Analysis
 
-### 2016 ✓ Validated
-- **Triggers:** 1 (Drought)
-- **Status:** **Confirmed**
-- **External Source:** FEWS NET
-- **Event:** Regional drought; Crisis (IPC Phase 3) outcomes
 
-### 2017 (Basis Risk)
-- **Triggers:** 0
-- **Status:** **Missed** (Model did not trigger)
-- **External Source:** WFP Report (Prolonged dry spell)
-- **Analysis:** Rainfall was sufficient to avoid payout despite regional dry spell reports.
+### 2015 
 
-### 2018 ✓ Validated
-- **Triggers:** 1 (Flood)
-- **Status:** **Confirmed**
-- **External Source:** TMA
-- **Event:** Heavy Masika rains caused river overflow
+*No triggers detected*
 
-### 2020 ✓ Validated
-- **Triggers:** 1 (Flood)
-- **Status:** **Confirmed**
-- **External Source:** Tanzania Meteorological Authority (TMA)
-- **Event:** Record rainfall; infrastructure damage in Morogoro
+### 2016 [v] *Externally Validated*
 
-### 2022 ✓ Validated
-- **Triggers:** 1 (Drought)
-- **Status:** **Confirmed**
-- **External Source:** Ministry of Agriculture
-- **Event:** Early season moisture deficit; planting delayed
+**Triggers:** 1  
+**Total Payout:** $11,940
+
+- **DROUGHT** (moderate): 50mm observed vs 80mm threshold
+  - *External Reference:* FEWS NET: Regional drought; Crisis (IPC Phase 3) outcomes
+
+### 2017 
+
+*No triggers detected*
+
+### 2018 [v] *Externally Validated*
+
+**Triggers:** 1  
+**Total Payout:** $9,000
+
+- **FLOOD** (moderate): 96mm observed vs 70mm threshold
+  - *External Reference:* TMA: Heavy Masika rains caused river overflow
+
+### 2019 
+
+*No triggers detected*
+
+### 2020 [v] *Externally Validated*
+
+**Triggers:** 1  
+**Total Payout:** $9,000
+
+- **FLOOD** (moderate): 104mm observed vs 70mm threshold
+  - *External Reference:* Tanzania Meteorological Authority (TMA): Record rainfall; infrastructure damage in Morogoro
+
+### 2021 
+
+*No triggers detected*
+
+### 2022 [v] *Externally Validated*
+
+**Triggers:** 1  
+**Total Payout:** $15,340
+
+- **DROUGHT** (moderate): 41mm observed vs 80mm threshold
+  - *External Reference:* Ministry of Agriculture: Early season moisture deficit; planting delayed
+
+### 2023 
+
+*No triggers detected*
+
+### 2024 
+
+*No triggers detected*
+
+### 2025 
+
+*No triggers detected*
+
 
 ---
 
-## External Validation Summary
+## External Validation
 
-| Year | Our Detection | External Source | Match |
-|------|---------------|-----------------|-------|
-| 2016 | Drought | FEWS NET Drought Advisory | ✅ Yes |
-| 2017 | No Trigger | WFP Prolonged Dry Spell | ❌ Missed (Basis Risk) |
-| 2018 | Flood | TMA Heavy Rains | ✅ Yes |
-| 2020 | Flood | TMA Record Rainfall | ✅ Yes |
-| 2022 | Drought | Ministry of Ag Dry Spell | ✅ Yes |
+The following trigger events were cross-referenced with external sources:
 
-**Validation Rate:** 4/5 major events verified (80% Accuracy). Model is conservative.
+| Year | Event | Source | Notes |
+|------|-------|--------|-------|
+| 2016 | Drought | FEWS NET | East Africa drought |
+| 2017 | Drought | WFP Report | Prolonged dry spell |
+| 2019 | Flood | OCHA | Heavy rains, flooding |
+| 2020 | Flood | Tanzania Met | Above-normal rainfall |
+| 2021 | Drought | FEWS NET | Failed long rains |
+| 2023 | Flood | News Reports | El Ni�o flooding |
 
 ---
 
 ## Sustainability Analysis
 
-### Loss Ratio: 20.6%
+**Loss Ratio:** 20.6%
 
-| Range | Assessment | Our Result |
-|-------|------------|------------|
-| **<40%** | **Excellent / Profitable** | ✅ **20.6%** |
-| 40-60% | Good | |
-| 60-80% | Acceptable | |
-| 80-100% | Concerning | |
-| >100% | Unsustainable | |
+| Range | Assessment |
+|-------|------------|
+| <40% | Excellent - Premium may be too high |
+| 40-60% | Good - Sustainable with reserves |
+| 60-80% | Acceptable - Within industry norms |
+| 80-100% | Concerning - Review premium adequacy |
+| >100% | Unsustainable - Immediate adjustment required |
 
-### Recommendation
-
-**Launch at $20 Premium**
-- This rate is proven effective for 1000-farmer scale using the Phase-Based Model.
-- Eliminates the need for external subsidies, ensuring long-term independence.
+**Recommendation:** Excellent - Premium may be too high, consider reduction
 
 ---
 
-## Farmer Portfolio Details
+## Limitations
 
-### Village Distribution
-
-| Village | Farmers | Percentage |
-|---------|---------|------------|
-| Ifakara | 300 | 30% |
-| Mlimba | 200 | 20% |
-| Kidatu | 150 | 15% |
-| Malinyi | 150 | 15% |
-| Mangula | 100 | 10% |
-| Kibaoni | 100 | 10% |
-
-### Farm Size Distribution
-
-| Category | Hectares | Farmers | Percentage |
-|----------|----------|---------|------------|
-| Small | 0.5-1.0 | 600 | 60% |
-| Medium | 1.0-2.0 | 300 | 30% |
-| Large | 2.0-5.0 | 100 | 10% |
-
-Average farm size: **1.2 hectares**
+1. **Simulated Farmers:** Portfolio is synthetic, not actual enrollees
+2. **No Ground Truth:** Actual yield data not available for full validation
+3. **Basis Risk:** Cannot be fully quantified without farmer loss reports
+4. **Historical Only:** Past performance doesn't guarantee future results
 
 ---
 
 ## Conclusion
 
-This historical backtesting analysis demonstrates that the parametric insurance model is **technically accurate** and **financially viable** at a premium of **$20/year**. 
+This historical backtesting analysis demonstrates that the parametric insurance
+model correctly identifies documented climate events in the Kilombero Basin.
+The system would have:
 
-1. **Accurate:** 80% match with external climate sources (conservative model).
-2. **Sustainable:** 20.6% loss ratio is excellent for long-term viability.
-3. **Validated:** Ready for commercial pilot deployment.
+- Detected 4 trigger events over 10 years
+- Paid $45,280 in claims to 1,000 farmers
+- Maintained a 20.6% loss ratio
+
+The model is ready for real-world pilot deployment pending:
+1. Partnership with licensed insurer
+2. Farmer enrollment system
+3. Payment gateway integration (M-Pesa)
 
 ---
 
-**Report Version:** 2.1 (Phase-Based Calibration)  
-**Generated By:** Climate Insurance Backtesting System  
-**Date:** 2026-01-23  
-**Contact:** Omdena Capstone Project Team
+*Report generated by Climate Insurance Backtesting System*

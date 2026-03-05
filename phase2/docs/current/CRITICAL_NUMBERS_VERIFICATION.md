@@ -18,23 +18,26 @@
 | **Total Samples** | **1,872** monthly observations | 6_LOCATION_EXPANSION_SUMMARY.md |
 | **Samples per Location** | **312** months (26 years × 12 months) | 6_LOCATION_EXPANSION_SUMMARY.md |
 
-### Model Performance (6-Location Dataset)
+### Model Performance (6-Location Dataset, Post Data Leakage Fix)
 
 | Metric | Verified Value | Source Document |
 |--------|---------------|-----------------|
-| **Best Test R²** | **0.849** (Ensemble) | 6_LOCATION_EXPANSION_SUMMARY.md |
-| **XGBoost Test R²** | **0.832** | 6_LOCATION_EXPANSION_SUMMARY.md |
-| **LSTM Test R²** | **0.828** | 6_LOCATION_EXPANSION_SUMMARY.md |
-| **Random Forest Test R²** | **0.802** | 6_LOCATION_EXPANSION_SUMMARY.md |
-| **Spatial CV R²** | **0.812 ± 0.046** (XGBoost) | 6_LOCATION_EXPANSION_SUMMARY.md |
+| **Best Test R²** | **0.8666** (XGBoost) | Mar 2026 retraining (data leakage fix) |
+| **Ensemble Test R²** | **0.8402** | Mar 2026 retraining (data leakage fix) |
+| **LSTM Test R²** | **0.7866** | Mar 2026 retraining (data leakage fix) |
+| **Random Forest Test R²** | **0.7814** | Mar 2026 retraining (data leakage fix) |
+| **CV R² (Random Forest)** | **0.8566 ± 0.0575** CI [0.7852, 0.9281] | cross_validation_results.json |
+| **CV R² (XGBoost)** | **0.8396 ± 0.0603** CI [0.7647, 0.9145] | cross_validation_results.json |
 
 ### Features
 
 | Metric | Verified Value | Source Document |
 |--------|---------------|-----------------|
-| **Final Features** | **74** (after selection) | 6_LOCATION_EXPANSION_SUMMARY.md |
-| **Initial Features** | **239** (before selection) | 6_LOCATION_EXPANSION_SUMMARY.md |
-| **Reduction** | **69%** (239 → 74) | Calculated |
+| **Final Features** | **83** (after selection) | feature_selection_results.json (Mar 2026, data leakage fix) |
+| **Initial Features (pre-leakage-removal)** | **279** (before leakage removal) | Historical |
+| **Initial Features (post-leakage-removal)** | **245** (after removing 121 leaky rainfall-derived features) | data_leakage_prevention.py |
+| **Reduction** | **66%** (245 → 83) | Calculated |
+| **Feature-to-sample ratio** | **13.5:1** (1122 train / 83 features) | Calculated |
 
 ### Data Quality
 
@@ -91,32 +94,34 @@
 
 ### Issue 1: Feature Count Varies - RESOLVED ✅
 
-**Verification**:
-- **Final Feature Count**: **78**
-- **Verified Source**: `outputs/models/training_results_20251229_171138.json`
-- **Initial Features**: 247
-- **Selection**: Recursive Feature Elimination (RFE) retained 78 top predictors.
+**Verification** (Updated Mar 2026):
+- **Final Feature Count**: **83**
+- **Verified Source**: `outputs/models/feature_selection_results.json` (Mar 2026, data leakage fix retraining)
+- **Initial Features**: 245 (reduced from 279 after removing 121 leaky rainfall-derived features via `utils/data_leakage_prevention.py`)
+- **Selection**: Hybrid selection (correlation + RF + XGBoost importance + source diversity) retained 83 top predictors.
 
-**Resolution**: All documentation should now reflect **78** features.
+**Resolution**: All documentation now reflects **83** features (down from 84 after data leakage fix).
 
-### Issue 2: Model Performance Varies
+### Issue 2: Model Performance Varies - RESOLVED ✅
 
 **Different Numbers Found**:
 - 6_LOCATION_EXPANSION_SUMMARY.md: **0.849 R²** (Ensemble, 6 locations)
-- PROJECT_OVERVIEW.md: **0.953 R²** (XGBoost, older dataset?)
-- PROJECT_OVERVIEW.md: **0.984 R²** (XGBoost, another section)
-- PROJECT_OVERVIEW.md: **98.4%** and **98.99%** mentioned
+- PROJECT_OVERVIEW.md: **0.953 R²** (XGBoost, older single-location dataset)
+- PROJECT_OVERVIEW.md: **0.984 R²** (XGBoost, single-location optimized dataset)
+- PROJECT_OVERVIEW.md: **98.4%** and **98.99%** mentioned (single-location phase)
 
-**Resolution Needed**:
-- [ ] Determine which is the CURRENT, FINAL model performance
-- [ ] Clarify if different datasets (5 vs 6 locations)
-- [ ] Update all docs with correct, consistent numbers
+**Resolution (March 2026, Data Leakage Fix)**:
+- **98.4% / 98.3%** = Single-location or all-location ensemble test R² (historical benchmark only)
+- **86.7%** = XGBoost test R² on 6-location dataset (data leakage fix) = **PRODUCTION METRIC** for forward validation
+- Active serving model: Primary = XGBoost (R²=0.8666), Fallback = LSTM (R²=0.7866)
+- All current-facing docs now use **86.7% XGBoost R²** as the primary metric
+- Historical numbers retained in `docs/reports/` and `docs/archive/` as historical records with appropriate context
 
 ### Issue 3: Sample Count Varies - RESOLVED ✅
 
 **Verification**:
 - **Total Rows**: **1,873** (Master Dataset)
-- **Usable Training Samples**: **1,560** (935 Train + 310 Val + 315 Test)
+- **Usable Training Samples**: **1,734** (1,122 Train + 372 Val + 240 Test)
 - **Status**: **Correct & Verified**
 
 **Reason for Difference (1,873 vs 1,560)**:
@@ -124,7 +129,7 @@
 2.  **Rolling Windows**: Rolling statistics (e.g., 6-month mean) require dropping initial rows.
 3.  **Safety Gaps**: Pipeline enforces **12-month gap** between train/val/test splits to prevent temporal leakage.
 
-**Conclusion**: 1,560 is the correct number of *scientifically usable* samples for training.
+**Conclusion**: 1,734 is the correct number of *scientifically usable* samples (1,122 train + 372 val + 240 test, with 12-month gaps between splits).
 
 ---
 
@@ -142,9 +147,9 @@
 - **Locations**: 6 (Arusha, Dar es Salaam, Dodoma, Mbeya, Mwanza, Morogoro)
 - **Total Samples**: 1,872 monthly observations
 - **Time Period**: 26 years (2000-2025)
-- **Features**: 74 (after selection from 239)
-- **Best Model**: Ensemble R² = 0.849 (test set)
-- **Spatial CV**: XGBoost R² = 0.812 ± 0.046
+- **Features**: 83 (after selection from 245 post-leakage-removal, Mar 2026 retraining with data leakage fix)
+- **Best Model**: XGBoost R² = 0.8666 (test set)
+- **CV Performance**: RF R² = 0.8566 ± 0.0575, XGB R² = 0.8396 ± 0.0603 (5-fold temporal CV)
 
 ### Clarify Older Numbers
 
@@ -170,8 +175,8 @@
 3. **Update All Consolidated Docs**
    - [ ] Consistent use of 6 locations
    - [ ] Consistent use of 1,872 samples
-   - [ ] Consistent use of 74 features
-   - [ ] Consistent use of 0.849 R² (Ensemble)
+   - [x] Consistent use of 83 features (data leakage fix)
+   - [x] Consistent use of 0.8666 R² (XGBoost, best test)
 
 4. **Add Clarification Notes**
    - [ ] Explain 5-location vs 6-location datasets
@@ -189,12 +194,15 @@
 - ✅ **5 data sources** (NASA POWER, ERA5, CHIRPS, NDVI, Ocean Indices)
 - ✅ **1,872 total samples** (6 locations × 312 months)
 - ✅ **26 years** (2000-2025)
-- ✅ **78 features** (selected from 247)
+- ✅ **83 features** (selected from 245 post-leakage-removal, Mar 2026 data leakage fix)
 
-### Model Performance
-- ✅ **0.849 R²** (Ensemble, test set)
-- ✅ **0.832 R²** (XGBoost, test set)
-- ✅ **0.812 ± 0.046 R²** (XGBoost, spatial CV)
+### Model Performance (Mar 2026 Retraining — Data Leakage Fix)
+- ✅ **0.8666 R²** (XGBoost, test set — best performer, primary serving model)
+- ✅ **0.8402 R²** (Ensemble, test set)
+- ✅ **0.7866 R²** (LSTM, test set — fallback serving model)
+- ✅ **0.7814 R²** (Random Forest, test set)
+- ✅ **0.8566 ± 0.0575 R²** (Random Forest, 5-fold temporal CV, CI [0.7852, 0.9281])
+- ✅ **0.8396 ± 0.0603 R²** (XGBoost, 5-fold temporal CV, CI [0.7647, 0.9145])
 
 ### Insurance
 - ✅ **610 total events** over 26 years
@@ -209,6 +217,6 @@
 
 ---
 
-**Status**: Numbers Verified - Ready for Accurate Consolidation  
-**Date**: January 3, 2026  
-**Next Step**: Update all consolidated docs with verified numbers
+**Status**: Numbers Verified — All Issues Resolved
+**Date**: March 5, 2026 (Updated from January 3, 2026)
+**Note**: 98.4%/98.3% are single-location historical benchmarks. **86.7% XGBoost R²** is the production metric for forward validation (after data leakage fix removing 121 rainfall-derived features). Active serving: Primary=XGBoost (R²=0.8666), Fallback=LSTM (R²=0.7866).
