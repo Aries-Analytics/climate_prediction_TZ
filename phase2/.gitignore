@@ -86,3 +86,11 @@ dist/
 build/
 frontend/dist/
 frontend/build/
+
+# ===============================================================
+# Session Artifacts (transient, not project code)
+# ===============================================================
+memory/
+state.json
+pdf_*.txt
+test_pack.zip
