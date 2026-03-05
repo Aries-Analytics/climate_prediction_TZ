@@ -70,6 +70,10 @@ def identify_feature_source(feature_name: str) -> str:
     """
     Identify which data source a feature belongs to.
     
+    Maps feature names (including lag/rolling/interaction derivatives) back to
+    their original data source. Uses prefix matching for robustness against
+    derived feature name patterns like 'temp_2m_lag_6_lag_6'.
+    
     Args:
         feature_name: Name of the feature
         
@@ -78,19 +82,53 @@ def identify_feature_source(feature_name: str) -> str:
     """
     feature_lower = feature_name.lower()
     
-    if 'chirps' in feature_lower or 'precipitation' in feature_lower or 'rainfall' in feature_lower:
+    # --- CHIRPS (rainfall, precipitation, drought/flood derived) ---
+    chirps_keywords = [
+        'chirps', 'precipitation', 'rainfall', 'precip',
+        'flood_risk', 'drought', 'dry_day', 'is_dry_day',
+        'consecutive_dry', 'cumulative_excess', 'spi',
+        'wet_day', 'rain_anomal',
+    ]
+    if any(kw in feature_lower for kw in chirps_keywords):
         return 'CHIRPS'
-    elif 'nasa' in feature_lower or 'temperature' in feature_lower or 'solar' in feature_lower:
-        return 'NASA_POWER'
-    elif 'era5' in feature_lower or 'wind' in feature_lower or 'pressure' in feature_lower:
-        return 'ERA5'
-    elif 'ndvi' in feature_lower or 'vegetation' in feature_lower:
+    
+    # --- NDVI (vegetation indices) ---
+    ndvi_keywords = [
+        'ndvi', 'vegetation', 'vci', 'crop_stress',
+    ]
+    if any(kw in feature_lower for kw in ndvi_keywords):
         return 'NDVI'
-    elif 'nino' in feature_lower or 'soi' in feature_lower or 'dmi' in feature_lower or 'ocean' in feature_lower:
+    
+    # --- Ocean Indices (ENSO, IOD) ---
+    ocean_keywords = [
+        'nino', 'el_nino', 'la_nina', 'enso',
+        'soi', 'dmi', 'iod', 'ocean',
+        'is_el_nino', 'is_strong_el_nino', 'is_la_nina',
+    ]
+    if any(kw in feature_lower for kw in ocean_keywords):
         return 'Ocean_Indices'
-    else:
-        # Default categorization based on common patterns
-        return 'Unknown'
+    
+    # --- ERA5 (atmospheric reanalysis: wind, pressure, dewpoint, humidity, temp_2m) ---
+    era5_keywords = [
+        'era5', 'wind', 'pressure', 'surface_pressure',
+        'dewpoint', 'temp_2m', 'humidity', 'rel_humidity',
+        'total_precip', 'boundary_layer',
+    ]
+    if any(kw in feature_lower for kw in era5_keywords):
+        return 'ERA5'
+    
+    # --- NASA POWER (solar, temperature min/max/mean/range, PET, VPD) ---
+    nasa_keywords = [
+        'nasa', 'temperature', 'solar', 'solar_rad',
+        'temp_min', 'temp_max', 'temp_mean', 'temp_range',
+        'temp_variabil', 'pet_mm', 'vpd', 'cloud_cover',
+    ]
+    if any(kw in feature_lower for kw in nasa_keywords):
+        return 'NASA_POWER'
+    
+    # Fallback — log for future improvement
+    logger.debug(f"Could not classify feature source for: {feature_name}")
+    return 'Unknown'
 
 
 def remove_highly_correlated_features(

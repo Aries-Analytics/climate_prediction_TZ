@@ -210,7 +210,7 @@ def prepare_model_inputs(
     logger.info(f"X_val shape: {X_val.shape}")
     logger.info(f"X_test shape: {X_test.shape}")
 
-    return X_train, y_train, X_val, y_val, X_test, y_test, feature_cols
+    return X_train, y_train, X_val, y_val, X_test, y_test, feature_cols, target_column
 
 
 def parse_model_list(models_str: str) -> Dict[str, bool]:
@@ -354,7 +354,7 @@ def run_model_development_pipeline(
     logger.info("STEP 3: PREPARING MODEL INPUTS")
     logger.info("=" * 80)
 
-    X_train, y_train, X_val, y_val, X_test, y_test, feature_names = prepare_model_inputs(
+    X_train, y_train, X_val, y_val, X_test, y_test, feature_names, target_column = prepare_model_inputs(
         train_df, val_df, test_df, target_column
     )
 
@@ -367,47 +367,28 @@ def run_model_development_pipeline(
     logger.info("=" * 80)
     logger.info(f"Checking {len(feature_names)} features for data leakage...")
 
-    # Define leaky feature patterns (features derived from target)
-    leaky_patterns = [
-        'rainfall_mm',  # Direct target or derivatives
-        'rainfall_anomaly',  # Derived from rainfall_mm
-        'rainfall_percentile',  # Derived from rainfall_mm
-        'rainfall_clim',  # Climate stats from rainfall_mm
-        'rainfall_7day', 'rainfall_14day', 'rainfall_30day',  # Cumulative rainfall
-        'rainfall_90day', 'rainfall_180day',  # Long-term rainfall
-        'extreme_rain_event',  # Binary flag from rainfall_mm
-        'heavy_rain_event',
-        'very_extreme_rain_event',
-        'excess_rainfall',  # Derived from rainfall_mm
-        'flood_risk',  # May be derived from rainfall
-        'drought_',  # May be derived from rainfall
-        'trigger_severity',  # May be derived from rainfall
-    ]
+    from utils.data_leakage_prevention import remove_leaky_features
 
-    # Identify leaky features
-    leaky_features = []
-    for feat in feature_names:
-        for pattern in leaky_patterns:
-            if pattern in feat.lower():
-                leaky_features.append(feat)
-                break
+    # Convert arrays to DataFrame for the utility
+    X_train_df_for_check = pd.DataFrame(X_train, columns=feature_names)
+    y_train_series = pd.Series(y_train, name=target_column)
 
-    # Remove leaky features
-    if leaky_features:
-        logger.warning(f"Found {len(leaky_features)} potentially leaky features")
-        logger.warning(f"Examples: {leaky_features[:10]}")
-        
-        # Filter out leaky features
-        clean_feature_names = [f for f in feature_names if f not in leaky_features]
-        
-        # Update data arrays
-        feature_indices = [i for i, f in enumerate(feature_names) if f not in leaky_features]
+    # Use the comprehensive leakage prevention module
+    X_cleaned, removed_features, removal_reasons = remove_leaky_features(
+        X_train_df_for_check, target_name=target_column, y=y_train_series, strict=True
+    )
+
+    if removed_features:
+        clean_feature_names = [f for f in feature_names if f not in removed_features]
+        feature_indices = [i for i, f in enumerate(feature_names) if f not in removed_features]
         X_train = X_train[:, feature_indices]
         X_val = X_val[:, feature_indices]
         X_test = X_test[:, feature_indices]
         feature_names = clean_feature_names
-        
-        logger.info(f"Removed {len(leaky_features)} leaky features")
+
+        logger.info(f"Removed {len(removed_features)} leaky features")
+        for reason in removal_reasons:
+            logger.info(f"  {reason}")
         logger.info(f"Remaining features: {len(feature_names)}")
     else:
         logger.info("No leaky features detected")
@@ -449,9 +430,16 @@ def run_model_development_pipeline(
         logger.info(f"Selected {len(feature_names)} features")
         logger.info(f"Features saved to: {dirs['models']}/feature_selection_results.json")
 
+        # Store feature selection summary for later enrichment of training_results
+        _feature_selection_summary = {
+            "selected_features": selection_result.selected_count if hasattr(selection_result, 'selected_count') else len(feature_names),
+            "original_features": selection_result.original_count if hasattr(selection_result, 'original_count') else None,
+        }
+
     except Exception as e:
         logger.error(f"Feature selection failed: {e}")
         logger.warning("Continuing with all features")
+        _feature_selection_summary = None
 
     # ========================================================================
     # STEP 3.6: Handle Missing Values
@@ -506,7 +494,7 @@ def run_model_development_pipeline(
         **model_flags,
     )
 
-    # Save training results
+    # Save initial training results (will be re-saved with enriched data at end of pipeline)
     results_file = save_training_results(
         training_results, str(dirs["experiments"]), experiment_name
     )
@@ -587,6 +575,25 @@ def run_model_development_pipeline(
             cv_path = dirs["evaluation"] / "cv_comparison.csv"
             cv_comparison.to_csv(cv_path, index=False)
             logger.info(f"CV comparison saved to: {cv_path}")
+
+        # Enrich training_results with CV data so canonical file includes it
+        cv_data_for_results = {}
+        for cv_result in cv_results_list:
+            name = cv_result.model_name.lower().replace(" ", "_")
+            cv_data_for_results[name] = {
+                "r2_mean": cv_result.r2_mean,
+                "r2_std": cv_result.r2_std,
+                "r2_ci_lower": cv_result.r2_ci_lower,
+                "r2_ci_upper": cv_result.r2_ci_upper,
+                "rmse_mean": cv_result.rmse_mean,
+                "rmse_std": cv_result.rmse_std,
+                "mae_mean": cv_result.mae_mean,
+                "mae_std": cv_result.mae_std,
+                "n_splits": cv_result.n_splits,
+            }
+        if cv_data_for_results:
+            training_results["cross_validation"] = cv_data_for_results
+            logger.info(f"Added CV data for {len(cv_data_for_results)} models to training_results")
 
     except Exception as e:
         logger.error(f"Temporal CV failed: {e}")
@@ -713,6 +720,112 @@ def run_model_development_pipeline(
 
     logger.info(f"Experiment logged: {exp_id}")
     logger.info(f"Comparison report: {comparison_report}")
+
+    # ========================================================================
+    # STEP 7: Generate active_model.json (Dynamic Model Resolution)
+    # ========================================================================
+
+    logger.info("\n" + "=" * 80)
+    logger.info("STEP 7: GENERATING active_model.json FOR SERVING")
+    logger.info("=" * 80)
+
+    try:
+        # Find the best-performing model by test R²
+        model_scores = {}
+        model_filenames = {
+            "random_forest": "random_forest_climate.pkl",
+            "xgboost": "xgboost_climate.pkl",
+        }
+
+        for model_name, model_results in training_results["models"].items():
+            if "error" not in model_results and "test_metrics" in model_results:
+                metrics = model_results["test_metrics"]
+                if "error" not in metrics and "r2" in metrics:
+                    model_scores[model_name] = metrics["r2"]
+
+        if model_scores:
+            # Sort by R² (highest first)
+            ranked = sorted(model_scores.items(), key=lambda x: x[1], reverse=True)
+            best_name, best_r2 = ranked[0]
+            
+            # Build active_model.json
+            from datetime import datetime, timezone as tz
+            
+            active_model_config = {
+                "expected_feature_count": len(feature_names),
+                "feature_schema": "feature_schema.json",
+                "last_updated": datetime.now(tz.utc).isoformat(),
+                "notes": f"Auto-generated by training pipeline (experiment: {exp_id})",
+            }
+            
+            # Primary model (best R²)
+            best_filename = model_filenames.get(best_name, f"{best_name}_climate.pkl")
+            active_model_config["primary_model"] = {
+                "filename": best_filename,
+                "type": best_name,
+                "version": f"{best_name}_v{exp_id[:8]}",
+                "r2_score": best_r2,
+                "expected_features": len(feature_names),
+                "trained_at": datetime.now(tz.utc).isoformat(),
+            }
+            
+            # Fallback model (second best, if available)
+            if len(ranked) > 1:
+                fallback_name, fallback_r2 = ranked[1]
+                fallback_filename = model_filenames.get(fallback_name, f"{fallback_name}_climate.pkl")
+                active_model_config["fallback_model"] = {
+                    "filename": fallback_filename,
+                    "type": fallback_name,
+                    "version": f"{fallback_name}_v{exp_id[:8]}",
+                    "r2_score": fallback_r2,
+                    "expected_features": len(feature_names),
+                    "trained_at": datetime.now(tz.utc).isoformat(),
+                }
+            
+            # Write to models directory
+            active_model_path = dirs["models"] / "active_model.json"
+            with open(active_model_path, "w") as f:
+                json.dump(active_model_config, f, indent=2)
+            
+            logger.info(f"Generated active_model.json:")
+            logger.info(f"  Primary: {best_filename} (R²={best_r2:.4f})")
+            if len(ranked) > 1:
+                logger.info(f"  Fallback: {fallback_filename} (R²={ranked[1][1]:.4f})")
+            logger.info(f"  Features: {len(feature_names)}")
+            logger.info(f"  Saved to: {active_model_path}")
+        else:
+            logger.warning("No model scores available — active_model.json not generated")
+
+    except Exception as e:
+        logger.error(f"Failed to generate active_model.json: {e}")
+        logger.warning("Serving will fall back to hardcoded model candidates")
+
+    # ========================================================================
+    # STEP 8: Re-save Enriched Training Results to Canonical Path
+    # ========================================================================
+
+    logger.info("\n" + "=" * 80)
+    logger.info("STEP 8: SAVING ENRICHED TRAINING RESULTS")
+    logger.info("=" * 80)
+
+    # Add feature selection summary if available
+    if _feature_selection_summary:
+        training_results["feature_selection"] = _feature_selection_summary
+        logger.info(f"Added feature_selection to training_results: {_feature_selection_summary}")
+
+    # Re-save the enriched training_results (now includes cross_validation + feature_selection)
+    try:
+        enriched_file = save_training_results(
+            training_results, str(dirs["experiments"]), experiment_name
+        )
+        # Update canonical path with enriched data
+        import shutil
+        canonical_path = dirs["models"] / "latest_training_results.json"
+        shutil.copy2(enriched_file, str(canonical_path))
+        logger.info(f"Canonical training results updated with enriched data: {canonical_path}")
+        logger.info(f"  Keys: {list(training_results.keys())}")
+    except Exception as e:
+        logger.error(f"Failed to re-save enriched training results: {e}")
 
     # ========================================================================
     # Pipeline Summary

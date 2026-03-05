@@ -654,28 +654,58 @@ def split_temporal_data(
             # Calculate split indices ensuring minimum samples per split
             train_end = max(MIN_SAMPLES_PER_SPLIT, int(n_samples * train_pct))
             val_size = max(MIN_SAMPLES_PER_SPLIT, int(n_samples * val_pct))
-            
-            # Ensure we don't exceed available samples
+
+            # Ensure we don't exceed available samples (before gaps)
             if train_end + val_size + MIN_SAMPLES_PER_SPLIT > n_samples:
                 # Adjust to fit: prioritize train, then val, then test
                 train_end = max(MIN_SAMPLES_PER_SPLIT, n_samples - val_size - MIN_SAMPLES_PER_SPLIT)
                 val_size = max(MIN_SAMPLES_PER_SPLIT, n_samples - train_end - MIN_SAMPLES_PER_SPLIT)
-            
-            val_end = train_end + val_size
-            
+
+            # Enforce temporal gaps between splits (matching single-location logic)
+            effective_gap = gap_months
+            total_needed = train_end + effective_gap + val_size + effective_gap + MIN_SAMPLES_PER_SPLIT
+            if total_needed > n_samples:
+                available_for_gaps = n_samples - (train_end + val_size + MIN_SAMPLES_PER_SPLIT)
+                if available_for_gaps >= 2:
+                    effective_gap = available_for_gaps // 2
+                    logger.warning(
+                        f"  {location}: Reduced gap from {gap_months} to {effective_gap} months "
+                        f"(insufficient data for full gaps)"
+                    )
+                else:
+                    effective_gap = 0
+                    logger.warning(
+                        f"  {location}: No gap possible ({n_samples} samples). "
+                        f"Using consecutive split."
+                    )
+
+            # Apply gaps between splits
+            val_start = train_end + effective_gap
+            val_end = val_start + val_size
+            test_start = val_end + effective_gap
+
             train_loc = loc_df.iloc[:train_end].copy()
-            val_loc = loc_df.iloc[train_end:val_end].copy()
-            test_loc = loc_df.iloc[val_end:].copy()
-            
+            val_loc = loc_df.iloc[val_start:val_end].copy()
+            test_loc = loc_df.iloc[test_start:].copy()
+
             train_dfs.append(train_loc)
             val_dfs.append(val_loc)
             test_dfs.append(test_loc)
-            
-            logger.info(
-                f"  {location}: Train={len(train_loc)} ({train_loc['year'].min()}-{train_loc['year'].max()}), "
-                f"Val={len(val_loc)} ({val_loc['year'].min()}-{val_loc['year'].max()}), "
-                f"Test={len(test_loc)} ({test_loc['year'].min()}-{test_loc['year'].max()})"
-            )
+
+            if effective_gap > 0:
+                logger.info(
+                    f"  {location}: Train={len(train_loc)} ({train_loc['year'].min()}-{train_loc['year'].max()}), "
+                    f"[{effective_gap}-month gap], "
+                    f"Val={len(val_loc)} ({val_loc['year'].min()}-{val_loc['year'].max()}), "
+                    f"[{effective_gap}-month gap], "
+                    f"Test={len(test_loc)} ({test_loc['year'].min()}-{test_loc['year'].max()})"
+                )
+            else:
+                logger.info(
+                    f"  {location}: Train={len(train_loc)} ({train_loc['year'].min()}-{train_loc['year'].max()}), "
+                    f"Val={len(val_loc)} ({val_loc['year'].min()}-{val_loc['year'].max()}), "
+                    f"Test={len(test_loc)} ({test_loc['year'].min()}-{test_loc['year'].max()})"
+                )
         
         # Combine all locations
         train_df = pd.concat(train_dfs, ignore_index=True)
@@ -837,6 +867,16 @@ def split_temporal_data(
         return train_df, val_df, test_df
 
 
+def _get_split_date_range(split_df: pd.DataFrame) -> str:
+    """Get actual first and last year-month from a split DataFrame."""
+    if len(split_df) == 0:
+        return "empty"
+    sorted_df = split_df.sort_values(['year', 'month'])
+    first = sorted_df.iloc[0]
+    last = sorted_df.iloc[-1]
+    return f"{int(first['year'])}-{int(first['month']):02d} to {int(last['year'])}-{int(last['month']):02d}"
+
+
 def preprocess_pipeline(
     input_path: str,
     output_dir: str,
@@ -961,9 +1001,9 @@ def preprocess_pipeline(
         "missing_values_after": int(df.isnull().sum().sum()),
         "normalized_features": len(scaler_params),
         "date_range": {
-            "train": f"{train_df['year'].min()}-{train_df['month'].min()} to {train_df['year'].max()}-{train_df['month'].max()}",
-            "val": f"{val_df['year'].min()}-{val_df['month'].min()} to {val_df['year'].max()}-{val_df['month'].max()}",
-            "test": f"{test_df['year'].min()}-{test_df['month'].min()} to {test_df['year'].max()}-{test_df['month'].max()}",
+            "train": _get_split_date_range(train_df),
+            "val": _get_split_date_range(val_df),
+            "test": _get_split_date_range(test_df),
         },
     }
 

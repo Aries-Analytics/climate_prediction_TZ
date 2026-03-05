@@ -76,6 +76,13 @@ def detect_target_related_features(
         "days_since_trigger",
         "drought_stress_severity",
         "any_climate_trigger",
+        # Rainfall-derived features not caught by target name matching
+        "is_dry_day",
+        "consecutive_dry_days",
+        "cumulative_excess",       # cumulative_excess_7day, etc.
+        "heavy_rain_days",         # heavy_rain_days_7day, heavy_rain_days_30day
+        "is_drought_month",
+        "drought_duration",
     ]
 
     for feature in feature_names:
