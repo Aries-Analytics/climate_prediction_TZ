@@ -6,7 +6,7 @@ Runs the complete test suite and generates a summary report.
 import subprocess
 import sys
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 
 # Add backend to path
 backend_path = Path(__file__).parent.parent
@@ -19,7 +19,7 @@ def run_tests():
     print("=" * 80)
     print("AUTOMATED FORECAST PIPELINE - TEST SUITE")
     print("=" * 80)
-    print(f"Started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"Started: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')}")
     print()
     
     test_categories = [
@@ -106,7 +106,7 @@ def run_tests():
     
     print()
     print(f"Categories Passed: {total_passed}/{total_categories}")
-    print(f"Completed: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"Completed: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')}")
     
     return total_passed == total_categories
 

@@ -4,7 +4,7 @@ Pipeline API endpoints for data freshness and status
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import func, desc
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from app.core.database import get_db
@@ -39,7 +39,7 @@ def get_data_freshness(db: Session = Depends(get_db)):
     ).first()
     
     # Calculate staleness
-    now = datetime.now()
+    now = datetime.now(timezone.utc)
     staleness_threshold = timedelta(days=7)
     
     climate_stale = False

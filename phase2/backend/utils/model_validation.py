@@ -16,7 +16,7 @@ Requirements: 10.1, 10.2, 10.3, 10.4, 10.5
 
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
@@ -425,7 +425,7 @@ def validate_model(
 
     # Create report
     report = ValidationReport(
-        timestamp=datetime.now(),
+        timestamp=datetime.now(timezone.utc),
         model_name=model_name,
         feature_to_sample_ratio=feature_to_sample_ratio,
         train_val_gap=train_val_gap,

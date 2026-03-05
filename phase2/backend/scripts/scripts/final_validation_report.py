@@ -12,7 +12,7 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 def load_all_data():
@@ -215,7 +215,7 @@ def generate_final_report(trigger_results, financial_results, quality_results, e
     print("\n" + "="*70)
     print("FINAL VALIDATION REPORT")
     print("="*70)
-    print(f"\nGenerated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"\nGenerated: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')}")
     
     # Summary
     print(f"\n{'='*70}")
@@ -300,7 +300,7 @@ def generate_final_report(trigger_results, financial_results, quality_results, e
         return obj
     
     report = {
-        'generated_at': datetime.now().isoformat(),
+        'generated_at': datetime.now(timezone.utc).isoformat(),
         'trigger_rates': trigger_results,
         'financial_sustainability': financial_results,
         'data_quality': quality_results,

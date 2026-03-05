@@ -5,7 +5,7 @@ Fetches climate data from NASA POWER API for Tanzania region
 
 import os
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, Tuple
 
 import pandas as pd
@@ -299,7 +299,7 @@ def ingest_nasa_power(
     if start_date is None:
         start_date = datetime(2010, 1, 1)
     if end_date is None:
-        end_date = datetime.now()
+        end_date = datetime.now(timezone.utc)
 
     # Ensure dates are pandas-compatible timestamps for comparison
     start_date = pd.to_datetime(start_date)
@@ -343,6 +343,10 @@ def ingest_nasa_power(
                     # Update existing record with NASA POWER data
                     if "t2m" in row:
                         existing.temperature_avg = float(row["t2m"])
+                    if "rh2m" in row and row["rh2m"] is not None:
+                        existing.rel_humidity_pct = float(row["rh2m"])
+                    if "allsky_sfc_sw_dwn" in row and row["allsky_sfc_sw_dwn"] is not None:
+                        existing.solar_rad_wm2 = float(row["allsky_sfc_sw_dwn"])
                     records_stored += 1
                 else:
                     # Create new record
@@ -351,6 +355,8 @@ def ingest_nasa_power(
                         location_lat=float(row.get("latitude", TANZANIA_LAT)),
                         location_lon=float(row.get("longitude", TANZANIA_LON)),
                         temperature_avg=float(row["t2m"]) if "t2m" in row else None,
+                        rel_humidity_pct=float(row["rh2m"]) if "rh2m" in row and row["rh2m"] is not None else None,
+                        solar_rad_wm2=float(row["allsky_sfc_sw_dwn"]) if "allsky_sfc_sw_dwn" in row and row["allsky_sfc_sw_dwn"] is not None else None,
                     )
                     db.add(climate_record)
                     records_stored += 1

@@ -20,7 +20,7 @@ pandas==2.0.3
 numpy==1.24.3
 
 # Data Ingestion (ADDED FIX)
-cdsapi>=0.7.0
+ecmwf-datastores-client>=0.4.0
 earthengine-api==0.1.370
 xarray==2023.10.1
 netCDF4==1.6.5

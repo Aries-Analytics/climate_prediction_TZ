@@ -8,15 +8,20 @@ Date: January 23, 2026
 from typing import Dict, List
 
 # Rice Growing Season Configuration (Morogoro, Tanzania)
-# Total duration: 145 days (~4.8 months)
+# Total duration: Dynamic (dependent on Growing Degree Days)
 # Season: March-June (long rains)
+
+# Base temperature for rice GDD calculation
+GDD_BASE_TEMP_C = 10.0
+GDD_MAX_TEMP_C = 35.0  # Optional upper limit for heat stress modeling
 
 RICE_GROWTH_PHASES: Dict[str, Dict] = {
     'germination': {
-        'duration_days': 21,
+        'required_gdd': 300,  # Accumulation required to complete germination (approx 15-20 days)
         'rainfall_requirement_mm': 60,
-        'drought_trigger_mm': 50,  # Increased from 40mm
-        'flood_trigger_daily_mm': 70,  # Increased from 50mm
+        'drought_trigger_mm': 50,  
+        'flood_trigger_daily_mm': 70,  
+        'flood_trigger_cumulative_mm': 120, # Added for 5-day rolling cumulative flood risk
         'payout_weight': 0.20,  # 20% of sum insured
         'critical_period': 'Low',
         'description': 'Seed germination and seedling emergence',
@@ -24,10 +29,11 @@ RICE_GROWTH_PHASES: Dict[str, Dict] = {
     },
     
     'vegetative': {
-        'duration_days': 29,
+        'required_gdd': 450,  # Approx 25-30 days dependent on heat
         'rainfall_requirement_mm': 100,
-        'drought_trigger_mm': 60,  # Increased from 40mm to capture 2017/2022
-        'flood_trigger_daily_mm': 80,  # Increased from 50mm to reduce false positives
+        'drought_trigger_mm': 60,  
+        'flood_trigger_daily_mm': 80,  
+        'flood_trigger_cumulative_mm': 140,
         'payout_weight': 0.30,  # 30% of sum insured
         'critical_period': 'Medium',
         'description': 'Tillering and vegetative growth',
@@ -35,10 +41,11 @@ RICE_GROWTH_PHASES: Dict[str, Dict] = {
     },
     
     'flowering': {
-        'duration_days': 40,
+        'required_gdd': 600,  # Approx 35-42 days
         'rainfall_requirement_mm': 120,
-        'drought_trigger_mm': 80,  # Increased from 50mm to capture 2017/2022
-        'flood_trigger_daily_mm': 90,  # Increased from 60mm
+        'drought_trigger_mm': 80,  
+        'flood_trigger_daily_mm': 90,  
+        'flood_trigger_cumulative_mm': 160,
         'payout_weight': 0.35,  # 35% of sum insured - MOST CRITICAL PHASE
         'critical_period': 'HIGH',
         'description': 'Panicle initiation, flowering, and pollination',
@@ -46,10 +53,11 @@ RICE_GROWTH_PHASES: Dict[str, Dict] = {
     },
     
     'ripening': {
-        'duration_days': 55,
+        'required_gdd': 850,  # Approx 50-60 days
         'rainfall_requirement_mm': 120,
         'drought_trigger_mm': 0, # No drought payout for ripening (dry is good)
-        'flood_trigger_daily_mm': 60,  # Increased from 40mm
+        'flood_trigger_daily_mm': 60,  
+        'flood_trigger_cumulative_mm': 100,
         'payout_weight': 0.15,  # 15% of sum insured
         'critical_period': 'Medium',
         'description': 'Grain filling and maturation',
@@ -58,12 +66,12 @@ RICE_GROWTH_PHASES: Dict[str, Dict] = {
 }
 
 # Total season validation
-TOTAL_DURATION_DAYS = sum(phase['duration_days'] for phase in RICE_GROWTH_PHASES.values())
+TOTAL_REQUIRED_GDD = sum(phase['required_gdd'] for phase in RICE_GROWTH_PHASES.values())
 TOTAL_RAINFALL_REQUIREMENT = sum(phase['rainfall_requirement_mm'] for phase in RICE_GROWTH_PHASES.values())
 TOTAL_WEIGHT = sum(phase['payout_weight'] for phase in RICE_GROWTH_PHASES.values())
 
 # Assertions to ensure configuration validity
-assert TOTAL_DURATION_DAYS == 145, f"Total duration must be 145 days, got {TOTAL_DURATION_DAYS}"
+assert TOTAL_REQUIRED_GDD == 2200, f"Total GDD must be roughly 2200 for full rice cycle, got {TOTAL_REQUIRED_GDD}"
 assert TOTAL_RAINFALL_REQUIREMENT == 400, f"Total rainfall must be 400mm, got {TOTAL_RAINFALL_REQUIREMENT}"
 assert abs(TOTAL_WEIGHT - 1.0) < 0.01, f"Weights must sum to 1.0, got {TOTAL_WEIGHT}"
 
@@ -72,7 +80,8 @@ DYNAMIC_START_CONFIG = {
     'monitoring_month': 3,  # March
     'cumulative_threshold_mm': 50,  # Trigger when 50mm recorded
     'fallback_date': (4, 1),  # April 1 if March too dry
-    'reasoning': 'Aligns coverage with actual planting behavior, reduces basis risk'
+    'reasoning': 'Aligns coverage with actual planting behavior, reduces basis risk',
+    'fallback_activation_note': 'If triggered via fallback date due to failure to meet 50mm threshold, model logs this as a dry start.'
 }
 
 # Soil Moisture Thresholds (Industry Standard)
@@ -101,22 +110,24 @@ FAO_RICE_WATER_REQUIREMENTS = {
     'notes': 'Configuration aligned with FAO recommendations'
 }
 
-def get_phase_by_day(day_of_season: int) -> str:
+def get_phase_by_gdd(accumulated_gdd: float) -> str:
     """
-    Get which growth phase corresponds to a given day of the season
+    Get which growth phase corresponds to the accumulated Growing Degree Days (GDD).
     
     Args:
-        day_of_season: Day number (1-145)
+        accumulated_gdd: Total GDD since season start
         
     Returns:
         Phase name: 'germination', 'vegetative', 'flowering', or 'ripening'
     """
-    cumulative_days = 0
+    cumulative_gdd = 0
     for phase_name, phase_config in RICE_GROWTH_PHASES.items():
-        cumulative_days += phase_config['duration_days']
-        if day_of_season <= cumulative_days:
+        cumulative_gdd += phase_config['required_gdd']
+        if accumulated_gdd <= cumulative_gdd:
             return phase_name
-    raise ValueError(f"Day {day_of_season} exceeds season length ({TOTAL_DURATION_DAYS} days)")
+            
+    # If we somehow exceed total GDD, we are still in ripening until harvest
+    return 'ripening'
 
 def validate_configuration():
     """Validate all configuration parameters"""
@@ -127,8 +138,8 @@ def validate_configuration():
         errors.append(f"Phase weights sum to {TOTAL_WEIGHT}, must be 1.0")
     
     # Check all phases have required fields
-    required_fields = ['duration_days', 'rainfall_requirement_mm', 'drought_trigger_mm', 
-                      'flood_trigger_daily_mm', 'payout_weight']
+    required_fields = ['required_gdd', 'rainfall_requirement_mm', 'drought_trigger_mm', 
+                      'flood_trigger_daily_mm', 'flood_trigger_cumulative_mm', 'payout_weight']
     for phase_name, phase_config in RICE_GROWTH_PHASES.items():
         for field in required_fields:
             if field not in phase_config:
@@ -148,19 +159,20 @@ def validate_configuration():
 validate_configuration()
 
 if __name__ == "__main__":
-    print("Rice Growth Phase Configuration")
+    print("Rice Growth Phase Configuration (V4 Dynamic GDD)")
     print("=" * 50)
-    print(f"\nTotal Season: {TOTAL_DURATION_DAYS} days ({TOTAL_DURATION_DAYS/30:.1f} months)")
+    print(f"\nTotal Required GDD: {TOTAL_REQUIRED_GDD} heat units")
     print(f"Total Rainfall Requirement: {TOTAL_RAINFALL_REQUIREMENT}mm")
     print(f"\nPhase Breakdown:")
     print("-" * 50)
     
     for phase_name, config in RICE_GROWTH_PHASES.items():
         print(f"\n{phase_name.upper()}")
-        print(f"  Duration: {config['duration_days']} days")
+        print(f"  Required GDD: {config['required_gdd']} heat units")
         print(f"  Rainfall Need: {config['rainfall_requirement_mm']}mm")
         print(f"  Drought Trigger: < {config['drought_trigger_mm']}mm")
-        print(f"  Flood Trigger: > {config['flood_trigger_daily_mm']}mm/day")
+        print(f"  Flood Trigger (Acute): > {config['flood_trigger_daily_mm']}mm/day")
+        print(f"  Flood Trigger (Prolonged): > {config['flood_trigger_cumulative_mm']}mm/5-days")
         print(f"  Payout Weight: {config['payout_weight']*100:.0f}%")
         print(f"  Critical: {config['critical_period']}")
     

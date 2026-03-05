@@ -4,7 +4,7 @@ Staleness Monitor
 Monitors data and forecast freshness and sends alerts when thresholds are exceeded.
 """
 import logging
-from datetime import datetime, date, timedelta
+from datetime import datetime, date, timedelta, timezone
 from typing import Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import func
@@ -141,7 +141,7 @@ class StalenessMonitor:
                 return None
             
             # Calculate age
-            now = datetime.now()
+            now = datetime.now(timezone.utc)
             
             # Handle timezone-aware datetime
             if latest_forecast.tzinfo is not None:

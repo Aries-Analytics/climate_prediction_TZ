@@ -6,7 +6,7 @@ Version: 1.0
 Date: January 23, 2026
 """
 
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta, date, timezone
 from typing import Dict, List, Optional, Tuple
 import pandas as pd
 import numpy as np
@@ -75,7 +75,7 @@ class SeasonalForecastService:
             
         except Exception as e:
             # Fallback to simple if phase calculation fails
-            moderate_payout = simple_payout
+            moderate_payout = 0.0  # Safe default: no payout when phase calc fails
             phases_detail = {'error': str(e)}
         
         # Calculate trigger probabilities (simplified - based on uncertainty)
@@ -86,7 +86,7 @@ class SeasonalForecastService:
             'location': location,
             'forecast_year': year,
             'season': 'Mar-Jun',
-            'forecast_date': datetime.now().strftime('%Y-%m-%d'),
+            'forecast_date': datetime.now(timezone.utc).strftime('%Y-%m-%d'),
             
             # Seasonal totals
             'predicted_seasonal_mm': round(seasonal_total_mm, 1),

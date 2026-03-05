@@ -36,6 +36,11 @@ class ModelMetricsBase(BaseModel):
     n_val_samples: Optional[int] = Field(None, serialization_alias="valSamples")
     n_test_samples: Optional[int] = Field(None, serialization_alias="testSamples")
 
+    # Temporal split date ranges (from feature_metadata.json)
+    train_date_range: Optional[str] = Field(None, serialization_alias="trainDateRange")
+    val_date_range: Optional[str] = Field(None, serialization_alias="valDateRange")
+    test_date_range: Optional[str] = Field(None, serialization_alias="testDateRange")
+
 class ModelMetricsCreate(ModelMetricsBase):
     pass
 

@@ -5,7 +5,7 @@ Runs daily or when new climate data arrives to generate forecasts
 for all trigger types and horizons.
 """
 import logging
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from typing import Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import func
@@ -44,7 +44,7 @@ class ForecastScheduler:
             return True
         
         # Check if forecasts are older than 7 days
-        days_old = (datetime.now() - latest_forecast.created_at).days
+        days_old = (datetime.now(timezone.utc) - latest_forecast.created_at).days
         if days_old >= 7:
             logger.info(f"Forecasts are {days_old} days old - triggering generation")
             return True
@@ -68,7 +68,7 @@ class ForecastScheduler:
         Returns:
             dict: Summary of forecast generation results
         """
-        start_time = datetime.now()
+        start_time = datetime.now(timezone.utc)
         logger.info(f"Starting scheduled forecast generation at {start_time}")
         
         try:
@@ -101,7 +101,7 @@ class ForecastScheduler:
                 min_probability=0.3
             )
             
-            end_time = datetime.now()
+            end_time = datetime.now(timezone.utc)
             duration = (end_time - start_time).total_seconds()
             
             logger.info(
@@ -124,7 +124,7 @@ class ForecastScheduler:
             return {
                 "status": "error",
                 "error": str(e),
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat()
             }
     
     def get_next_run_time(self) -> Optional[datetime]:
@@ -141,7 +141,7 @@ class ForecastScheduler:
             )
         else:
             # First run - schedule for tomorrow at midnight
-            next_run = (datetime.now() + timedelta(days=1)).replace(
+            next_run = (datetime.now(timezone.utc) + timedelta(days=1)).replace(
                 hour=0, minute=0, second=0, microsecond=0
             )
         

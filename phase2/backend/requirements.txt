@@ -17,7 +17,7 @@ python-dateutil==2.8.2
 requests==2.31.0
 
 # Data Ingestion
-cdsapi==0.6.1
+ecmwf-datastores-client>=0.4.0
 earthengine-api==0.1.370
 xarray==2023.10.1
 netCDF4==1.6.5

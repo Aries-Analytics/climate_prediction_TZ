@@ -23,7 +23,7 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -357,7 +357,7 @@ def main():
             'test_samples': len(test),
             'n_features': n_features,
             'feature_to_sample_ratio': float(ratio),
-            'timestamp': datetime.now().isoformat()
+            'timestamp': datetime.now(timezone.utc).isoformat()
         },
         'models': {
             'random_forest': rf_metrics,

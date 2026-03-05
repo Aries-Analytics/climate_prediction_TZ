@@ -4,7 +4,7 @@ Monitoring Service
 Exposes metrics and health checks for pipeline monitoring.
 """
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, Optional, NamedTuple
 from sqlalchemy.orm import Session
 from sqlalchemy import func, desc
@@ -201,7 +201,7 @@ class MonitoringService:
             latest_date = self.db.query(func.max(ClimateData.date)).scalar()
             
             if latest_date:
-                today = datetime.now().date()
+                today = datetime.now(timezone.utc).date()
                 freshness = (today - latest_date).days
                 return freshness
             
@@ -222,7 +222,7 @@ class MonitoringService:
             latest_forecast = self.db.query(func.max(Forecast.created_at)).scalar()
             
             if latest_forecast:
-                now = datetime.now()
+                now = datetime.now(timezone.utc)
                 # Handle timezone-aware datetime
                 if latest_forecast.tzinfo is not None:
                     from datetime import timezone

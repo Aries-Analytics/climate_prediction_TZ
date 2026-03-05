@@ -5,12 +5,13 @@ Coordinates pipeline stages, manages execution locking, and handles retries.
 """
 import logging
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, NamedTuple
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 
 from app.models.pipeline_execution import PipelineExecution, DataQualityMetrics
+from app.models.forecast_log import ForecastLog
 from app.services.pipeline.incremental_manager import IncrementalIngestionManager
 from app.services.pipeline.retry_handler import RetryHandler
 from app.services.pipeline.data_quality import DataQualityValidator
@@ -29,6 +30,7 @@ class ExecutionResult(NamedTuple):
     recommendations_created: int
     sources_succeeded: list
     sources_failed: list
+    per_source_records: dict = {}  # {source_name: records_stored}
     error_message: Optional[str] = None
     duration_seconds: Optional[int] = None
 
@@ -39,6 +41,7 @@ class IngestionResult(NamedTuple):
     records_stored: int
     sources_succeeded: list
     sources_failed: list
+    per_source_records: dict = {}  # {source_name: records_stored}
     error_message: Optional[str] = None
 
 
@@ -101,16 +104,28 @@ class PipelineOrchestrator:
     
     def acquire_lock(self) -> bool:
         """
-        Acquire execution lock to prevent concurrent runs
+        Acquire execution lock to prevent concurrent runs.
         
-        Uses PostgreSQL advisory locks for distributed locking.
+        Uses a DEDICATED raw DB connection for the advisory lock, separate
+        from the ORM session. This prevents:
+        - Connection pool recycling breaking the lock/unlock pairing
+        - ORM commit()/rollback() accidentally releasing xact-level locks
+        
+        The lock is session-level (pg_try_advisory_lock) on its OWN connection.
+        Release happens when release_lock() explicitly closes this connection.
         
         Returns:
             True if lock acquired, False if already locked
         """
         try:
-            # Try to acquire advisory lock (non-blocking)
-            result = self.db.execute(
+            from sqlalchemy import create_engine
+            from app.core.config import settings
+            
+            # Create a dedicated connection ONLY for holding the lock
+            engine = create_engine(settings.DATABASE_URL)
+            self._lock_connection = engine.connect()
+            
+            result = self._lock_connection.execute(
                 text("SELECT pg_try_advisory_lock(:lock_id)"),
                 {"lock_id": self.LOCK_ID}
             ).scalar()
@@ -120,21 +135,32 @@ class PipelineOrchestrator:
                 return True
             else:
                 logger.warning(f"Pipeline execution lock already held (ID: {self.LOCK_ID})")
+                self._lock_connection.close()
+                self._lock_connection = None
                 return False
         except Exception as e:
             logger.error(f"Failed to acquire lock: {e}")
+            if hasattr(self, '_lock_connection') and self._lock_connection:
+                self._lock_connection.close()
+                self._lock_connection = None
             return False
     
     def release_lock(self) -> None:
-        """Release execution lock"""
+        """Release execution lock by closing the dedicated lock connection.
+        
+        Closing the connection automatically releases the session-level
+        advisory lock. This is guaranteed — no silent failures.
+        """
         try:
-            self.db.execute(
-                text("SELECT pg_advisory_unlock(:lock_id)"),
-                {"lock_id": self.LOCK_ID}
-            )
-            logger.info(f"Released pipeline execution lock (ID: {self.LOCK_ID})")
+            if hasattr(self, '_lock_connection') and self._lock_connection:
+                self._lock_connection.close()
+                self._lock_connection = None
+                logger.info(f"Released pipeline execution lock (ID: {self.LOCK_ID})")
+            else:
+                logger.warning("No lock connection to release")
         except Exception as e:
             logger.error(f"Failed to release lock: {e}")
+            self._lock_connection = None
     
     def execute_pipeline(
         self, 
@@ -152,7 +178,7 @@ class PipelineOrchestrator:
             ExecutionResult with summary of execution
         """
         execution_id = str(uuid.uuid4())
-        started_at = datetime.now()
+        started_at = datetime.now(timezone.utc)
         
         # Try to acquire lock
         if not self.acquire_lock():
@@ -217,7 +243,7 @@ class PipelineOrchestrator:
                 error_msg = None
             
             # Complete execution
-            completed_at = datetime.now()
+            completed_at = datetime.now(timezone.utc)
             duration = int((completed_at - started_at).total_seconds())
             
             execution.status = final_status
@@ -241,6 +267,7 @@ class PipelineOrchestrator:
                 recommendations_created=forecast_result.recommendations_created,
                 sources_succeeded=ingestion_result.sources_succeeded,
                 sources_failed=ingestion_result.sources_failed,
+                per_source_records=ingestion_result.per_source_records,
                 error_message=error_msg,
                 duration_seconds=duration
             )
@@ -250,7 +277,7 @@ class PipelineOrchestrator:
             
             # Update execution record with failure
             execution.status = 'failed'
-            execution.completed_at = datetime.now()
+            execution.completed_at = datetime.now(timezone.utc)
             execution.duration_seconds = int((execution.completed_at - started_at).total_seconds())
             execution.error_message = str(e)
             execution.error_traceback = self._get_traceback()
@@ -294,6 +321,7 @@ class PipelineOrchestrator:
         total_records_stored = 0
         sources_succeeded = []
         sources_failed = []
+        per_source_records = {}  # Track per-source record counts
         errors = []
         
         # Process each source independently (graceful degradation)
@@ -317,6 +345,7 @@ class PipelineOrchestrator:
                     records_fetched, records_stored = result
                     total_records_fetched += records_fetched
                     total_records_stored += records_stored
+                    per_source_records[source] = records_stored
                     sources_succeeded.append(source)
                     logger.info(f"Source {source} succeeded: {records_stored} records stored")
                     
@@ -336,6 +365,7 @@ class PipelineOrchestrator:
             records_stored=total_records_stored,
             sources_succeeded=sources_succeeded,
             sources_failed=sources_failed,
+            per_source_records=per_source_records,
             error_message=error_message
         )
     
@@ -363,7 +393,7 @@ class PipelineOrchestrator:
         else:
             # Full refresh - fetch all available data
             start_date = datetime(2010, 1, 1)
-            end_date = datetime.now()
+            end_date = datetime.now(timezone.utc)
         
         logger.info(f"Date range for {source}: {start_date} to {end_date}")
         
@@ -428,6 +458,29 @@ class PipelineOrchestrator:
                     # Add metadata to indicate reduced confidence
                     # This could be stored in a metadata field or notes
                     logger.info(f"Forecast {forecast.id} generated with partial data")
+            
+            # Formally log this execution in the shadow-run ForecastLog
+            import uuid
+            log_batch = []
+            for f in forecasts:
+                fl = ForecastLog(
+                    id=str(uuid.uuid4()),
+                    issued_at=datetime.now(timezone.utc),
+                    valid_from=f.forecast_date,
+                    valid_until=f.target_date,
+                    region_id=str(f.location_id),
+                    model_version=f.model_version or "V4.0",
+                    forecast_type=f.trigger_type,
+                    forecast_value=f.probability,
+                    lead_time_days=f.horizon_months * 30,  # approximate days
+                    status="pending"
+                )
+                log_batch.append(fl)
+            
+            if log_batch:
+                self.db.bulk_save_objects(log_batch)
+                self.db.commit()
+                logger.info(f"Saved {len(log_batch)} ForecastLog evidence snapshots for Shadow-Run")
             
             # Generate recommendations
             recommendations = generate_all_recommendations(self.db, min_probability=0.3)

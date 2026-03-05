@@ -4,7 +4,7 @@ Fetches reanalysis climate data from Copernicus Climate Data Store (CDS)
 """
 
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, Tuple
 
 import pandas as pd
@@ -363,7 +363,7 @@ def ingest_era5(
     if start_date is None:
         start_date = datetime(2010, 1, 1)
     if end_date is None:
-        end_date = datetime.now()
+        end_date = datetime.now(timezone.utc)
 
     # Ensure dates are pandas-compatible timestamps for comparison
     start_date = pd.to_datetime(start_date)
@@ -411,14 +411,42 @@ def ingest_era5(
                     if "temp_2m" in row:
                         # Convert Kelvin to Celsius
                         existing.temperature_avg = float(row["temp_2m"]) - 273.15
+                    if "dewpoint_2m" in row and row["dewpoint_2m"] is not None:
+                        existing.dewpoint_2m = float(row["dewpoint_2m"]) - 273.15
+                    if "surface_pressure" in row and row["surface_pressure"] is not None:
+                        existing.surface_pressure = float(row["surface_pressure"])
+                    if "wind_u_10m" in row and row["wind_u_10m"] is not None:
+                        existing.wind_u_10m = float(row["wind_u_10m"])
+                    if "wind_v_10m" in row and row["wind_v_10m"] is not None:
+                        existing.wind_v_10m = float(row["wind_v_10m"])
+                    # Derive wind speed and direction from u/v components
+                    if "wind_u_10m" in row and "wind_v_10m" in row and row["wind_u_10m"] is not None and row["wind_v_10m"] is not None:
+                        import math
+                        u, v = float(row["wind_u_10m"]), float(row["wind_v_10m"])
+                        existing.wind_speed_ms = math.sqrt(u**2 + v**2)
+                        existing.wind_direction_deg = (math.degrees(math.atan2(-u, -v)) + 360) % 360
                     records_stored += 1
                 else:
                     # Create new record
+                    # Derive wind speed and direction from u/v components
+                    ws = None
+                    wd = None
+                    if "wind_u_10m" in row and "wind_v_10m" in row and row["wind_u_10m"] is not None and row["wind_v_10m"] is not None:
+                        import math
+                        u, v = float(row["wind_u_10m"]), float(row["wind_v_10m"])
+                        ws = math.sqrt(u**2 + v**2)
+                        wd = (math.degrees(math.atan2(-u, -v)) + 360) % 360
                     climate_record = ClimateData(
                         date=row["date"].date(),
                         location_lat=tanzania_lat,
                         location_lon=tanzania_lon,
                         temperature_avg=float(row["temp_2m"]) - 273.15 if "temp_2m" in row else None,
+                        dewpoint_2m=float(row["dewpoint_2m"]) - 273.15 if "dewpoint_2m" in row and row["dewpoint_2m"] is not None else None,
+                        surface_pressure=float(row["surface_pressure"]) if "surface_pressure" in row and row["surface_pressure"] is not None else None,
+                        wind_u_10m=float(row["wind_u_10m"]) if "wind_u_10m" in row and row["wind_u_10m"] is not None else None,
+                        wind_v_10m=float(row["wind_v_10m"]) if "wind_v_10m" in row and row["wind_v_10m"] is not None else None,
+                        wind_speed_ms=ws,
+                        wind_direction_deg=wd,
                     )
                     db.add(climate_record)
                     records_stored += 1

@@ -12,7 +12,7 @@ Usage:
 """
 import requests
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timezone
 import time
 import math
 import argparse
@@ -440,7 +440,7 @@ def main():
     print("=" * 60)
     print("LOADING 6-LOCATION CALIBRATED DATA INTO DASHBOARD")
     print("=" * 60)
-    print(f"Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"Time: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')}")
     
     # Clear triggers if requested
     if args.clear:

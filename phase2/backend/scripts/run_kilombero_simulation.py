@@ -16,7 +16,7 @@ Output:
 import sys
 import os
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 
 # Add project paths
 # Running from backend/scripts, .. is backend (where app is)
@@ -169,7 +169,7 @@ def generate_markdown_report(simulation, summary, output_path):
     
     report = f"""# Kilombero Basin Rice Pilot - Historical Validation Report
 
-**Generated:** {datetime.now().strftime('%Y-%m-%d %H:%M')}  
+**Generated:** {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M')}  
 **Simulation ID:** {simulation.id}  
 **Status:** {simulation.status}
 

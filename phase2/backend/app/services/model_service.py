@@ -40,8 +40,8 @@ def get_all_models(db: Session) -> List[ModelMetricsResponse]:
         (ModelMetric.id == subquery.c.max_id)
     ).all()
     
-    # Load CV and feature selection data from latest training results
-    cv_data, feature_data = _load_latest_training_results()
+    # Load CV, feature selection, and date range data from latest training results
+    cv_data, feature_data, date_ranges = _load_latest_training_results()
     
     # Enhance metrics with CV and feature selection data
     enhanced_metrics = []
@@ -94,6 +94,14 @@ def get_all_models(db: Session) -> List[ModelMetricsResponse]:
                 "n_val_samples": feature_data.get("n_val_samples"),
                 "n_test_samples": feature_data.get("n_test_samples"),
             })
+
+        # Add temporal split date ranges
+        if date_ranges:
+            metric_dict.update({
+                "train_date_range": date_ranges.get("train"),
+                "val_date_range": date_ranges.get("val"),
+                "test_date_range": date_ranges.get("test"),
+            })
         
         enhanced_metrics.append(ModelMetricsResponse(**metric_dict))
     
@@ -101,62 +109,76 @@ def get_all_models(db: Session) -> List[ModelMetricsResponse]:
 
 
 def _load_latest_training_results():
-    """Load CV and feature selection data from latest training results JSON"""
+    """Load CV, feature selection, and date range data from training results + metadata"""
     import glob
-    
+
     models_dir = os.path.join(settings.OUTPUTS_DIR, "models")
-    
-    # Find the latest training_results JSON file
-    pattern = os.path.join(models_dir, "training_results_*.json")
-    result_files = glob.glob(pattern)
-    
-    if not result_files:
-        return {}, {}
-    
-    # Get the most recent file
-    latest_file = max(result_files, key=os.path.getmtime)
-    
+
+    # Prefer canonical latest_training_results.json (updated by pipeline)
+    canonical_file = os.path.join(models_dir, "latest_training_results.json")
+    if os.path.exists(canonical_file):
+        latest_file = canonical_file
+    else:
+        # Fallback: find the most recent timestamped training_results file
+        pattern = os.path.join(models_dir, "training_results_*.json")
+        result_files = glob.glob(pattern)
+        if not result_files:
+            return {}, {}, {}
+        latest_file = max(result_files, key=os.path.getmtime)
+
     try:
         with open(latest_file, 'r') as f:
             results = json.load(f)
-        
+
         # Extract CV data
         cv_data = {}
         if "cross_validation" in results and results["cross_validation"]:
             for model_name, cv_metrics in results["cross_validation"].items():
                 cv_data[model_name] = cv_metrics
-        
+
         # Extract feature selection data
         feature_data = {}
         if "feature_selection" in results:
             fs = results["feature_selection"]
-            feature_data = {
-                "selected_features": fs.get("selected_features"),
-                "original_features": fs.get("original_features"),
-            }
-            
-            # Add sample counts from data_shapes
-            if "data_shapes" in results:
-                shapes = results["data_shapes"]
-                if "train" in shapes:
-                    feature_data["n_train_samples"] = shapes["train"][0]
-                if "val" in shapes:
-                    feature_data["n_val_samples"] = shapes["val"][0]
-                if "test" in shapes:
-                    feature_data["n_test_samples"] = shapes["test"][0]
-            
-            # Calculate feature-to-sample ratio
-            if "data_shapes" in results and "train" in results["data_shapes"]:
-                n_train_samples = results["data_shapes"]["train"][0]
-                n_features = fs.get("selected_features", 1)
-                if n_features > 0:
-                    feature_data["feature_to_sample_ratio"] = n_train_samples / n_features
-        
-        return cv_data, feature_data
-    
+            feature_data["selected_features"] = fs.get("selected_features")
+            feature_data["original_features"] = fs.get("original_features")
+
+        # Add sample counts and feature count from data_shapes (always available)
+        if "data_shapes" in results:
+            shapes = results["data_shapes"]
+            if "train" in shapes:
+                feature_data["n_train_samples"] = shapes["train"][0]
+                # Fallback: get feature count from data_shapes if not in feature_selection
+                if not feature_data.get("selected_features") and len(shapes["train"]) > 1:
+                    feature_data["selected_features"] = shapes["train"][1]
+            if "val" in shapes:
+                feature_data["n_val_samples"] = shapes["val"][0]
+            if "test" in shapes:
+                feature_data["n_test_samples"] = shapes["test"][0]
+
+        # Calculate feature-to-sample ratio
+        n_train = feature_data.get("n_train_samples", 0)
+        n_features = feature_data.get("selected_features", 0)
+        if n_train and n_features and n_features > 0:
+            feature_data["feature_to_sample_ratio"] = n_train / n_features
+
+        # Load temporal split date ranges from feature_metadata.json
+        date_ranges = {}
+        processed_dir = os.path.join(settings.OUTPUTS_DIR, "processed")
+        metadata_file = os.path.join(processed_dir, "feature_metadata.json")
+        if os.path.exists(metadata_file):
+            try:
+                with open(metadata_file, 'r') as f:
+                    metadata = json.load(f)
+                date_ranges = metadata.get("date_range", {})
+            except Exception:
+                pass
+
+        return cv_data, feature_data, date_ranges
+
     except Exception as e:
         # Silently fail and return empty dicts
-        return {}, {}
+        return {}, {}, {}
 
 def compare_models(db: Session, model_names: List[str], metric: str = "r2_score") -> ModelComparison:
     """Compare multiple models by a specific metric"""

@@ -6,7 +6,7 @@ Provides version control for climate datasets with metadata tracking and rollbac
 import hashlib
 import json
 import shutil
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pandas as pd
@@ -107,7 +107,7 @@ class DataVersionControl:
             # Create version metadata
             version_info = {
                 "version": version_num,
-                "timestamp": datetime.now().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "description": description,
                 "tags": tags or [],
                 "checksum": checksum,

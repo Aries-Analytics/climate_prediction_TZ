@@ -15,7 +15,7 @@ project_root = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List, Optional
 
 import pandas as pd
@@ -157,7 +157,7 @@ def run_processing_pipeline(sources: Optional[List[str]] = None, skip_merge: boo
 
     # Process each source
     results = []
-    start_time = datetime.now()
+    start_time = datetime.now(timezone.utc)
 
     for source in sources_to_process:
         source_result = process_source(source, locations)
@@ -182,7 +182,7 @@ def run_processing_pipeline(sources: Optional[List[str]] = None, skip_merge: boo
         merge_status = "skipped"
 
     # Summary
-    end_time = datetime.now()
+    end_time = datetime.now(timezone.utc)
     duration = (end_time - start_time).total_seconds()
 
     logger.info("")

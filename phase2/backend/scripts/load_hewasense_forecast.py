@@ -8,7 +8,7 @@ Run after backend is up:
 
 import requests
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 import sys
 from pathlib import Path
 
@@ -123,7 +123,7 @@ def main():
     print("=" * 60)
     print("HEWASENSE PHASE-BASED FORECAST LOADER")
     print("=" * 60)
-    print(f"Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"Time: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')}")
     
     # Get auth token
     print("\nAuthenticating...")

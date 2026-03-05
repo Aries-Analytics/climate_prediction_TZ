@@ -2,23 +2,42 @@
 Alert Service
 
 Multi-channel alerting for pipeline failures, data staleness, and quality issues.
+Supports rich Slack formatting per SLACK_ALERT_STRATEGY.md.
 """
 import logging
 import smtplib
 import requests
-from datetime import date, datetime
-from typing import List, Optional, Dict
+from datetime import date, datetime, timezone
+from typing import List, Optional, Dict, Any
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from dataclasses import dataclass
+import pytz
 
 logger = logging.getLogger(__name__)
+
+# East Africa Time zone (UTC+3)
+EAT_TZ = pytz.timezone('Africa/Dar_es_Salaam')
+
+# Pilot context constants (from persona_config.yaml)
+PILOT_REGION = "Morogoro (Kilombero Basin)"
+PILOT_CROP = "Rice"
+PILOT_FARMERS = 1_000
+
+# Source display names
+SOURCE_DISPLAY_NAMES = {
+    'chirps': 'CHIRPS',
+    'nasa_power': 'NASA POWER',
+    'era5': 'ERA5',
+    'ndvi': 'NDVI',
+    'ocean_indices': 'Ocean Indices',
+}
 
 
 @dataclass
 class Alert:
     """Alert message structure"""
-    severity: str  # 'critical' | 'warning' | 'info'
+    severity: str  # 'critical' | 'warning' | 'info' | 'success'
     title: str
     message: str
     timestamp: datetime
@@ -33,7 +52,7 @@ class AlertService:
     
     Supports:
     - Email alerts via SMTP
-    - Slack notifications via webhook
+    - Slack notifications via webhook (with rich Block Kit formatting)
     - Structured logging
     """
     
@@ -84,6 +103,242 @@ class AlertService:
             except Exception as e:
                 logger.error(f"Failed to send Slack alert: {e}")
     
+    # ── Rich pipeline alerts ──────────────────────────────────────────
+    
+    def send_pipeline_success_alert(
+        self,
+        execution_id: str,
+        duration_seconds: int,
+        sources_succeeded: List[str],
+        sources_failed: List[str],
+        records_stored: int,
+        forecasts_generated: int,
+        execution_type: str = 'scheduled',
+        db=None,
+        next_run_time: Optional[str] = None,
+        per_source_records: Optional[Dict[str, int]] = None,
+    ) -> None:
+        """
+        Send rich success alert matching SLACK_ALERT_STRATEGY.md format.
+        
+        Queries DB for per-source quality metrics and total record count
+        when a db session is provided.  Falls back to per_source_records
+        dict passed directly from the orchestrator.
+        """
+        now_eat = datetime.now(timezone.utc).astimezone(EAT_TZ)
+        date_str = now_eat.strftime('%A, %B %d, %Y — %H:%M EAT')
+        
+        # ── Gather enrichment data from DB ──
+        quality_score = None
+        source_records: Dict[str, int] = dict(per_source_records or {})
+        total_db_records: Optional[int] = None
+        
+        if db is not None:
+            try:
+                from app.models.pipeline_execution import DataQualityMetrics
+                from app.models.climate_data import ClimateData
+                from sqlalchemy import func
+                
+                # Per-source record counts from this execution's quality metrics
+                quality_rows = (
+                    db.query(DataQualityMetrics)
+                    .filter(DataQualityMetrics.execution_id == execution_id)
+                    .all()
+                )
+                scores = []
+                for qm in quality_rows:
+                    source_records[qm.source] = qm.total_records
+                    if qm.quality_score is not None:
+                        scores.append(float(qm.quality_score))
+                
+                if scores:
+                    quality_score = round(sum(scores) / len(scores) * 100)
+                
+                # Total climate data records
+                total_db_records = db.query(func.count(ClimateData.id)).scalar()
+            except Exception as e:
+                logger.warning(f"Failed to query enrichment data for success alert: {e}")
+        
+        # ── Fallback quality score from ingestion success rate ──
+        total_sources = len(sources_succeeded) + len(sources_failed)
+        if quality_score is None and total_sources > 0:
+            quality_score = round(len(sources_succeeded) / total_sources * 100)
+        
+        # ── Build ingestion lines ──
+        ingestion_lines = []
+        for src in sources_succeeded:
+            display = SOURCE_DISPLAY_NAMES.get(src, src.upper())
+            count = source_records.get(src)
+            count_str = f": {count} records" if count is not None else ""
+            ingestion_lines.append(f"✓ {display}{count_str}")
+        for src in sources_failed:
+            display = SOURCE_DISPLAY_NAMES.get(src, src.upper())
+            ingestion_lines.append(f"✗ {display}: FAILED")
+        
+        ingestion_text = "\n".join(ingestion_lines) if ingestion_lines else "No sources"
+        
+        # ── Quality line ──
+        if quality_score is not None:
+            q_emoji = "✅" if quality_score >= 80 else ("⚠️" if quality_score >= 50 else "🚨")
+            quality_line = f"Score: {quality_score}% {q_emoji}"
+        else:
+            quality_line = "Score: N/A"
+        
+        # ── DB records line ──
+        db_line = f"Database: {total_db_records:,} total records" if total_db_records else "Database: N/A"
+        
+        # ── Next run ──
+        next_run_line = f"_Next run: {next_run_time}_" if next_run_time else ""
+        
+        # ── Duration ──
+        if duration_seconds and duration_seconds >= 60:
+            dur_str = f"{duration_seconds // 60}m {duration_seconds % 60}s"
+        else:
+            dur_str = f"{duration_seconds}s" if duration_seconds else "N/A"
+        
+        # ── Build rich Slack text ──
+        text_body = (
+            f"✅ *Tanzania Climate Pipeline — Daily Summary*\n"
+            f"_{date_str}_\n\n"
+            f"*Execution Status*\n"
+            f"Status: ✅ SUCCESS\n"
+            f"Duration: {dur_str}\n"
+            f"Trigger: {execution_type.capitalize()}\n\n"
+            f"*Data Ingestion ({len(sources_succeeded)}/{total_sources})*\n"
+            f"{ingestion_text}\n\n"
+            f"*Forecast Generation*\n"
+            f"Total: {forecasts_generated} forecasts\n"
+            f"Location: {PILOT_REGION} — Pilot\n"
+            f"Crop: {PILOT_CROP} | Farmers: {PILOT_FARMERS:,}\n\n"
+            f"*Data Quality*\n"
+            f"{quality_line}\n\n"
+            f"*System Health*\n"
+            f"{db_line}\n"
+        )
+        if next_run_line:
+            text_body += f"\n{next_run_line}"
+        
+        # Also log normally
+        logger.info(f"Pipeline SUCCESS alert: {execution_id}, {forecasts_generated} forecasts, {dur_str}")
+        
+        # Send via Slack
+        if self.slack_enabled:
+            try:
+                self._send_rich_slack_alert(
+                    text=text_body,
+                    color='#36A64F',  # Green
+                    footer_text=f"Execution ID: {execution_id}",
+                )
+            except Exception as e:
+                logger.error(f"Failed to send rich Slack success alert: {e}")
+        
+        # Also send email if enabled
+        if self.email_enabled:
+            try:
+                plain_alert = Alert(
+                    severity='success',
+                    title='Pipeline Execution Completed',
+                    message=text_body.replace('*', '').replace('_', ''),
+                    timestamp=datetime.now(timezone.utc),
+                    affected_components=['pipeline'],
+                    execution_id=execution_id,
+                )
+                self._send_email_alert(plain_alert)
+            except Exception as e:
+                logger.error(f"Failed to send email success alert: {e}")
+    
+    def send_pipeline_failure_rich_alert(
+        self,
+        execution_id: str,
+        error_message: str,
+        duration_seconds: Optional[int] = None,
+        sources_succeeded: Optional[List[str]] = None,
+        sources_failed: Optional[List[str]] = None,
+        failed_stage: str = "Unknown",
+        forecasts_generated: int = 0,
+    ) -> None:
+        """
+        Send rich failure alert matching SLACK_ALERT_STRATEGY.md format.
+        
+        Includes what succeeded before failure, error details, impact, and actions.
+        """
+        now_eat = datetime.now(timezone.utc).astimezone(EAT_TZ)
+        date_str = now_eat.strftime('%A, %B %d, %Y — %H:%M EAT')
+        
+        sources_succeeded = sources_succeeded or []
+        sources_failed = sources_failed or []
+        
+        # Duration
+        if duration_seconds and duration_seconds >= 60:
+            dur_str = f"{duration_seconds // 60}m {duration_seconds % 60}s"
+        else:
+            dur_str = f"{duration_seconds}s" if duration_seconds else "N/A"
+        
+        # What succeeded
+        succeeded_lines = []
+        if sources_succeeded:
+            succeeded_lines.append(f"✅ Data Ingestion: {len(sources_succeeded)}/{len(sources_succeeded) + len(sources_failed)} sources")
+        if forecasts_generated > 0:
+            succeeded_lines.append(f"✅ Forecasts: {forecasts_generated} generated before failure")
+        succeeded_text = "\n".join(succeeded_lines) if succeeded_lines else "None"
+        
+        # Failed sources
+        failed_src_text = ""
+        if sources_failed:
+            failed_names = [SOURCE_DISPLAY_NAMES.get(s, s.upper()) for s in sources_failed]
+            failed_src_text = f"\nFailed Sources: {', '.join(failed_names)}"
+        
+        text_body = (
+            f"❌ *PIPELINE FAILURE — Immediate Action Required*\n"
+            f"_{date_str}_\n\n"
+            f"*Execution Details*\n"
+            f"Status: ❌ FAILED\n"
+            f"Duration: {dur_str} (before failure)\n"
+            f"Failed At: {failed_stage} Stage\n\n"
+            f"*What Succeeded*\n"
+            f"{succeeded_text}\n\n"
+            f"*Failure Details*\n"
+            f"Error: `{error_message}`{failed_src_text}\n\n"
+            f"*Impact*\n"
+            f"🚫 No new forecasts generated today\n"
+            f"⚠️ Previous forecasts still available\n"
+            f"📊 Dashboard showing stale data\n\n"
+            f"*Immediate Actions*\n"
+            f"1. Check logs: `docker-compose logs scheduler`\n"
+            f"2. Manual retry: `python -m app.cli pipeline run`\n\n"
+            f"*Auto-Recovery*\n"
+            f"⏰ Will retry tomorrow at 06:00 AM EAT\n"
+        )
+        
+        logger.error(f"Pipeline FAILURE alert: {execution_id}, error={error_message}")
+        
+        if self.slack_enabled:
+            try:
+                self._send_rich_slack_alert(
+                    text=text_body,
+                    color='#FF0000',  # Red
+                    footer_text=f"Execution ID: {execution_id}",
+                )
+            except Exception as e:
+                logger.error(f"Failed to send rich Slack failure alert: {e}")
+        
+        if self.email_enabled:
+            try:
+                plain_alert = Alert(
+                    severity='critical',
+                    title='Pipeline Execution FAILED',
+                    message=text_body.replace('*', '').replace('_', '').replace('`', ''),
+                    timestamp=datetime.now(timezone.utc),
+                    affected_components=sources_failed or ['pipeline'],
+                    error_details=error_message,
+                    execution_id=execution_id,
+                )
+                self._send_email_alert(plain_alert)
+            except Exception as e:
+                logger.error(f"Failed to send email failure alert: {e}")
+    
+    # ── Legacy alert methods (unchanged) ──────────────────────────────
+    
     def send_pipeline_failure(
         self,
         execution_id: str,
@@ -91,7 +346,7 @@ class AlertService:
         affected_components: Optional[List[str]] = None
     ) -> None:
         """
-        Send critical alert for pipeline failure
+        Send critical alert for pipeline failure (legacy / simple format)
         
         Args:
             execution_id: Pipeline execution ID
@@ -102,7 +357,7 @@ class AlertService:
             severity='critical',
             title='Pipeline Execution Failed',
             message=f'Pipeline execution {execution_id} failed with error: {str(error)}',
-            timestamp=datetime.now(),
+            timestamp=datetime.now(timezone.utc),
             affected_components=affected_components or ['pipeline'],
             error_details=str(error),
             execution_id=execution_id
@@ -122,7 +377,7 @@ class AlertService:
             severity='warning',
             title=f'Stale Data Detected: {source}',
             message=f'Data source {source} has not been updated in {days_old} days. Last update: {last_date}',
-            timestamp=datetime.now(),
+            timestamp=datetime.now(timezone.utc),
             affected_components=[source, 'data_ingestion']
         )
         self.send_alert(alert)
@@ -149,7 +404,7 @@ class AlertService:
                 f'Failed sources: {", ".join(failed_sources)}. '
                 f'Succeeded sources: {", ".join(succeeded_sources)}.'
             ),
-            timestamp=datetime.now(),
+            timestamp=datetime.now(timezone.utc),
             affected_components=failed_sources,
             execution_id=execution_id
         )
@@ -176,12 +431,14 @@ class AlertService:
                 f'Data quality checks failed for {source}. '
                 f'Issues detected: {", ".join(issues)}'
             ),
-            timestamp=datetime.now(),
+            timestamp=datetime.now(timezone.utc),
             affected_components=[source, 'data_quality'],
             error_details='\n'.join(issues),
             execution_id=execution_id
         )
         self.send_alert(alert)
+    
+    # ── Internal transport methods ────────────────────────────────────
     
     def _log_alert(self, alert: Alert) -> None:
         """Log alert with structured format"""
@@ -251,7 +508,7 @@ Affected Components:
         logger.info(f"Email alert sent to {msg['To']}")
     
     def _send_slack_alert(self, alert: Alert) -> None:
-        """Send alert via Slack webhook"""
+        """Send alert via Slack webhook (legacy attachment format)"""
         if not self.slack_webhook_url:
             return
         
@@ -259,30 +516,36 @@ Affected Components:
         color_map = {
             'critical': '#FF0000',  # Red
             'warning': '#FFA500',   # Orange
-            'info': '#0000FF'       # Blue
+            'info': '#0000FF',      # Blue
+            'success': '#36A64F',   # Green
         }
         
-        # Build Slack message
+        # Convert timestamp to East Africa Time (EAT)
+        eat_time = alert.timestamp.astimezone(EAT_TZ)
+        
+        # Build Slack message payload matching the working format
+        attachment = {
+            'color': color_map.get(alert.severity, '#808080'),
+            'text': alert.message,
+            'title': f"[{alert.severity.upper()}] {alert.title}",
+            'footer': 'Climate Forecast Pipeline',
+            'ts': int(alert.timestamp.timestamp()),
+            'fields': [
+                {
+                    'title': 'Affected Components',
+                    'value': ', '.join(alert.affected_components),
+                    'short': False
+                },
+                {
+                    'title': 'Timestamp',
+                    'value': f"{eat_time.strftime('%Y-%m-%d %H:%M:%S')} EAT",
+                    'short': True
+                }
+            ]
+        }
+        
         payload = {
-            'attachments': [{
-                'color': color_map.get(alert.severity, '#808080'),
-                'title': f"[{alert.severity.upper()}] {alert.title}",
-                'text': alert.message,
-                'fields': [
-                    {
-                        'title': 'Affected Components',
-                        'value': ', '.join(alert.affected_components),
-                        'short': False
-                    },
-                    {
-                        'title': 'Timestamp',
-                        'value': alert.timestamp.strftime('%Y-%m-%d %H:%M:%S UTC'),
-                        'short': True
-                    }
-                ],
-                'footer': 'Climate Forecast Pipeline',
-                'ts': int(alert.timestamp.timestamp())
-            }]
+            "attachments": [attachment]
         }
         
         if alert.execution_id:
@@ -301,3 +564,43 @@ Affected Components:
         response.raise_for_status()
         
         logger.info("Slack alert sent successfully")
+    
+    def _send_rich_slack_alert(
+        self,
+        text: str,
+        color: str = '#36A64F',
+        footer_text: str = '',
+    ) -> None:
+        """
+        Send a rich Slack alert using attachment with mrkdwn text.
+        
+        Uses the attachment format (compatible with all Slack webhook types)
+        with rich mrkdwn-formatted text body for the daily summary look.
+        
+        Args:
+            text: Full mrkdwn-formatted message body
+            color: Sidebar color hex
+            footer_text: Footer line (e.g. execution ID)
+        """
+        if not self.slack_webhook_url:
+            return
+        
+        payload: Dict[str, Any] = {
+            "attachments": [
+                {
+                    "color": color,
+                    "mrkdwn_in": ["text"],
+                    "text": text,
+                    "footer": f"Climate Forecast Pipeline | {footer_text}" if footer_text else "Climate Forecast Pipeline",
+                    "ts": int(datetime.now(timezone.utc).timestamp()),
+                }
+            ]
+        }
+        
+        response = requests.post(
+            self.slack_webhook_url,
+            json=payload,
+            timeout=15,
+        )
+        response.raise_for_status()
+        logger.info("Rich Slack alert sent successfully")

@@ -1,7 +1,7 @@
 
 import sys
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 # Add parent directory to path
 sys.path.append(os.getcwd())
@@ -41,7 +41,7 @@ def seed_data():
                 "rmse": 0.419,
                 "mae": 0.282,
                 "mape": 9.5,
-                "training_date": datetime.now(),
+                "training_date": datetime.now(timezone.utc),
                 "data_start_date": datetime(2015, 1, 1).date(),
                 "data_end_date": datetime(2025, 12, 31).date()
             },
@@ -52,7 +52,7 @@ def seed_data():
                 "rmse": 0.442,
                 "mae": 0.293,
                 "mape": 10.2,
-                "training_date": datetime.now(),
+                "training_date": datetime.now(timezone.utc),
                 "data_start_date": datetime(2015, 1, 1).date(),
                 "data_end_date": datetime(2025, 12, 31).date()
             },
@@ -63,7 +63,7 @@ def seed_data():
                 "rmse": 0.449,
                 "mae": 0.288,
                 "mape": 10.5,
-                "training_date": datetime.now(),
+                "training_date": datetime.now(timezone.utc),
                 "data_start_date": datetime(2015, 1, 1).date(),
                 "data_end_date": datetime(2025, 12, 31).date()
             },
@@ -74,7 +74,7 @@ def seed_data():
                 "rmse": 0.479,
                 "mae": 0.315,
                 "mape": 11.2,
-                "training_date": datetime.now(),
+                "training_date": datetime.now(timezone.utc),
                 "data_start_date": datetime(2015, 1, 1).date(),
                 "data_end_date": datetime(2025, 12, 31).date()
             }
@@ -107,8 +107,8 @@ def seed_data():
             if not existing_forecast:
                 logger.info(f"Seeding sample forecast for location: {location.name}")
                 forecast = Forecast(
-                    forecast_date=datetime.now().date(),
-                    target_date=(datetime.now() + timedelta(days=30)).date(),
+                    forecast_date=datetime.now(timezone.utc).date(),
+                    target_date=(datetime.now(timezone.utc) + timedelta(days=30)).date(),
                     horizon_months=1,
                     trigger_type="drought",
                     probability=0.75,

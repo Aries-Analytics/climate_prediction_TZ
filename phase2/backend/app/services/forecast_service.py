@@ -22,12 +22,8 @@ from app.schemas.forecast import (
     ValidationMetrics
 )
 from app.core.config import settings
-
-
-class ForecastGenerator:
-    """Service for generating climate trigger forecasts"""
-    
 from app.models.location import Location
+
 
 class ForecastGenerator:
     """Service for generating climate trigger forecasts"""
@@ -37,31 +33,84 @@ class ForecastGenerator:
         self.model_version = "ensemble_v1"
         
     def load_model(self):
-        # ... (keep existing load_model implementation)
-        """Load trained model from disk (supports both pickle and Keras formats)"""
+        """Load the best production model using dynamic resolution.
+        
+        Reads `active_model.json` to determine which model to load.
+        This file is written by the training pipeline after each retrain,
+        so the serving code always uses the latest best model.
+        
+        GOTCHA Law #1: If `active_model.json` is missing, fail explicitly.
+        GOTCHA Law #6: Feature count is verified at load time.
+        """
+        import json
+        models_dir = os.path.join(settings.OUTPUTS_DIR, "models")
+        config_path = os.path.join(models_dir, "active_model.json")
+        
+        # active_model.json is REQUIRED — no hardcoded fallbacks (GOTCHA Law #1)
+        if not os.path.exists(config_path):
+            print(f"ERROR: {config_path} not found. "
+                  f"Run the training pipeline to generate it. "
+                  f"No hardcoded model fallbacks allowed (GOTCHA Law #1).")
+            return False
+        
         try:
-            # Try to load Keras model first (for LSTM)
-            keras_path = os.path.join(settings.OUTPUTS_DIR, "models", "best_model.keras")
-            if os.path.exists(keras_path):
+            with open(config_path, 'r') as f:
+                config = json.load(f)
+        except Exception as e:
+            print(f"ERROR: Failed to read {config_path}: {e}")
+            return False
+        
+        expected_features = config.get('expected_feature_count', 77)
+        
+        # Build ordered candidate list from config
+        model_candidates = []
+        if 'primary_model' in config:
+            pm = config['primary_model']
+            model_candidates.append((
+                pm['filename'],
+                pm.get('version', 'primary'),
+                pm.get('expected_features', expected_features)
+            ))
+        if 'fallback_model' in config:
+            fm = config['fallback_model']
+            model_candidates.append((
+                fm['filename'],
+                fm.get('version', 'fallback'),
+                fm.get('expected_features', expected_features)
+            ))
+        
+        if not model_candidates:
+            print(f"ERROR: active_model.json has no primary_model or fallback_model defined.")
+            return False
+        
+        print(f"Loaded model config from {config_path}")
+        
+        # Try each candidate in order
+        for candidate in model_candidates:
+            model_file, version, expected_n = candidate[0], candidate[1], candidate[2]
+            model_path = os.path.join(models_dir, model_file)
+            if os.path.exists(model_path):
                 try:
-                    from tensorflow import keras
-                    self.model = keras.models.load_model(keras_path)
-                    self.model_version = "lstm_v1"
-                    print(f"Loaded Keras model from {keras_path}")
+                    with open(model_path, 'rb') as f:
+                        self.model = pickle.load(f)
+                        self.model_version = version
+                    
+                    # Verify feature alignment (GOTCHA Law #6)
+                    if hasattr(self.model, 'n_features_in_'):
+                        n_features = self.model.n_features_in_
+                        if n_features != expected_n:
+                            print(f"WARNING: {model_file} expects {n_features} features, "
+                                  f"expected {expected_n} per active_model.json. Skipping.")
+                            self.model = None
+                            continue
+                    
+                    print(f"Loaded {model_file} (version: {version})")
                     return True
                 except Exception as e:
-                    print(f"Failed to load Keras model: {e}")
-            
-            # Fall back to pickle format (for RF, XGBoost, Ensemble)
-            pkl_path = os.path.join(settings.OUTPUTS_DIR, "models", "best_model.pkl")
-            if os.path.exists(pkl_path):
-                with open(pkl_path, 'rb') as f:
-                    self.model = pickle.load(f)
-                    self.model_version = "ensemble_v1"
-                    print(f"Loaded pickle model from {pkl_path}")
-                return True
-        except Exception as e:
-            print(f"Failed to load model: {e}")
+                    print(f"Failed to load {model_file}: {e}")
+                    continue
+        
+        print(f"ERROR: No valid production model found in {models_dir}")
         return False
     
     def prepare_features(self, db: Session, start_date: date, horizon_months: int, location: Optional[Location] = None) -> Optional[pd.DataFrame]:
@@ -77,10 +126,11 @@ class ForecastGenerator:
         Returns:
             DataFrame with features or None if insufficient data
         """
-        # Get recent climate data (last 6 months for monthly data)
+        # Get recent climate data (last 7 months to ensure 6+ monthly records)
         # Using relativedelta for month-based lookback (monthly data cadence)
+        # Use start of month to ensure monthly records (dated on the 1st) are included
         from dateutil.relativedelta import relativedelta
-        lookback_date = start_date - relativedelta(months=6)
+        lookback_date = (start_date - relativedelta(months=7)).replace(day=1)
         
         query = db.query(ClimateData).filter(
             and_(
@@ -112,32 +162,53 @@ class ForecastGenerator:
         print(f"   {location.name if location else 'location'}: Using {len(climate_data)} monthly records "
               f"from {climate_data[0].date} to {climate_data[-1].date}")
         
-        # Convert to DataFrame
+        # Convert to DataFrame with ALL ClimateData columns (including atmospheric)
         df = pd.DataFrame([{
             'date': cd.date,
+            'month': cd.date.month if cd.date else None,
             'temperature': float(cd.temperature_avg) if cd.temperature_avg else None,
             'rainfall': float(cd.rainfall_mm) if cd.rainfall_mm else None,
             'ndvi': float(cd.ndvi) if cd.ndvi else None,
+            'soil_moisture': float(cd.soil_moisture) if cd.soil_moisture else None,
             'enso': float(cd.enso_index) if cd.enso_index else None,
             'iod': float(cd.iod_index) if cd.iod_index else None,
+            # Atmospheric columns (expanded schema)
+            'humidity': float(cd.humidity_pct) if cd.humidity_pct else None,
+            'rel_humidity': float(cd.rel_humidity_pct) if cd.rel_humidity_pct else None,
+            'dewpoint': float(cd.dewpoint_2m) if cd.dewpoint_2m else None,
+            'wind_speed': float(cd.wind_speed_ms) if cd.wind_speed_ms else None,
+            'wind_u': float(cd.wind_u_10m) if cd.wind_u_10m else None,
+            'wind_v': float(cd.wind_v_10m) if cd.wind_v_10m else None,
+            'wind_direction': float(cd.wind_direction_deg) if cd.wind_direction_deg else None,
+            'pressure': float(cd.surface_pressure) if cd.surface_pressure else None,
+            'solar': float(cd.solar_rad_wm2) if cd.solar_rad_wm2 else None,
+            'location_name': location.name if location else 'Unknown',
         } for cd in climate_data])
         
-        # Calculate aggregate features (using all available months in lookback)
-        # For monthly data, use last 3 and 6 months instead of 30/90 days
-        features = {
-            'avg_temp_3mo': df['temperature'].tail(3).mean(),
-            'avg_rainfall_3mo': df['rainfall'].tail(3).mean(),
-            'avg_ndvi_3mo': df['ndvi'].tail(3).mean(),
-            'avg_temp_6mo': df['temperature'].tail(6).mean(),
-            'avg_rainfall_6mo': df['rainfall'].tail(6).mean(),
-            'total_rainfall_3mo': df['rainfall'].tail(3).sum(),
-            'total_rainfall_6mo': df['rainfall'].tail(6).sum(),
-            'enso_latest': df['enso'].iloc[-1] if not df['enso'].isna().all() else 0,
-            'iod_latest': df['iod'].iloc[-1] if not df['iod'].isna().all() else 0,
-            'horizon_months': horizon_months,
-        }
+        # Check for critical missing data (GOTCHA Law #1: no synthetic fill)
+        # If a data source failed, its columns will be all None.
+        # Rather than filling with fake 0s, skip forecast and retry next run.
+        critical_columns = ['temperature', 'rainfall']  # Minimum required
+        for col in critical_columns:
+            if col in df.columns and df[col].isna().all():
+                print(f"   SKIPPING {location.name if location else 'location'}: "
+                      f"critical column '{col}' is entirely None (data source failed). "
+                      f"No synthetic fallbacks (GOTCHA Law #1). Will retry next run.")
+                return None
         
-        return pd.DataFrame([features])
+        # Use feature_engineering module to build the exact 88 features
+        try:
+            from app.services.feature_engineering import build_feature_vector
+        except ImportError:
+            from backend.app.services.feature_engineering import build_feature_vector
+        
+        features_df = build_feature_vector(df)
+        if features_df is None:
+            print(f"   Feature engineering failed for {location.name if location else 'location'}")
+            return None
+        
+        print(f"   Generated {features_df.shape[1]} features for prediction")
+        return features_df
 
     def calculate_confidence_intervals(self, probability: float, uncertainty: float = 0.15) -> Tuple[float, float]:
         # ... (keep existing implementation)
@@ -167,16 +238,23 @@ class ForecastGenerator:
         # Generate prediction
         if self.model is not None:
             try:
-                prediction = self.model.predict_proba(features_df)[0]
-                probability = float(prediction[1] if len(prediction) > 1 else prediction[0])
+                # CRITICAL: Use .predict() for regressors, NEVER .predict_proba()
+                # Models are ensemble regressors (RF, XGBoost) outputting continuous values
+                raw_prediction = self.model.predict(features_df)[0]
+                # Normalize regressor output to [0, 1] probability range via sigmoid
+                probability = float(1.0 / (1.0 + np.exp(-raw_prediction)))
+                probability = max(0.0, min(1.0, probability))
             except Exception as e:
-                print(f"Model prediction failed: {e}")
-                probability = self._baseline_prediction(features_df, trigger_type)
+                print(f"Model prediction failed for {trigger_type}: {e}")
+                return None  # GOTCHA Law #1: NO SYNTHETIC FALLBACKS
         else:
-            probability = self._baseline_prediction(features_df, trigger_type)
+            # No model loaded — cannot generate forecast
+            print(f"  ERROR: No model loaded for {trigger_type} forecast. "
+                  f"Load a trained model to resolve.")
+            return None  # GOTCHA Law #1: NO SYNTHETIC FALLBACKS
         
         # Calculate confidence intervals
-        base_uncertainty = 0.15 if self.model is not None else 0.25
+        base_uncertainty = 0.15
         horizon_uncertainty = base_uncertainty + (0.02 * (horizon_months - 3))
         confidence_lower, confidence_upper = self.calculate_confidence_intervals(probability, horizon_uncertainty)
         
@@ -191,33 +269,6 @@ class ForecastGenerator:
             confidence_upper=confidence_upper,
             model_version=self.model_version
         )
-        
-    def _baseline_prediction(self, features_df: pd.DataFrame, trigger_type: str) -> float:
-        # ... (keep existing implementation)
-        features = features_df.iloc[0]
-        horizon_months = features['horizon_months']
-        
-        # Updated to use monthly feature names (3mo instead of 30d)
-        if trigger_type == "drought":
-            rainfall_score = 1.0 - min(1.0, features['avg_rainfall_3mo'] / 100.0)
-            temp_score = min(1.0, max(0.0, (features['avg_temp_3mo'] - 25) / 10.0))
-            ndvi_score = 1.0 - min(1.0, max(0.0, features['avg_ndvi_3mo']))
-            base_probability = (rainfall_score * 0.5 + temp_score * 0.3 + ndvi_score * 0.2)
-        elif trigger_type == "flood":
-            rainfall_score = min(1.0, features['total_rainfall_3mo'] / 300.0)
-            base_probability = rainfall_score * 0.7 + 0.1
-        elif trigger_type == "crop_failure":
-            rainfall_score = abs(features['avg_rainfall_3mo'] - 50) / 50.0
-            ndvi_score = 1.0 - min(1.0, max(0.0, features['avg_ndvi_3mo']))
-            base_probability = (rainfall_score * 0.5 + ndvi_score * 0.5)
-        else:
-            base_probability = 0.2
-
-        horizon_decay = 0.6 ** (horizon_months - 3)
-        mean_probability = 0.15
-        adjusted_probability = base_probability * horizon_decay + mean_probability * (1 - horizon_decay)
-        
-        return min(1.0, max(0.0, adjusted_probability))
 
 
 def generate_forecasts_all_locations(
@@ -368,8 +419,9 @@ def get_forecasts(
         else:
             forecast_response.is_stale = False
             
-        # 2. Phenology Stage
-        stage = get_kilombero_stage(f.target_date)
+        # 2. Phenology Stage — detect season from target month
+        season_type = 'dry' if f.target_date.month >= 7 else 'wet'
+        stage = get_kilombero_stage(f.target_date, season_type)
         forecast_response.stage = stage
         
         # 3. Threshold Value

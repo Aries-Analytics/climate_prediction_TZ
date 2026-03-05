@@ -3,7 +3,7 @@ Extended verification for Dashboard functionality with authentication
 """
 import requests
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 
 BASE_URL = "http://localhost:8000"
 
@@ -23,7 +23,7 @@ def print_test(name: str, passed: bool, details: str = ""):
 def create_test_user():
     """Create a test user for authentication"""
     try:
-        timestamp = int(datetime.now().timestamp())
+        timestamp = int(datetime.now(timezone.utc).timestamp())
         response = requests.post(
             f"{BASE_URL}/api/auth/register",
             json={

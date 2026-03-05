@@ -7,7 +7,7 @@ Command-line interface for manual pipeline operations.
 """
 import click
 import asyncio
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from tabulate import tabulate
 from sqlalchemy.orm import Session
 
@@ -52,12 +52,12 @@ def run(incremental: bool, sources: str):
         scheduler = PipelineScheduler(db)
         
         click.echo("Starting pipeline execution...")
-        start_time = datetime.now()
+        start_time = datetime.now(timezone.utc)
         
         # Trigger manual run
         result = scheduler.trigger_manual_run(incremental=incremental)
         
-        end_time = datetime.now()
+        end_time = datetime.now(timezone.utc)
         duration = (end_time - start_time).total_seconds()
         
         # Display results
@@ -244,7 +244,7 @@ def history(limit: int, status_filter: str, days: int):
         query = db.query(PipelineExecution)
         
         # Filter by date
-        cutoff_date = datetime.now() - timedelta(days=days)
+        cutoff_date = datetime.now(timezone.utc) - timedelta(days=days)
         query = query.filter(PipelineExecution.started_at >= cutoff_date)
         
         # Filter by status

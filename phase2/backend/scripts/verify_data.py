@@ -17,7 +17,7 @@ from app.models.trigger_event import TriggerEvent
 from app.models.model_metric import ModelMetric
 from app.models.user import User
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -30,7 +30,7 @@ def verify_data():
     logger.info("=" * 80)
     logger.info("DATABASE VERIFICATION")
     logger.info("=" * 80)
-    logger.info(f"Verification time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+    logger.info(f"Verification time: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')}\n")
     
     db = SessionLocal()
     

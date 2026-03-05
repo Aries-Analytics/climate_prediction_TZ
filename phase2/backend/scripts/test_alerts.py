@@ -12,11 +12,11 @@ from pathlib import Path
 backend_path = Path(__file__).parent.parent
 sys.path.insert(0, str(backend_path))
 
-from app.services.pipeline.alerts import AlertService
+from app.services.pipeline.alert_service import AlertService
 from app.core.config import settings
 
 
-async def test_email_alerts():
+def test_email_alerts():
     """Test email alert delivery"""
     print("\n=== Testing Email Alerts ===")
     
@@ -35,11 +35,10 @@ async def test_email_alerts():
     
     try:
         print("\nSending test email...")
-        await alert_service.send_email_alert(
-            subject="Test Alert - Climate EWS",
-            body="This is a test alert from the Climate Early Warning System.\n\n"
-                 "If you receive this email, email alerts are configured correctly.",
-            alert_type="test"
+        # Testing email alert using a pseudo pipeline failure pattern since send_email is private
+        alert_service.send_pipeline_failure(
+            execution_id="test-email-execution",
+            error=Exception("Test Error for Email"),
         )
         print("✓ Test email sent successfully")
         return True
@@ -48,7 +47,7 @@ async def test_email_alerts():
         return False
 
 
-async def test_slack_alerts():
+def test_slack_alerts():
     """Test Slack alert delivery"""
     print("\n=== Testing Slack Alerts ===")
     
@@ -64,12 +63,11 @@ async def test_slack_alerts():
     
     try:
         print("\nSending test Slack message...")
-        await alert_service.send_slack_alert(
-            title="Test Alert - Climate EWS",
-            message="This is a test alert from the Climate Early Warning System.\n\n"
-                    "If you receive this message, Slack alerts are configured correctly.",
-            severity="info",
-            alert_type="test"
+        # Using partial failure to test slack since we just want to fire any alert message through it
+        alert_service.send_partial_failure_alert(
+            execution_id="test-slack-execution",
+            failed_sources=["Test slack"],
+            succeeded_sources=["Test slack"]
         )
         print("✓ Test Slack message sent successfully")
         return True
@@ -78,7 +76,7 @@ async def test_slack_alerts():
         return False
 
 
-async def test_pipeline_failure_alert():
+def test_pipeline_failure_alert():
     """Test pipeline failure alert"""
     print("\n=== Testing Pipeline Failure Alert ===")
     
@@ -86,11 +84,10 @@ async def test_pipeline_failure_alert():
     
     try:
         print("\nSending test pipeline failure alert...")
-        await alert_service.send_pipeline_failure_alert(
+        alert_service.send_pipeline_failure(
             execution_id="test-execution-123",
-            error_message="This is a test pipeline failure alert",
-            failed_sources=["test-source-1", "test-source-2"],
-            duration_seconds=120
+            error=Exception("This is a test pipeline failure alert"),
+            affected_components=["test-source-1", "test-source-2"],
         )
         print("✓ Pipeline failure alert sent successfully")
         return True
@@ -99,7 +96,7 @@ async def test_pipeline_failure_alert():
         return False
 
 
-async def test_staleness_alert():
+def test_staleness_alert():
     """Test data staleness alert"""
     print("\n=== Testing Staleness Alert ===")
     
@@ -107,9 +104,11 @@ async def test_staleness_alert():
     
     try:
         print("\nSending test staleness alert...")
-        await alert_service.send_staleness_alert(
-            data_age_days=10,
-            forecast_age_days=8
+        from datetime import date
+        alert_service.send_data_staleness_alert(
+            source="Test Data",
+            last_date=date.today(),
+            days_old=10
         )
         print("✓ Staleness alert sent successfully")
         return True
@@ -118,17 +117,17 @@ async def test_staleness_alert():
         return False
 
 
-async def main():
+def main():
     """Run all alert tests"""
     print("=" * 60)
     print("Climate Early Warning System - Alert Delivery Test")
     print("=" * 60)
     
     results = {
-        "email": await test_email_alerts(),
-        "slack": await test_slack_alerts(),
-        "pipeline_failure": await test_pipeline_failure_alert(),
-        "staleness": await test_staleness_alert()
+        "email": test_email_alerts(),
+        "slack": test_slack_alerts(),
+        "pipeline_failure": test_pipeline_failure_alert(),
+        "staleness": test_staleness_alert()
     }
     
     print("\n" + "=" * 60)
@@ -153,5 +152,5 @@ async def main():
 
 
 if __name__ == "__main__":
-    exit_code = asyncio.run(main())
+    exit_code = main()
     sys.exit(exit_code)

@@ -8,7 +8,6 @@ from datetime import datetime
 from typing import Optional
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
-from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from sqlalchemy.orm import Session
 
 from app.services.pipeline.orchestrator import PipelineOrchestrator, ExecutionResult
@@ -39,7 +38,8 @@ def execute_pipeline_standalone(alert_service_config: Optional[dict] = None) -> 
             if alert_service_config:
                 alert_service = AlertService(
                     email_enabled=alert_service_config.get('email_enabled', False),
-                    slack_enabled=alert_service_config.get('slack_enabled', False)
+                    slack_enabled=alert_service_config.get('slack_enabled', False),
+                    slack_webhook_url=alert_service_config.get('slack_webhook_url')
                 )
             
             orchestrator = PipelineOrchestrator(db, alert_service)
@@ -51,12 +51,70 @@ def execute_pipeline_standalone(alert_service_config: Optional[dict] = None) -> 
                 f"duration={result.duration_seconds}s"
             )
             
-            # Send alert if execution failed
-            if result.status == 'failed' and alert_service:
-                alert_service.send_pipeline_failure(
-                    execution_id=result.execution_id,
-                    error=Exception(result.error_message or "Pipeline execution failed")
-                )
+            # Compute dynamic next run time from schedule config
+            next_run_str = None
+            try:
+                import os
+                import pytz
+                schedule = os.environ.get('PIPELINE_SCHEDULE', '0 3 * * *')
+                tz_name = os.environ.get('PIPELINE_TIMEZONE', 'Africa/Dar_es_Salaam')
+                tz = pytz.timezone(tz_name)
+                from apscheduler.triggers.cron import CronTrigger
+                trigger = CronTrigger.from_crontab(schedule, timezone=tz)
+                next_fire = trigger.get_next_fire_time(None, datetime.now(tz))
+                if next_fire:
+                    next_run_str = next_fire.strftime('%A, %b %d at %H:%M %Z')
+            except Exception as e:
+                logger.warning(f"Could not compute next run time: {e}")
+            
+            # Send alerts based on execution status
+            if alert_service:
+                if result.status == 'failed':
+                    # Don't send CRITICAL for lock contention — it's expected behavior
+                    # when a run is still in progress from a previous trigger
+                    if 'already running' in (result.error_message or ''):
+                        logger.info(
+                            f"Skipped execution (pipeline already running). "
+                            f"This is normal when a run overlaps with the next trigger."
+                        )
+                    else:
+                        # Determine which stage failed
+                        failed_stage = "Pipeline"
+                        if result.sources_succeeded or result.sources_failed:
+                            if result.forecasts_generated == 0 and result.records_stored > 0:
+                                failed_stage = "Forecast Generation"
+                            elif result.records_stored == 0:
+                                failed_stage = "Data Ingestion"
+                        
+                        alert_service.send_pipeline_failure_rich_alert(
+                            execution_id=result.execution_id,
+                            error_message=result.error_message or "Pipeline execution failed",
+                            duration_seconds=result.duration_seconds,
+                            sources_succeeded=result.sources_succeeded,
+                            sources_failed=result.sources_failed,
+                            failed_stage=failed_stage,
+                            forecasts_generated=result.forecasts_generated,
+                        )
+                elif result.status == 'partial':
+                    alert_service.send_partial_failure_alert(
+                        failed_sources=result.sources_failed,
+                        succeeded_sources=result.sources_succeeded,
+                        execution_id=result.execution_id
+                    )
+                elif result.status == 'completed':
+                    # Send rich success alert with full context
+                    alert_service.send_pipeline_success_alert(
+                        execution_id=result.execution_id,
+                        duration_seconds=result.duration_seconds or 0,
+                        sources_succeeded=result.sources_succeeded,
+                        sources_failed=result.sources_failed,
+                        records_stored=result.records_stored,
+                        forecasts_generated=result.forecasts_generated,
+                        execution_type='scheduled',
+                        db=db,
+                        next_run_time=next_run_str,
+                        per_source_records=result.per_source_records,
+                    )
             
         finally:
             db.close()
@@ -89,7 +147,7 @@ class PipelineScheduler:
     def __init__(
         self,
         db_url: str,
-        schedule: str = "0 6 * * *",  # Daily at 06:00 UTC
+        schedule: str = "0 3 * * *",  # Daily at 03:00 UTC = 06:00 EAT
         timezone: str = "UTC",
         alert_service: Optional[AlertService] = None
     ):
@@ -97,7 +155,7 @@ class PipelineScheduler:
         Initialize pipeline scheduler
         
         Args:
-            db_url: Database URL for persistent job store
+            db_url: Database URL (used for clearing stale locks on startup)
             schedule: Cron expression for schedule (default: daily at 06:00 UTC)
             timezone: Timezone for scheduling (default: UTC)
             alert_service: Optional alert service for notifications
@@ -107,47 +165,67 @@ class PipelineScheduler:
         self.timezone = timezone
         self.alert_service = alert_service
         
-        # Configure job store
-        jobstores = {
-            'default': SQLAlchemyJobStore(url=db_url)
-        }
+        # Clear any stale advisory locks from previous container runs
+        self._clear_stale_locks()
         
-        # Create scheduler
+        # Use IN-MEMORY job store — no persistence needed.
+        # The job is re-added on every startup. Persistent store
+        # causes phantom runs from stale next_run_times after restarts.
         self.scheduler = BackgroundScheduler(
-            jobstores=jobstores,
             timezone=timezone
         )
         
         self._job_id = 'pipeline_execution'
         logger.info(f"Pipeline scheduler initialized with schedule: {schedule}")
     
-    def start(self) -> None:
-        """
-        Start the scheduler
+    def _clear_stale_locks(self) -> None:
+        """Clear any stale advisory locks from previous container runs.
         
-        Adds the pipeline execution job and starts the scheduler.
+        On startup, terminate any PostgreSQL backends still holding
+        advisory lock 123456 from old crashed/restarted containers.
         """
         try:
-            # Add job if it doesn't exist
-            if not self.scheduler.get_job(self._job_id):
-                # Use a standalone function instead of instance method to avoid serialization issues
-                self.scheduler.add_job(
-                    func=execute_pipeline_standalone,
-                    trigger=CronTrigger.from_crontab(self.schedule),
-                    id=self._job_id,
-                    name='Automated Pipeline Execution',
-                    replace_existing=True,
-                    kwargs={'alert_service_config': self._get_alert_config()}
-                )
-                logger.info(f"Added pipeline job with schedule: {self.schedule}")
-            
-            # Start scheduler
+            from sqlalchemy import create_engine, text
+            engine = create_engine(self.db_url)
+            with engine.connect() as conn:
+                result = conn.execute(text(
+                    "SELECT pg_terminate_backend(pid) "
+                    "FROM pg_locks WHERE locktype = 'advisory' AND objid = 123456"
+                ))
+                terminated = result.fetchall()
+                if terminated:
+                    logger.info(f"Cleared {len(terminated)} stale advisory lock(s) on startup")
+                else:
+                    logger.info("No stale advisory locks found on startup")
+                conn.commit()
+            engine.dispose()
+        except Exception as e:
+            logger.warning(f"Failed to clear stale locks (non-fatal): {e}")
+    
+    def start(self) -> None:
+        """
+        Start the scheduler.
+        
+        Uses in-memory job store — job is added fresh on every startup.
+        No persistent state, no phantom runs.
+        """
+        try:
+            self.scheduler.add_job(
+                func=execute_pipeline_standalone,
+                trigger=CronTrigger.from_crontab(self.schedule),
+                id=self._job_id,
+                name='Automated Pipeline Execution',
+                max_instances=1,
+                coalesce=True,
+                misfire_grace_time=1,      # Drop missed triggers
+                kwargs={'alert_service_config': self._get_alert_config()}
+            )
+            logger.info(f"Added pipeline job with schedule: {self.schedule}")
+        
             if not self.scheduler.running:
                 self.scheduler.start()
                 logger.info("Pipeline scheduler started")
-            else:
-                logger.info("Pipeline scheduler already running")
-                
+            
         except Exception as e:
             logger.error(f"Failed to start scheduler: {e}", exc_info=True)
             raise
@@ -160,6 +238,7 @@ class PipelineScheduler:
         return {
             'email_enabled': getattr(self.alert_service, 'email_enabled', False),
             'slack_enabled': getattr(self.alert_service, 'slack_enabled', False),
+            'slack_webhook_url': getattr(self.alert_service, 'slack_webhook_url', None),
         }
     
     def stop(self) -> None:

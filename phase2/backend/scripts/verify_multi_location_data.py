@@ -17,7 +17,7 @@ from pathlib import Path
 import yaml
 import requests
 import pandas as pd
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 from typing import Dict, List, Tuple, Optional
 from dotenv import load_dotenv
 import json
@@ -315,7 +315,7 @@ def generate_availability_report(config: dict, results: Dict[str, Dict[str, Tupl
     
     with open(report_path, 'w', encoding='utf-8') as f:
         f.write("# Data Availability Report: Multi-Location Spatial-Temporal Expansion\n\n")
-        f.write(f"**Generated**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
+        f.write(f"**Generated**: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')}\n\n")
         f.write("---\n\n")
         
         # Executive Summary
@@ -460,7 +460,7 @@ def generate_availability_report(config: dict, results: Dict[str, Dict[str, Tupl
 def main():
     """Main verification workflow"""
     print_header("Multi-Location Data Availability Verification")
-    print(f"Timestamp: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+    print(f"Timestamp: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')}\n")
     
     # Load locations config
     try:

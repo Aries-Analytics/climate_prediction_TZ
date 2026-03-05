@@ -30,6 +30,13 @@ class IncrementalIngestionManager:
     
     DEFAULT_LOOKBACK_DAYS = 180
     
+    # Minimum fetch windows for sources that operate at coarser granularity
+    # Ocean indices and ERA5 use year-level APIs, so a 1-day window returns nothing
+    SOURCE_MIN_WINDOW_DAYS = {
+        'ocean_indices': 90,   # Monthly data, need at least a quarter
+        'era5': 90,            # Monthly aggregation, need wide window
+    }
+    
     def __init__(self, db: Session):
         """
         Initialize the incremental ingestion manager
@@ -95,6 +102,18 @@ class IncrementalIngestionManager:
         else:
             # Incremental: fetch from last date + 1 day
             start_date = last_date + timedelta(days=1)
+            
+            # Apply minimum window for coarse-granularity sources
+            min_window = self.SOURCE_MIN_WINDOW_DAYS.get(source, 0)
+            if min_window > 0:
+                min_start = end_date - timedelta(days=min_window)
+                if start_date > min_start:
+                    start_date = min_start
+                    logger.info(
+                        f"Applied minimum {min_window}-day window for {source}: "
+                        f"{start_date} to {end_date}"
+                    )
+            
             logger.info(
                 f"Incremental fetch for {source}: {start_date} to {end_date}"
             )

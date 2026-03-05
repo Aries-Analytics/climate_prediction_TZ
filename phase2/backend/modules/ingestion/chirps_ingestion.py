@@ -5,7 +5,7 @@ Data source: Google Earth Engine (UCSB-CHG/CHIRPS/DAILY)
 """
 
 import os
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from typing import Optional, Tuple
 
 import pandas as pd
@@ -426,7 +426,7 @@ def ingest_chirps(
     if start_date is None:
         start_date = datetime(2010, 1, 1)
     if end_date is None:
-        end_date = datetime.now()
+        end_date = datetime.now(timezone.utc)
 
     # Ensure dates are pandas-compatible timestamps for comparison
     start_date = pd.to_datetime(start_date)

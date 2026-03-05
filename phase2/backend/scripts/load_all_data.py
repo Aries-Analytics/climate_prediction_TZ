@@ -11,7 +11,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import logging
 import argparse
-from datetime import datetime
+from datetime import datetime, timezone
 
 # Import individual loaders
 from load_climate_data import load_climate_data
@@ -36,7 +36,7 @@ def load_all_data(clear_existing: bool = False, skip_models: bool = False):
     logger.info("=" * 80)
     logger.info("DASHBOARD DATA LOADING - START")
     logger.info("=" * 80)
-    logger.info(f"Start time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    logger.info(f"Start time: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')}")
     logger.info(f"Clear existing: {clear_existing}")
     logger.info(f"Skip models: {skip_models}")
     logger.info("")
@@ -109,7 +109,7 @@ def load_all_data(clear_existing: bool = False, skip_models: bool = False):
     logger.info("=" * 80)
     logger.info("DATA LOADING COMPLETE")
     logger.info("=" * 80)
-    logger.info(f"End time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    logger.info(f"End time: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')}")
     logger.info("")
     logger.info("Summary:")
     logger.info(f"  ✓ Climate Data: {'SUCCESS' if results['climate_data'] else 'FAILED'}")

@@ -11,13 +11,15 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Tuple, Optional
 import pandas as pd
 import numpy as np
+import random
 
 from app.config.rice_growth_phases import (
     RICE_GROWTH_PHASES,
     DYNAMIC_START_CONFIG,
     SOIL_MOISTURE_THRESHOLDS,
     PAYOUT_RATES,
-    get_phase_by_day
+    get_phase_by_gdd,
+    GDD_BASE_TEMP_C
 )
 
 
@@ -97,16 +99,18 @@ class PhaseBasedCoverageService:
         location: str,
         coverage_start: datetime,
         rainfall_data: pd.DataFrame,
+        temperature_data: pd.DataFrame, # Newly required for GDD
         soil_moisture_data: Optional[pd.DataFrame] = None,
         sum_insured: float = 90  # Crop failure max payout
     ) -> Dict:
         """
-        Calculate payouts for each growth phase using rainfall and soil moisture
+        Calculate payouts for each growth phase using rainfall, GDD, and soil moisture
         
         Args:
             location: Farm location
             coverage_start: When coverage began
             rainfall_data: DataFrame with ['date', 'rainfall_mm']
+            temperature_data: DataFrame with ['date', 'temp_mean_c']
             soil_moisture_data: Optional DataFrame with ['date', 'soil_moisture']
             sum_insured: Maximum payout amount
             
@@ -114,34 +118,66 @@ class PhaseBasedCoverageService:
             Dictionary with phase-by-phase breakdown and total payout
         """
         phase_results = {}
-        current_date = coverage_start
         
-        for phase_name, phase_config in self.phases.items():
-            phase_end = current_date + timedelta(days=phase_config['duration_days'])
+        # Merge data streams
+        daily_data = pd.merge(rainfall_data, temperature_data, on='date', how='inner')
+        if soil_moisture_data is not None:
+            daily_data = pd.merge(daily_data, soil_moisture_data, on='date', how='left')
             
-            # Get rainfall data for this phase
-            phase_rainfall_data = rainfall_data[
-                (rainfall_data['date'] >= current_date) &
-                (rainfall_data['date'] < phase_end)
+        # Filter from start date
+        daily_data = daily_data[daily_data['date'] >= coverage_start].sort_values('date').reset_index(drop=True)
+        
+        if daily_data.empty:
+            return {'error': 'No climate data available after coverage start date'}
+
+        # Calculate daily GDD
+        daily_data['gdd'] = daily_data['temp_mean_c'].apply(lambda t: max(0, t - GDD_BASE_TEMP_C))
+        daily_data['cumulative_gdd'] = daily_data['gdd'].cumsum()
+        
+        # Calculate rolling 5-day rainfall for cumulative flood logic
+        daily_data['rolling_5d_rain'] = daily_data['rainfall_mm'].rolling(window=5, min_periods=1).sum()
+
+        current_phase_idx = 0
+        phase_names = list(self.phases.keys())
+        
+        phase_start_date = coverage_start
+        accumulated_gdd_start = 0
+
+        for phase_name in phase_names:
+            phase_config = self.phases[phase_name]
+            target_gdd = accumulated_gdd_start + phase_config['required_gdd']
+            
+            # Find when this phase ends based on target GDD
+            phase_data = daily_data[
+                (daily_data['cumulative_gdd'] > accumulated_gdd_start) & 
+                (daily_data['cumulative_gdd'] <= target_gdd)
             ]
             
-            if phase_rainfall_data.empty:
+            if phase_data.empty:
+                # If we run out of data before end of season
+                phase_end_date = daily_data['date'].max()
+                phase_duration = (phase_end_date - phase_start_date).days
+                
                 phase_results[phase_name] = {
-                    'start_date': current_date.strftime('%Y-%m-%d'),
-                    'end_date': phase_end.strftime('%Y-%m-%d'),
+                    'start_date': phase_start_date.strftime('%Y-%m-%d'),
+                    'end_date': phase_end_date.strftime('%Y-%m-%d'),
+                    'duration_days': phase_duration,
                     'phase_rainfall_mm': 0.0,
-'drought_payout': 0.0,
+                    'drought_payout': 0.0,
                     'flood_payout': 0.0,
                     'soil_moisture_payout': 0.0,
                     'total_payout': 0.0,
-                    'error': 'No rainfall data available for phase'
+                    'error': 'Climate data ended before GDD requirement met'
                 }
-                current_date = phase_end
-                continue
+                break
+
+            phase_end_date = phase_data['date'].max()
+            phase_duration = len(phase_data)
             
             # Calculate rainfall-based triggers
-            phase_rainfall_mm = phase_rainfall_data['rainfall_mm'].sum()
-            max_daily_rainfall = phase_rainfall_data['rainfall_mm'].max()
+            phase_rainfall_mm = phase_data['rainfall_mm'].sum()
+            max_daily_rainfall = phase_data['rainfall_mm'].max()
+            max_5d_cumulative_rainfall = phase_data['rolling_5d_rain'].max()
             
             # Drought trigger
             drought_payout = self._calculate_drought_payout(
@@ -152,38 +188,40 @@ class PhaseBasedCoverageService:
                 sum_insured
             )
             
-            # Flood trigger
+            # Flood trigger (Dual condition: Acute OR Prolonged)
             flood_payout = self._calculate_flood_payout(
                 max_daily_rainfall,
+                max_5d_cumulative_rainfall,
                 phase_config['flood_trigger_daily_mm'],
+                phase_config['flood_trigger_cumulative_mm'],
                 phase_config['payout_weight'],
                 sum_insured
             )
             
             # Soil moisture trigger (if data available)
             soil_moisture_payout = 0.0
-            if soil_moisture_data is not None:
-                phase_sm_data = soil_moisture_data[
-                    (soil_moisture_data['date'] >= current_date) &
-                    (soil_moisture_data['date'] < phase_end)
-                ]
-                if not phase_sm_data.empty:
-                    soil_moisture_payout = self._calculate_soil_moisture_payout(
-                        phase_sm_data['soil_moisture'].mean(),
-                        phase_config['payout_weight'],
-                        sum_insured
-                    )
+            if 'soil_moisture' in phase_data.columns and not phase_data['soil_moisture'].isna().all():
+                avg_sm = phase_data['soil_moisture'].mean()
+                soil_moisture_payout = self._calculate_soil_moisture_payout(
+                    avg_sm,
+                    phase_config['payout_weight'],
+                    sum_insured
+                )
+            else:
+                avg_sm = None
             
             # Use maximum of drought OR soil moisture (dual-index, farmer-friendly)
             total_payout = max(drought_payout, soil_moisture_payout) + flood_payout
             
             phase_results[phase_name] = {
-                'start_date': current_date.strftime('%Y-%m-%d'),
-                'end_date': phase_end.strftime('%Y-%m-%d'),
-                'duration_days': phase_config['duration_days'],
+                'start_date': phase_start_date.strftime('%Y-%m-%d'),
+                'end_date': phase_end_date.strftime('%Y-%m-%d'),
+                'duration_days': phase_duration,
+                'accumulated_gdd': round(phase_data['gdd'].sum(), 1),
                 'phase_rainfall_mm': round(phase_rainfall_mm, 1),
                 'max_daily_rainfall_mm': round(max_daily_rainfall, 1),
-                'avg_soil_moisture': round(phase_sm_data['soil_moisture'].mean(), 3) if soil_moisture_data is not None and not phase_sm_data.empty else None,
+                'max_5d_cumulative_rain_mm': round(max_5d_cumulative_rainfall, 1),
+                'avg_soil_moisture': round(avg_sm, 3) if avg_sm is not None else None,
                 'drought_payout': round(drought_payout, 2),
                 'flood_payout': round(flood_payout, 2),
                 'soil_moisture_payout': round(soil_moisture_payout, 2),
@@ -191,7 +229,9 @@ class PhaseBasedCoverageService:
                 'triggered': total_payout > 0
             }
             
-            current_date = phase_end
+            # Setup for next phase
+            phase_start_date = phase_end_date + timedelta(days=1)
+            accumulated_gdd_start = target_gdd
         
         # Calculate summary
         total_payout = sum(p['total_payout'] for p in phase_results.values())
@@ -199,7 +239,7 @@ class PhaseBasedCoverageService:
         
         return {
             'coverage_start': coverage_start.strftime('%Y-%m-%d'),
-            'coverage_end': current_date.strftime('%Y-%m-%d'),
+            'coverage_end': phase_end_date.strftime('%Y-%m-%d') if 'phase_end_date' in locals() else 'Unknown',
             'phases': phase_results,
             'total_payout': round(total_payout, 2),
             'triggered_phases': triggered_phases,
@@ -229,13 +269,19 @@ class PhaseBasedCoverageService:
     
     def _calculate_flood_payout(
         self,
-        max_daily: float,
-        flood_trigger: float,
+        max_daily_rainfall: float,
+        max_5d_cumulative_rainfall: float,
+        flood_trigger_daily: float,
+        flood_trigger_cumulative: float,
         phase_weight: float,
         sum_insured: float
     ) -> float:
-        """Calculate payout for flood conditions"""
-        if max_daily <= flood_trigger:
+        """Calculate payout for flood conditions (Dual Condition: Acute OR Prolonged)"""
+        
+        acute_triggered = max_daily_rainfall > flood_trigger_daily
+        prolonged_triggered = max_5d_cumulative_rainfall > flood_trigger_cumulative
+        
+        if not (acute_triggered or prolonged_triggered):
             return 0.0
         
         # Fixed payout for flood (50% of phase weight)
@@ -292,9 +338,15 @@ class PhaseBasedCoverageService:
         simple_drought = seasonal_total < 400  # Simple threshold
         simple_payout = PAYOUT_RATES['drought'] if simple_drought else 0
         
-        # Moderate model (phase-based)
+        # Moderate model (phase-based v4 - requiring temperature mockup for simple comparison)
+        
+        # Generate dummy temperature data for simple vs moderate comparison
+        temp_df = rainfall_data.copy()
+        temp_df = temp_df[['date']]
+        temp_df['temp_mean_c'] = 26.0 # Avg temp provides ~16 GDD/day
+        
         moderate_result = self.calculate_phase_payouts(
-            location, coverage_start, rainfall_data, None, sum_insured
+            location, coverage_start, rainfall_data, temp_df, None, sum_insured
         )
         
         return {
@@ -328,9 +380,17 @@ if __name__ == "__main__":
     rainfall = np.random.exponential(3, 145)  # Exponential distribution
     rainfall[40:80] = rainfall[40:80] * 0.3  # Reduce rainfall during flowering
     
+    # Simulate temperature pattern
+    temperatures = np.array([random.gauss(26, 2) for _ in range(145)])  # 26C mean temp
+    
     rainfall_df = pd.DataFrame({
         'date': dates,
         'rainfall_mm': rainfall
+    })
+    
+    temperature_df = pd.DataFrame({
+        'date': dates,
+        'temp_mean_c': temperatures
     })
     
     # Calculate payouts
@@ -338,6 +398,7 @@ if __name__ == "__main__":
         location='Morogoro',
         coverage_start=start,
         rainfall_data=rainfall_df,
+        temperature_data=temperature_df,
         sum_insured=90
     )
     

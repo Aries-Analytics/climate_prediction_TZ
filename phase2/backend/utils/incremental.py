@@ -4,7 +4,7 @@ Tracks last update timestamps and enables fetching only new data since last upda
 """
 
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pandas as pd
@@ -72,7 +72,7 @@ class IncrementalUpdateTracker:
         """
         metadata = {
             "source": source,
-            "last_update_timestamp": datetime.now().isoformat(),
+            "last_update_timestamp": datetime.now(timezone.utc).isoformat(),
             "last_data_year": end_year,
             "last_data_month": end_month,
             "rows_fetched": rows_fetched,

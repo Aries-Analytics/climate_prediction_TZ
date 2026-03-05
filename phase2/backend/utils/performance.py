@@ -5,7 +5,7 @@ Provides tools for profiling, monitoring, and optimizing pipeline performance.
 
 import functools
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pandas as pd
@@ -43,7 +43,7 @@ class PerformanceMonitor:
             **kwargs: Additional metrics
         """
         metric = {
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "operation": operation,
             "duration_seconds": round(duration, 3),
             "memory_mb": memory_used,

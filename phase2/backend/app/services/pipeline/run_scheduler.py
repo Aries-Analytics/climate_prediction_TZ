@@ -7,7 +7,13 @@ import os
 import sys
 import logging
 import signal
+from pathlib import Path
 from time import sleep
+from dotenv import load_dotenv
+
+# Load .env from project root (phase2/)
+env_path = Path(__file__).resolve().parents[4] / '.env'
+load_dotenv(env_path)
 
 # Configure logging
 logging.basicConfig(
@@ -31,7 +37,7 @@ def main():
         logger.error("DATABASE_URL environment variable not set")
         sys.exit(1)
     
-    schedule = os.getenv('PIPELINE_SCHEDULE', '0 6 * * *')  # Default: daily at 06:00 UTC
+    schedule = os.getenv('PIPELINE_SCHEDULE', '0 3 * * *')  # Default: 3 AM UTC = 6 AM EAT
     timezone = os.getenv('PIPELINE_TIMEZONE', 'UTC')
     
     # Alert configuration
@@ -48,8 +54,13 @@ def main():
     alert_service = None
     if alert_email_enabled or alert_slack_enabled:
         from app.services.pipeline.alert_service import AlertService
-        alert_service = AlertService()
-        logger.info("Alert service initialized")
+        slack_webhook_url = os.getenv('ALERT_SLACK_WEBHOOK_URL')
+        alert_service = AlertService(
+            email_enabled=alert_email_enabled,
+            slack_enabled=alert_slack_enabled,
+            slack_webhook_url=slack_webhook_url
+        )
+        logger.info(f"Alert service initialized (email={alert_email_enabled}, slack={alert_slack_enabled})")
     
     # Initialize and start scheduler
     from app.services.pipeline.scheduler import PipelineScheduler

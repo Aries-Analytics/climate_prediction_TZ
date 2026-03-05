@@ -13,7 +13,7 @@ import os
 import sys
 from pathlib import Path
 import requests
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from dotenv import load_dotenv
 
 # Add parent directory to path
@@ -250,7 +250,7 @@ def test_ocean_indices():
 def main():
     """Run all API verification tests"""
     print_header("API Connection Verification")
-    print(f"Timestamp: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"Timestamp: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')}")
     
     results = {
         "NASA POWER": test_nasa_power(),

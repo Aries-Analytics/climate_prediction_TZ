@@ -10,7 +10,7 @@ This script:
 """
 import sys
 import os
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 # Add parent directory to path
@@ -34,7 +34,7 @@ def fetch_recent_data():
     print("=" * 60)
     
     # Calculate date range
-    end_date = datetime.now()
+    end_date = datetime.now(timezone.utc)
     start_date = end_date - timedelta(days=180)
     
     print(f"\nDate range: {start_date.strftime('%Y-%m-%d')} to {end_date.strftime('%Y-%m-%d')}")

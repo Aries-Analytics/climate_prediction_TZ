@@ -5,7 +5,7 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 
 from app.core.database import get_db
 from app.models.claim import Claim
@@ -89,7 +89,7 @@ def approve_payout_batch(
         
         # Generate unique claim ID
         claim_count = db.query(Claim).count()
-        claim_id = f"CLM-{datetime.now().year}-{str(claim_count + 1).zfill(4)}"
+        claim_id = f"CLM-{datetime.now(timezone.utc).year}-{str(claim_count + 1).zfill(4)}"
         
         # Create claim record
         claim = Claim(

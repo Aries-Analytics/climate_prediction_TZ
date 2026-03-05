@@ -10,6 +10,7 @@ from app.models.pipeline_execution import PipelineExecution, DataQualityMetrics,
 from app.models.location import Location
 from app.models.climate_forecast import ClimateForecast
 from app.models.trigger_alert import TriggerAlert
+from app.models.forecast_log import ForecastLog
 
 __all__ = [
     "User",
@@ -27,4 +28,5 @@ __all__ = [
     "Location",
     "ClimateForecast",
     "TriggerAlert",
+    "ForecastLog",
 ]

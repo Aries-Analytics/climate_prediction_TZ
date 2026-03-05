@@ -24,7 +24,7 @@ if os.path.exists(backend_dir):
     sys.path.insert(0, backend_dir)
 
 from app.core.database import SessionLocal
-from app.services.forecast_service import generate_climate_forecasts_all_locations
+from app.services.forecast_service import generate_forecasts_all_locations
 
 
 def main():
@@ -44,27 +44,26 @@ def main():
         print(f"   Horizons: {horizons} months")
         print(f"   Variable: Rainfall (mm)")
         
-        forecasts = generate_climate_forecasts_all_locations(
+        forecasts = generate_forecasts_all_locations(
             db=db,
             start_date=start_date,
             horizons=horizons
         )
         
-        print(f"\nGenerated {len(forecasts)} climate forecasts")
+        print(f"\nGenerated {len(forecasts)} forecasts")
         
-        # Count alerts
-        alerts_count = 0
+        # Summarize high-probability forecasts
+        high_risk_count = 0
         for f in forecasts:
-            alerts_count += len(f.trigger_alerts)
-            if f.trigger_alerts:
-                print(f"   Location {f.location_id} ({f.target_date}): {len(f.trigger_alerts)} alerts")
-                for alert in f.trigger_alerts:
-                    print(f"      - {alert.alert_type.upper()} ({alert.severity}): {alert.forecast_value}mm vs {alert.threshold_value}mm")
+            if f.probability >= 0.5:
+                high_risk_count += 1
+                print(f"   HIGH RISK: Location {f.location_id} ({f.target_date}) "
+                      f"{f.trigger_type} p={f.probability:.2f}")
         
         print("\n" + "=" * 60)
         print(f"SUMMARY:")
         print(f"   - Forecasts Created: {len(forecasts)}")
-        print(f"   - Active Triggers: {alerts_count}")
+        print(f"   - High Risk (p>=0.5): {high_risk_count}")
         print("=" * 60)
         
     except Exception as e:

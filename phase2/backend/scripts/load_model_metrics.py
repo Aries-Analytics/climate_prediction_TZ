@@ -14,7 +14,7 @@ import pandas as pd
 from sqlalchemy.orm import Session
 from app.core.database import SessionLocal
 from app.models.model_metric import ModelMetric
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 
 logging.basicConfig(level=logging.INFO)
@@ -22,19 +22,25 @@ logger = logging.getLogger(__name__)
 
 
 def load_model_metrics(
-    results_file: str = "/outputs/models/training_results.json",
+    results_file: str = None,
     clear_existing: bool = False
 ):
     """
     Load model metrics from training results JSON.
     """
-    # If default file doesn't exist, find the most recent one
+    # Resolve project-relative paths (works on both Windows and Unix)
+    project_root = Path(__file__).resolve().parent.parent.parent
+    models_dir = project_root / "outputs" / "models"
+
+    # Default: use canonical latest_training_results.json
+    if results_file is None:
+        results_file = str(models_dir / "latest_training_results.json")
+
+    # If specified file doesn't exist, find the most recent timestamped one
     if not Path(results_file).exists():
-        models_dir = Path("/outputs/models")
         if models_dir.exists():
             result_files = list(models_dir.glob("training_results_*.json"))
             if result_files:
-                # Get the most recent file
                 results_file = str(max(result_files, key=lambda p: p.stat().st_mtime))
                 logger.info(f"Using most recent training results: {results_file}")
     
@@ -83,7 +89,7 @@ def load_model_metrics(
                 rmse=test_metrics.get('rmse') if test_metrics.get('rmse') is not None else None,
                 mae=test_metrics.get('mae') if test_metrics.get('mae') is not None else None,
                 mape=test_metrics.get('mape') if test_metrics.get('mape') is not None else None,
-                training_date=datetime.fromisoformat(results.get('training_start_time', datetime.now().isoformat())),
+                training_date=datetime.fromisoformat(results.get('training_start_time', datetime.now(timezone.utc).isoformat())),
                 hyperparameters={
                     'n_features': metrics.get('n_features'),
                     'training_time': metrics.get('training_time'),
@@ -131,7 +137,7 @@ if __name__ == "__main__":
     import argparse
     
     parser = argparse.ArgumentParser(description="Load model metrics into dashboard database")
-    parser.add_argument("--results", default="outputs/models/training_results.json", help="Path to training results JSON")
+    parser.add_argument("--results", default=None, help="Path to training results JSON (default: outputs/models/latest_training_results.json)")
     parser.add_argument("--clear", action="store_true", help="Clear existing data before loading")
     
     args = parser.parse_args()

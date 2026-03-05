@@ -231,8 +231,8 @@ def update_config_file(flood_config, drought_config, crop_config):
     config['crop_failure_triggers']['ndvi_anomaly_std']['threshold'] = round(crop_config['ndvi_threshold'], 2)
     
     # Update calibration date and data period
-    from datetime import datetime
-    config['calibration_date'] = datetime.now().strftime('%Y-%m-%d')
+    from datetime import datetime, timezone
+    config['calibration_date'] = datetime.now(timezone.utc).strftime('%Y-%m-%d')
     config['data_period'] = '2000-01-01 to 2025-12-31'
     
     # Save updated config
