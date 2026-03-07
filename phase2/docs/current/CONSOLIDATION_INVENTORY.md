@@ -30,7 +30,7 @@
 
 **Key Information to Preserve**:
 - System capabilities and metrics
-- Performance achievements (98.99% accuracy, 6 locations, 1,872 samples)
+- Performance achievements (86.7% XGBoost R² accuracy after data leakage fix, 6 locations, 1,872 samples)
 - Technical journey and lessons learned
 - Technology stack
 - Current status and next steps
@@ -122,7 +122,7 @@
 - Model architecture (XGBoost, Random Forest, LSTM, Ensemble)
 - Training pipeline details
 - Feature engineering process (640 → 78 features)
-- Performance metrics (98.99% R², 13.97:1 ratio)
+- Performance metrics (86.7% R² XGBoost after data leakage fix, 13.5:1 ratio)
 - Overfitting solutions
 - Cross-validation results
 - Uncertainty quantification methods
@@ -376,10 +376,10 @@
 ## Critical Numbers to Verify Across All Docs
 
 ### Model Performance
-- [ ] Accuracy: 98.99% (R²) - XGBoost
-- [ ] RMSE: 0.138
-- [ ] Feature-to-sample ratio: 13.97:1
-- [ ] Features: 78 (reduced from 247 or 640?)
+- [ ] Accuracy: 86.7% (R²=0.8666) - XGBoost (post data leakage fix)
+- [ ] RMSE: 0.4008 (XGBoost)
+- [ ] Feature-to-sample ratio: 13.5:1 (1,122 train / 83 features)
+- [ ] Features: 83 (selected from 245 after removing 11 leaky features)
 - [ ] Samples: 1,872 total (133 train, 29 val, 29 test per location?)
 
 ### Data

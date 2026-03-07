@@ -1,8 +1,8 @@
 # Tanzania Climate Intelligence Platform - Documentation
 
-**Last Updated**: January 5, 2026  
+**Last Updated**: March 5, 2026  
 **Status**: ✅ Production-Ready  
-**Version**: 3.0 (6-Location System)
+**Version**: 3.1 (6-Location System, Data Leakage Fix)
 
 ---
 
@@ -24,7 +24,7 @@
 |----------|-------------|-------------|
 | **[PROJECT_OVERVIEW_CONSOLIDATED.md](./references/PROJECT_OVERVIEW_CONSOLIDATED.md)** ⭐ | Complete project overview | System capabilities, performance metrics, technical journey |
 | **[DATA_PIPELINE_REFERENCE.md](./references/DATA_PIPELINE_REFERENCE.md)** | Data pipeline architecture | 5 data sources, 6 locations, ingestion & processing |
-| **[ML_MODEL_REFERENCE.md](./references/ML_MODEL_REFERENCE.md)** | ML models and training | XGBoost, Random Forest, LSTM, Ensemble (R²=0.849) |
+| **[ML_MODEL_REFERENCE.md](./references/ML_MODEL_REFERENCE.md)** | ML models and training | XGBoost (R²=0.8666), Random Forest, LSTM, Ensemble |
 | **[TESTING_REFERENCE.md](./references/TESTING_REFERENCE.md)** | Testing strategy | 180+ tests, 80%+ coverage, validation framework |
 | **[FRONTEND_DASHBOARDS_COMPLETE_REFERENCE.md](./references/FRONTEND_DASHBOARDS_COMPLETE_REFERENCE.md)** | Dashboard system | 5 interactive dashboards, visualizations |
 | **[PARAMETRIC_INSURANCE_FINAL.md](./references/PARAMETRIC_INSURANCE_FINAL.md)** | Insurance implementation | Payout model, triggers, financial sustainability |
@@ -66,9 +66,9 @@
 | **Data Sources** | 5 (NASA POWER, ERA5, CHIRPS, NDVI, Ocean Indices) |
 | **Total Samples** | 1,872 (6 locations × 312 months) |
 | **Time Period** | 26 years (2000-2025) |
-| **Features** | 74 (selected from 239) |
-| **Model Accuracy** | 0.849 R² (Ensemble) |
-| **Spatial CV R²** | 0.812 ± 0.046 (XGBoost) |
+| **Features** | 83 (selected from 245 post-leakage-removal) |
+| **Model Accuracy** | 0.8666 R² (XGBoost, data leakage fix) |
+| **Spatial CV R²** | 0.8566 ± 0.0575 (RF, 5-fold temporal CV) |
 | **Dashboards** | 5 interactive dashboards |
 | **API Endpoints** | 28 endpoints |
 | **Test Coverage** | 80%+ (180+ tests) |
@@ -82,7 +82,7 @@
 
 ### Key Features
 
-- ✅ **98.99% prediction accuracy** (XGBoost model)
+- ✅ **86.7% prediction accuracy** (XGBoost R²=0.8666, 6-location, data leakage fix)
 - ✅ **6 pilot locations** in Tanzania
 - ✅ **5 authoritative data sources** integrated
 - ✅ **5 interactive dashboards**
@@ -315,7 +315,7 @@ See [JANUARY_2026_PIPELINE_IMPROVEMENTS.md](./current/JANUARY_2026_PIPELINE_IMPR
 
 - ✅ **Added Morogoro** - 6th pilot location
 - ✅ **Improved spatial CV** - R² 0.812 ± 0.046 (+9% vs 5-location)
-- ✅ **Fixed data leakage** - Realistic R² of 0.849
+- ✅ **Fixed data leakage** - Realistic R² of 0.8666 (XGBoost, 11 leaky features removed)
 - ✅ **Complete automation** - Single-command pipeline
 - ✅ **1,872 total samples** - 26 years across 6 locations
 
@@ -323,9 +323,9 @@ See [JANUARY_2026_PIPELINE_IMPROVEMENTS.md](./current/JANUARY_2026_PIPELINE_IMPR
 
 ## 🎯 Project Status
 
-**Phase**: Production-Ready  
-**Version**: 3.0  
-**Last Updated**: January 4, 2026  
+**Phase**: Production-Ready (Forward Validation)  
+**Version**: 3.1  
+**Last Updated**: March 5, 2026  
 **Status**: ✅ Complete
 
 **Validated**:

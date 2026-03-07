@@ -45,7 +45,7 @@ Implement a live "shadow-run" (forward-testing, no-payout) simulation for the Ki
 - [x] `forecast_logs` capture exact model versions and timestamps. *(ForecastLog entries saved with model_version="xgboost_v4")*
 - [x] Evaluation metrics cleanly match stored mock observations. *(Backend Phase 3 complete: evaluation_service.py calculates Brier, RMSE, and Confusion Matrix. Observation backfill API is live.)*
 - [x] PDF/Zip evidence packs generate successfully. *(Backend Phase 3 complete: `POST /api/v1/evidence-pack/generate` live.)*
-- [ ] Dashboard displays the calibration reliability diagrams properly. *(Frontend Integration Pending)*
+- [x] Dashboard displays the calibration reliability diagrams properly. *(Frontend Integration Complete)*
 
 ### Pipeline Pre-Launch Testing Results (March 4, 2026)
 
@@ -56,7 +56,7 @@ Switch schedule from `*/30 * * * *` (testing) to `0 3 * * *` (daily 6 AM EAT) to
 |-----------|--------|-------|
 | **Scheduler** | ✅ Operational | APScheduler + SQLAlchemy job store, `max_instances=1` |
 | **Data Ingestion** | ✅ All 5 sources | CHIRPS, NASA POWER, ERA5, NDVI, Ocean Indices |
-| **Model Loading** | ✅ `xgboost_climate.pkl` | 77 features, R²=0.840, verified at load time |
+| **Model Loading** | ✅ `xgboost_climate.pkl` | 83 features, R²=0.8666 (data leakage fix), verified at load time |
 | **Forecast Generation** | ✅ 12 per run | 3 triggers × 4 horizons × Morogoro |
 | **Slack Alerts** | ✅ Working | Lock contention alerts suppressed |
 | **ForecastLog** | ✅ Shadow-run logging | Evidence snapshots saved per run |
@@ -68,4 +68,7 @@ Switch schedule from `*/30 * * * *` (testing) to `0 3 * * *` (daily 6 AM EAT) to
 | **Phase 1** | Rich Slack Alerts & Metrics Fixes | ✅ Completed | `alert_service.py`, `scheduler.py`, `orchestrator.py` |
 | **Phase 2** | Forecast Logs API | ✅ Completed | `api/forecast_logs.py` (`GET /`, `GET /summary`) |
 | **Phase 3** | Evaluation Engine & Evidence Packs | ✅ Completed | `evaluation_service.py`, `generator.py`, `api/evidence.py` |
-| **Phase 4** | React Dashboard Integration | ❌ Pending | Frontend (`Predicted vs Actual` charts, API hooks) |
+| **Phase 4** | React Dashboard Integration | ✅ Completed | Frontend (`Predicted vs Actual` charts, API hooks) |
+
+### Future Enhancements (Post-Deployment)
+- [ ] **Dynamic Slack Routing**: Update `alert_service.py` to route to two different channels in reality. This requires modifying the service to accept two different webhook URLs (e.g., `SLACK_WEBHOOK_DAILY` and `SLACK_WEBHOOK_ALERTS`), or updating the JSON payload to dynamically include `"channel": "#climate-pipeline-daily"`. (Deferred: Can be hot-swapped after server deployment via GitHub pull).

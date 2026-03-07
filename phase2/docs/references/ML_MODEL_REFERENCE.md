@@ -8,12 +8,12 @@
 
 ## Overview
 
-The Tanzania Climate Intelligence Platform employs an advanced ensemble machine learning approach combining four complementary models to predict climate variables with high accuracy. The system achieves 86.7% accuracy (R²) using XGBoost on the 6-location dataset with proper temporal gap validation (12-month gaps between train/val/test splits). Following a data leakage fix (121 rainfall-derived features removed), the pipeline now uses `utils/data_leakage_prevention.py` for systematic leakage detection instead of hardcoded patterns.
+The Tanzania Climate Intelligence Platform employs an advanced ensemble machine learning approach combining four complementary models to predict climate variables with high accuracy. The system achieves 86.7% accuracy (R²) using XGBoost on the 6-location dataset with proper temporal gap validation (12-month gaps between train/val/test splits). Following a data leakage fix (11 rainfall-derived features removed), the pipeline now uses `utils/data_leakage_prevention.py` for systematic leakage detection instead of hardcoded patterns.
 
 ### Key Achievements
 
 - **6-Location Dataset**: 1,872 monthly observations across 6 locations
-- **83 Optimized Features**: Selected from 245 through intelligent hybrid feature selection (121 leaky rainfall-derived features removed)
+- **83 Optimized Features**: Selected from 245 through intelligent hybrid feature selection (11 leaky rainfall-derived features removed)
 - **4-Model Ensemble**: Random Forest, XGBoost, LSTM, and Weighted Ensemble
 - **Temporal Validation**: 0.8566 ± 0.0575 R² (RF CV), 0.8396 ± 0.0603 R² (XGB CV, 5-fold temporal CV)
 - **Temporal Validation**: Robust performance with 12-month gap between train/val/test splits
@@ -64,7 +64,7 @@ The system combines four complementary models to leverage their individual stren
 
 **Active Model for Serving**: Primary = XGBoost (R²=0.8666, highest test R²), Fallback = LSTM (R²=0.7866)
 
-> **Note (March 2026 Data Leakage Fix)**: 121 rainfall-derived features (precip_mm, flood_trigger, is_dry_day, consecutive_dry_days, heavy_rain_days_30day, cumulative_excess_7day, and all their lags/rolling variants) were identified as data leakage and removed. The pipeline now uses `utils/data_leakage_prevention.py` for systematic detection. Original features reduced from 279 to 245 before selection; selected features reduced from 84 to 83.
+> **Note (March 2026 Data Leakage Fix)**: 11 rainfall-derived features (precip_mm, flood_trigger, is_dry_day, consecutive_dry_days, heavy_rain_days_30day, cumulative_excess_7day, and all their lags/rolling variants) were identified as data leakage and removed. The pipeline now uses `utils/data_leakage_prevention.py` for systematic detection. Original features reduced from 279 to 245 before selection; selected features reduced from 84 to 83.
 
 ### Spatial Cross-Validation Results
 
@@ -197,7 +197,7 @@ ensemble_prediction = (
 
 ### Feature Selection Process
 
-**Original Features**: 245 (after feature engineering with atmospheric data; reduced from 279 after removing 121 leaky rainfall-derived features)
+**Original Features**: 245 (after feature engineering with atmospheric data; reduced from 279 after removing 11 leaky rainfall-derived features)
 **Selected Features**: 83 (66% reduction)
 **Selection Method**: Hybrid approach combining:
 - Correlation analysis
@@ -251,7 +251,7 @@ def engineer_features(df):
     df = create_anomaly_features(df)
     
     # 5. Data leakage prevention (utils/data_leakage_prevention.py)
-    df = remove_leaky_features(df)  # Removes 121 rainfall-derived features
+    df = remove_leaky_features(df)  # Removes 11 rainfall-derived features
 
     # 6. Feature selection
     df = select_optimal_features(df, n_features=83)
@@ -271,7 +271,7 @@ def engineer_features(df):
 - **Test**: 240 samples, Oct 2022 -- Jan 2026 (12-month gap after val)
 
 **Preprocessing Steps**:
-1. **Data Leakage Prevention**: Automatic exclusion of 121 rainfall-derived features via `utils/data_leakage_prevention.py`
+1. **Data Leakage Prevention**: Automatic exclusion of 11 rainfall-derived features via `utils/data_leakage_prevention.py`
 2. **Feature Selection**: Intelligent selection of 83 optimal features from 245 candidates
 3. **Missing Value Handling**: Median imputation after feature selection
 4. **Normalization**: Z-score standardization
@@ -459,7 +459,7 @@ predictions = predictor.predict_batch(features_batch)
 
 **Systematic Detection via `utils/data_leakage_prevention.py`**:
 
-In March 2026, a comprehensive audit identified 121 rainfall-derived features as data leakage (precip_mm, flood_trigger, is_dry_day, consecutive_dry_days, heavy_rain_days_30day, cumulative_excess_7day, and all their lag/rolling variants). These features were derived from the prediction target (rainfall) and artificially inflated model performance.
+In March 2026, a comprehensive audit identified 11 rainfall-derived features as data leakage (precip_mm, flood_trigger, is_dry_day, consecutive_dry_days, etc.). These features were derived from the prediction target (rainfall) and artificially inflated model performance.
 
 The pipeline now uses a dedicated module instead of hardcoded regex patterns:
 
@@ -467,7 +467,7 @@ The pipeline now uses a dedicated module instead of hardcoded regex patterns:
 from utils.data_leakage_prevention import remove_leaky_features
 
 # Removes all rainfall-derived features systematically
-# 121 features removed, reducing candidates from 279 to 245
+# 11 features removed, reducing candidates from 279 to 245
 df = remove_leaky_features(df)
 ```
 

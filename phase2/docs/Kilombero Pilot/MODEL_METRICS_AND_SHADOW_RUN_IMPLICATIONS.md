@@ -1,7 +1,7 @@
 # Model Metrics Implications for the Kilombero Pilot & Shadow Run
 
 > **Date:** 2026-03-05
-> **Context:** Post data-leakage fix — 11 leaky features removed, all models retrained on 83 clean features
+> **Context:** Post data-leakage fix — 11 leaky rainfall-derived features removed, all models retrained on 83 clean features
 > **Primary Model:** XGBoost (R²=0.8666, RMSE=0.4008)
 > **Branch:** `phase2/feature-expansion`
 
@@ -113,10 +113,10 @@ The leakage fix completed on 2026-03-05 actually **strengthens the shadow run ca
 | **Random Forest** | 0.7814 | 0.5131 | 0.3256 | Baseline |
 
 **Cross-Validation (5-fold):**
-- Random Forest: R²=0.7882 ± 0.0923
-- XGBoost: R²=0.8465 ± 0.0505
+- Random Forest: R²=0.8566 ± 0.0575 (CI [0.7852, 0.9281])
+- XGBoost: R²=0.8396 ± 0.0603 (CI [0.7647, 0.9145])
 
 **Training Configuration:**
-- Features: 83 selected from 245 candidates (121 leaky removed)
+- Features: 83 selected from 245 candidates (11 leaky removed)
 - Temporal split: 12-month gap between train/val/test
 - Target: `rainfall_mm` (normalized z-score)

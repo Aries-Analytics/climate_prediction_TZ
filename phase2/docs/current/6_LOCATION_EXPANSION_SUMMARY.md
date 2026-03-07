@@ -20,22 +20,22 @@ Successfully expanded the climate prediction system from 5 to 6 locations by add
 - **Total Dataset**: 1,872 samples across 6 locations
 - **Time Period**: 2000-2025 (25 years)
 
-### 2. Model Performance (Test Set)
+### 2. Model Performance (Test Set, Post Data Leakage Fix — March 2026)
 
 | Model | R² | RMSE | MAE |
 |-------|-----|------|-----|
-| **XGBoost** | **0.840** ⭐ | 0.431 | 0.248 |
-| Ensemble | 0.831 | 0.442 | 0.264 |
-| LSTM | 0.809 | 0.472 | 0.299 |
-| Random Forest | 0.785 | 0.499 | 0.296 |
+| **XGBoost** | **0.8666** ⭐ | 0.4008 | 0.2518 |
+| Ensemble | 0.8402 | 0.4387 | 0.2784 |
+| LSTM | 0.7866 | 0.5103 | 0.3286 |
+| Random Forest | 0.7814 | 0.5131 | 0.3201 |
 
 ### 3. Spatial Generalization (Cross-Validation)
 
-**6-Location Results** (Feb 2026 Retraining, 77 features):
-- **Mean CV R²**: 0.846 ± 0.050 (XGBoost, 5-fold temporal CV)
-- **Ensemble CV R²**: 0.813 ± 0.094
-- **Best Model**: XGBoost (Test R²=0.840)
-- **Baseline Improvement**: +16.7% over linear regression
+**6-Location Results** (Mar 2026 Retraining, 83 features, data leakage fix):
+- **RF CV R²**: 0.8566 ± 0.0575 (5-fold temporal CV, CI [0.7852, 0.9281])
+- **XGB CV R²**: 0.8396 ± 0.0603 (5-fold temporal CV, CI [0.7647, 0.9145])
+- **Best Model**: XGBoost (Test R²=0.8666)
+- **Baseline Improvement**: +20.4% over Phase 1 (72%)
 
 **Comparison with 5-Location Baseline**:
 - **Improvement**: +9.0% mean R² (0.745 → 0.812)
@@ -44,14 +44,14 @@ Successfully expanded the climate prediction system from 5 to 6 locations by add
 
 ### 4. Critical Data Leakage Fix
 
-**Problem Discovered**: 16+ features derived FROM target variable
-- `rainfall_mm_rolling_mean_3`, `rainfall_anomaly_mm`, etc.
-- Caused unrealistic R² of 97%
+**Problem Discovered**: 11 features derived FROM target variable (rainfall)
+- `precip_mm`, `flood_trigger`, `is_dry_day`, `consecutive_dry_days`, `heavy_rain_days_30day`, `cumulative_excess_7day`, and all lags/rolling variants
+- Caused unrealistic R² of 97%+
 
-**Solution Implemented**: Automatic leakage prevention (Step 3.4)
-- Pattern-based feature exclusion
+**Solution Implemented**: Systematic leakage prevention via `utils/data_leakage_prevention.py`
+- Dedicated module for detection and removal (replaces hardcoded patterns)
 - Integrated into pipeline permanently
-- Result: Realistic R² of 85%
+- Result: Realistic R² of 86.7% (XGBoost)
 
 ### 5. Complete Pipeline Automation
 
@@ -62,7 +62,7 @@ Successfully expanded the climate prediction system from 5 to 6 locations by add
 1. Load preprocessed data
 2. Prepare model inputs (numeric filtering)
 3. **Step 3.4**: Data leakage prevention ⭐
-4. **Step 3.5**: Feature selection (594 → 77 features)
+4. **Step 3.5**: Feature selection (245 → 83 features, post-leakage-removal)
 5. **Step 3.6**: NaN handling (median imputation)
 6. Train 4 models (RF, XGBoost, LSTM, Ensemble)
 7. Display test metrics
@@ -79,7 +79,7 @@ Successfully expanded the climate prediction system from 5 to 6 locations by add
 |--------|------------|------------|--------|
 | **Locations** | 5 | 6 | +20% |
 | **Samples** | 1,560 | 1,872 | +20% |
-| **Best Test R²** | 0.857 (XGB) | 0.849 (Ensemble) | -1% (stable) |
+| **Best Test R²** | 0.857 (XGB) | 0.8666 (XGBoost) | Improved (data leakage fix) |
 | **Spatial CV R²** | 0.745 ± 0.054 | **0.812 ± 0.046** | **+9%** ⭐ |
 | **CV Stability** | ±5.4% | **±4.6%** | +15% better |
 | **Pipeline Steps** | 3 scripts | 1 command | 67% simpler |
@@ -127,8 +127,8 @@ Successfully expanded the climate prediction system from 5 to 6 locations by add
 
 ### Features
 - **Original**: 365 numeric features (after removing 11 string columns)
-- **After Leakage Prevention**: 239 features (excluded 126 target-derived)
-- **After Selection**: 77 features (optimal set, Feb 2026 retraining)
+- **After Leakage Prevention**: 245 features (excluded 11 rainfall-derived leaky features via `utils/data_leakage_prevention.py`)
+- **After Selection**: 83 features (optimal set, Mar 2026 retraining with data leakage fix)
 
 ### Model Training Times
 - Random Forest: 0.6 seconds
@@ -207,13 +207,13 @@ docs/
 ## Business Impact
 
 ### For Agricultural Insurance
-- **Better Risk Assessment**: 84% accuracy in rainfall prediction (XGBoost Test R²=0.840)
+- **Better Risk Assessment**: 86.7% accuracy in rainfall prediction (XGBoost Test R²=0.8666, data leakage fix)
 - **Expanded Coverage**: 6 locations vs 5 (+20% geographic coverage)
 - **Improved Trust**: Robust spatial validation (83% success rate)
 - **Cost Efficiency**: Automated pipeline reduces operational costs
 
 ### For Publication
-- **Strong Results**: R²=0.840 (state-of-the-art for rainfall)
+- **Strong Results**: R²=0.8666 (XGBoost, state-of-the-art for rainfall prediction with clean features)
 - **Rigorous Validation**: Temporal + Spatial CV
 - **Honest Reporting**: Discovered and fixed data leakage
 - **Reproducibility**: Fully automated pipeline
@@ -294,5 +294,5 @@ The 6-location expansion was **highly successful**:
 ---
 
 **Document**: `docs/6_LOCATION_EXPANSION_SUMMARY.md`  
-**Last Updated**: February 25, 2026  
-**Status**: Complete ✅ (Updated with 77-feature retraining results)
+**Last Updated**: March 5, 2026  
+**Status**: Complete ✅ (Updated with 83-feature data leakage fix retraining results)

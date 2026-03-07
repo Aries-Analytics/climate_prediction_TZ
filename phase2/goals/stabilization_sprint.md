@@ -32,7 +32,7 @@ Fix all 11 issues from the February 15, 2026 code review. Restore the ML bridge 
 | 11 | Multiple files | codebase-wide | MINOR — mixed naive/aware datetime |
 
 ### Schema Changes
-- Create `feature_schema.json` defining all 77 ML features (Issue 7)
+- Create `feature_schema.json` defining all 77 ML features (Issue 7) — *NOTE: superseded by 83 features after Mar 2026 data leakage fix; canonical source is now `feature_selection_results.json`*
 - Update `state.json → shared_contract` with canonical thresholds (Issue 9)
 
 ### Edge Cases
@@ -116,6 +116,8 @@ Before writing any fix code, verify:
 **SPRINT STATUS: ✅ COMPLETED (2026-02-25)**
 
 All 11 issues resolved. Models retrained with 77 features. Documentation synchronized.
+
+> **NOTE (Mar 2026):** The 77-feature references above were accurate at sprint completion. After the March 2026 data leakage fix, models were retrained with **83 features** (121 leaky features removed, R²=0.8666 XGBoost). See `CRITICAL_NUMBERS_VERIFICATION.md`.
 
 **On pass:** Merge `agent/fix-ml-bridge-and-data-truth` → `phase2/feature-expansion`, delete stabilization branch.
 

@@ -14,15 +14,15 @@
 
 ---
 
-## Rule 2: Feature Alignment (77 Features)
+## Rule 2: Feature Alignment (83 Features)
 
-**Law:** Serving must generate the exact same 77 features that training selected.
+**Law:** Serving must generate the exact same 83 features that training selected.
 
-**Why:** The training pipeline engineers ~594 features (with atmospheric data), then selects 77 via hybrid feature importance + source diversity. The serving path (`prepare_features`) must reproduce this exact pipeline via `feature_engineering.build_feature_vector()`. If serving generates fewer features, the model rejects the input due to shape mismatch.
+**Why:** The training pipeline engineers ~245 features (after removing 121 leaky rainfall-derived features from ~279 candidates), then selects 83 via hybrid feature importance + source diversity. The serving path (`prepare_features`) must reproduce this exact pipeline via `feature_engineering.build_feature_vector()`. If serving generates fewer features, the model rejects the input due to shape mismatch.
 
-**Canonical source:** `feature_schema.json`
+**Canonical source:** `feature_selection_results.json`
 
-**Check:** Both `train_pipeline.py` and `forecast_service.py` must reference `feature_schema.json`.
+**Check:** Both `train_pipeline.py` and `forecast_service.py` must reference `feature_selection_results.json`.
 
 ### Feature Categories (from training pipeline)
 1. **Raw features** — direct observations (temp, precip, NDVI)
@@ -95,4 +95,4 @@ now = datetime.now(timezone.utc)
 
 ---
 
-*Last updated: 2026-03-04*
+*Last updated: 2026-03-05*

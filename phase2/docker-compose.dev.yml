@@ -15,6 +15,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
 
   backend:
     build: ./backend
@@ -35,6 +36,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    restart: unless-stopped
 
   frontend:
     build:
@@ -50,6 +52,7 @@ services:
       - /app/node_modules
     depends_on:
       - backend
+    restart: unless-stopped
 
   pipeline-scheduler:
     build:

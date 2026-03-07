@@ -1,7 +1,7 @@
 # Tanzania Climate Intelligence Platform
 
-**Last Updated**: February 26, 2026  
-**Version**: 4.0 (Commercial Pilot Prep)  
+**Last Updated**: March 5, 2026  
+**Version**: 4.1 (Data Leakage Fix Update)  
 **Status**: ✅ Actuarial Validation Complete
 
 ---
@@ -12,11 +12,11 @@ A comprehensive climate intelligence platform for Tanzania that integrates multi
 
 ### Key Achievements
 
-- **98.99% prediction accuracy** using XGBoost ensemble (26-year dataset, 5 locations)
+- **86.7% prediction accuracy** (XGBoost R²=0.8666, 6-location dataset, data leakage fix)
 - **5 authoritative data sources** integrated (NASA POWER, ERA5, CHIRPS, MODIS NDVI, NOAA Ocean Indices)
-- **78 optimized features** from intelligent selection (reduced from 247)
-- **1,560 total samples** across 26 years (2000-2025) and 5 locations
-- **13.97:1 feature-to-sample ratio** (healthy ML standard achieved)
+- **83 optimized features** from intelligent selection (11 leaky rainfall-derived features removed, reduced from 245)
+- **1,872 total samples** across 26 years (2000-2025) and 6 locations
+- **13.5:1 feature-to-sample ratio** (1,122 train / 83 features — healthy ML standard achieved)
 - **HewaSense V4 Actuarial Sign-off**: Implemented dynamic Growing Degree Days (GDD) tracking and cumulative flood triggers.
 - **Out-of-Sample Resilience**: Achieved bounded 9.6% historical loss ratio (2000-2014) scaling test and 0.888 spatial correlation against local weather stations.
 - **Automated pipeline** with scheduling and monitoring
@@ -90,9 +90,9 @@ The system has evolved through three distinct phases of geographic expansion, ea
 - Important agricultural region (maize, rice, sugarcane)
 - Excellent data quality and availability
 
-**Performance Improvements**:
-- **Best Test R²**: 0.849 (Ensemble model)
-- **XGBoost Test R²**: 0.832
+**Performance Improvements (Post Data Leakage Fix, March 2026)**:
+- **Best Test R²**: 0.8666 (XGBoost — primary serving model)
+- **Ensemble Test R²**: 0.8402
 - **Spatial CV R²**: 0.812 ± 0.046 (+9.0% improvement from 5-location)
 - **CV Stability**: ±4.6% (15% better than 5-location)
 - **Success Rate**: 83% of locations meet R² ≥ 0.75 (+23% improvement)
@@ -169,13 +169,13 @@ Phase 2 addresses these gaps by developing a comprehensive system that integrate
 
 ### Dramatic Accuracy Improvements
 
-| Metric | Phase 1 | Phase 3 (6-Location Dataset) | Improvement |
+| Metric | Phase 1 | Phase 3 (6-Location, Data Leakage Fix) | Improvement |
 |--------|---------|---------------------------|-------------|
-| **Accuracy (R²)** | 72% | **84.0%** | **+16.7%** |
-| **Temporal CV R²** | N/A | **84.6% ± 5.0%** | **Robust generalization** |
-| **Error (RMSE)** | 0.91°C | **0.431 mm** | **Significantly improved** |
-| **Prediction Error (MAE)** | 0.89°C | **0.248 mm** | **Significantly improved** |
-| **CV Stability** | N/A | **±5.0%** | **Excellent stability** |
+| **Accuracy (R²)** | 72% | **86.7%** (XGBoost) | **+20.4%** |
+| **Temporal CV R²** | N/A | **85.7% ± 5.8%** (RF) | **Robust generalization** |
+| **Error (RMSE)** | 0.91°C | **0.401 mm** (XGBoost) | **Significantly improved** |
+| **Prediction Error (MAE)** | 0.89°C | **0.252 mm** (XGBoost) | **Significantly improved** |
+| **CV Stability** | N/A | **±5.8%** | **Excellent stability** |
 
 ### System Performance
 
@@ -318,7 +318,7 @@ This multi-source approach captures the complex interactions driving Tanzania's 
 
 ### 3. Intelligent Feature Engineering
 
-The system generates **77 carefully selected features** (optimized from 594 through intelligent hybrid feature selection) including:
+The system generates **83 carefully selected features** (optimized from 245 through intelligent hybrid feature selection, after removing 11 leaky rainfall-derived features) including:
 
 - **Drought indicators**: Standardized Precipitation Index (SPI), consecutive dry days
 - **Flood risk metrics**: Extreme rainfall events, cumulative precipitation
@@ -326,7 +326,7 @@ The system generates **77 carefully selected features** (optimized from 594 thro
 - **Climate oscillations**: ENSO-rainfall correlations, IOD impact scores
 - **Temporal patterns**: Lag features (1, 3, 6 months), rolling statistics (3-month windows), seasonal decomposition
 
-These features transform raw data into actionable intelligence for agriculture, insurance, and disaster preparedness. The feature selection process achieved an 87% reduction (594 → 77 features) while maintaining model performance and ensuring representation from all data sources.
+These features transform raw data into actionable intelligence for agriculture, insurance, and disaster preparedness. The feature selection process achieved a 66% reduction (245 → 83 features) while maintaining model performance and ensuring representation from all data sources.
 
 ### 4. Advanced ML Architecture
 
@@ -336,25 +336,25 @@ The system employs an **ensemble approach** combining four complementary models:
 - Captures non-linear relationships
 - Provides feature importance rankings
 - Robust to outliers and missing data
-- Test R²: 0.785, RMSE: 0.499
+- Test R²: 0.7814, RMSE: 0.5131
 
 **XGBoost** (40% weight)
 - Gradient boosting for high accuracy
 - Handles complex interactions
 - Fast training and prediction
-- Test R²: 0.840, RMSE: 0.431 (best individual model)
+- Test R²: 0.8666, RMSE: 0.4008 (best individual model — primary serving model)
 
 **LSTM Neural Network** (30% weight)
 - Captures temporal dependencies
 - Learns seasonal patterns
 - Processes 6-month sequences
-- Test R²: 0.809, RMSE: 0.472
+- Test R²: 0.7866, RMSE: 0.5103
 
 **Weighted Ensemble**
 - Combines strengths of all models
 - Reduces individual model biases
 - Provides uncertainty quantification
-- Test R²: 0.831, RMSE: 0.442
+- Test R²: 0.8402, RMSE: 0.4387
 
 ### 5. Interactive Web Dashboard
 
@@ -482,7 +482,7 @@ The journey from initial prototype to pilot-ready models involved systematic imp
 - Expanded training data (50 → 133 samples, +166%)
 - Added automated validation checks and baseline comparisons
 - Result: R² = 0.984 (XGBoost), RMSE = 0.138, healthy feature-to-sample ratio of 1.68:1
-- **Note**: This was single-location performance. When expanded to 6 locations (Phase 3), accuracy settled at **0.840 R² (XGBoost)** — a more realistic figure reflecting geographic diversity.
+- **Note**: This was single-location performance with data leakage. When expanded to 6 locations and after the March 2026 data leakage fix (11 rainfall-derived features removed), accuracy settled at **R² = 0.8666 (XGBoost)** — a more realistic figure reflecting geographic diversity and clean features.
 
 **Key Technical Improvements:**
 - **Regularization**: Applied L1/L2 penalties (XGBoost: alpha=0.1, lambda=1.0), dropout (LSTM: 0.3), and depth constraints (RF: max_depth=10, XGBoost: max_depth=4)
@@ -545,7 +545,7 @@ The strong linear baseline (97.3% variance explained) reveals that Tanzania's cl
 - Expanded training data from 50 to 133 samples
 - Implemented automated validation checks
 
-**Result**: Train-validation gap reduced to 1.62% while achieving 98.4% test performance (single-location; dropped to 84.0% XGBoost R² when expanded to 6 locations)
+**Result**: Train-validation gap reduced to 1.62% while achieving 98.4% test performance (single-location; settled at **86.7% XGBoost R²** on 6 locations after March 2026 data leakage fix)
 
 ### 2. Feature Selection and Dimensionality
 
@@ -688,20 +688,19 @@ The strong linear baseline (97.3% variance explained) reveals that Tanzania's cl
 
 ### System Capabilities
 - **5** authoritative data sources integrated
-- **77** optimized features (reduced from 594 through intelligent selection, 87% reduction)
+- **83** optimized features (reduced from 245 after removing 11 leaky features, 66% reduction)
 - **4** ML models in ensemble approach (XGBoost, Random Forest, LSTM, Ensemble)
 - **28** API endpoints for data access and analytics
 - **5** specialized dashboard views
-- **191** monthly observations (133 train, 29 val, 29 test)
+- **1,872** monthly observations (1,122 train, 372 val, 240 test with 12-month gaps)
 
 ### Performance Metrics
-- **84.0%** prediction accuracy (R² - XGBoost model on test set)
-- **83.1%** ensemble prediction accuracy (R²)
-- **84.6%** cross-validation performance (XGBoost CV R² ± 5.0%)
+- **86.7%** prediction accuracy (R²=0.8666 — XGBoost model on test set, data leakage fix)
+- **84.0%** ensemble prediction accuracy (R²=0.8402)
+- **85.7%** cross-validation performance (RF CV R² = 0.8566 ± 0.0575)
 - **67.3%** linear baseline (R² - indicates strong linear relationships)
-- **166%** increase in training data (50 → 133 samples)
-- **700%** improvement in feature-to-sample ratio (0.21:1 → 1.68:1)
-- **1.68:1** feature-to-sample ratio (approaching healthy ML standards)
+- **9.8×** increase in training data (191 → 1,872 samples)
+- **13.5:1** feature-to-sample ratio (1,122 train / 83 features — healthy ML standard)
 - **<500ms** API response time (95th percentile)
 - **80%+** test coverage with 100+ test cases
 
@@ -795,16 +794,16 @@ This project represents a foundation for climate intelligence in East Africa. We
 Phase 2 represents a significant evolution from initial prototype toward an operational climate intelligence platform. By integrating multiple data sources, advanced ML techniques, rigorous validation, automated pipelines, and interactive visualization, the system aims to provide actionable insights for climate adaptation in Tanzania.
 
 The journey demonstrates the value of:
-- **Systematic problem-solving**: Achieving R² = 0.840 (XGBoost test) and 0.846 ± 0.050 (Temporal CV) through iterative refinement
+- **Systematic problem-solving**: Achieving R² = 0.8666 (XGBoost test, data leakage fix) and 0.8566 ± 0.0575 (RF Temporal CV) through iterative refinement
 - **Data integration**: From single source to multi-source approach (5 authoritative sources)
-- **Feature optimization**: From 594 to 77 carefully selected features (87% reduction)
-- **Healthy ratios**: Improved sample-to-feature ratio to 24.3:1 (1,872 samples / 77 features)
+- **Feature optimization**: From 245 to 83 carefully selected features (66% reduction, 11 leaky features removed)
+- **Healthy ratios**: Improved sample-to-feature ratio to 13.5:1 (1,122 train / 83 features)
 - **Spatial expansion**: From 5 to 6 locations with +9% spatial CV improvement
 - **Automation**: From manual workflows to automated pipelines
 - **User experience**: From basic predictions to comprehensive dashboards (5 dashboards, 28 API endpoints)
 - **Quality assurance**: From ad-hoc testing to comprehensive validation frameworks (80%+ coverage)
 - **Performance optimization**: 60-80% improvements across all metrics
-- **Robust validation**: Temporal cross-validation confirms model reliability (XGBoost: 0.846 ± 0.050)
+- **Robust validation**: Temporal cross-validation confirms model reliability (RF: 0.8566 ± 0.0575)
 
 As climate variability increases, tools like this may become increasingly valuable for adaptation and resilience. The approach developed here could potentially be adapted to other regions and challenges, illustrating how data science might contribute to addressing pressing environmental challenges.
 
@@ -823,7 +822,7 @@ As climate variability increases, tools like this may become increasingly valuab
 
 ---
 
-**Document Version**: 3.1  
-**Last Updated**: March 3, 2026  
+**Document Version**: 4.1  
+**Last Updated**: March 5, 2026  
 **Status**: Pilot-Ready (Forward Validation Phase)  
 **Consolidates**: PROJECT_OVERVIEW.md, PROJECT_SUMMARY.md, EXECUTIVE_SUMMARY.md, PHASE_2_KEY_ACHIEVEMENTS.md, IMPLEMENTATION_COMPLETE.md

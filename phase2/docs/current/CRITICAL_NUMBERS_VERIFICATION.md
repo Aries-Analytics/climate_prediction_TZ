@@ -35,7 +35,7 @@
 |--------|---------------|-----------------|
 | **Final Features** | **83** (after selection) | feature_selection_results.json (Mar 2026, data leakage fix) |
 | **Initial Features (pre-leakage-removal)** | **279** (before leakage removal) | Historical |
-| **Initial Features (post-leakage-removal)** | **245** (after removing 121 leaky rainfall-derived features) | data_leakage_prevention.py |
+| **Initial Features (post-leakage-removal)** | **245** (after removing 11 leaky rainfall-derived features) | data_leakage_prevention.py |
 | **Reduction** | **66%** (245 → 83) | Calculated |
 | **Feature-to-sample ratio** | **13.5:1** (1122 train / 83 features) | Calculated |
 
@@ -97,7 +97,7 @@
 **Verification** (Updated Mar 2026):
 - **Final Feature Count**: **83**
 - **Verified Source**: `outputs/models/feature_selection_results.json` (Mar 2026, data leakage fix retraining)
-- **Initial Features**: 245 (reduced from 279 after removing 121 leaky rainfall-derived features via `utils/data_leakage_prevention.py`)
+- **Initial Features**: 245 (reduced from 279 after removing 11 leaky rainfall-derived features via `utils/data_leakage_prevention.py`)
 - **Selection**: Hybrid selection (correlation + RF + XGBoost importance + source diversity) retained 83 top predictors.
 
 **Resolution**: All documentation now reflects **83** features (down from 84 after data leakage fix).
@@ -219,4 +219,4 @@
 
 **Status**: Numbers Verified — All Issues Resolved
 **Date**: March 5, 2026 (Updated from January 3, 2026)
-**Note**: 98.4%/98.3% are single-location historical benchmarks. **86.7% XGBoost R²** is the production metric for forward validation (after data leakage fix removing 121 rainfall-derived features). Active serving: Primary=XGBoost (R²=0.8666), Fallback=LSTM (R²=0.7866).
+**Note**: 98.4%/98.3% are single-location historical benchmarks. **86.7% XGBoost R²** is the production metric for forward validation (after data leakage fix removing 11 rainfall-derived features). Active serving: Primary=XGBoost (R²=0.8666), Fallback=LSTM (R²=0.7866).

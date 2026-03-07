@@ -30,7 +30,7 @@ A comprehensive climate intelligence platform for Tanzania that integrates multi
 - **86.7% prediction test accuracy** using XGBoost model (6-location dataset, data leakage fix)
 - **85.7% CV R²** with RF model giving robust generalization across locations
 - **5 authoritative data sources** integrated (NASA, ECMWF, NOAA, USGS)
-- **83 optimized features** from intelligent selection (121 leaky rainfall-derived features removed)
+- **83 optimized features** from intelligent selection (11 leaky rainfall-derived features removed)
 - **6 geographic locations** covering diverse climate zones
 - **Automated pipeline** processing climate data
 - **Interactive dashboard** with 5 specialized views
@@ -72,7 +72,7 @@ A comprehensive climate intelligence platform for Tanzania that integrates multi
 
 ### 2. Optimized Feature Engineering
 - **Before**: 640 features, 50 samples (0.08:1 ratio - unhealthy)
-- **After**: 83 features, 1734 samples (20.9:1 ratio - healthy; 121 leaky features removed)
+- **After**: 83 features, 1734 samples (20.9:1 ratio - healthy; 11 leaky features removed)
 - **Method**: Hybrid selection maintaining source diversity
 
 ### 3. Established Validation Framework

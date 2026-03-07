@@ -11,7 +11,7 @@
 3. **AUDITOR GATE** — Only in Auditor mode can you run `git merge`. No exceptions.
 4. **HANDOVER** — Upon any model activation, read `state.json`, this file, and `args/persona_config.yaml` before doing anything.
 5. **DATA TRUTH** — UTC-aware datetimes everywhere. `datetime.now(timezone.utc)`, never naive `datetime.now()`.
-6. **FEATURE ALIGNMENT** — ML serving must match training: **77 features** defined in `feature_schema.json`. Never retrain on fewer features.
+6. **FEATURE ALIGNMENT** — ML serving must match training: **83 features** defined in `feature_selection_results.json`. Never retrain on fewer features.
 7. **CONTRACT COMPLIANCE** — Frontend consumes Backend API contracts exactly as defined in `state.json → shared_contract`. No frontend-side overrides.
 8. **AUTONOMOUS DOCUMENTATION** — After any model retraining, feature schema change, config update, or pipeline modification, the agent MUST automatically update all affected documentation files before marking the task complete. This includes:
    - `docs/current/EXECUTIVE_SUMMARY.md` (metrics, feature counts)

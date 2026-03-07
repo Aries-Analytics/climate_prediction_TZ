@@ -3,7 +3,7 @@
 
 **Document Version:** 1.2  
 **Created:** January 12, 2026  
-**Updated:** March 3, 2026 (Phase-Based model confirmed as production, 20% basis risk validated)  
+**Updated:** March 5, 2026 (Phase-Based model confirmed as production, data leakage fix applied, XGBoost R²=0.8666)  
 **Location:** Kilombero Basin, Morogoro Region, Tanzania  
 **Purpose:** Single-location pilot to validate ensemble climate prediction model with dual-index triggers before engaging an underwriter for a real pilot deployment
 
@@ -119,16 +119,16 @@ Morogoro was selected as the pilot location based on **objective model performan
 |--------|-------|----------------|
 | **Morogoro R² Score** | 0.855 (85.5%) | Tied for best among 6 locations (location-specific) |
 | **Spatial CV** | 0.356 | Highest spatial generalization score |
-| **Overall Ensemble Model** | 0.983 (98.3%) | Test set accuracy (2020-2023, all locations combined) — historical benchmark |
-| **Production Model (XGBoost)** | 0.840 (84.0%) | **Forward validation model** — used for pilot predictions |
-| **RMSE** | 10.25 mm | Overall model prediction error |
-| **Seasonal Performance** | 97.6-98.7% | Consistent across all seasons (overall model) |
+| **Overall Ensemble Model** | — | Historical benchmark only — superseded by data leakage fix |
+| **Production Model (XGBoost)** | 0.8666 (86.7%) | **Forward validation model** — primary serving model (post data leakage fix, 11 rainfall-derived features removed) |
+| **RMSE** | 0.4008 (normalized) | ~35 mm/month in real units |
+| **Seasonal Performance** | 97.6-98.7% | Historical single-location benchmarks (pre-leakage-fix; not applicable to production) |
 
 > [!NOTE]
 > **Performance Metrics Explained**: 
 > - **85.5% (Morogoro-specific)**: How well the model performs when trained on 5 locations and tested on Morogoro (spatial cross-validation). This is the key metric for location selection.
-> - **98.3% (Overall ensemble)**: Historical benchmark — how well the ensemble performs on the held-out test set (2020-2023) when trained on all available data. Not used for forward predictions.
-> - **84.0% (XGBoost production model)**: The model actually used for forward validation and pilot predictions. Lower than the ensemble benchmark but more realistic for real-world deployment.
+> - **86.7% (XGBoost R²=0.8666)**: The model actually used for forward validation and pilot predictions. After the March 2026 data leakage fix (11 rainfall-derived features removed), this is the most accurate and honest metric.
+> - **Ensemble (R²=0.8402)**: Secondary model available as fallback.
 
 **Conclusion:** Morogoro demonstrates the **best spatial cross-validation performance**, indicating the model generalizes exceptionally well to this location, making it ideal for pilot validation.
 
@@ -206,7 +206,7 @@ The ensemble model uses 5 integrated data sources for Kilombero Basin:
 > - **Benefit**: Reduced basis risk in flood-prone Kilombero Valley
 > - **Details**: See [`SOIL_MOISTURE_FUTURE_ENHANCEMENT.md`](../SOIL_MOISTURE_FUTURE_ENHANCEMENT.md)
 
-**Total Features:** 162 numeric features engineered from these sources (soil moisture to be added: +12 features)  
+**Total Features:** 83 selected features (from 245 candidates, after removing 11 leaky rainfall-derived features via `utils/data_leakage_prevention.py`)  
 **Data Quality:** 99.8% completeness for Morogoro location  
 
 > [!WARNING]
@@ -237,7 +237,7 @@ The system generates forecasts at **4 time horizons**:
 
 ### Primary Objectives
 
-1. **Model Validation**: Verify 84.0% XGBoost R² accuracy translates to real-world forecast reliability (forward validation)
+1. **Model Validation**: Verify 86.7% XGBoost R² accuracy translates to real-world forecast reliability (forward validation)
 2. **Operational Testing**: Validate end-to-end system (data → forecast → alert → payout)
 3. **Farmer Adoption**: Test farmer understanding and trust in parametric insurance
 4. **Financial Viability**: Validate payout rates and reserve requirements
@@ -490,9 +490,11 @@ TOTAL_FARMERS = 6000
 - **Crop Failures:** ~8% of years (1-in-12 year event based on NDVI)
 
 **Model Performance by Season (Morogoro):**
-- Long Rains: R² = 0.982 (98.2%)
-- Short Rains: R² = 0.987 (98.7%)  
-- Dry Season: R² = 0.976 (97.6%)
+- Long Rains: R² = 0.982 (98.2%) — *historical single-location benchmark*
+- Short Rains: R² = 0.987 (98.7%) — *historical single-location benchmark*
+- Dry Season: R² = 0.976 (97.6%) — *historical single-location benchmark*
+
+> **Note**: Seasonal R² values above are from pre-data-leakage-fix single-location analysis and are historical benchmarks only. Production model (XGBoost R²=0.8666) uses 83 clean features across all locations.
 
 ---
 
