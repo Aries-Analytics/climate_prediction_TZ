@@ -6,6 +6,7 @@ export default defineConfig({
   server: {
     port: 3000,
     host: true, // Needed for Docker
+    allowedHosts: ['hewasense.majaribio.com', 'api.hewasense.majaribio.com'],
     watch: {
       usePolling: true,
       interval: 1000,
