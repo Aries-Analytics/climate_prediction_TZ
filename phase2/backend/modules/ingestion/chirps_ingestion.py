@@ -428,9 +428,9 @@ def ingest_chirps(
     if end_date is None:
         end_date = datetime.now(timezone.utc)
 
-    # Ensure dates are pandas-compatible timestamps for comparison
-    start_date = pd.to_datetime(start_date)
-    end_date = pd.to_datetime(end_date)
+    # Ensure dates are timezone-naive pandas Timestamps for DataFrame comparison
+    start_date = pd.to_datetime(start_date).tz_localize(None) if pd.to_datetime(start_date).tzinfo else pd.to_datetime(start_date)
+    end_date = pd.to_datetime(end_date).tz_localize(None) if pd.to_datetime(end_date).tzinfo else pd.to_datetime(end_date)
 
     log_info(f"Ingesting CHIRPS data from {start_date} to {end_date}")
 
