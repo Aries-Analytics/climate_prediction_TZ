@@ -63,7 +63,7 @@ services:
     env_file: .env
     environment:
       - DATABASE_URL=postgresql://user:pass@db:5432/climate_dev
-      - PIPELINE_SCHEDULE=*/30 * * * *
+      - PIPELINE_SCHEDULE=0 6 * * *
       - GOOGLE_APPLICATION_CREDENTIALS=/root/.config/earthengine/credentials
       - PIPELINE_TIMEZONE=Africa/Dar_es_Salaam
       - ALERT_EMAIL_ENABLED=false
