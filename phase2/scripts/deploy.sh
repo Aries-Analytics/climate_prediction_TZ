@@ -103,23 +103,23 @@ health_check() {
   local elapsed=0
   while [[ $elapsed -lt 90 ]]; do
     local up
-    up=$(ssh_run "cd ${REMOTE_DIR} && docker-compose -f ${COMPOSE_FILE} ps --services --filter status=running 2>/dev/null | wc -l" || echo 0)
+    up=$(ssh_run "cd ${REMOTE_DIR} && docker compose -f ${COMPOSE_FILE} ps --services --filter status=running 2>/dev/null | wc -l" || echo 0)
     [[ "$up" -ge 5 ]] && break
     sleep 5; elapsed=$((elapsed + 5))
     echo -ne "  ${elapsed}s elapsed...\r"
   done
   echo ""
 
-  ssh_run "cd ${REMOTE_DIR} && docker-compose -f ${COMPOSE_FILE} ps"
+  ssh_run "cd ${REMOTE_DIR} && docker compose -f ${COMPOSE_FILE} ps"
   echo ""
 
   local running
-  running=$(ssh_run "cd ${REMOTE_DIR} && docker-compose -f ${COMPOSE_FILE} ps --services --filter status=running 2>/dev/null | wc -l" || echo 0)
+  running=$(ssh_run "cd ${REMOTE_DIR} && docker compose -f ${COMPOSE_FILE} ps --services --filter status=running 2>/dev/null | wc -l" || echo 0)
   if [[ "$running" -ge 5 ]]; then
     ok "All ${running} containers running"
   else
     warn "${running}/5 containers running — check logs:"
-    warn "  ssh ${SERVER} \"cd ${REMOTE_DIR} && docker-compose -f ${COMPOSE_FILE} logs --tail 50\""
+    warn "  ssh ${SERVER} \"cd ${REMOTE_DIR} && docker compose -f ${COMPOSE_FILE} logs --tail 50\""
   fi
 }
 
@@ -177,8 +177,8 @@ print_summary() {
   echo ""
   echo -e "  ${BOLD}Useful commands:${NC}"
   echo -e "  Logs   : ssh ${SERVER} \"docker logs climate_pipeline_scheduler_dev -f --tail 100\""
-  echo -e "  Status : ssh ${SERVER} \"cd ${REMOTE_DIR} && docker-compose -f ${COMPOSE_FILE} ps\""
-  echo -e "  Down   : ssh ${SERVER} \"cd ${REMOTE_DIR} && docker-compose -f ${COMPOSE_FILE} down\""
+  echo -e "  Status : ssh ${SERVER} \"cd ${REMOTE_DIR} && docker compose -f ${COMPOSE_FILE} ps\""
+  echo -e "  Down   : ssh ${SERVER} \"cd ${REMOTE_DIR} && docker compose -f ${COMPOSE_FILE} down\""
   echo ""
   echo -e "  ${YELLOW}Local scheduler is paused — keep it that way.${NC}"
   echo -e "  ${YELLOW}All forecasts now run on the server at ${PIPELINE_SCHEDULE} EAT.${NC}"
@@ -307,11 +307,11 @@ run_init() {
   # ── Step 7: Build and launch ───────────────────────────
   banner "STEP 6/6  Build & launch"
   info "Building Docker images (this may take a few minutes)..."
-  ssh_run "cd ${REMOTE_DIR} && docker-compose -f ${COMPOSE_FILE} build"
+  ssh_run "cd ${REMOTE_DIR} && docker compose -f ${COMPOSE_FILE} build"
   ok "Images built"
 
   info "Starting all containers in detached mode..."
-  ssh_run "cd ${REMOTE_DIR} && docker-compose -f ${COMPOSE_FILE} up -d"
+  ssh_run "cd ${REMOTE_DIR} && docker compose -f ${COMPOSE_FILE} up -d"
   ok "Containers started"
 
   health_check
@@ -341,7 +341,7 @@ run_update() {
   ok "Schedule confirmed"
 
   info "Rebuilding changed images and restarting containers..."
-  ssh_run "cd ${REMOTE_DIR} && docker-compose -f ${COMPOSE_FILE} up -d --build"
+  ssh_run "cd ${REMOTE_DIR} && docker compose -f ${COMPOSE_FILE} up -d --build"
   ok "Containers updated"
 
   health_check

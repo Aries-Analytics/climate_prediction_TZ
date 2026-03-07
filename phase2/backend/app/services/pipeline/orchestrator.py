@@ -233,7 +233,20 @@ class PipelineOrchestrator:
             execution.forecasts_generated = forecast_result.forecasts_generated
             execution.recommendations_created = forecast_result.recommendations_created
             self.db.commit()
-            
+
+            # Stage 3: Evaluate matured forecasts
+            # Resolve any ForecastLog entries whose valid_until date has passed
+            logger.info("Stage 3: Evaluating matured forecasts")
+            try:
+                from app.services.evaluation_service import ForecastEvaluator
+                eval_result = ForecastEvaluator(self.db).evaluate_pending_forecasts()
+                evaluated = eval_result.get("processed", 0)
+                if evaluated:
+                    logger.info(f"Resolved {evaluated} matured ForecastLog entries")
+            except Exception as eval_err:
+                # Non-fatal — log and continue; forecasts stay pending until next run
+                logger.warning(f"Forecast evaluation stage failed (non-fatal): {eval_err}")
+
             # Determine final status
             if ingestion_result.sources_failed:
                 final_status = 'partial'  # Some sources failed
