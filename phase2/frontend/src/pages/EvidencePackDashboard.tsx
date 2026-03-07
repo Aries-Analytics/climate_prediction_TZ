@@ -48,7 +48,7 @@ export default function EvidencePackDashboard() {
         setLoading(true);
         setError(null);
         try {
-            const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+            const apiUrl = import.meta.env.VITE_API_BASE_URL || '/api';
             const response = await fetch(`${apiUrl}/v1/evidence-pack/metrics`);
             if (!response.ok) {
                 throw new Error('Failed to fetch evidence metrics');
@@ -65,7 +65,7 @@ export default function EvidencePackDashboard() {
 
     const triggerEvaluation = async () => {
         try {
-            const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+            const apiUrl = import.meta.env.VITE_API_BASE_URL || '/api';
             await fetch(`${apiUrl}/v1/evidence-pack/evaluate`, { method: 'POST' });
             fetchMetrics();
         } catch (err) {
@@ -75,7 +75,7 @@ export default function EvidencePackDashboard() {
 
     const downloadEvidencePack = async () => {
         try {
-            const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+            const apiUrl = import.meta.env.VITE_API_BASE_URL || '/api';
             const response = await fetch(`${apiUrl}/v1/evidence-pack/generate`, { method: 'POST' });
             if (!response.ok) throw new Error('Failed to generate evidence pack');
             const blob = await response.blob();
