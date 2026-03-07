@@ -4,7 +4,7 @@ Fetches reanalysis climate data from Copernicus Climate Data Store (CDS)
 """
 
 import os
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Optional, Tuple
 
 import pandas as pd
@@ -175,6 +175,21 @@ def fetch_era5_data(
         nc_file = get_data_path("raw", "era5_raw.nc")
         os.makedirs(os.path.dirname(nc_file), exist_ok=True)
 
+        # Cap end_year and months to only complete months.
+        # ECMWF returns 400 if asked for months that haven't ended yet.
+        now = datetime.now(timezone.utc)
+        if end_year >= now.year:
+            last_complete_month = now.month - 1
+            if last_complete_month < 1:
+                # January edge case: last complete month is December of previous year
+                end_year = now.year - 1
+                months = [f"{m:02d}" for m in range(1, 13)]
+            else:
+                months = [f"{m:02d}" for m in range(1, last_complete_month + 1)]
+            log_info(f"ERA5 months capped to last complete month: up to {end_year}-{months[-1]}")
+        else:
+            months = [f"{m:02d}" for m in range(1, 13)]
+
         log_info(f"Requesting ERA5 data for years {start_year}-{end_year}")
         log_info(f"Variables: {', '.join(variables)}")
 
@@ -188,7 +203,7 @@ def fetch_era5_data(
                 "product_type": "monthly_averaged_reanalysis",
                 "variable": variables,
                 "year": years,
-                "month": ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"],
+                "month": months,
                 "time": "00:00",
                 "area": [
                     bounds["north"],
@@ -364,6 +379,15 @@ def ingest_era5(
         start_date = datetime(2010, 1, 1)
     if end_date is None:
         end_date = datetime.now(timezone.utc)
+
+    # Cap end_date to the last complete month.
+    # ERA5 monthly reanalysis is only published for finished months;
+    # requesting the current (incomplete) month causes a 400 from ECMWF.
+    now = datetime.now(timezone.utc)
+    last_complete_month_end = now.replace(day=1) - timedelta(days=1)
+    if end_date > last_complete_month_end:
+        end_date = last_complete_month_end
+        log_info(f"ERA5 end_date capped to last complete month: {end_date.date()}")
 
     # Ensure dates are pandas-compatible timestamps for comparison
     start_date = pd.to_datetime(start_date)
