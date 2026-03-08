@@ -102,32 +102,10 @@ def seed_data():
         
         db.commit()
 
-        # Seed Forecasts if missing
-        logger.info("Checking Forecasts...")
-        location = db.query(Location).first()
-        if location:
-            existing_forecast = db.query(Forecast).filter(Forecast.location_id == location.id).first()
-            if not existing_forecast:
-                logger.info(f"Seeding sample forecast for location: {location.name}")
-                forecast = Forecast(
-                    forecast_date=datetime.now(timezone.utc).date(),
-                    target_date=(datetime.now(timezone.utc) + timedelta(days=90)).date(),
-                    horizon_months=3,
-                    trigger_type="drought",
-                    probability=0.75,
-                    confidence_lower=0.6,
-                    confidence_upper=0.9,
-                    model_version="XGBoost_v4",
-                    expected_deficit=50.0,
-                    location_id=location.id
-                )
-                db.add(forecast)
-                db.commit()
-                logger.info("✅ Sample forecast created")
-            else:
-                 logger.info("Forecasts already exist")
-        else:
-             logger.warning("No locations found to attach forecasts to!")
+        # NOTE: Forecast records are NOT seeded here.
+        # The pipeline (orchestrator.py Stage 2) generates real Forecast records on every run.
+        # Seeding placeholder forecasts causes schema validation errors if horizon_months < 3.
+        logger.info("Skipping Forecast seed — pipeline generates real forecasts on first run (6AM EAT).")
 
         logger.info("✅ Seeding complete!")
 

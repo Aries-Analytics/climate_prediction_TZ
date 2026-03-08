@@ -73,7 +73,7 @@ export default function ForecastDashboard() {
   const [recommendations, setRecommendations] = useState<Recommendation[]>([])
   const [selectedTriggerType, setSelectedTriggerType] = useState<string>('all')
   const [selectedHorizon, setSelectedHorizon] = useState<string>('all')
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)

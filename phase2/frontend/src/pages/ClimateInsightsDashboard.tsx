@@ -75,36 +75,25 @@ export default function ClimateInsightsDashboard() {
         return response.data
       })
 
-      const timeSeriesData = await Promise.all(timeSeriesPromises)
-      setAllTimeSeries(timeSeriesData) // Store all data
-      // Don't filter here - let the useEffect handle filtering based on selectedVariables
-      // This ensures the initial render shows all default-selected variables
-      const filtered = timeSeriesData.filter(ts => selectedVariables.includes(ts.variable));
-      console.log('Initial fetch - selected variables:', selectedVariables);
-      console.log('Filtered time series count:', filtered.length);
-      setTimeSeries(filtered)
-
-      // Fetch anomalies
-      if (selectedVariables.length > 0) {
-        const anomalyResponse = await axios.get(
-          `${API_BASE_URL}/climate/anomalies?variable=${selectedVariables[0]}`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        )
-        setAnomalies(anomalyResponse.data)
-      }
-
-      // Always fetch correlation matrix for all 5 variables (independent of time series selection)
+      // Run timeseries, anomalies, and correlations all in parallel
       const corrParams = new URLSearchParams()
       allVariables.forEach(v => corrParams.append('variables', v))
-      if (!startDate && !endDate) { // Only fetch correlations if default range to avoid empty data errors
-        try {
-          const corrResponse = await axios.get(
-            `${API_BASE_URL}/climate/correlations?${corrParams.toString()}`,
-            { headers: { Authorization: `Bearer ${token}` } }
-          )
-          setCorrelationMatrix(corrResponse.data)
-        } catch (e) { console.warn("Correlation fetch skipped/failed", e) }
-      }
+      const headers = { Authorization: `Bearer ${token}` }
+
+      const [timeSeriesData, anomalyResponse, corrResponse] = await Promise.all([
+        Promise.all(timeSeriesPromises),
+        selectedVariables.length > 0
+          ? axios.get(`${API_BASE_URL}/climate/anomalies?variable=${selectedVariables[0]}`, { headers }).then(r => r.data).catch(() => [])
+          : Promise.resolve([]),
+        (!startDate && !endDate)
+          ? axios.get(`${API_BASE_URL}/climate/correlations?${corrParams.toString()}`, { headers }).then(r => r.data).catch(() => null)
+          : Promise.resolve(null),
+      ])
+
+      setAllTimeSeries(timeSeriesData)
+      setTimeSeries(timeSeriesData.filter(ts => selectedVariables.includes(ts.variable)))
+      setAnomalies(anomalyResponse)
+      if (corrResponse) setCorrelationMatrix(corrResponse)
 
       setError(null)
     } catch (err: any) {

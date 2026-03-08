@@ -5,7 +5,7 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 3000,
-    host: true, // Needed for Docker
+    host: true,
     allowedHosts: ['hewasense.majaribio.com', 'api.hewasense.majaribio.com'],
     watch: {
       usePolling: true,
@@ -15,6 +15,26 @@ export default defineConfig({
       '/api': {
         target: process.env.API_PROXY_TARGET || 'http://localhost:8000',
         changeOrigin: true,
+      }
+    }
+  },
+  // Pre-bundle heavy deps once so they're cached across page navigations
+  optimizeDeps: {
+    include: ['react-plotly.js', 'plotly.js', 'chart.js', 'react-chartjs-2', 'leaflet', 'react-leaflet'],
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Isolate the 3MB Plotly bundle so it caches independently
+          plotly: ['plotly.js', 'react-plotly.js'],
+          // Isolate mapping libraries
+          maps: ['leaflet', 'react-leaflet'],
+          // Isolate chart.js separately from plotly
+          chartjs: ['chart.js', 'react-chartjs-2'],
+          // MUI into its own cacheable chunk
+          mui: ['@mui/material', '@mui/icons-material', '@emotion/react', '@emotion/styled'],
+        }
       }
     }
   }
