@@ -72,4 +72,4 @@ When Backend returns errors, Frontend must handle gracefully:
 
 ---
 
-*Last updated: 2026-02-22*
+*Last updated: 2026-03-08*

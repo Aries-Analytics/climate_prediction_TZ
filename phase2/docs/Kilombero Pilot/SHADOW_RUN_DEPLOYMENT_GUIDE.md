@@ -100,15 +100,15 @@ Now we bring up the entire stack using Docker Compose in detached mode (`-d`), s
 
 ```bash
 # Build the images (this takes a few minutes)
-docker-compose -f docker-compose.dev.yml build
+docker compose -f docker-compose.dev.yml build
 
 # Start the services in detached mode
-docker-compose -f docker-compose.dev.yml up -d
+docker compose -f docker-compose.dev.yml up -d
 ```
 
 Verify everything is running perfectly:
 ```bash
-docker-compose -f docker-compose.dev.yml ps
+docker compose -f docker-compose.dev.yml ps
 ```
 You should see all 5 containers (`db`, `backend`, `frontend`, `pipeline-scheduler`, and `pipeline-monitor`) with an "Up" status.
 
