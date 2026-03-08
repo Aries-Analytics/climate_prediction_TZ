@@ -353,8 +353,8 @@ Stack Trace: <http://logs.example.com/error-12345|View Full Trace>
 📊 Dashboard showing stale data
 
 *Immediate Actions*
-1. Check database connectivity: `docker-compose ps postgres`
-2. Review logs: `docker-compose logs scheduler`
+1. Check database connectivity: `docker compose ps postgres`
+2. Review logs: `docker compose logs scheduler`
 3. Manual retry: `python -m app.cli pipeline run`
 
 *Auto-Recovery*

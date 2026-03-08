@@ -666,7 +666,7 @@ def clean_database(test_db):
 **Solution**:
 ```bash
 # Start test database
-docker-compose up -d db
+docker compose up -d db
 
 # Verify connection
 psql postgresql://test:test@localhost/climate_test -c "SELECT 1"

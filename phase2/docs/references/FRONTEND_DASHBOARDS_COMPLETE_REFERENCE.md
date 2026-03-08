@@ -420,7 +420,7 @@ All KPI cards now feature **visible color-coded info blocks** instead of hidden 
 
 ### Deployment
 - **Container**: Docker (development mode)
-- **Hot Reload**: Requires `docker-compose restart frontend` for certain changes
+- **Hot Reload**: Requires `docker compose restart frontend` for certain changes
 - **Build**: Vite (fast HMR)
 - **Port**: 3000 (default)
 

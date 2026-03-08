@@ -49,8 +49,8 @@ Implement a live "shadow-run" (forward-testing, no-payout) simulation for the Ki
 
 ### Pipeline Pre-Launch Testing Results (March 4, 2026)
 
-Pipeline fully tested and validated. Ready for shadow-run activation.
-Switch schedule from `*/30 * * * *` (testing) to `0 3 * * *` (daily 6 AM EAT) to begin shadow run.
+Pipeline fully tested and validated. **Shadow run ACTIVE as of 2026-03-07.**
+Deployed to `root@37.27.200.227` on `phase2/feature-expansion`. Schedule: `0 6 * * *` (Africa/Dar_es_Salaam = 6 AM EAT). ERA5 month-cap fix applied. Forecast auto-evaluation (Stage 3) active.
 
 | Component | Status | Notes |
 |-----------|--------|-------|
@@ -59,7 +59,7 @@ Switch schedule from `*/30 * * * *` (testing) to `0 3 * * *` (daily 6 AM EAT) to
 | **Model Loading** | ✅ `xgboost_climate.pkl` | 83 features, R²=0.8666 (data leakage fix), verified at load time |
 | **Forecast Generation** | ✅ 12 per run | 3 triggers × 4 horizons × Morogoro |
 | **Slack Alerts** | ✅ Working | Lock contention alerts suppressed |
-| **ForecastLog** | ✅ Shadow-run logging | Evidence snapshots saved per run |
+| **ForecastLog** | ✅ Shadow-run logging | Evidence snapshots saved per run; auto-evaluated after validity window closes (Stage 3) |
 
 ### Phase Completion Status (March 4, 2026)
 

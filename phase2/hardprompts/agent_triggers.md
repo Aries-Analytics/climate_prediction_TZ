@@ -5,6 +5,7 @@
 ---
 
 ## 1. The "Start of Session" Context Loader
+
 *Use this right after you open a new chat instance to ensure the fresh agent reads the foundational rules and what the previous agent was doing.*
 
 ```markdown
@@ -18,6 +19,7 @@ Confirm you have loaded this context before we proceed.
 ---
 
 ## 2. The "Mid-Session Insight" Trigger
+
 *Use this when we've just spent time debugging a weird issue, or when you make a specific technical decision you want the agent to remember (like a specific library version or configuration choice).*
 
 ```markdown
@@ -27,6 +29,7 @@ That worked. Please run `tools/memory/memory_write.py` right now to log this exa
 ---
 
 ## 3. The "End of Session / Sprint Wrap-up" Trigger
+
 *Use this when we've finished a major feature or solved a big ticket, right before you close out for the day.*
 
 ```markdown
@@ -39,6 +42,7 @@ We are done with this feature/sprint. Before we close out, execute the GOTCHA Sp
 ---
 
 ## 4. The "Data Leakage / Architecture Shift" Trigger
+
 *Use this if we ever change the core ML features, thresholds, or API responses—things that break backward compatibility.*
 
 ```markdown
@@ -49,12 +53,13 @@ Please find and update all relevant files in `docs/current/`, `docs/references/`
 ---
 
 ## 5. The "Global Doc Sweep & Sync" Trigger
+
 *Use this perfectly-phrased prompt when you want to force an agent to do exactly what we did today: meticulously hunt down every stale number across the entire project and sync it to the newest truth.*
 
 ```markdown
 We have a new canonical metric/fact: [e.g., XGBoost R² is now 0.8666, features are 83]. 
 As per GOTCHA Law #8 (Autonomous Documentation), execute a global documentation sweep. 
-1. Use `grep_search` across the `docs/current/`, `docs/references/`, `goals/`, and `memory/` directories to find all stale instances of the old metrics.
+1. Use `grep_search` across the `docs/current/`, `docs/references/`, `goals/`, and `memory/` directories to find all stale instances of the old metrics/facts.
 2. Systematically replace them using `multi_replace_file_content`. 
 3. Do NOT modify the `docs/archive/` or `docs/reports/` folders, as they are historical.
 4. Verify your work is complete by running `grep_search` again. Create a walkthrough artifact summarizing the files changed.

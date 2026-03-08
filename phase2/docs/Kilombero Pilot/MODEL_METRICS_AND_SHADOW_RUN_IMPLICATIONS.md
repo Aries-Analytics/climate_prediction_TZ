@@ -13,19 +13,21 @@
 
 The target is **normalized rainfall** (z-score). Converting back using scaler params (mean=82.74mm, std=87.97mm):
 
-| Metric | Normalized | Real-World |
-|--------|-----------|------------|
-| XGBoost RMSE | 0.4008 | **~35 mm/month** |
-| XGBoost R² | 0.8666 | Explains 87% of rainfall variance |
+| Metric       | Normalized | Real-World                        |
+| ------------ | ---------- | --------------------------------- |
+| XGBoost RMSE | 0.4008     | **~35 mm/month**            |
+| XGBoost R²  | 0.8666     | Explains 87% of rainfall variance |
 
 ### What ±35mm Means for Parametric Triggers
 
 **Strong confidence zones** (model reliably distinguishes):
+
 - **Severe drought** (25mm observed vs 80mm threshold) — large gap, high-confidence trigger
 - **Normal rainfall** (120mm observed) — clearly above all thresholds, high-confidence no-trigger
 - **Major flood** (150mm+ daily) — far above 90mm threshold, high-confidence trigger
 
 **Grey zone** (~20% of cases):
+
 - **Marginal drought** (55-75mm observed vs 80mm threshold) — model prediction could fall either side
 - **Marginal flood** (85-100mm daily) — near the threshold boundary
 
@@ -52,7 +54,6 @@ Fixed Payouts ($60-$90 per trigger type)
 ### Remaining Concerns
 
 1. **XGBoost overfitting gap (14.94%)** — train R² is significantly higher than validation. The shadow run will expose this if the model degrades on truly new 2026 data. The Ensemble (zero overfitting gap) is available as fallback.
-
 2. **`flood_risk_score_left/right`** (score 3.72 — highest feature) and **`spi_30day`** — these are still in the 83 features. `spi_30day` is Standardized Precipitation Index, directly derived from rainfall. `flood_risk_score` may also be rainfall-derived. These aren't as direct as `precip_mm` was, but worth flagging as potential secondary leakage. The shadow run's predicted-vs-actual evaluation will reveal if performance drops on forward data.
 
 ---
@@ -62,6 +63,7 @@ Fixed Payouts ($60-$90 per trigger type)
 ### The Pipeline's Daily Cycle
 
 Every day at 6 AM EAT, the automated pipeline:
+
 1. **Ingests** fresh data from 5 sources (CHIRPS, NASA POWER, ERA5, NDVI, Ocean Indices)
 2. **Loads** `active_model.json` → XGBoost (83 features, R²=0.8666)
 3. **Generates** 12 forecasts per location (3 trigger types × 4 horizons: 3-6 months)
@@ -70,16 +72,17 @@ Every day at 6 AM EAT, the automated pipeline:
 
 ### What the Shadow Run Will Validate
 
-| Question | How It's Answered | Decision Threshold |
-|----------|------------------|-------------------|
-| Does 87% R² hold on new 2026 data? | Brier Score on evaluated forecasts | Brier < 0.25 |
-| Does the overfitting gap matter? | Compare forecast accuracy month-over-month | No degradation trend |
-| Are trigger thresholds appropriate? | Confusion matrix (TP/FP/TN/FN) | False positive rate < 15% |
-| Is basis risk manageable? | Predicted vs observed trigger alignment | Basis risk < 30% |
+| Question                            | How It's Answered                          | Decision Threshold        |
+| ----------------------------------- | ------------------------------------------ | ------------------------- |
+| Does 87% R² hold on new 2026 data? | Brier Score on evaluated forecasts         | Brier < 0.25              |
+| Does the overfitting gap matter?    | Compare forecast accuracy month-over-month | No degradation trend      |
+| Are trigger thresholds appropriate? | Confusion matrix (TP/FP/TN/FN)             | False positive rate < 15% |
+| Is basis risk manageable?           | Predicted vs observed trigger alignment    | Basis risk < 30%          |
 
 ### After 90 Days (~1,080 Forecasts)
 
 The **Evidence Pack** bundles:
+
 - `metrics.json` — aggregate Brier score, RMSE, calibration error
 - `logs_export.csv` — all forecast-vs-actual pairs
 - `model_compliance_statement.txt` — zero look-ahead bias attestation, model version
@@ -94,6 +97,7 @@ This goes to reinsurers as proof of operational reliability.
 ### Key Strength for Reinsurers
 
 The leakage fix completed on 2026-03-05 actually **strengthens the shadow run case**:
+
 - We can now honestly state: "Models trained with zero target leakage, verified by `utils/data_leakage_prevention.py`"
 - The 12-month temporal gaps prevent look-ahead bias in training
 - The Evidence Pack system proves no synthetic fallbacks (GOTCHA Law #1)
@@ -105,18 +109,20 @@ The leakage fix completed on 2026-03-05 actually **strengthens the shadow run ca
 
 ## Reference: Post-Leakage-Fix Model Metrics
 
-| Model | R² | RMSE | MAE | Role |
-|-------|-----|------|-----|------|
-| **XGBoost** | 0.8666 | 0.4008 | 0.2572 | Primary |
-| **Ensemble** | 0.8402 | 0.4387 | 0.2842 | Secondary |
-| **LSTM** | 0.7866 | 0.5103 | 0.3417 | Fallback |
-| **Random Forest** | 0.7814 | 0.5131 | 0.3256 | Baseline |
+| Model                   | R²    | RMSE   | MAE    | Role      |
+| ----------------------- | ------ | ------ | ------ | --------- |
+| **XGBoost**       | 0.8666 | 0.4008 | 0.2572 | Primary   |
+| **Ensemble**      | 0.8402 | 0.4387 | 0.2842 | Secondary |
+| **LSTM**          | 0.7866 | 0.5103 | 0.3417 | Fallback  |
+| **Random Forest** | 0.7814 | 0.5131 | 0.3256 | Baseline  |
 
 **Cross-Validation (5-fold):**
+
 - Random Forest: R²=0.8566 ± 0.0575 (CI [0.7852, 0.9281])
 - XGBoost: R²=0.8396 ± 0.0603 (CI [0.7647, 0.9145])
 
 **Training Configuration:**
+
 - Features: 83 selected from 245 candidates (11 leaky removed)
 - Temporal split: 12-month gap between train/val/test
 - Target: `rainfall_mm` (normalized z-score)
