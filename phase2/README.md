@@ -1,30 +1,37 @@
 # Tanzania Climate Prediction - Phase 2
 
-A comprehensive end-to-end machine learning system for climate prediction in Tanzania, featuring data ingestion, processing, feature engineering, model training pipelines, and an **interactive web dashboard**.
+> **Status**: 🔵 Shadow Run ACTIVE (Mar 7 – Jun 5, 2026) · Live at [hewasense.majaribio.com](https://hewasense.majaribio.com)
 
-## 🎉 NEW: Interactive Dashboard System
+A comprehensive end-to-end machine learning system for climate prediction in Tanzania, featuring data ingestion, processing, feature engineering, model training pipelines, and an **interactive web dashboard** supporting parametric insurance for smallholder farmers.
 
-**Production-ready web application for climate insights and risk management!**
+**Current Pilot**: 1,000 rice farmers in the Kilombero Basin (Morogoro, Tanzania). The system is generating daily forecasts and accumulating Brier Score evidence for underwriter engagement.
 
-👉 **[Get Started with the Dashboard](GETTING_STARTED.md)** - 5-minute setup with Docker
+## 🎉 Interactive Dashboard System
 
-**Features**:
-- 📊 Executive Dashboard - Business KPIs and metrics
-- 🤖 Model Performance Monitoring - ML model tracking
-- ⚡ Triggers Dashboard - Insurance trigger events
-- 🌍 Climate Insights - Data analysis and trends
-- 📈 Risk Management - Portfolio risk assessment
+**Production-ready web application for climate insights and risk management — live on server!**
+
+👉 **Live**: [https://hewasense.majaribio.com](https://hewasense.majaribio.com)
+👉 **Local Setup**: [GETTING_STARTED.md](docs/guides/GETTING_STARTED.md) - 5-minute setup with Docker
+
+**7 Dashboard Views**:
+- 📊 Executive Dashboard - Business KPIs, loss ratios, portfolio metrics
+- 🤖 Model Performance Monitoring - ML accuracy tracking, drift detection
+- ⚡ Triggers Dashboard - Insurance trigger events and alerts
+- 🌍 Climate Insights - 25-year historical time series (2000–2026, 6 locations)
+- 📈 Risk Management - Historical backtesting validation (phase-based parametric model)
+- 🔔 Early Warning - Forward forecast alerts (fires on threshold breaches)
+- 🗂️ Evidence Pack - Shadow run Brier Score accumulation for underwriters
 
 **Quick Start**:
-```powershell
+```bash
 # Local development (use docker-compose.dev.yml)
 docker compose -f docker-compose.dev.yml up -d
 # Access at http://localhost:3000
 ```
 
-> **Note**: This project uses `docker-compose.dev.yml` for local development. See [GETTING_STARTED.md](docs/guides/GETTING_STARTED.md) for full setup instructions.
+> **Note**: This project uses `docker-compose.dev.yml` for local development and the server uses `docker compose` (v2 plugin, not the legacy `docker-compose` with hyphen). See [GETTING_STARTED.md](docs/guides/GETTING_STARTED.md) for full setup instructions.
 
-See **[PROJECT_SUMMARY.md](PROJECT_SUMMARY.md)** for complete dashboard documentation.
+See **[docs/current/EXECUTIVE_SUMMARY.md](docs/current/EXECUTIVE_SUMMARY.md)** for the latest project status and performance metrics.
 
 ---
 
@@ -36,7 +43,7 @@ Phase 2 delivers a complete ML system that:
 - **Feature Engineering**: Creates ML-ready features with lag, rolling statistics, and interactions
 - **Model Training**: Trains multiple models (Random Forest, XGBoost, LSTM, Ensemble) with experiment tracking
 - **Evaluation**: Provides comprehensive model evaluation with uncertainty quantification
-- **Testing**: Includes 45+ tests ensuring data quality and model reliability
+- **Testing**: Includes 180+ tests ensuring data quality and model reliability
 - **🆕 Interactive Dashboard**: Web-based visualization and monitoring system
 
 ## Project Structure
@@ -391,6 +398,17 @@ DATA_STALENESS_THRESHOLD_DAYS=7
 MONITORING_METRICS_PORT=9090
 ```
 
+**New in March 2026:**
+- **Shadow Run ACTIVE**: Daily 6AM EAT pipeline generating 12 forecasts/day, accumulating Brier Scores
+- **Evidence Pack Dashboard**: Tracks forecast accuracy over time for underwriter engagement
+- **Historical Backtesting**: Phase-based parametric model (GDD-tracked, 4 growth phases) validated on 2015-2025 data — 3/8 documented events matched
+- **Automated Evaluation**: ForecastLog records auto-resolve when validity windows mature (~Jun 2026 first Brier Scores)
+
+**New in February 2026:**
+- **Actuarial Refinement (HewaSense V4)**: GDD integration, cumulative flood triggers, out-of-sample validation (2000-2014)
+- **6-Location Phase-Based Backtesting**: Dual-index triggers, phase-weighted payouts, 22.6% loss ratio (sustainable)
+- **Early Warning Dashboard**: Real-time forward alert view (displays when threshold breaches detected)
+
 **New in January 2026:**
 - **Mock APIs**: Test all data sources without network calls
 - **Slack Alerts**: Real-time notifications for pipeline status
@@ -575,7 +593,7 @@ pytest -s
 ```
 
 ### Test Results
-- ✅ 45 tests passing
+- ✅ 180+ tests passing
 - ✅ Data pipeline integration verified
 - ✅ Model training and evaluation tested
 - ✅ Utility functions validated
@@ -680,7 +698,10 @@ python model_development_pipeline.py --skip-preprocessing
 
 **Import sorting errors in CI:**
 ```bash
-# Fix import formattin
+# Fix import formatting
+isort .
+black .
+```
 
 ## Contributing
 
