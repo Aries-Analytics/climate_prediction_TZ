@@ -140,7 +140,7 @@ def run_simulation(
     service = BacktestingService(db)
     
     try:
-        result = service.run_simulation(simulation_id)
+        result = service.run_phase_based_simulation(simulation_id)
         return {
             "message": "Simulation completed successfully",
             "simulation_id": result.id,
