@@ -1,6 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
-import axios from 'axios'
-import { API_BASE_URL } from '../config/api'
+import axiosInstance from '../config/axiosInstance'
 
 interface User {
   id: number
@@ -27,48 +26,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    // Check for stored token on mount
     const storedToken = localStorage.getItem('token')
     if (storedToken) {
       setToken(storedToken)
-      fetchCurrentUser(storedToken)
+      fetchCurrentUser()
     } else {
       setIsLoading(false)
     }
   }, [])
 
-  const fetchCurrentUser = async (authToken: string) => {
+  const fetchCurrentUser = async () => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/auth/me`, {
-        headers: { Authorization: `Bearer ${authToken}` }
-      })
+      const response = await axiosInstance.get('/auth/me')
       setUser(response.data)
     } catch (error) {
-      console.error('Failed to fetch user:', error)
-      localStorage.removeItem('token')
+      // Interceptor already handled token refresh or redirect to /login
       setToken(null)
+      setUser(null)
     } finally {
       setIsLoading(false)
     }
   }
 
   const login = async (username: string, password: string) => {
-    const response = await axios.post(`${API_BASE_URL}/auth/login`, {
-      username,
-      password
-    })
-    
-    const { access_token } = response.data
+    const response = await axiosInstance.post('/auth/login', { username, password })
+    const { access_token, refresh_token } = response.data
     setToken(access_token)
     localStorage.setItem('token', access_token)
-    
-    await fetchCurrentUser(access_token)
+    localStorage.setItem('refresh_token', refresh_token)
+    await fetchCurrentUser()
   }
 
   const logout = () => {
     setUser(null)
     setToken(null)
     localStorage.removeItem('token')
+    localStorage.removeItem('refresh_token')
   }
 
   return (

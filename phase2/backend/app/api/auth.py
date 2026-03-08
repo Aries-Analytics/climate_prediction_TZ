@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.dependencies import get_current_active_user
-from app.schemas.user import UserCreate, UserResponse, LoginRequest, Token
+from app.schemas.user import UserCreate, UserResponse, LoginRequest, Token, RefreshRequest
 from app.services import auth_service
 from app.models.user import User
 
@@ -44,8 +44,28 @@ def login(login_data: LoginRequest, db: Session = Depends(get_db)):
         )
     
     access_token = auth_service.create_access_token(user.id)
-    
-    return Token(access_token=access_token, token_type="bearer")
+    refresh_token = auth_service.create_refresh_token(user.id)
+
+    return Token(access_token=access_token, refresh_token=refresh_token, token_type="bearer")
+
+@router.post("/refresh", response_model=Token)
+def refresh_token(body: RefreshRequest, db: Session = Depends(get_db)):
+    """Issue a new access token using a valid refresh token"""
+    user_id = auth_service.verify_refresh_token(body.refresh_token)
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired refresh token",
+        )
+    user = auth_service.get_user_by_id(db, user_id)
+    if not user or not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found or inactive",
+        )
+    access_token = auth_service.create_access_token(user.id)
+    new_refresh_token = auth_service.create_refresh_token(user.id)
+    return Token(access_token=access_token, refresh_token=new_refresh_token, token_type="bearer")
 
 @router.get("/me", response_model=UserResponse)
 def get_current_user_info(current_user: User = Depends(get_current_active_user)):

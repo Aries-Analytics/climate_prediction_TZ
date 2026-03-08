@@ -6,7 +6,7 @@
 
 ## 📌 Project Overview
 
-In my [previous article](INSERT_LINK_TO_PART_1_HERE), I explored how machine learning could be applied to climate data in Tanzania. The goal of that project was to investigate whether historical climate records could be used to identify patterns and generate predictive insights about environmental conditions.
+In my previous article, I explored how machine learning could be applied to climate data in Tanzania. The goal of that project was to investigate whether historical climate records could be used to identify patterns and generate predictive insights about environmental conditions.
 
 Using historical weather data and machine learning models, the initial results showed that it was possible to capture meaningful relationships within the data. While the project began as an academic exercise, it raised an important question:
 
@@ -43,6 +43,9 @@ Combining these datasets allows the model to capture a broader range of environm
 Several patterns identified during exploratory analysis directly informed the modeling strategy.
 
 *Seasonal rainfall concentration:* Rainfall patterns in Tanzania follow strong seasonal cycles. Heavy precipitation is concentrated during defined rainy seasons, increasing the likelihood of flooding in certain regions. Models therefore need to distinguish between normal seasonal patterns and extreme precipitation events.
+
+![Monthly average temperature and rainfall chart showing Long Rains (Mar–May) and Short Rains (Oct–Dec) seasons, with temperature peaking during dry months (Jun–Oct).](monthly_Avg_seasonal.png)
+*Long rains (Mar–May) and Short rains (Oct–Dec) are visible as rainfall peaks. Temperature is highest during dry seasons (Jun–Oct).*
 
 *Rainfall accumulation dynamics:* Flood events are often linked to rainfall accumulation across several consecutive days rather than a single storm. Capturing short-term rainfall persistence helps identify conditions where soil saturation and runoff increase rapidly.
 
@@ -115,7 +118,8 @@ Together, these signals give the model the temporal context needed to distinguis
 
 ## 🗺️ Pipeline Overview
 
-*[INSERT PIPELINE DIAGRAM HERE — showing the 5 ingestion sources → feature engineering → model inference → ForecastLog → Evidence Pack Dashboard flow]*
+![HewaSense pipeline diagram showing the 5 data sources flowing through feature engineering, model optimization (XGBoost, LSTM, RF ensemble), forecasting and performance logging, to the Evidence Pack Dashboard.](HewaSense_Pipeline_Diagram.png)
+*The HewaSense solution workflow — from raw climate data to actionable risk intelligence.*
 
 ---
 

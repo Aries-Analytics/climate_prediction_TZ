@@ -82,6 +82,29 @@ def create_access_token(user_id: int, expires_delta: Optional[timedelta] = None)
     
     return encoded_jwt
 
+def create_refresh_token(user_id: int) -> str:
+    """Create a long-lived JWT refresh token"""
+    expire = datetime.utcnow() + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+    to_encode = {
+        "sub": str(user_id),
+        "exp": expire,
+        "type": "refresh"
+    }
+    return jwt.encode(to_encode, settings.JWT_SECRET, algorithm=settings.JWT_ALGORITHM)
+
+def verify_refresh_token(token: str) -> Optional[int]:
+    """Verify a refresh token and return the user ID"""
+    try:
+        payload = jwt.decode(token, settings.JWT_SECRET, algorithms=[settings.JWT_ALGORITHM])
+        if payload.get("type") != "refresh":
+            return None
+        user_id: str = payload.get("sub")
+        if user_id is None:
+            return None
+        return int(user_id)
+    except JWTError:
+        return None
+
 def verify_token(token: str) -> Optional[int]:
     """Verify a JWT token and return the user ID"""
     try:

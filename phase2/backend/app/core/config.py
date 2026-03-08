@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     JWT_SECRET: str = "your-secret-key-change-in-production"
     JWT_ALGORITHM: str = "HS256"
     JWT_EXPIRATION_HOURS: int = 24
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 30
     
     # CORS
     ALLOWED_ORIGINS: str = '["http://localhost:3000"]'
