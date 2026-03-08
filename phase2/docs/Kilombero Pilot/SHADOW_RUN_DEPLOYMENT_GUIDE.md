@@ -28,8 +28,8 @@ sudo apt-get update && sudo apt-get upgrade -y
 # Install Git
 sudo apt-get install git -y
 
-# Install Docker & Docker Compose
-sudo apt-get install docker.io docker-compose -y
+# Install Docker & Docker Compose (v2 plugin)
+sudo apt-get install docker.io docker-compose-plugin -y
 
 # Add your user to the docker group (so you don't need sudo for every docker command)
 sudo usermod -aG docker $USER

@@ -80,14 +80,14 @@ ERA5_API_KEY=your_cds_api_key
 
 ```bash
 # Initialize database schema
-docker-compose run scheduler alembic upgrade head
+docker compose run scheduler alembic upgrade head
 ```
 
 ### 3. Start Services
 
 ```bash
 # Start all services
-docker-compose up -d
+docker compose up -d
 
 # Services started:
 # - postgres: Database
@@ -99,7 +99,7 @@ docker-compose up -d
 
 ```bash
 # Check scheduler is running
-docker-compose logs scheduler
+docker compose logs scheduler
 
 # Check health endpoint
 curl http://localhost:8080/health
@@ -257,7 +257,7 @@ Import provided dashboard: `monitoring/grafana-dashboard.json`
 
 ```bash
 # Using CLI
-docker-compose exec scheduler python -m app.cli pipeline run
+docker compose exec scheduler python -m app.cli pipeline run
 
 # Or via API (if exposed)
 curl -X POST http://localhost:8000/api/v1/pipeline/trigger
@@ -267,20 +267,20 @@ curl -X POST http://localhost:8000/api/v1/pipeline/trigger
 
 ```bash
 # View current status
-docker-compose exec scheduler python -m app.cli pipeline status
+docker compose exec scheduler python -m app.cli pipeline status
 
 # View execution history
-docker-compose exec scheduler python -m app.cli pipeline history --days 7
+docker compose exec scheduler python -m app.cli pipeline history --days 7
 ```
 
 ### Test Alerts
 
 ```bash
 # Test Slack webhook
-docker-compose exec scheduler python -m app.cli pipeline test-alerts --channel slack
+docker compose exec scheduler python -m app.cli pipeline test-alerts --channel slack
 
 # Test email
-docker-compose exec scheduler python -m app.cli pipeline test-alerts --channel email
+docker compose exec scheduler python -m app.cli pipeline test-alerts --channel email
 ```
 
 ---
@@ -291,8 +291,8 @@ docker-compose exec scheduler python -m app.cli pipeline test-alerts --channel e
 
 **Check scheduler is running:**
 ```bash
-docker-compose ps scheduler
-docker-compose logs scheduler
+docker compose ps scheduler
+docker compose logs scheduler
 ```
 
 **Common Causes:**
@@ -303,17 +303,17 @@ docker-compose logs scheduler
 **Solution:**
 ```bash
 # Check scheduler status
-docker-compose logs scheduler | grep ERROR
+docker compose logs scheduler | grep ERROR
 
 # Restart scheduler
-docker-compose restart scheduler
+docker compose restart scheduler
 ```
 
 ### Data Ingestion Failures
 
 **Check logs:**
 ```bash
-docker-compose logs scheduler | grep "ingestion"
+docker compose logs scheduler | grep "ingestion"
 ```
 
 **Common Causes:**
@@ -324,20 +324,20 @@ docker-compose logs scheduler | grep "ingestion"
 **Solution:**
 ```bash
 # Test API connectivity
-docker-compose exec scheduler python -m app.services.pipeline.test_apis
+docker compose exec scheduler python -m app.services.pipeline.test_apis
 
 # Check credentials
 cat .env | grep API
 
 # Manual retry
-docker-compose exec scheduler python -m app.cli pipeline run --source CHIRPS
+docker compose exec scheduler python -m app.cli pipeline run --source CHIRPS
 ```
 
 ### Alerts Not Delivering
 
 **Test alert channels:**
 ```bash
-docker-compose exec scheduler python -m app.cli pipeline test-alerts
+docker compose exec scheduler python -m app.cli pipeline test-alerts
 ```
 
 **Common Causes:**
@@ -360,7 +360,7 @@ telnet smtp.gmail.com 587
 
 **Check quality metrics:**
 ```bash
-docker-compose exec scheduler python scripts/validate_data_quality.py
+docker compose exec scheduler python scripts/validate_data_quality.py
 ```
 
 **Common Causes:**
@@ -371,14 +371,14 @@ docker-compose exec scheduler python scripts/validate_data_quality.py
 **Solution:**
 ```bash
 # View quality details
-docker-compose exec scheduler python -c "
+docker compose exec scheduler python -c "
 from app.services.pipeline.data_quality import DataQualityValidator
 import pandas as pd
 # Load and validate data
 "
 
 # Re-run ingestion
-docker-compose exec scheduler python -m app.cli pipeline run
+docker compose exec scheduler python -m app.cli pipeline run
 ```
 
 ---
@@ -418,13 +418,13 @@ ALERT_EMAIL_ENABLED=true
 **Database Backups:**
 ```bash
 # Daily backup (add to cron)
-0 2 * * * docker-compose exec postgres pg_dump climate > backup_$(date +\%Y\%m\%d).sql
+0 2 * * * docker compose exec postgres pg_dump climate > backup_$(date +\%Y\%m\%d).sql
 ```
 
 **Recovery:**
 ```bash
 # Restore from backup
-docker-compose exec -T postgres psql climate < backup_20260122.sql
+docker compose exec -T postgres psql climate < backup_20260122.sql
 ```
 
 ---
@@ -468,7 +468,7 @@ PARALLEL_INGESTION=true
 
 ## ✅ Post-Deployment Checklist
 
-- [ ] All services running (`docker-compose ps`)
+- [ ] All services running (`docker compose ps`)
 - [ ] Health check passing (`curl http://localhost:8080/health`)
 - [ ] Slack alerts delivered (`test-alerts` command)
 - [ ] First manual run successful

@@ -90,6 +90,20 @@
 - **Why weighted blending was kept despite lower accuracy:** Regulatory interpretability. A regulator can audit "30/40/30 fixed blend" trivially. A stacked meta-learner raises questions about training data, meta-model overfitting, and auditability that are difficult to answer in a regulated insurance context. Conscious trade-off: interpretability > marginal accuracy gain.
 - **Future improvement path:** Once Brier Scores arrive (~Jun 2026), compare calibrated XGBoost (Platt scaling / isotonic regression) vs stacked ensemble vs current blend using forward-validation ground truth — not retrospective R².
 
+## Gitignore Rules (phase2/)
+
+- `memory/` — tracked (removed from gitignore 2026-03-08). Negation patterns `!memory/`, `!memory/logs/`, `!memory/logs/**` override root `.gitignore`'s global `logs/` rule.
+- `/logs/` — anchored to root only (pipeline runtime logs). Keeps `memory/logs/` accessible.
+- `state.json` — correctly gitignored (Claude Code session state, machine-specific).
+- **VS Code gitignore decoration is unreliable.** Always verify with `git ls-files` or `git check-ignore -v`.
+
+## Medium Article
+
+- **File:** `docs/Kilombero Pilot/MEDIUM_ARTICLE_PART_2_FINAL.md`
+- **Status:** Final — pending Part 1 URL + pipeline diagram before publish.
+- **Balance rule:** Public draft controls disclosure level. Internal draft provides specific numbers (R², feature counts, 6AM EAT, 12 forecasts). Never reveal architecture, thresholds, or internal service names.
+- **Pre-publish checklist:** (1) link to Part 1, (2) consistent "I" throughout, (3) explain domain terms, (4) concrete time horizons, (5) non-repetitive conclusion, (6) pipeline diagram (not empty dashboard screenshot), (7) cover image.
+
 ## Learned Behaviors
 
 - Always check `tools/manifest.md` before creating new scripts
