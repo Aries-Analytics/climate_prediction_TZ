@@ -10,7 +10,7 @@
 
 ```markdown
 Before we begin the next task, execute your handover protocol:
-1. Read `memory/MEMORY.md` — load the current system state, known bugs, and architecture rules.
+1. Read `memory/MEMORY.md` (in-repo GOTCHA memory) AND the Claude Code project memory at `C:\Users\YYY\.claude\projects\...\memory\MEMORY.md` — load the current system state, known bugs, and architecture rules. If they differ, the Claude Code memory is more recent.
 2. Read today's and yesterday's daily logs in `memory/logs/` — catch up on recent fixes and decisions.
 3. Run `git log --oneline -10` — check the last 10 commits to see what code changed.
 4. Read `goals/manifest.md` and `goals/shadow_run_implementation.md` — confirm current phase and active goals.
@@ -27,9 +27,12 @@ After loading, give me a one-paragraph briefing: what the system's current state
 
 ```markdown
 That worked. Right now, before we move on:
-1. Open (or create) today's daily log at `memory/logs/YYYY-MM-DD.md` and write a concise entry under a new `###` heading. Include: the symptom, the root cause, the exact fix (file + line), and the lesson learned so we never repeat it.
-2. Check if `memory/MEMORY.md` needs a new entry or an update in "Known Bugs Fixed" or "Learned Behaviors". If yes, edit it now.
-Do not use any external scripts — use the Write and Edit tools directly.
+1. Append to today's in-repo log:
+   `python tools/memory/memory_write.py --content "<symptom> → <root cause> → <fix: file:line>" --type insight --importance 8`
+2. If this is a structural fact that must survive across sessions (a bug fix pattern, an architecture rule, a gotcha), also update `memory/MEMORY.md` directly using the Edit tool — specifically the "Known Bugs Fixed" or "Learned Behaviors" section.
+3. If it changes Claude Code's understanding of how the system works, update the Claude Code project memory at `C:\Users\YYY\.claude\projects\...\memory\MEMORY.md` too.
+
+Note: Two memory tiers exist — `phase2/memory/` (in-repo GOTCHA memory, tooled) and the `.claude` project memory (Claude Code native, auto-loaded each session). Critical facts go in both.
 ```
 
 ---
