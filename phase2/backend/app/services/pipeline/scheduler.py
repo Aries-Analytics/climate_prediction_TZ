@@ -212,7 +212,7 @@ class PipelineScheduler:
         try:
             self.scheduler.add_job(
                 func=execute_pipeline_standalone,
-                trigger=CronTrigger.from_crontab(self.schedule),
+                trigger=CronTrigger.from_crontab(self.schedule, timezone=self.timezone),
                 id=self._job_id,
                 name='Automated Pipeline Execution',
                 max_instances=1,
