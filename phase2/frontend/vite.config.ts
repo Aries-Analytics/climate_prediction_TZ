@@ -19,8 +19,10 @@ export default defineConfig({
     }
   },
   // Pre-bundle heavy deps once so they're cached across page navigations
+  // NOTE: plotly.js excluded — it uses require('buffer/') which esbuild can't resolve
   optimizeDeps: {
-    include: ['react-plotly.js', 'plotly.js', 'chart.js', 'react-chartjs-2', 'leaflet', 'react-leaflet'],
+    include: ['chart.js', 'react-chartjs-2', 'leaflet', 'react-leaflet'],
+    exclude: ['plotly.js', 'react-plotly.js'],
   },
   build: {
     rollupOptions: {
