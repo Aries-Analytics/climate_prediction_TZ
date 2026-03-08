@@ -65,7 +65,7 @@ __pycache__/
 *.pyo
 *.log
 .pytest_cache/
-logs/
+/logs/
 
 # ===============================================================
 # Admin/Utility Scripts (project management automation)
@@ -90,7 +90,11 @@ frontend/build/
 # ===============================================================
 # Session Artifacts (transient, not project code)
 # ===============================================================
-memory/
 state.json
 pdf_*.txt
 test_pack.zip
+
+# GOTCHA in-repo memory travels with the repo (un-ignore from root logs/ rule)
+!memory/
+!memory/logs/
+!memory/logs/**
