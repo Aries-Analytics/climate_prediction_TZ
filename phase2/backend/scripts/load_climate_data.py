@@ -67,13 +67,17 @@ def load_climate_data(csv_path: str = "../data/processed/merged_data_2010_2025.c
                 logger.warning(f"Skipping row {idx}: invalid date")
                 continue
             
+            # Use per-row lat/lon if available (multi-location datasets)
+            row_lat = float(row.get('latitude', row.get('location_lat', TANZANIA_LAT)))
+            row_lon = float(row.get('longitude', row.get('location_lon', TANZANIA_LON)))
+
             # Check if record exists (smart upsert)
             existing = db.query(ClimateData).filter(
                 ClimateData.date == date,
-                ClimateData.location_lat == TANZANIA_LAT,
-                ClimateData.location_lon == TANZANIA_LON
+                ClimateData.location_lat == row_lat,
+                ClimateData.location_lon == row_lon
             ).first()
-            
+
             if existing:
                 # Update existing record
                 existing.temperature_avg = row.get('temp_mean_c')
@@ -82,11 +86,11 @@ def load_climate_data(csv_path: str = "../data/processed/merged_data_2010_2025.c
                 existing.enso_index = row.get('oni')
                 existing.iod_index = row.get('iod')
             else:
-                # Create new ClimateData record with Tanzania coordinates
+                # Create new ClimateData record
                 record = ClimateData(
                     date=date,
-                    location_lat=TANZANIA_LAT,
-                    location_lon=TANZANIA_LON,
+                    location_lat=row_lat,
+                    location_lon=row_lon,
                     temperature_avg=row.get('temp_mean_c'),
                     rainfall_mm=row.get('rainfall_mm', row.get('precip_mm')),
                     ndvi=row.get('ndvi'),
