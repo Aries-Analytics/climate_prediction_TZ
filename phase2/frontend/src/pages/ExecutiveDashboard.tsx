@@ -6,7 +6,6 @@ import axios from 'axios'
 import { API_BASE_URL } from '../config/api'
 import { useAuth } from '../contexts/AuthContext'
 import KPICard from '../components/common/KPICard'
-import LoadingSpinner from '../components/common/LoadingSpinner'
 
 // --- MOCK DATA GENERATOR (Demo Mode - Shows Strategic Vision) ---
 // Updated to reflect Morogoro Rice Pilot parameters (1000 farmers, $150k reserves)
@@ -62,67 +61,43 @@ const generateMockData = (year: number) => {
 };
 
 export default function ExecutiveDashboard() {
-  const [loading, setLoading] = useState(true);
   const [selectedYear, setSelectedYear] = useState<number>(2025);
-  const [data, setData] = useState<any>(null);
+  const [realAlerts, setRealAlerts] = useState<any[] | null>(null);
 
-  useEffect(() => {
-    // Simulate API Call
-    setLoading(true);
-    setTimeout(() => {
-      setData(generateMockData(selectedYear));
-      setLoading(false);
-    }, 800);
-  }, [selectedYear]);
+  // Mock data computed synchronously — no network call, no spinner
+  const data = useMemo(() => generateMockData(selectedYear), [selectedYear]);
 
-  // --- REAL DATA INTEGRATION ---
-  // Moved before loading check to respect Rules of Hooks
+  // Fetch real alerts on mount, parallel with render
   useEffect(() => {
     const fetchRealAlerts = async () => {
       try {
         const token = localStorage.getItem('token')
-        if (!token) return; // Skip if no token (e.g. dev mode)
-
+        if (!token) return;
         const response = await axios.get(`${API_BASE_URL}/climate-forecasts/alerts`, {
           headers: { Authorization: `Bearer ${token}` }
         })
-        const alerts = response.data;
-
-        // Calculate Liability from Real Alerts
-        // Assuming each alert represents a payout event for a location (~$50k per location for pilot)
-        const PAYOUT_PER_LOCATION = 50000;
-        const realLiability = alerts.length * PAYOUT_PER_LOCATION;
-
-        // Update state if data exists
-        if (data) {
-          setData((prevData: any) => ({
-            ...prevData,
-            kpis: {
-              ...prevData.kpis,
-              // Update Loss Ratio YTD based on real liability vs Mock Premium ($10M)
-              loss_ratio_ytd: Math.max(prevData.kpis.loss_ratio_ytd, realLiability / 10000000)
-            },
-            real_alerts: alerts
-          }))
-        }
+        setRealAlerts(response.data);
       } catch (err) {
         console.error("Failed to fetch real alerts for Executive Dashboard", err)
       }
     }
+    fetchRealAlerts();
+  }, []);
 
-    if (data) {
-      fetchRealAlerts()
-    }
-  }, [data?.solvency_history]) // Run once after mock data loads
-
-  if (loading) return <LoadingSpinner message="Loading Command Center metrics..." />;
+  // Merge real alert liability into KPIs when available
+  const kpis = useMemo(() => {
+    if (!realAlerts || realAlerts.length === 0) return data.kpis;
+    const PAYOUT_PER_LOCATION = 50000;
+    const realLiability = realAlerts.length * PAYOUT_PER_LOCATION;
+    return { ...data.kpis, loss_ratio_ytd: Math.max(data.kpis.loss_ratio_ytd, realLiability / 10000000) };
+  }, [data.kpis, realAlerts]);
 
   // --- DERIVED METRICS ---
-  const criticalRegions = data ? data.watchlist.filter((r: any) => r.vhi < 0.3) : [];
+  const criticalRegions = data.watchlist.filter((r: any) => r.vhi < 0.3);
   const criticalCount = criticalRegions.length;
 
   // Insight Logic
-  const currentLossRatio = data.kpis.loss_ratio_ytd;
+  const currentLossRatio = kpis.loss_ratio_ytd;
   let solvencyStatus: 'success' | 'warning' | 'error' = 'success';
   let solvencyMessage = "Fund is healthy. Retained earnings are growing.";
   if (currentLossRatio > 0.8) {
@@ -241,7 +216,7 @@ export default function ExecutiveDashboard() {
         <Grid item xs={12} sm={6} md={3}>
           <KPICard
             title="Farmers Covered"
-            value={data.kpis.farmers_protected.toLocaleString()}
+            value={kpis.farmers_protected.toLocaleString()}
             status="success"
             trend="up"
             subtitle="+12% vs LY"
@@ -254,9 +229,9 @@ export default function ExecutiveDashboard() {
         <Grid item xs={12} sm={6} md={3}>
           <KPICard
             title="Hectares Insured"
-            value={`${data.kpis.hectares_insured.toLocaleString()} ha`}
+            value={`${kpis.hectares_insured.toLocaleString()} ha`}
             status="success"
-            subtitle={`Est. Yield Value: $${(data.kpis.hectares_insured * 450).toLocaleString()}`}
+            subtitle={`Est. Yield Value: $${(kpis.hectares_insured * 450).toLocaleString()}`}
             insight="Total land area covered. Estimated yield based on crop type."
             insightSeverity="info"
           />
@@ -266,12 +241,12 @@ export default function ExecutiveDashboard() {
         <Grid item xs={12} sm={6} md={3}>
           <KPICard
             title="Replanting Speed"
-            value={`${data.kpis.avg_payout_days} Days`}
-            status={data.kpis.avg_payout_days > 21 ? 'error' : (data.kpis.avg_payout_days > 14 ? 'warning' : 'success')}
-            trend={data.kpis.avg_payout_days > 21 ? 'down' : 'up'}
-            subtitle={data.kpis.avg_payout_days > 21 ? 'Missed Replanting Window' : 'Optimal for Replanting'}
+            value={`${kpis.avg_payout_days} Days`}
+            status={kpis.avg_payout_days > 21 ? 'error' : (kpis.avg_payout_days > 14 ? 'warning' : 'success')}
+            trend={kpis.avg_payout_days > 21 ? 'down' : 'up'}
+            subtitle={kpis.avg_payout_days > 21 ? 'Missed Replanting Window' : 'Optimal for Replanting'}
             insight="Avg days from Trigger to Payout. Target < 14 Days."
-            insightSeverity={data.kpis.avg_payout_days > 21 ? 'error' : 'success'}
+            insightSeverity={kpis.avg_payout_days > 21 ? 'error' : 'success'}
           />
         </Grid>
 
@@ -279,7 +254,7 @@ export default function ExecutiveDashboard() {
         <Grid item xs={12} sm={6} md={3}>
           <KPICard
             title="Loss Ratio (YTD)"
-            value={`${(data.kpis.loss_ratio_ytd * 100).toFixed(1)}%`}
+            value={`${(kpis.loss_ratio_ytd * 100).toFixed(1)}%`}
             status={solvencyStatus}
             subtitle={solvencyStatus === 'error' ? 'UNSUSTAINABLE' : (solvencyStatus === 'warning' ? 'Monitor Closely' : 'Sustainable')}
             insight="Payouts / Premiums collected. >80% is Critical."
@@ -406,7 +381,7 @@ export default function ExecutiveDashboard() {
       </Grid>
 
       <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
-        {data.real_alerts ? "Active Trigger Alerts (Real-Time)" : "Priority Watchlist (Low VHI Regions)"}
+        {realAlerts ? "Active Trigger Alerts (Real-Time)" : "Priority Watchlist (Low VHI Regions)"}
       </Typography>
       <TableContainer component={Paper}>
         <Table size="small">
@@ -420,14 +395,14 @@ export default function ExecutiveDashboard() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {data.real_alerts ? (
+            {realAlerts ? (
               // RENDER REAL ALERTS
-              data.real_alerts.length === 0 ? (
+              realAlerts.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={5} align="center">No active triggers detected in real-time monitoring.</TableCell>
                 </TableRow>
               ) : (
-                data.real_alerts.map((alert: any, idx: number) => (
+                realAlerts.map((alert: any, idx: number) => (
                   <TableRow key={idx}>
                     <TableCell>{alert.location_name}</TableCell>
                     <TableCell>Rainfall: {alert.forecast_value}mm (vs {alert.threshold_value}mm)</TableCell>
@@ -468,7 +443,7 @@ export default function ExecutiveDashboard() {
                 </TableRow>
               ))
             )}
-            {!data.real_alerts && data.watchlist.length === 0 && (
+            {!realAlerts && data.watchlist.length === 0 && (
               <TableRow>
                 <TableCell colSpan={5} align="center">No critical regions detected.</TableCell>
               </TableRow>
