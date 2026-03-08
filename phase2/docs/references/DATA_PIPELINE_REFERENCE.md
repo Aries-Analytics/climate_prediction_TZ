@@ -74,7 +74,7 @@ The Tanzania Climate Intelligence Platform data pipeline is a comprehensive syst
 
 Coordinates the entire pipeline execution:
 - Manages execution locking to prevent concurrent runs
-- Coordinates ingestion and forecasting stages
+- Coordinates ingestion, forecasting, and forecast evaluation stages (3-stage pipeline)
 - Handles errors and implements retry logic
 - Records comprehensive execution metadata
 - Provides status reporting and monitoring
@@ -285,20 +285,23 @@ def process(data):
 
 ### Scheduling
 
-**Scheduler**: APScheduler with persistent job store  
-**Default Schedule**: Daily at 06:00 UTC  
-**Configuration**: Environment variable `PIPELINE_SCHEDULE`
+**Scheduler**: APScheduler with in-memory job store
+**Default Schedule**: Daily at 06:00 EAT (Africa/Dar_es_Salaam)
+**Configuration**: Environment variables `PIPELINE_SCHEDULE` + `PIPELINE_TIMEZONE`
 
 **Schedule Examples**:
 ```bash
-# Daily at 6 AM UTC
+# Daily at 6 AM EAT (production / shadow run)
 PIPELINE_SCHEDULE="0 6 * * *"
+PIPELINE_TIMEZONE=Africa/Dar_es_Salaam
 
-# Twice daily (6 AM and 6 PM UTC)
+# Twice daily (6 AM and 6 PM EAT)
 PIPELINE_SCHEDULE="0 6,18 * * *"
+PIPELINE_TIMEZONE=Africa/Dar_es_Salaam
 
-# Weekly on Sundays at 2 AM UTC
+# Weekly on Sundays at 2 AM EAT
 PIPELINE_SCHEDULE="0 2 * * 0"
+PIPELINE_TIMEZONE=Africa/Dar_es_Salaam
 ```
 
 ### Execution Flow
@@ -440,7 +443,7 @@ DATABASE_URL=postgresql://user:password@localhost:5432/climate_prod
 
 # Pipeline Schedule
 PIPELINE_SCHEDULE=0 6 * * *
-PIPELINE_TIMEZONE=UTC
+PIPELINE_TIMEZONE=Africa/Dar_es_Salaam
 ```
 
 **Optional**:
