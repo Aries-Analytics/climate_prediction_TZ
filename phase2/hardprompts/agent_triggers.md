@@ -9,11 +9,14 @@
 *Use this right after you open a new chat instance to ensure the fresh agent reads the foundational rules and what the previous agent was doing.*
 
 ```markdown
-Before we begin the next task, please execute your handover protocol as defined in `.agent/rules/SKILL.md`. Specifically:
-1. Read `memory/MEMORY.md` to load the current system state and rules.
-2. Read the daily log from today and yesterday in `memory/logs/` to catch up on recent context.
-3. Read `state.json` to see our active phase.
-Confirm you have loaded this context before we proceed.
+Before we begin the next task, execute your handover protocol:
+1. Read `memory/MEMORY.md` — load the current system state, known bugs, and architecture rules.
+2. Read today's and yesterday's daily logs in `memory/logs/` — catch up on recent fixes and decisions.
+3. Run `git log --oneline -10` — check the last 10 commits to see what code changed.
+4. Read `goals/manifest.md` and `goals/shadow_run_implementation.md` — confirm current phase and active goals.
+5. SSH to the server and check `docker ps` and the last 20 lines of scheduler logs to confirm current operational status.
+
+After loading, give me a one-paragraph briefing: what the system's current state is, what was done last session, and what the most important open risk or pending action is. Then confirm you are ready.
 ```
 
 ---
@@ -23,7 +26,10 @@ Confirm you have loaded this context before we proceed.
 *Use this when we've just spent time debugging a weird issue, or when you make a specific technical decision you want the agent to remember (like a specific library version or configuration choice).*
 
 ```markdown
-That worked. Please run `tools/memory/memory_write.py` right now to log this exact fix and the root cause into today's daily log so we don't forget it. Tag it appropriately with `--type insight`.
+That worked. Right now, before we move on:
+1. Open (or create) today's daily log at `memory/logs/YYYY-MM-DD.md` and write a concise entry under a new `###` heading. Include: the symptom, the root cause, the exact fix (file + line), and the lesson learned so we never repeat it.
+2. Check if `memory/MEMORY.md` needs a new entry or an update in "Known Bugs Fixed" or "Learned Behaviors". If yes, edit it now.
+Do not use any external scripts — use the Write and Edit tools directly.
 ```
 
 ---
@@ -34,33 +40,93 @@ That worked. Please run `tools/memory/memory_write.py` right now to log this exa
 
 ```markdown
 We are done with this feature/sprint. Before we close out, execute the GOTCHA Sprint End protocol:
-1. Synthesize all our scattered bullet points into a clean, formatted daily log for today in `memory/logs/YYYY-MM-DD.md`. Create a "Learned Behaviors" section at the bottom.
-2. Extract the most critical structural facts or rules we established today and append them to `memory/MEMORY.md`. 
-3. Run a `grep_search` across `docs/` to ensure no documentation files are contradicting the code we just wrote.
+1. Write a clean, formatted daily log for today at `memory/logs/YYYY-MM-DD.md`. Include: Issues Diagnosed & Fixed (symptom → root cause → fix → commit), Dashboard State table, Shadow Run Status, and a Learned Behaviors section at the bottom.
+2. Update `memory/MEMORY.md`: append new Known Bugs Fixed entries, update any stale facts, update the Logs Index.
+3. Run a doc sweep (see Trigger #5) specifically looking for:
+   - Any status that should have changed (pending → active, planned → live, upcoming → complete)
+   - Any stale dates in "Last Updated", "Date:", or "Updated:" fields in docs we touched
+   - Any doc that contradicts code we just wrote
+4. Stage, commit, and push all changed files (docs + code). Then `git pull` on the server.
 ```
 
 ---
 
 ## 4. The "Data Leakage / Architecture Shift" Trigger
 
-*Use this if we ever change the core ML features, thresholds, or API responses—things that break backward compatibility.*
+*Use this if we ever change the core ML features, thresholds, model metrics, or API responses — things that break backward compatibility.*
 
 ```markdown
-Since we just modified the [feature count / payout threshold / model architecture], you are mandated by GOTCHA Law #8 (Autonomous Documentation) to update the system. 
-Please find and update all relevant files in `docs/current/`, `docs/references/`, `goals/`, `state.json`, and `memory/MEMORY.md` to reflect this new reality before doing anything else.
+Since we just modified [feature count / payout threshold / model architecture / metric values], you are mandated by GOTCHA Law #8 (Autonomous Documentation) to sync the system before doing anything else.
+
+Find and update ALL occurrences of the old value in:
+- `docs/current/` — all files
+- `docs/references/` — all files
+- `docs/Kilombero Pilot/` — all files
+- `goals/` — manifest and shadow run implementation
+- `context/` — hewasense_domain.md and ml_serving_rules.md
+- `memory/MEMORY.md` — Known Bugs Fixed, Forecast Structure, Data Assets sections
+
+Search pattern: grep for the old number/value across all those directories. Replace every instance. Then re-grep to verify zero remaining occurrences. Do NOT touch `docs/archive/` or `docs/reports/` (historical).
 ```
 
 ---
 
 ## 5. The "Global Doc Sweep & Sync" Trigger
 
-*Use this perfectly-phrased prompt when you want to force an agent to do exactly what we did today: meticulously hunt down every stale number across the entire project and sync it to the newest truth.*
+*Use this when you want to force a comprehensive hunt across the entire project for ALL classes of stale information — not just metric values.*
 
 ```markdown
-We have a new canonical metric/fact: [e.g., XGBoost R² is now 0.8666, features are 83]. 
-As per GOTCHA Law #8 (Autonomous Documentation), execute a global documentation sweep. 
-1. Use `grep_search` across the `docs/current/`, `docs/references/`, `goals/`, and `memory/` directories to find all stale instances of the old metrics/facts.
-2. Systematically replace them using `multi_replace_file_content`. 
-3. Do NOT modify the `docs/archive/` or `docs/reports/` folders, as they are historical.
-4. Verify your work is complete by running `grep_search` again. Create a walkthrough artifact summarizing the files changed.
+Execute a global documentation sweep across `docs/current/`, `docs/references/`, `docs/Kilombero Pilot/`, `goals/`, `context/`, and `memory/`. Do NOT touch `docs/archive/` or `docs/reports/`.
+
+Search for ALL four staleness classes — not just the obvious one:
+
+CLASS 1 — Stale metrics/numbers: grep for the old value and replace with the new one.
+
+CLASS 2 — Stale status transitions: grep for words like "pending", "planned", "upcoming", "scheduled", "will be", "future" in the context of things that are now ACTIVE or COMPLETE. Check every "Current Status", "Document Status", "Next Steps", and "Status:" field explicitly.
+
+CLASS 3 — Stale dates: grep for "Last Updated", "Date:", "Updated:" fields and check if they reflect the last actual change to that document.
+
+CLASS 4 — Command/syntax staleness: grep for `docker-compose` (v1), old cron expressions (`0 3 * * *`), `PIPELINE_TIMEZONE=UTC`, or any other deprecated config values.
+
+After replacing, re-grep each class to verify zero remaining stale instances. Write a walkthrough summary listing every file changed, what was wrong, and what was fixed. Then commit and push.
+```
+
+---
+
+## 6. The "Operational Status Change" Trigger
+
+*Use this whenever the system transitions to a new operational state: shadow run goes live, first pipeline run fires, evidence pack threshold reached, underwriter engagement begins, etc.*
+
+```markdown
+We just reached a new operational milestone: [describe the milestone — e.g., "shadow run day 1 pipeline ran successfully", "first Brier Score evaluated", "Evidence Pack sent to underwriter"].
+
+Execute the operational status update:
+1. Update every "Current Status", "Document Status", "Status:", and "Next Steps" section in:
+   - `docs/current/EXECUTIVE_SUMMARY.md`
+   - `docs/references/PROJECT_OVERVIEW_CONSOLIDATED.md`
+   - `docs/Kilombero Pilot/KILOMBERO_BASIN_PILOT_SPECIFICATION.md`
+   - `goals/shadow_run_implementation.md`
+   - `goals/manifest.md`
+2. Write a daily log entry in `memory/logs/YYYY-MM-DD.md` marking this milestone with exact timestamp and evidence (log output, Slack message, DB count, etc.).
+3. Update `memory/MEMORY.md` to reflect the new operational reality (e.g., "Shadow run Day N complete", "Brier Scores available", etc.).
+4. Commit and push all changes with a commit message that names the milestone explicitly.
+```
+
+---
+
+## 7. The "Server Health Check" Trigger
+
+*Use this at the start of any session where you will interact with the server, or after any incident (container crash, DB wipe, missed pipeline run).*
+
+```markdown
+Before we touch anything on the server, run a full health check:
+1. `docker ps` — confirm all 5 containers are Up: climate_db_dev, climate_backend_dev, climate_frontend_dev, climate_pipeline_scheduler_dev, climate_pipeline_monitor_dev.
+2. Last 30 lines of scheduler logs — confirm "Next scheduled run: YYYY-MM-DD 06:00:00+03:00" (EAT, not UTC).
+3. DB record counts — run inside climate_backend_dev:
+   - `SELECT COUNT(*) FROM climate_data;` → expect 1878+
+   - `SELECT COUNT(*) FROM model_metrics;` → expect 4
+   - `SELECT COUNT(*) FROM forecast_logs;` → expect N × 12 (where N = shadow run days elapsed)
+4. `git log --oneline -3` on the server — confirm it matches origin/phase2/feature-expansion HEAD.
+
+Report the health check results before proceeding with any work.
 ```
