@@ -1,8 +1,8 @@
 # Tanzania Climate Intelligence Platform - Executive Summary
 
-**Project Phase**: 3.2 (Forward Validation & Pilot Preparation)  
-**Date**: March 5, 2026
-**Status**: Retrospective Validation Complete · Forward Testing In Progress (HewaSense V4)
+**Project Phase**: 3.2 (Forward Validation & Pilot Preparation)
+**Date**: March 8, 2026
+**Status**: Retrospective Validation Complete · Shadow Run ACTIVE (Mar 7 – Jun 5, 2026)
 
 ---
 
@@ -325,19 +325,19 @@ A comprehensive climate intelligence platform for Tanzania that integrates multi
 
 ### Current Status
 ✅ **Pilot-ready system** with comprehensive retrospective validation  
-✅ **86.7% prediction accuracy** (XGBoost R² on held-out test data; forward validation pending)
+✅ **86.7% prediction accuracy** (XGBoost R² on held-out test data; forward validation ACTIVE — shadow run live)
 ✅ **Automated pipeline** operational (daily scheduler + Slack monitoring)  
 ✅ **Interactive dashboard** complete (5 views)  
 ✅ **Phase-based parametric model** validated (20% basis risk, zero false negatives)  
 
 ### What Still Needs Validation
-- **Forward prediction accuracy** — All accuracy metrics are retrospective (2015-2025). The upcoming growing season will be the first real-world test.
+- **Forward prediction accuracy** — Shadow run ACTIVE (Mar 7, 2026 → Jun 5, 2026). Brier Score auto-evaluation begins ~Jun 8 as 3-month forecast windows mature.
 - **Kilombero-specific yield correlation** — Retrospective validation used national yield averages, not farm-level Kilombero data.
 - **Data resolution alignment** — CHIRPS (5km) and NASA POWER (50km) satellite grids may not perfectly reflect micro-farm conditions. Correlation (r=0.888) is strong but not definitive.
 - **Farmer adoption and trust** — Untested in real field conditions.
 
 ### Next Steps
-1. **Forward Validation**: Monitor live predictions against actual outcomes during 2026 growing season
+1. **Forward Validation** *(IN PROGRESS)*: Shadow run live Mar 7 – Jun 5, 2026. First Brier Score evaluation ~Jun 8.
 2. **Underwriter Engagement**: Present validated prototype to insurance underwriters
 3. **Ground-Truth Data**: Source Kilombero-specific yield data via Tanzania NBS regional reports
 4. **Rain Gauge Calibration**: Deploy 2-3 ground-truthing stations to calibrate satellite resolution
@@ -390,7 +390,7 @@ A comprehensive climate intelligence platform for Tanzania that integrates multi
 
 ---
 
-**Last Updated**: March 5, 2026
-**Version**: 3.3 (Data Leakage Fix Retraining Update)
+**Last Updated**: March 8, 2026
+**Version**: 3.4 (Shadow Run Active)
 **License**: [Specify license]  
 **Contact**: [Contact information]

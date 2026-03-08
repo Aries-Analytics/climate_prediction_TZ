@@ -1,9 +1,9 @@
 # Kilombero Basin Rice Pilot Specification
 ## Morogoro Region, Tanzania
 
-**Document Version:** 1.2  
-**Created:** January 12, 2026  
-**Updated:** March 5, 2026 (Phase-Based model confirmed as production, data leakage fix applied, XGBoost R²=0.8666)  
+**Document Version:** 1.3
+**Created:** January 12, 2026
+**Updated:** March 8, 2026 (Shadow run ACTIVE Mar 7, 2026 — live on root@37.27.200.227)  
 **Location:** Kilombero Basin, Morogoro Region, Tanzania  
 **Purpose:** Single-location pilot to validate ensemble climate prediction model with dual-index triggers before engaging an underwriter for a real pilot deployment
 
@@ -498,5 +498,5 @@ TOTAL_FARMERS = 6000
 
 ---
 
-**Document Status:** Forward Validation Phase (Retrospective Validation Complete)  
-**Next Review:** July 2026 (end of forward testing period)
+**Document Status:** Shadow Run ACTIVE (Mar 7 – Jun 5, 2026) — Retrospective Validation Complete
+**Next Review:** June 2026 (Evidence Pack compilation, Brier Score evaluation begins ~Jun 8)
