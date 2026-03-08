@@ -33,48 +33,51 @@ def seed_data():
         
         # Standardized model names: lowercase with underscores
         # Added data_start_date, data_end_date, experiment_id for dashboard
+        # Metrics from actual training run 2026-03-05 (test set / holdout)
+        # Source: outputs/models/latest_training_results.json
+        training_date = datetime(2026, 3, 5, tzinfo=timezone.utc)
         models_data = [
             {
                 "model_name": "ensemble",
                 "experiment_id": "ensemble_baseline",
-                "r2_score": 0.849,
-                "rmse": 0.419,
-                "mae": 0.282,
-                "mape": 9.5,
-                "training_date": datetime.now(timezone.utc),
+                "r2_score": 0.840,
+                "rmse": 0.439,
+                "mae": 0.278,
+                "mape": 74.8,
+                "training_date": training_date,
                 "data_start_date": datetime(2015, 1, 1).date(),
                 "data_end_date": datetime(2025, 12, 31).date()
             },
             {
                 "model_name": "xgboost",
                 "experiment_id": "xgboost_baseline",
-                "r2_score": 0.832,
-                "rmse": 0.442,
-                "mae": 0.293,
-                "mape": 10.2,
-                "training_date": datetime.now(timezone.utc),
+                "r2_score": 0.867,
+                "rmse": 0.401,
+                "mae": 0.252,
+                "mape": 74.6,
+                "training_date": training_date,
                 "data_start_date": datetime(2015, 1, 1).date(),
                 "data_end_date": datetime(2025, 12, 31).date()
             },
             {
                 "model_name": "lstm",
                 "experiment_id": "lstm_baseline",
-                "r2_score": 0.828,
-                "rmse": 0.449,
-                "mae": 0.288,
-                "mape": 10.5,
-                "training_date": datetime.now(timezone.utc),
+                "r2_score": 0.787,
+                "rmse": 0.510,
+                "mae": 0.329,
+                "mape": 94.0,
+                "training_date": training_date,
                 "data_start_date": datetime(2015, 1, 1).date(),
                 "data_end_date": datetime(2025, 12, 31).date()
             },
             {
                 "model_name": "random_forest",
                 "experiment_id": "random_forest_baseline",
-                "r2_score": 0.802,
-                "rmse": 0.479,
-                "mae": 0.315,
-                "mape": 11.2,
-                "training_date": datetime.now(timezone.utc),
+                "r2_score": 0.781,
+                "rmse": 0.513,
+                "mae": 0.320,
+                "mape": 66.8,
+                "training_date": training_date,
                 "data_start_date": datetime(2015, 1, 1).date(),
                 "data_end_date": datetime(2025, 12, 31).date()
             }
