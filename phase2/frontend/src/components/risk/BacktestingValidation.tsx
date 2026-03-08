@@ -158,7 +158,7 @@ export default function BacktestingValidation() {
         <Box>
             <Alert severity="success" icon={<VerifiedUserIcon />} sx={{ mb: 3 }}>
                 <Typography variant="subtitle2">
-                    <strong>Historical Validation Passed:</strong> This model has been backtested against 10 years of historical climate data ({report.executive_summary.period})
+                    <strong>Historical Validation Passed:</strong> This model has been backtested against {totalYears} years of historical climate data ({report.executive_summary.period})
                     and independently detected {(validatedEvents / EXPECTED_EVENT_YEARS * 100).toFixed(0)}% of documented disaster events in {report.executive_summary.location}.
                 </Typography>
             </Alert>
@@ -221,7 +221,7 @@ export default function BacktestingValidation() {
                         <Box>
                             <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                 <TimelineIcon color="primary" />
-                                Trigger Events Timeline (2015-2025)
+                                Trigger Events Timeline ({report.executive_summary.period})
                             </Typography>
                             <Typography variant="body2" color="text.secondary">
                                 Model detection vs. Historical validation
