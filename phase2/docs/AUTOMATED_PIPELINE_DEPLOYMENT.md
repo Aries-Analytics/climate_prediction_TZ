@@ -157,8 +157,8 @@ LOG_LEVEL=INFO                  # DEBUG, INFO, WARNING, ERROR
 
 **Pipeline Schedule:**
 ```bash
-PIPELINE_SCHEDULE="0 3 * * *"     # Cron expression (3 AM UTC = 6 AM EAT)
-PIPELINE_TIMEZONE=UTC           # Timezone for schedule
+PIPELINE_SCHEDULE="0 6 * * *"              # Cron expression — 6 AM in PIPELINE_TIMEZONE
+PIPELINE_TIMEZONE=Africa/Dar_es_Salaam    # Timezone for schedule (EAT = UTC+3)
 ENABLE_SCHEDULER=true           # Enable/disable automatic runs
 ```
 
