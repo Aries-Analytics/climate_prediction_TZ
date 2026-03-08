@@ -111,13 +111,13 @@ def seed_data():
                 logger.info(f"Seeding sample forecast for location: {location.name}")
                 forecast = Forecast(
                     forecast_date=datetime.now(timezone.utc).date(),
-                    target_date=(datetime.now(timezone.utc) + timedelta(days=30)).date(),
-                    horizon_months=1,
+                    target_date=(datetime.now(timezone.utc) + timedelta(days=90)).date(),
+                    horizon_months=3,
                     trigger_type="drought",
                     probability=0.75,
                     confidence_lower=0.6,
                     confidence_upper=0.9,
-                    model_version="XGBoost_v1",
+                    model_version="XGBoost_v4",
                     expected_deficit=50.0,
                     location_id=location.id
                 )
