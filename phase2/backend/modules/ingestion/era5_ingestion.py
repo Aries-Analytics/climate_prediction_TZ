@@ -410,10 +410,11 @@ def ingest_era5(
         df["date"] = pd.to_datetime(df[["year", "month"]].assign(day=1))
         df = df[(df["date"] >= start_date) & (df["date"] <= end_date)]
 
-        # Store to database (ERA5 provides regional averages, use Tanzania center point)
+        # Store to database — Kilombero Pilot location: Morogoro, Tanzania
+        # Source: locations table (id=6), seed_locations.py
         records_stored = 0
-        tanzania_lat = -6.369028
-        tanzania_lon = 34.888822
+        tanzania_lat = -6.8211
+        tanzania_lon = 37.6595
 
         for _, row in df.iterrows():
             try:

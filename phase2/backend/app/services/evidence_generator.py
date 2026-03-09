@@ -80,7 +80,7 @@ class EvidencePackGenerator:
                 f.write(f"Generated at: {now_str} UTC\n\n")
                 f.write("Statement of Compliance:\n")
                 f.write("1. All forecasts included in this pack were generated with zero look-ahead bias.\n")
-                f.write("2. No synthetic fallback methods were utilized for data outages (GOTCHA Law #1 compliant).\n")
+                f.write("2. No fabricated fallback methods were utilized for data outages (GOTCHA Law #1 compliant).\n")
                 f.write("3. Evaluation calculates Brier Score explicitly from recorded `.predict()` probabilities.\n")
                 
                 # Sniff the most recent model version used

@@ -16,9 +16,10 @@ from utils.config import get_data_path
 from utils.logger import log_error, log_info
 from utils.validator import validate_dataframe
 
-# Tanzania bounding box (approximate)
-TANZANIA_LAT = -6.369028  # Central latitude
-TANZANIA_LON = 34.888822  # Central longitude
+# Kilombero Pilot location: Morogoro, Tanzania
+# Source: locations table (id=6), seed_locations.py
+TANZANIA_LAT = -6.8211   # Morogoro latitude
+TANZANIA_LON = 37.6595   # Morogoro longitude
 
 # NASA POWER API endpoint (using daily data, will aggregate to monthly)
 NASA_POWER_BASE_URL = "https://power.larc.nasa.gov/api/temporal/daily/point"

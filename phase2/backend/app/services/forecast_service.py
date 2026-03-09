@@ -194,7 +194,7 @@ class ForecastGenerator:
             if col in df.columns and df[col].isna().all():
                 print(f"   SKIPPING {location.name if location else 'location'}: "
                       f"critical column '{col}' is entirely None (data source failed). "
-                      f"No synthetic fallbacks (GOTCHA Law #1). Will retry next run.")
+                      f"No fabricated fallbacks (GOTCHA Law #1). Will retry next run.")
                 return None
         
         # Use feature_engineering module to build the exact 88 features
@@ -247,12 +247,12 @@ class ForecastGenerator:
                 probability = max(0.0, min(1.0, probability))
             except Exception as e:
                 print(f"Model prediction failed for {trigger_type}: {e}")
-                return None  # GOTCHA Law #1: NO SYNTHETIC FALLBACKS
+                return None  # GOTCHA Law #1: No fabricated fallbacks
         else:
             # No model loaded — cannot generate forecast
             print(f"  ERROR: No model loaded for {trigger_type} forecast. "
                   f"Load a trained model to resolve.")
-            return None  # GOTCHA Law #1: NO SYNTHETIC FALLBACKS
+            return None  # GOTCHA Law #1: No fabricated fallbacks
         
         # Calculate confidence intervals
         base_uncertainty = 0.15

@@ -449,8 +449,12 @@ def ingest_chirps(
         df["date"] = pd.to_datetime(df[["year", "month"]].assign(day=1))
         df = df[(df["date"] >= start_date) & (df["date"] <= end_date)]
 
-        # Store to database
+        # Store to database — Kilombero Pilot location: Morogoro, Tanzania
+        # Source: locations table (id=6), seed_locations.py
         records_stored = 0
+        morogoro_lat = -6.8211
+        morogoro_lon = 37.6595
+
         for _, row in df.iterrows():
             try:
                 # Check if record already exists
@@ -459,8 +463,8 @@ def ingest_chirps(
                     .filter(
                         and_(
                             ClimateData.date == row["date"].date(),
-                            ClimateData.location_lat == float(row.get("lat_min", -6.369028)),
-                            ClimateData.location_lon == float(row.get("lon_min", 34.888822)),
+                            ClimateData.location_lat == morogoro_lat,
+                            ClimateData.location_lon == morogoro_lon,
                         )
                     )
                     .first()
@@ -474,8 +478,8 @@ def ingest_chirps(
                     # Create new record
                     climate_record = ClimateData(
                         date=row["date"].date(),
-                        location_lat=float(row.get("lat_min", -6.369028)),
-                        location_lon=float(row.get("lon_min", 34.888822)),
+                        location_lat=morogoro_lat,
+                        location_lon=morogoro_lon,
                         rainfall_mm=float(row["rainfall_mm"]),
                     )
                     db.add(climate_record)

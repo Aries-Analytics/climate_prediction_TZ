@@ -486,9 +486,9 @@ def fetch_ndvi_data(
 
         if use_gee and not GEE_AVAILABLE:
             raise ImportError("Google Earth Engine not available. Install 'earthengine-api' and authenticate.")
-            
+
         raise RuntimeError("Failed to fetch NDVI data from Google Earth Engine and no cached data available.")
-        
+
     except Exception:
         raise
 
@@ -536,9 +536,9 @@ def ingest_ndvi(
     if end_date is None:
         end_date = datetime.now(timezone.utc)
 
-    # Ensure dates are pandas-compatible timestamps for comparison
-    start_date = pd.to_datetime(start_date)
-    end_date = pd.to_datetime(end_date)
+    # Ensure dates are timezone-naive pandas Timestamps for DataFrame comparison
+    start_date = pd.to_datetime(start_date).tz_localize(None) if pd.to_datetime(start_date).tzinfo else pd.to_datetime(start_date)
+    end_date = pd.to_datetime(end_date).tz_localize(None) if pd.to_datetime(end_date).tzinfo else pd.to_datetime(end_date)
 
     log_info(f"Ingesting NDVI data from {start_date} to {end_date}")
 
@@ -557,10 +557,11 @@ def ingest_ndvi(
         df["date"] = pd.to_datetime(df[["year", "month"]].assign(day=1))
         df = df[(df["date"] >= start_date) & (df["date"] <= end_date)]
 
-        # Store to database (use Tanzania center point)
+        # Store to database — Kilombero Pilot location: Morogoro, Tanzania
+        # Source: locations table (id=6), seed_locations.py
         records_stored = 0
-        tanzania_lat = -6.369028
-        tanzania_lon = 34.888822
+        tanzania_lat = -6.8211
+        tanzania_lon = 37.6595
 
         for _, row in df.iterrows():
             try:
