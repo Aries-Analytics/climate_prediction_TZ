@@ -10,6 +10,28 @@ from app.models.climate_data import ClimateData
 
 logger = logging.getLogger(__name__)
 
+# ---------------------------------------------------------------------------
+# Physical rainfall thresholds for actual-outcome determination (mm / month avg)
+#
+# The evaluator sums cumulative observed rainfall over the forecast window and
+# normalises to a monthly average, then compares against these values.
+#
+# Source: RAINFALL_THRESHOLDS in rice_thresholds.py (Kilombero rice calendar)
+# and calibrated trigger rates in configs/trigger_thresholds.yaml (v2.0.0).
+#
+# drought    : avg monthly < 80 mm  → event triggered (approx P12 for Kilombero,
+#              consistent with 12 % calibrated trigger rate in trigger_thresholds.yaml)
+# flood      : avg monthly > 400 mm → event triggered (vegetative-stage "excessive"
+#              threshold from RAINFALL_THRESHOLDS; consistent with P95 flood rate)
+# heat_stress,
+# crop_failure : cannot be evaluated from rainfall alone (require temperature /
+#              NDVI / VCI data).  Skip — logs remain "pending" until that data
+#              is available (Q2 2026 soil-moisture + NDVI integration roadmap).
+# ---------------------------------------------------------------------------
+_MONTHLY_DROUGHT_THRESHOLD_MM = 80.0
+_MONTHLY_FLOOD_THRESHOLD_MM   = 400.0
+_RAINFALL_SKIP_TYPES = {"heat_stress", "crop_failure"}
+
 class ForecastEvaluator:
     """
     Evaluates historical forecasts in the Shadow Run.
@@ -68,6 +90,13 @@ class ForecastEvaluator:
 
         for log in pending_logs:
             try:
+                forecast_type = (log.forecast_type or "").lower()
+
+                # heat_stress and crop_failure require NDVI / temperature data —
+                # not available from rainfall alone.  Skip until Q2 2026 integration.
+                if forecast_type in _RAINFALL_SKIP_TYPES:
+                    continue
+
                 # Retrieve actual cumulative rainfall for the region and time period
                 observed_rainfall = self.db.query(func.sum(ClimateData.precipitation)).filter(
                     ClimateData.location_id == int(log.region_id),
@@ -78,19 +107,29 @@ class ForecastEvaluator:
                 if observed_rainfall is None:
                     # Climate data not yet available for this window
                     continue
-                
+
                 observed_rainfall = float(observed_rainfall)
 
-                # Determine if a trigger condition was met based on threshold
-                threshold = float(log.threshold_used) if log.threshold_used else 150.0
-                
-                if log.forecast_type.upper() == "DROUGHT":
-                    actual_outcome = 1 if observed_rainfall < threshold else 0
-                elif log.forecast_type.upper() == "EXCESS_RAINFALL":
-                    actual_outcome = 1 if observed_rainfall > threshold else 0
+                # Normalise to average monthly rainfall for the forecast window
+                if log.valid_from and log.valid_until:
+                    delta_days = (log.valid_until - log.valid_from).days
+                    horizon_months = max(1.0, delta_days / 30.0)
                 else:
-                    actual_outcome = 1 if observed_rainfall < threshold else 0
-                
+                    horizon_months = max(1.0, (log.lead_time_days or 90) / 30.0)
+
+                avg_monthly_mm = observed_rainfall / horizon_months
+
+                # Determine actual outcome using physical climate thresholds.
+                # threshold_used stores the probability trigger level (0.65 / 0.60)
+                # and is NOT used here — physical thresholds are defined above.
+                if forecast_type == "drought":
+                    actual_outcome = 1 if avg_monthly_mm < _MONTHLY_DROUGHT_THRESHOLD_MM else 0
+                elif forecast_type in ("flood", "excess_rainfall"):
+                    actual_outcome = 1 if avg_monthly_mm > _MONTHLY_FLOOD_THRESHOLD_MM else 0
+                else:
+                    logger.warning(f"Unknown forecast_type '{log.forecast_type}' for log {log.id}; skipping")
+                    continue
+
                 # Brier Score = (predicted_probability - actual_outcome)^2
                 predicted_prob = float(log.forecast_value)
                 brier_score = (predicted_prob - actual_outcome) ** 2
@@ -145,15 +184,23 @@ class ForecastEvaluator:
         for log in evaluated_logs:
             if log.brier_score is not None:
                 brier_scores.append(float(log.brier_score))
-            
+
             prob = float(log.forecast_value)
             obs_rain = float(log.observed_value) if log.observed_value is not None else 0.0
-            threshold = float(log.threshold_used) if log.threshold_used else 150.0
+            forecast_type = (log.forecast_type or "").lower()
 
-            if log.forecast_type.upper() == "DROUGHT":
-                actual_outcome = 1 if obs_rain < threshold else 0
+            # Normalise observed rainfall to monthly average for threshold comparison
+            if log.valid_from and log.valid_until:
+                delta_days = (log.valid_until - log.valid_from).days
+                horizon_months = max(1.0, delta_days / 30.0)
             else:
-                actual_outcome = 1 if obs_rain > threshold else 0
+                horizon_months = max(1.0, (log.lead_time_days or 90) / 30.0)
+            avg_monthly_mm = obs_rain / horizon_months
+
+            if forecast_type == "drought":
+                actual_outcome = 1 if avg_monthly_mm < _MONTHLY_DROUGHT_THRESHOLD_MM else 0
+            else:
+                actual_outcome = 1 if avg_monthly_mm > _MONTHLY_FLOOD_THRESHOLD_MM else 0
 
             # Confusion Matrix Logic (using 0.5 as the default binary classification threshold)
             predicted_outcome = 1 if prob >= 0.5 else 0
