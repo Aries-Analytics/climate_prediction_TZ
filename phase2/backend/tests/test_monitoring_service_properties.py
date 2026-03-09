@@ -7,7 +7,7 @@ Property-based tests for Monitoring Service
 **Validates: Requirements 10.1, 10.2, 10.3**
 """
 import pytest
-from hypothesis import given, strategies as st, settings
+from hypothesis import given, strategies as st, settings, HealthCheck
 from datetime import datetime, timedelta, date
 from sqlalchemy.orm import Session
 
@@ -20,6 +20,7 @@ from app.models.forecast import Forecast
 @settings(
     max_examples=20,
     deadline=5000,
+    suppress_health_check=[HealthCheck.function_scoped_fixture],
 )
 @given(
     total_executions=st.integers(min_value=0, max_value=100),
@@ -127,6 +128,7 @@ def test_prometheus_metrics_format(
 @settings(
     max_examples=20,
     deadline=5000,
+    suppress_health_check=[HealthCheck.function_scoped_fixture],
 )
 @given(
     data_age_days=st.integers(min_value=0, max_value=30),
@@ -235,6 +237,7 @@ def test_health_check_endpoint(
 @settings(
     max_examples=20,
     deadline=5000,
+    suppress_health_check=[HealthCheck.function_scoped_fixture],
 )
 @given(
     execution_status=st.sampled_from(['completed', 'failed', 'partial']),
