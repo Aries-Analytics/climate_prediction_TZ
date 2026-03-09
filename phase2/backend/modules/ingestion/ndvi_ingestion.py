@@ -37,28 +37,26 @@ except ImportError:
 
 def _initialize_gee():
     """
-    Initialize Google Earth Engine with project ID from environment.
+    Initialize Google Earth Engine (service account or user credentials).
 
     Returns:
         bool: True if initialization successful, False otherwise.
     """
     if not GEE_AVAILABLE:
         return False
-
     try:
-        import os
+        from utils.earth_engine_auth import initialize_gee
+        return initialize_gee()
+    except ImportError:
+        pass
 
-        from dotenv import load_dotenv
-
-        load_dotenv()
-
+    # Fallback: direct init (local dev)
+    try:
         project_id = os.getenv("GOOGLE_CLOUD_PROJECT", "climate-prediction-using-ml")
         ee.Initialize(project=project_id)
-        log_info(f"Google Earth Engine initialized with project: {project_id}")
         return True
     except Exception as e:
         log_warning(f"Failed to initialize Google Earth Engine: {e}")
-        log_info("To authenticate, run: earthengine authenticate")
         return False
 
 

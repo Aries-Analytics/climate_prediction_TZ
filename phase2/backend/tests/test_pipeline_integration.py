@@ -14,7 +14,7 @@ from unittest.mock import patch, MagicMock, AsyncMock
 from app.services.pipeline.orchestrator import PipelineOrchestrator
 from app.services.pipeline.scheduler import PipelineScheduler
 from app.services.pipeline.monitoring import MonitoringService
-from app.services.pipeline.alerts import AlertService
+from app.services.pipeline.alert_service import AlertService
 from app.models.pipeline_execution import PipelineExecution, SourceIngestionTracking
 from app.models.climate_data import ClimateData
 from app.models.forecast import Forecast

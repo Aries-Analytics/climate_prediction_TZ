@@ -11,7 +11,7 @@ from hypothesis import given, strategies as st, settings
 from unittest.mock import Mock, patch, AsyncMock
 from datetime import datetime
 
-from app.services.pipeline.alerts import AlertService
+from app.services.pipeline.alert_service import AlertService
 
 
 @settings(
