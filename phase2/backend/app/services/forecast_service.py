@@ -62,56 +62,46 @@ class ForecastGenerator:
         
         expected_features = config.get('expected_feature_count', 77)
         
-        # Build ordered candidate list from config
-        model_candidates = []
-        if 'primary_model' in config:
-            pm = config['primary_model']
-            model_candidates.append((
-                pm['filename'],
-                pm.get('version', 'primary'),
-                pm.get('expected_features', expected_features)
-            ))
-        if 'fallback_model' in config:
-            fm = config['fallback_model']
-            model_candidates.append((
-                fm['filename'],
-                fm.get('version', 'fallback'),
-                fm.get('expected_features', expected_features)
-            ))
-        
-        if not model_candidates:
-            print(f"ERROR: active_model.json has no primary_model or fallback_model defined.")
+        # Shadow run protocol: ONLY the primary model is permitted.
+        # Fallbacks are forbidden — a forecast from the wrong model corrupts the evidence pack.
+        if 'primary_model' not in config:
+            print("ERROR: active_model.json has no primary_model defined. "
+                  "Fallback models are forbidden by shadow run protocol.")
             return False
-        
+
+        pm = config['primary_model']
+        model_file = pm['filename']
+        version = pm.get('version', 'primary')
+        expected_n = pm.get('expected_features', expected_features)
+        model_path = os.path.join(models_dir, model_file)
+
         print(f"Loaded model config from {config_path}")
-        
-        # Try each candidate in order
-        for candidate in model_candidates:
-            model_file, version, expected_n = candidate[0], candidate[1], candidate[2]
-            model_path = os.path.join(models_dir, model_file)
-            if os.path.exists(model_path):
-                try:
-                    with open(model_path, 'rb') as f:
-                        self.model = pickle.load(f)
-                        self.model_version = version
-                    
-                    # Verify feature alignment (GOTCHA Law #6)
-                    if hasattr(self.model, 'n_features_in_'):
-                        n_features = self.model.n_features_in_
-                        if n_features != expected_n:
-                            print(f"WARNING: {model_file} expects {n_features} features, "
-                                  f"expected {expected_n} per active_model.json. Skipping.")
-                            self.model = None
-                            continue
-                    
-                    print(f"Loaded {model_file} (version: {version})")
-                    return True
-                except Exception as e:
-                    print(f"Failed to load {model_file}: {e}")
-                    continue
-        
-        print(f"ERROR: No valid production model found in {models_dir}")
-        return False
+
+        if not os.path.exists(model_path):
+            print(f"ERROR: Primary model file not found: {model_path}. "
+                  f"Shadow run cannot proceed without the validated primary model.")
+            return False
+
+        try:
+            with open(model_path, 'rb') as f:
+                self.model = pickle.load(f)
+                self.model_version = version
+
+            # Verify feature alignment (GOTCHA Law #6)
+            if hasattr(self.model, 'n_features_in_'):
+                n_features = self.model.n_features_in_
+                if n_features != expected_n:
+                    print(f"ERROR: {model_file} expects {n_features} features but "
+                          f"active_model.json declares {expected_n}. Cannot use misaligned model.")
+                    self.model = None
+                    return False
+
+            print(f"Loaded primary model: {model_file} (version: {version})")
+            return True
+        except Exception as e:
+            print(f"ERROR: Failed to load primary model {model_file}: {e}")
+            self.model = None
+            return False
     
     def prepare_features(self, db: Session, start_date: date, horizon_months: int, location: Optional[Location] = None) -> Optional[pd.DataFrame]:
         """

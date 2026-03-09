@@ -227,9 +227,12 @@ try:
         Session = sessionmaker(bind=engine)
         db = Session()
 
-        location = db.query(Location).filter(Location.id == 1).first()
+        location = (
+            db.query(Location).filter(Location.name == "Morogoro").first()
+            or db.query(Location).first()
+        )
         if not location:
-            print(f"{WARN} Location id=1 not found in DB")
+            print(f"{WARN} No locations found in DB")
         else:
             print(f"   Location: {location.name} ({float(location.latitude):.4f}, "
                   f"{float(location.longitude):.4f})")
