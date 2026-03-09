@@ -98,3 +98,12 @@ test_pack.zip
 !memory/
 !memory/logs/
 !memory/logs/**
+
+# ===============================================================
+# Test & Tool Caches (generated, not project code)
+# ===============================================================
+.hypothesis/
+.coverage
+htmlcov/
+.claude/
+.pytest_cache/

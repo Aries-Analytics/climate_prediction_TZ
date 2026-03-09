@@ -22,7 +22,7 @@ def test_imports():
         return False
     
     try:
-        from app.services.pipeline.alerts import AlertService
+        from app.services.pipeline.alert_service import AlertService
         print("✓ AlertService imported")
     except Exception as e:
         print(f"✗ AlertService import failed: {e}")

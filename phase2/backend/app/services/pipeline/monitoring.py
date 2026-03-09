@@ -223,11 +223,10 @@ class MonitoringService:
             
             if latest_forecast:
                 now = datetime.now(timezone.utc)
-                # Handle timezone-aware datetime
-                if latest_forecast.tzinfo is not None:
-                    from datetime import timezone
-                    now = now.replace(tzinfo=timezone.utc)
-                
+                # Handle timezone-naive datetime from database
+                if latest_forecast.tzinfo is None:
+                    latest_forecast = latest_forecast.replace(tzinfo=timezone.utc)
+
                 freshness = (now - latest_forecast).days
                 return freshness
             

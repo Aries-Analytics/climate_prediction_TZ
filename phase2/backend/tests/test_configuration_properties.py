@@ -330,8 +330,12 @@ def test_configuration_defaults():
         'DATA_STALENESS_THRESHOLD_DAYS'
     ]
     
-    with patch.dict(os.environ, {k: '' for k in env_to_clear}, clear=False):
+    # Remove keys so pydantic falls back to field defaults (empty string fails int parsing)
+    backup = {k: os.environ.pop(k) for k in env_to_clear if k in os.environ}
+    try:
         settings = Settings()
+    finally:
+        os.environ.update(backup)
         
         # Property 1: Should have default schedule
         assert settings.PIPELINE_SCHEDULE is not None, (
@@ -391,7 +395,7 @@ def test_configuration_documentation():
     config_changes=st.lists(
         st.tuples(
             st.sampled_from(['PIPELINE_SCHEDULE', 'RETRY_MAX_ATTEMPTS', 'DATA_STALENESS_THRESHOLD_DAYS']),
-            st.sampled_from(['0 6 * * *', '3', '7'])
+            st.sampled_from(['3', '7', '5'])  # int-compatible for all three fields
         ),
         min_size=1,
         max_size=3,

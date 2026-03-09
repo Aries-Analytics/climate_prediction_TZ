@@ -46,9 +46,9 @@ def fetch_nasa_power_data(
     dry_run : bool, optional
         If True, return placeholder data without making API call. Default is False.
     latitude : float, optional
-        Latitude coordinate for data retrieval. Default is Tanzania center (-6.369028).
+        Latitude coordinate for data retrieval. Default is Morogoro (-6.8211).
     longitude : float, optional
-        Longitude coordinate for data retrieval. Default is Tanzania center (34.888822).
+        Longitude coordinate for data retrieval. Default is Morogoro (37.6595).
     start_year : int, optional
         Start year for data retrieval (inclusive). Default is 2010.
     end_year : int, optional

@@ -3,6 +3,13 @@ from typing import List, Optional
 import json
 
 class Settings(BaseSettings):
+    """
+    Application settings loaded from environment variables and .env file.
+
+    All pipeline, alert, monitoring, and API configuration lives here.
+    Integer/boolean fields must be provided as valid values — empty strings
+    will cause a ValidationError. Use field defaults by omitting the env var.
+    """
     # Database
     DATABASE_URL: str = "postgresql://user:pass@localhost:5432/climate_dev"
     
@@ -88,3 +95,10 @@ class Settings(BaseSettings):
             return ["http://localhost:3000"]
 
 settings = Settings()
+
+
+from functools import lru_cache
+
+@lru_cache()
+def get_settings() -> Settings:
+    return Settings()

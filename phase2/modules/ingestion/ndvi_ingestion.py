@@ -37,21 +37,21 @@ except ImportError:
 
 def _initialize_gee():
     """
-    Initialize Google Earth Engine with project ID from environment.
+    Initialize Google Earth Engine (service account or user credentials).
 
     Returns:
         bool: True if initialization successful, False otherwise.
     """
     if not GEE_AVAILABLE:
         return False
-
     try:
-        import os
+        from utils.earth_engine_auth import initialize_gee
+        return initialize_gee()
+    except ImportError:
+        pass
 
-        from dotenv import load_dotenv
-
-        load_dotenv()
-
+    # Fallback: direct init (local dev)
+    try:
         project_id = os.getenv("GOOGLE_CLOUD_PROJECT", "climate-prediction-using-ml")
         ee.Initialize(project=project_id)
         log_info(f"Google Earth Engine initialized with project: {project_id}")
@@ -536,9 +536,9 @@ def ingest_ndvi(
     if end_date is None:
         end_date = datetime.now()
 
-    # Ensure dates are pandas-compatible timestamps for comparison
-    start_date = pd.to_datetime(start_date)
-    end_date = pd.to_datetime(end_date)
+    # Ensure dates are timezone-naive pandas Timestamps for DataFrame comparison
+    start_date = pd.to_datetime(start_date).tz_localize(None) if pd.to_datetime(start_date).tzinfo else pd.to_datetime(start_date)
+    end_date = pd.to_datetime(end_date).tz_localize(None) if pd.to_datetime(end_date).tzinfo else pd.to_datetime(end_date)
 
     log_info(f"Ingesting NDVI data from {start_date} to {end_date}")
 
@@ -557,10 +557,11 @@ def ingest_ndvi(
         df["date"] = pd.to_datetime(df[["year", "month"]].assign(day=1))
         df = df[(df["date"] >= start_date) & (df["date"] <= end_date)]
 
-        # Store to database (use Tanzania center point)
+        # Store to database — Kilombero Pilot location: Morogoro, Tanzania
+        # Source: locations table (id=6), seed_locations.py
         records_stored = 0
-        tanzania_lat = -6.369028
-        tanzania_lon = 34.888822
+        tanzania_lat = -6.8211
+        tanzania_lon = 37.6595
 
         for _, row in df.iterrows():
             try:

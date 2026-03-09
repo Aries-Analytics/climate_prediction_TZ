@@ -17,8 +17,8 @@ from utils.logger import log_error, log_info
 from utils.validator import validate_dataframe
 
 # Tanzania bounding box (approximate)
-TANZANIA_LAT = -6.369028  # Central latitude
-TANZANIA_LON = 34.888822  # Central longitude
+TANZANIA_LAT = -6.8211   # Morogoro latitude
+TANZANIA_LON = 37.6595   # Morogoro longitude
 
 # NASA POWER API endpoint (using daily data, will aggregate to monthly)
 NASA_POWER_BASE_URL = "https://power.larc.nasa.gov/api/temporal/daily/point"
@@ -45,9 +45,9 @@ def fetch_nasa_power_data(
     dry_run : bool, optional
         If True, return placeholder data without making API call. Default is False.
     latitude : float, optional
-        Latitude coordinate for data retrieval. Default is Tanzania center (-6.369028).
+        Latitude coordinate for data retrieval. Default is Morogoro (-6.8211).
     longitude : float, optional
-        Longitude coordinate for data retrieval. Default is Tanzania center (34.888822).
+        Longitude coordinate for data retrieval. Default is Morogoro (37.6595).
     start_year : int, optional
         Start year for data retrieval (inclusive). Default is 2010.
     end_year : int, optional

@@ -73,8 +73,8 @@ def test_model_metrics_endpoint(client, auth_headers, sample_model_metrics):
     
     assert response.status_code == 200
     data = response.json()
-    assert data["model_name"] == "model_a"
-    assert data["r2_score"] == 0.85
+    assert data["modelName"] == "model_a"
+    assert data["r2Score"] == 0.85
 
 def test_model_not_found(client, auth_headers):
     """Test getting metrics for nonexistent model"""

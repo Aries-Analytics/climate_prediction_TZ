@@ -335,8 +335,8 @@ def ingest_ocean_indices(
 
         # Store to database (use Tanzania center point)
         records_stored = 0
-        tanzania_lat = -6.369028
-        tanzania_lon = 34.888822
+        tanzania_lat = -6.8211
+        tanzania_lon = 37.6595
 
         for _, row in df.iterrows():
             try:
