@@ -59,10 +59,10 @@ def test_retry_handler():
     def success_func():
         return "success"
     
-    result = handler.execute_with_retry(success_func, "test_op")
+    result = handler.retry(success_func)
     assert result == "success", f"Expected 'success', got {result}"
     print("✓ Successful operation works")
-    
+
     # Test retry on failure then success
     attempt_count = [0]
     def fail_once():
@@ -70,8 +70,8 @@ def test_retry_handler():
         if attempt_count[0] < 2:
             raise Exception("First attempt fails")
         return "success_after_retry"
-    
-    result = handler.execute_with_retry(fail_once, "test_op")
+
+    result = handler.retry(fail_once)
     assert result == "success_after_retry"
     assert attempt_count[0] == 2
     print("✓ Retry logic works")
