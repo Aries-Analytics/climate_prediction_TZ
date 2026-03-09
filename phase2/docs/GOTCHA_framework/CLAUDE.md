@@ -159,6 +159,7 @@ Document Claude-specific mistakes here (not script bugs—those go in goals):
 * **Elegance gate** — If a fix requires >20 lines of new code, pause: "Can the root cause be addressed in <5 lines instead?" Skip only for simple, obviously contained changes.
 * **Autonomous bug fixing** — A failing test is a complete bug report. Read the test + production code + fixture chain before asking the user anything.
 * **Self-improvement is mandatory** — After any user correction, write one rule here before the next tool call. Corrections mean a stored assumption was wrong — fix it at the source.
+* **Audit before commit+push (STRICT)** — Before every `git add` + `git commit` + `git push`: (1) run `git diff HEAD` to review every staged line, (2) confirm only intended files are staged, (3) ask "Would a staff engineer approve this diff in a code review?" — only then push. Never push without this audit. This applies to remote pushes only; local commits for work-in-progress are exempt but must be audited before the final push.
 
 *(Add new guardrails as mistakes happen. Keep this under 15 items.)*
 
@@ -330,6 +331,7 @@ Six operating laws that govern how the Orchestration layer behaves. These sit ab
 * Run the specific test, check the specific log, demonstrate the specific fix
 * Ask: *"Would a staff engineer approve this?"*
 * Diff behavior between before and after your change when relevant
+* **Before every push:** `git diff HEAD` audit — review every staged line, confirm no unintended files, confirm no secrets. This is a hard gate, not optional.
 
 ### **WO-5 — Demand Elegance (Balanced)**
 
