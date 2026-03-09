@@ -376,5 +376,5 @@ INSURANCE_TRIGGERS = outputs/business_reports/insurance_triggers_detailed.csv
 ---
 
 **Document Owner**: Climate Prediction & Insurance Team  
-**Last Updated**: January 23, 2026  
-**Next Review**: March 2026 (post-pilot launch)
+**Last Updated**: March 9, 2026
+**Next Review**: June 2026 (post 90-day shadow run — review against Brier Score results)
