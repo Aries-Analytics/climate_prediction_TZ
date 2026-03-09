@@ -154,6 +154,11 @@ Document Claude-specific mistakes here (not script bugs—those go in goals):
 * When a workflow fails mid-execution, preserve intermediate outputs before retrying
 * Read the full goal before starting a task—don't skim
 * **NEVER DELETE YOUTUBE VIDEOS** — Video deletion is irreversible. The MCP server blocks this intentionally. If deletion is ever truly needed, ask the user 3 times and get 3 confirmations before proceeding. Direct user to YouTube Studio instead.
+* **Stale Output Trap** — Output from a background process started before a fix was applied is NOT evidence the fix failed. Always check whether the process predates the fix before treating its results as current.
+* **Verification before completion** — Never mark a task complete without running the specific test/log/assertion that prompted the task and seeing it pass. Belief is not proof. Ask: "Would a staff engineer approve this?"
+* **Elegance gate** — If a fix requires >20 lines of new code, pause: "Can the root cause be addressed in <5 lines instead?" Skip only for simple, obviously contained changes.
+* **Autonomous bug fixing** — A failing test is a complete bug report. Read the test + production code + fixture chain before asking the user anything.
+* **Self-improvement is mandatory** — After any user correction, write one rule here before the next tool call. Corrections mean a stored assumption was wrong — fix it at the source.
 
 *(Add new guardrails as mistakes happen. Keep this under 15 items.)*
 
@@ -290,6 +295,58 @@ python tools/memory/memory_read.py --format markdown
 
 ---
 
+# **Workflow Orchestration Protocol**
+
+Six operating laws that govern how the Orchestration layer behaves. These sit above individual goals — they apply to every task.
+
+---
+
+### **WO-1 — Plan Before Executing**
+
+* Enter plan mode for ANY non-trivial task (3+ steps or architectural decisions)
+* If something goes sideways mid-task: **STOP and re-plan immediately** — do not keep pushing
+* Use plan mode for *verification steps*, not just building
+* Write detailed specs upfront to reduce ambiguity
+* If stuck for >2 consecutive tool calls, exit and re-plan before continuing
+
+### **WO-2 — Subagent Strategy**
+
+* Use subagents to keep the main context window clean
+* Offload research, exploration, and parallel analysis to subagents
+* **One task per subagent** — focused execution only
+* For complex problems, throw more compute at it via parallel subagents
+* If a subagent result exceeds 3 paragraphs of relevant content, spawn a follow-up subagent rather than expanding the main prompt
+
+### **WO-3 — Self-Improvement Loop**
+
+* After **any** correction from the user: write one new guardrail rule (Section 6 above) before the next tool call
+* Write rules that *prevent* the same mistake — not just describe it
+* Ruthlessly iterate until the mistake rate for that pattern drops to zero
+* Review guardrails at session start for the relevant project
+
+### **WO-4 — Verification Before Done**
+
+* Never mark a task complete without **proving** it works
+* Run the specific test, check the specific log, demonstrate the specific fix
+* Ask: *"Would a staff engineer approve this?"*
+* Diff behavior between before and after your change when relevant
+
+### **WO-5 — Demand Elegance (Balanced)**
+
+* For non-trivial changes: pause and ask *"is there a more elegant way?"*
+* If a fix feels hacky: *"Knowing everything I know now, implement the elegant solution"*
+* **Skip this for simple, obvious fixes** — do not over-engineer
+* Challenge your own work before presenting it
+
+### **WO-6 — Autonomous Bug Fixing**
+
+* When given a bug report or failing test: just fix it — do not ask for hand-holding
+* Point at logs, errors, failing tests → then resolve them
+* Zero context switching required from the user
+* Read the test + production code + fixture chain in full before asking any question
+
+---
+
 # **The Continuous Improvement Loop**
 
 Every failure strengthens the system:
@@ -299,7 +356,8 @@ Every failure strengthens the system:
 3. Test until it works reliably
 4. Update the goal with new knowledge
 5. **Update all affected documentation** (metrics, configs, references) — see Law #8 in `.agent/rules/SKILL.md`
-6. Next time → automatic success
+6. Add a guardrail (Section 6) if the failure was an orchestration mistake, not a tool bug
+7. Next time → automatic success
 
 ---
 
@@ -336,3 +394,24 @@ Read instructions, apply args, use context, delegate well, handle failures, and 
 Be direct.
 Be reliable.
 Get shit done.
+
+---
+
+# **Task Execution Checklist**
+
+For every non-trivial task, follow this sequence:
+
+1. **Plan First** — Write plan to `tasks/todo.md` or plan mode with checkable items
+2. **Verify Plan** — Check in with user before starting implementation if scope is ambiguous
+3. **Track Progress** — Mark items complete as you go; never batch completions
+4. **Explain Changes** — High-level summary at each meaningful step
+5. **Document Results** — Add review note after task is done
+6. **Capture Lessons** — Update Section 6 Guardrails after any correction
+
+---
+
+# **Core Principles**
+
+* **Simplicity First** — Make every change as simple as possible. Impact minimal code.
+* **No Laziness** — Find root causes. No temporary fixes. Senior developer standards.
+* **Minimal Impact** — Changes should only touch what's necessary. Avoid introducing bugs.
