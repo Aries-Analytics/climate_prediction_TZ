@@ -165,12 +165,18 @@ class AlertService:
             quality_score = round(len(sources_succeeded) / total_sources * 100)
         
         # ── Build ingestion lines ──
+        # Sources that returned 0 records are shown with ⚠️ — they didn't fail
+        # (no exception raised) but also produced no data, which warrants attention.
         ingestion_lines = []
         for src in sources_succeeded:
             display = SOURCE_DISPLAY_NAMES.get(src, src.upper())
             count = source_records.get(src)
-            count_str = f": {count} records" if count is not None else ""
-            ingestion_lines.append(f"✓ {display}{count_str}")
+            if count is not None and count == 0:
+                ingestion_lines.append(f"⚠️ {display}: 0 records (fetch returned empty)")
+            elif count is not None:
+                ingestion_lines.append(f"✓ {display}: {count} records")
+            else:
+                ingestion_lines.append(f"✓ {display}")
         for src in sources_failed:
             display = SOURCE_DISPLAY_NAMES.get(src, src.upper())
             ingestion_lines.append(f"✗ {display}: FAILED")

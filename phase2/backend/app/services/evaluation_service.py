@@ -3,81 +3,138 @@ from typing import List, Dict, Any, Optional
 from datetime import datetime, timezone
 import math
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy import func, and_
 
 from app.models.forecast_log import ForecastLog
 from app.models.climate_data import ClimateData
+from app.models.location import Location
 
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
-# Physical rainfall thresholds for actual-outcome determination (mm / month avg)
+# Physical thresholds for actual-outcome determination per forecast type.
 #
-# The evaluator sums cumulative observed rainfall over the forecast window and
-# normalises to a monthly average, then compares against these values.
+# drought      : avg monthly rainfall < 80 mm/month → triggered
+#                (approx P12 for Kilombero, consistent with 12% calibrated rate
+#                in configs/trigger_thresholds.yaml v2.0.0)
 #
-# Source: RAINFALL_THRESHOLDS in rice_thresholds.py (Kilombero rice calendar)
-# and calibrated trigger rates in configs/trigger_thresholds.yaml (v2.0.0).
+# flood        : avg monthly rainfall > 400 mm/month → triggered
+#                (vegetative-stage "excessive" from rice_thresholds.RAINFALL_THRESHOLDS;
+#                consistent with P95 calibrated rate)
 #
-# drought    : avg monthly < 80 mm  → event triggered (approx P12 for Kilombero,
-#              consistent with 12 % calibrated trigger rate in trigger_thresholds.yaml)
-# flood      : avg monthly > 400 mm → event triggered (vegetative-stage "excessive"
-#              threshold from RAINFALL_THRESHOLDS; consistent with P95 flood rate)
-# heat_stress,
-# crop_failure : cannot be evaluated from rainfall alone (require temperature /
-#              NDVI / VCI data).  Skip — logs remain "pending" until that data
-#              is available (Q2 2026 soil-moisture + NDVI integration roadmap).
+# heat_stress  : avg temperature over period > 35°C → triggered
+#                (sustained monthly avg above 35°C causes spikelet sterility in rice
+#                during reproductive stage; standard IRRI threshold)
+#
+# crop_failure : avg NDVI over period < 0.30 → triggered
+#                (NDVI < 0.30 = severely stressed / sparse vegetation;
+#                proxy for the calibrated VCI < 3.33 threshold in trigger_thresholds.yaml)
+#
+# Coordinate tolerance for ClimateData lat/lon queries: ±0.01° (~1.1 km).
+# The locations table and climate_data rows use slightly different coordinate
+# precision; 0.001° was too tight (missed Morogoro by 0.0039°).
 # ---------------------------------------------------------------------------
-_MONTHLY_DROUGHT_THRESHOLD_MM = 80.0
-_MONTHLY_FLOOD_THRESHOLD_MM   = 400.0
-_RAINFALL_SKIP_TYPES = {"heat_stress", "crop_failure"}
+_MONTHLY_DROUGHT_THRESHOLD_MM  = 80.0
+_MONTHLY_FLOOD_THRESHOLD_MM    = 400.0
+_HEAT_STRESS_TEMP_C            = 35.0
+_CROP_FAILURE_NDVI             = 0.30
+_COORD_TOLERANCE               = 0.01   # degrees (~1.1 km)
+
+
+def _location_filter(location: Location):
+    """Return SQLAlchemy filters matching ClimateData rows for a Location."""
+    return and_(
+        ClimateData.location_lat >= float(location.latitude)  - _COORD_TOLERANCE,
+        ClimateData.location_lat <= float(location.latitude)  + _COORD_TOLERANCE,
+        ClimateData.location_lon >= float(location.longitude) - _COORD_TOLERANCE,
+        ClimateData.location_lon <= float(location.longitude) + _COORD_TOLERANCE,
+    )
+
+
+def _get_actual_outcome(log: ForecastLog, forecast_type: str) -> tuple:
+    """
+    Returns (actual_outcome: int, observed_value: float) derived from the
+    already-stored log.observed_value.  Used in get_aggregate_metrics() where
+    data has already been evaluated.
+    """
+    obs = float(log.observed_value) if log.observed_value is not None else 0.0
+
+    if forecast_type == "drought":
+        # observed_value stores cumulative rainfall; normalise to monthly avg
+        horizon_months = _horizon_months(log)
+        actual_outcome = 1 if (obs / horizon_months) < _MONTHLY_DROUGHT_THRESHOLD_MM else 0
+    elif forecast_type in ("flood", "excess_rainfall"):
+        horizon_months = _horizon_months(log)
+        actual_outcome = 1 if (obs / horizon_months) > _MONTHLY_FLOOD_THRESHOLD_MM else 0
+    elif forecast_type == "heat_stress":
+        # observed_value stores avg temperature (°C)
+        actual_outcome = 1 if obs > _HEAT_STRESS_TEMP_C else 0
+    elif forecast_type == "crop_failure":
+        # observed_value stores avg NDVI
+        actual_outcome = 1 if obs < _CROP_FAILURE_NDVI else 0
+    else:
+        actual_outcome = 0
+
+    return actual_outcome, obs
+
+
+def _horizon_months(log: ForecastLog) -> float:
+    if log.valid_from and log.valid_until:
+        return max(1.0, (log.valid_until - log.valid_from).days / 30.0)
+    return max(1.0, (log.lead_time_days or 90) / 30.0)
+
 
 class ForecastEvaluator:
     """
     Evaluates historical forecasts in the Shadow Run.
     Calculates Predicted vs Actual metrics: Brier Score, RMSE, and Calibration Error.
     """
-    
+
     def __init__(self, db: Session):
         self.db = db
 
     def backfill_observations(self, logs_to_update: List[Dict[str, Any]]) -> Dict[str, int]:
         """
         Manually inject actual observed payload data into specific ForecastLog entries.
-        Allows immediate testing of the evaluation engine without waiting for 
+        Allows immediate testing of the evaluation engine without waiting for
         asynchronous climate data ingestion later in the year.
-        
+
         Args:
             logs_to_update: List of dicts, e.g., [{"log_id": "uuid1", "observed_value": 120.5}]
         """
         updated = 0
         errors = 0
-        
+
         for data in logs_to_update:
             try:
                 log_id = data.get("log_id")
                 obs_val = data.get("observed_value")
-                
+
                 if not log_id or obs_val is None:
                     continue
-                    
+
                 log_entry = self.db.query(ForecastLog).filter(ForecastLog.id == log_id).first()
                 if not log_entry:
                     continue
-                    
+
                 log_entry.observed_value = float(obs_val)
                 updated += 1
             except Exception as e:
                 logger.error(f"Error backfilling log {data.get('log_id')}: {e}")
                 errors += 1
-                
+
         self.db.commit()
         return {"updated": updated, "errors": errors}
 
     def evaluate_pending_forecasts(self) -> Dict[str, Any]:
         """
-        Evaluate all 'pending' ForecastLogs where the valid_until date has already passed.
-        Compare against observed ClimateData to calculate the Brier Score and update the log.
+        Evaluate all 'pending' ForecastLogs where the valid_until date has passed.
+        Compare against observed ClimateData to calculate Brier Score and update the log.
+
+        Evaluation logic per forecast type:
+        - drought / flood     : compare cumulative rainfall (rainfall_mm) vs monthly threshold
+        - heat_stress         : compare avg temperature (temperature_avg) vs 35°C
+        - crop_failure        : compare avg NDVI (ndvi) vs 0.30
         """
         now = datetime.now(timezone.utc).date()
         pending_logs = self.db.query(ForecastLog).filter(
@@ -92,40 +149,54 @@ class ForecastEvaluator:
             try:
                 forecast_type = (log.forecast_type or "").lower()
 
-                # heat_stress and crop_failure require NDVI / temperature data —
-                # not available from rainfall alone.  Skip until Q2 2026 integration.
-                if forecast_type in _RAINFALL_SKIP_TYPES:
+                # Look up the Location to get lat/lon for the ClimateData query.
+                # region_id stores the integer location PK (e.g. 6 = Morogoro).
+                location = self.db.query(Location).filter(
+                    Location.id == int(log.region_id)
+                ).first()
+                if not location:
+                    logger.warning(f"Location {log.region_id} not found for log {log.id}; skipping")
                     continue
 
-                # Retrieve actual cumulative rainfall for the region and time period
-                observed_rainfall = self.db.query(func.sum(ClimateData.precipitation)).filter(
-                    ClimateData.location_id == int(log.region_id),
+                loc_filter = _location_filter(location)
+                date_filter = and_(
                     ClimateData.date >= log.valid_from,
-                    ClimateData.date <= log.valid_until
-                ).scalar()
+                    ClimateData.date <= log.valid_until,
+                )
 
-                if observed_rainfall is None:
-                    # Climate data not yet available for this window
-                    continue
+                if forecast_type in ("drought", "flood", "excess_rainfall"):
+                    # Sum cumulative rainfall over the forecast window
+                    observed = self.db.query(func.sum(ClimateData.rainfall_mm)).filter(
+                        loc_filter, date_filter
+                    ).scalar()
+                    if observed is None:
+                        continue
+                    observed = float(observed)
+                    horizon_months = _horizon_months(log)
+                    avg_monthly = observed / horizon_months
+                    if forecast_type == "drought":
+                        actual_outcome = 1 if avg_monthly < _MONTHLY_DROUGHT_THRESHOLD_MM else 0
+                    else:
+                        actual_outcome = 1 if avg_monthly > _MONTHLY_FLOOD_THRESHOLD_MM else 0
 
-                observed_rainfall = float(observed_rainfall)
+                elif forecast_type == "heat_stress":
+                    observed = self.db.query(func.avg(ClimateData.temperature_avg)).filter(
+                        loc_filter, date_filter
+                    ).scalar()
+                    if observed is None:
+                        continue
+                    observed = float(observed)
+                    actual_outcome = 1 if observed > _HEAT_STRESS_TEMP_C else 0
 
-                # Normalise to average monthly rainfall for the forecast window
-                if log.valid_from and log.valid_until:
-                    delta_days = (log.valid_until - log.valid_from).days
-                    horizon_months = max(1.0, delta_days / 30.0)
-                else:
-                    horizon_months = max(1.0, (log.lead_time_days or 90) / 30.0)
+                elif forecast_type == "crop_failure":
+                    observed = self.db.query(func.avg(ClimateData.ndvi)).filter(
+                        loc_filter, date_filter
+                    ).scalar()
+                    if observed is None:
+                        continue
+                    observed = float(observed)
+                    actual_outcome = 1 if observed < _CROP_FAILURE_NDVI else 0
 
-                avg_monthly_mm = observed_rainfall / horizon_months
-
-                # Determine actual outcome using physical climate thresholds.
-                # threshold_used stores the probability trigger level (0.65 / 0.60)
-                # and is NOT used here — physical thresholds are defined above.
-                if forecast_type == "drought":
-                    actual_outcome = 1 if avg_monthly_mm < _MONTHLY_DROUGHT_THRESHOLD_MM else 0
-                elif forecast_type in ("flood", "excess_rainfall"):
-                    actual_outcome = 1 if avg_monthly_mm > _MONTHLY_FLOOD_THRESHOLD_MM else 0
                 else:
                     logger.warning(f"Unknown forecast_type '{log.forecast_type}' for log {log.id}; skipping")
                     continue
@@ -134,12 +205,11 @@ class ForecastEvaluator:
                 predicted_prob = float(log.forecast_value)
                 brier_score = (predicted_prob - actual_outcome) ** 2
 
-                # Update the log
-                log.observed_value = observed_rainfall
+                log.observed_value = observed
                 log.brier_score = round(brier_score, 4)
                 log.status = "evaluated"
-
                 evaluated_count += 1
+
             except Exception as e:
                 logger.error(f"Error evaluating forecast {log.id}: {e}")
                 errors += 1
@@ -154,7 +224,7 @@ class ForecastEvaluator:
 
     def get_aggregate_metrics(self) -> Dict[str, Any]:
         """
-        Calculate Brier Score, RMSE, Calibration Error, and Confusion Matrix 
+        Calculate Brier Score, RMSE, Calibration Error, and Confusion Matrix
         across all evaluated ForecastLogs. Provides the dataset for the Evidence Pack.
         """
         evaluated_logs = self.db.query(ForecastLog).filter(
@@ -177,34 +247,19 @@ class ForecastEvaluator:
         predictions = []
         outcomes = []
         events = []
-        
-        # Confusion matrix counters
+
         tp, fp, tn, fn = 0, 0, 0, 0
-        
+
         for log in evaluated_logs:
             if log.brier_score is not None:
                 brier_scores.append(float(log.brier_score))
 
             prob = float(log.forecast_value)
-            obs_rain = float(log.observed_value) if log.observed_value is not None else 0.0
             forecast_type = (log.forecast_type or "").lower()
+            actual_outcome, _ = _get_actual_outcome(log, forecast_type)
 
-            # Normalise observed rainfall to monthly average for threshold comparison
-            if log.valid_from and log.valid_until:
-                delta_days = (log.valid_until - log.valid_from).days
-                horizon_months = max(1.0, delta_days / 30.0)
-            else:
-                horizon_months = max(1.0, (log.lead_time_days or 90) / 30.0)
-            avg_monthly_mm = obs_rain / horizon_months
-
-            if forecast_type == "drought":
-                actual_outcome = 1 if avg_monthly_mm < _MONTHLY_DROUGHT_THRESHOLD_MM else 0
-            else:
-                actual_outcome = 1 if avg_monthly_mm > _MONTHLY_FLOOD_THRESHOLD_MM else 0
-
-            # Confusion Matrix Logic (using 0.5 as the default binary classification threshold)
+            # Confusion matrix (binary classification at 0.5 threshold)
             predicted_outcome = 1 if prob >= 0.5 else 0
-            
             if predicted_outcome == 1 and actual_outcome == 1:
                 tp += 1
             elif predicted_outcome == 1 and actual_outcome == 0:
@@ -227,23 +282,19 @@ class ForecastEvaluator:
         mean_brier = sum(brier_scores) / len(brier_scores) if brier_scores else 0.0
         rmse = math.sqrt(mean_brier)
 
-        # Calibration Error (Expected Calibration Error - ECE)
+        # Expected Calibration Error (ECE)
         bins = [i / 10.0 for i in range(11)]
         ece = 0.0
         total_preds = len(predictions)
-        
+
         if total_preds > 0:
             for i in range(len(bins) - 1):
                 bin_start = bins[i]
-                bin_end = bins[i+1]
-                
-                # Find indices of predictions in this bin
+                bin_end = bins[i + 1]
                 if i == len(bins) - 2:
-                    # Include exact 1.0 in the top bin
                     mask_indices = [idx for idx, p in enumerate(predictions) if bin_start <= p <= bin_end]
                 else:
                     mask_indices = [idx for idx, p in enumerate(predictions) if bin_start <= p < bin_end]
-                    
                 if mask_indices:
                     bin_pred_mean = sum(predictions[idx] for idx in mask_indices) / len(mask_indices)
                     bin_obs_mean = sum(outcomes[idx] for idx in mask_indices) / len(mask_indices)
@@ -255,11 +306,6 @@ class ForecastEvaluator:
             "rmse": round(rmse, 4),
             "calibration_error": round(ece, 4),
             "total_evaluated": len(evaluated_logs),
-            "confusion_matrix": {
-                "tp": tp,
-                "fp": fp,
-                "tn": tn,
-                "fn": fn
-            },
+            "confusion_matrix": {"tp": tp, "fp": fp, "tn": tn, "fn": fn},
             "events": events
         }

@@ -126,27 +126,28 @@ class ForecastGenerator:
         Returns:
             DataFrame with features or None if insufficient data
         """
-        # Get recent climate data (last 7 months to ensure 6+ monthly records)
-        # Using relativedelta for month-based lookback (monthly data cadence)
-        # Use start of month to ensure monthly records (dated on the 1st) are included
+        # 12-month lookback ensures 6+ monthly records are available even when
+        # recent ingestion is delayed (e.g. GEE unavailable for CHIRPS/NDVI).
         from dateutil.relativedelta import relativedelta
-        lookback_date = (start_date - relativedelta(months=7)).replace(day=1)
-        
+        lookback_date = (start_date - relativedelta(months=12)).replace(day=1)
+
         query = db.query(ClimateData).filter(
             and_(
                 ClimateData.date >= lookback_date,
                 ClimateData.date <= start_date
             )
         )
-        
+
         if location:
-            # Match by coordinates with small tolerance
+            # ±0.01° tolerance (~1.1 km). The locations table and climate_data
+            # rows use slightly different coordinate precision; 0.001° was too
+            # tight for Morogoro (actual diff: 0.0039° in longitude).
             query = query.filter(
                 and_(
-                    ClimateData.location_lat >= location.latitude - 0.001,
-                    ClimateData.location_lat <= location.latitude + 0.001,
-                    ClimateData.location_lon >= location.longitude - 0.001,
-                    ClimateData.location_lon <= location.longitude + 0.001
+                    ClimateData.location_lat >= float(location.latitude)  - 0.01,
+                    ClimateData.location_lat <= float(location.latitude)  + 0.01,
+                    ClimateData.location_lon >= float(location.longitude) - 0.01,
+                    ClimateData.location_lon <= float(location.longitude) + 0.01,
                 )
             )
             
