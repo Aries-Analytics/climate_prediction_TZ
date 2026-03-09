@@ -461,21 +461,30 @@ class PipelineOrchestrator:
         def _generate_forecasts():
             """Inner function for retry logic"""
             from app.services.forecast_service import generate_forecasts, generate_all_recommendations
-            
+            from app.config.rice_thresholds import get_horizon_tier
+
+            # Calibrated probability thresholds (warning-level per hazard type).
+            # Source: THRESHOLD_ANALYSIS_INDUSTRY_RESEARCH.md + KILOMBERO_BASIN_PILOT_SPECIFICATION.md
+            _PROB_THRESHOLDS = {
+                "drought":      0.65,
+                "flood":        0.65,
+                "heat_stress":  0.60,
+                "crop_failure": 0.60,
+            }
+
             # Generate forecasts (with available data)
             forecasts = generate_forecasts(self.db)
-            
+
             # If partial data, flag forecasts with reduced confidence
             if partial_data:
                 for forecast in forecasts:
-                    # Add metadata to indicate reduced confidence
-                    # This could be stored in a metadata field or notes
                     logger.info(f"Forecast {forecast.id} generated with partial data")
-            
+
             # Formally log this execution in the shadow-run ForecastLog
             import uuid
             log_batch = []
             for f in forecasts:
+                tier = get_horizon_tier(f.horizon_months)
                 fl = ForecastLog(
                     id=str(uuid.uuid4()),
                     issued_at=datetime.now(timezone.utc),
@@ -485,8 +494,15 @@ class PipelineOrchestrator:
                     model_version=f.model_version or "V4.0",
                     forecast_type=f.trigger_type,
                     forecast_value=f.probability,
-                    lead_time_days=f.horizon_months * 30,  # approximate days
-                    status="pending"
+                    lead_time_days=f.horizon_months * 30,
+                    status="pending",
+                    threshold_used=_PROB_THRESHOLDS.get(f.trigger_type),
+                    forecast_distribution={
+                        "horizon_tier": tier,
+                        "is_insurance_trigger_eligible": tier == "primary",
+                        "confidence_lower": float(f.confidence_lower),
+                        "confidence_upper": float(f.confidence_upper),
+                    }
                 )
                 log_batch.append(fl)
             

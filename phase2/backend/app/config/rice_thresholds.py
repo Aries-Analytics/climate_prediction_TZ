@@ -65,18 +65,34 @@ RAINFALL_THRESHOLDS = {
 def get_kilombero_stage(target_date, season_type='wet'):
     """
     Return the phenology stage for a given date based on Kilombero calendar.
-    
+
     Args:
         target_date (date): The forecast target date
         season_type (str): 'wet' (main) or 'dry' (irrigated)
-        
+
     Returns:
         str: Stage name (e.g., 'flowering') or 'off_season'
     """
     month = target_date.month
-    
+
     if season_type == 'dry':
         return KILOMBERO_DRY_SEASON.get(month, 'off_season')
-    
+
     # Default to main Wet Season
     return KILOMBERO_WET_SEASON.get(month, 'off_season')
+
+
+# ---------------------------------------------------------------------------
+# Horizon tiers for parametric insurance eligibility
+#
+# primary  (3-4 months): forecast reliability sufficient for insurance trigger
+# advisory (5-6 months): early warning only — NOT a payout trigger
+#
+# Source: THRESHOLD_ANALYSIS_INDUSTRY_RESEARCH.md + KILOMBERO_BASIN_PILOT_SPECIFICATION.md
+# ---------------------------------------------------------------------------
+HORIZON_TIERS = {3: "primary", 4: "primary", 5: "advisory", 6: "advisory"}
+
+
+def get_horizon_tier(horizon_months: int) -> str:
+    """Return 'primary' (trigger-eligible) or 'advisory' (early warning only)."""
+    return HORIZON_TIERS.get(horizon_months, "advisory")
