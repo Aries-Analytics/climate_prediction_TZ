@@ -162,17 +162,21 @@ def test_health_check_endpoint(
     )
     db.add(climate_data)
     
-    # Create test forecast with specific age
-    forecast_time = datetime.now() - timedelta(days=forecast_age_days)
+    # Create test forecast with specific age (use utcnow: monitoring service treats naive datetimes as UTC)
+    forecast_time = datetime.utcnow() - timedelta(days=forecast_age_days)
     forecast = Forecast(
         trigger_type='drought',
         probability=0.5,
         horizon_months=3,
+        forecast_date=date.today(),
         target_date=date.today() + timedelta(days=90),
+        confidence_lower=0.3,
+        confidence_upper=0.7,
+        location_id=1,
         created_at=forecast_time
     )
     db.add(forecast)
-    
+
     # Create last execution
     execution = PipelineExecution(
         id='test-health-exec',
@@ -184,27 +188,27 @@ def test_health_check_endpoint(
     )
     db.add(execution)
     db.commit()
-    
+
     try:
         # Get health status
         health = monitoring.get_health_status()
-        
+
         # Property 1: Health status should be a HealthStatus object
         assert isinstance(health, HealthStatus), (
             f"Health should be HealthStatus, got {type(health)}"
         )
-        
+
         # Property 2: Status should be one of valid values
         valid_statuses = ['healthy', 'degraded', 'unhealthy']
         assert health.status in valid_statuses, (
             f"Status should be one of {valid_statuses}, got '{health.status}'"
         )
-        
+
         # Property 3: Last execution should be recorded
         assert health.last_execution is not None, (
             "Last execution timestamp should be present"
         )
-        
+
         # Property 4: Data freshness should be reported
         assert health.data_freshness_days is not None, (
             "Data freshness should be reported"
@@ -212,7 +216,7 @@ def test_health_check_endpoint(
         assert health.data_freshness_days == data_age_days, (
             f"Expected data age {data_age_days}, got {health.data_freshness_days}"
         )
-        
+
         # Property 5: Forecast freshness should be reported
         assert health.forecast_freshness_days is not None, (
             "Forecast freshness should be reported"
@@ -220,17 +224,29 @@ def test_health_check_endpoint(
         assert health.forecast_freshness_days == forecast_age_days, (
             f"Expected forecast age {forecast_age_days}, got {health.forecast_freshness_days}"
         )
-        
+
         # Property 6: Failed sources should be a list
         assert isinstance(health.failed_sources, list), (
             "Failed sources should be a list"
         )
-        
+
     finally:
-        # Cleanup
-        db.delete(climate_data)
-        db.delete(forecast)
-        db.delete(execution)
+        # Rollback any failed transaction before cleanup
+        try:
+            db.rollback()
+        except Exception:
+            pass
+        db.query(PipelineExecution).filter(
+            PipelineExecution.id == 'test-health-exec'
+        ).delete()
+        db.query(Forecast).filter(
+            Forecast.trigger_type == 'drought',
+            Forecast.probability == 0.5
+        ).delete()
+        db.query(ClimateData).filter(
+            ClimateData.location_lat == -6.369028,
+            ClimateData.location_lon == 34.888822
+        ).delete()
         db.commit()
 
 
@@ -273,16 +289,21 @@ def test_health_status_updates_on_failure(
     )
     db.add(climate_data)
     
-    forecast_time = datetime.now() - timedelta(days=forecast_age_days)
+    # Use utcnow: monitoring service treats naive datetimes as UTC
+    forecast_time = datetime.utcnow() - timedelta(days=forecast_age_days)
     forecast = Forecast(
         trigger_type='drought',
         probability=0.5,
         horizon_months=3,
+        forecast_date=date.today(),
         target_date=date.today() + timedelta(days=90),
+        confidence_lower=0.3,
+        confidence_upper=0.7,
+        location_id=1,
         created_at=forecast_time
     )
     db.add(forecast)
-    
+
     # Create execution with failures
     failed_sources = ['chirps', 'nasa_power', 'era5'][:failed_sources_count]
     execution = PipelineExecution(
@@ -296,18 +317,18 @@ def test_health_status_updates_on_failure(
     )
     db.add(execution)
     db.commit()
-    
+
     try:
         # Get health status
         health = monitoring.get_health_status()
-        
+
         # Determine expected health status based on conditions
         expected_unhealthy = (
             execution_status == 'failed' or
             data_age_days > 7 or
             forecast_age_days > 7
         )
-        
+
         expected_degraded = (
             not expected_unhealthy and (
                 failed_sources_count > 0 or
@@ -315,7 +336,7 @@ def test_health_status_updates_on_failure(
                 forecast_age_days > 2
             )
         )
-        
+
         # Property 1: Status should reflect failure conditions
         if expected_unhealthy:
             assert health.status == 'unhealthy', (
@@ -333,12 +354,12 @@ def test_health_status_updates_on_failure(
             assert health.status == 'healthy', (
                 f"Expected 'healthy' status for good conditions, got '{health.status}'"
             )
-        
+
         # Property 2: Failed sources should be tracked
         assert health.failed_sources == failed_sources, (
             f"Expected failed sources {failed_sources}, got {health.failed_sources}"
         )
-        
+
         # Property 3: Freshness values should match input
         assert health.data_freshness_days == data_age_days, (
             f"Data freshness mismatch: expected {data_age_days}, got {health.data_freshness_days}"
@@ -346,12 +367,24 @@ def test_health_status_updates_on_failure(
         assert health.forecast_freshness_days == forecast_age_days, (
             f"Forecast freshness mismatch: expected {forecast_age_days}, got {health.forecast_freshness_days}"
         )
-        
+
     finally:
-        # Cleanup
-        db.delete(climate_data)
-        db.delete(forecast)
-        db.delete(execution)
+        # Rollback any failed transaction before cleanup
+        try:
+            db.rollback()
+        except Exception:
+            pass
+        db.query(PipelineExecution).filter(
+            PipelineExecution.id == 'test-failure-exec'
+        ).delete()
+        db.query(Forecast).filter(
+            Forecast.trigger_type == 'drought',
+            Forecast.probability == 0.5
+        ).delete()
+        db.query(ClimateData).filter(
+            ClimateData.location_lat == -6.369028,
+            ClimateData.location_lon == 34.888822
+        ).delete()
         db.commit()
 
 
