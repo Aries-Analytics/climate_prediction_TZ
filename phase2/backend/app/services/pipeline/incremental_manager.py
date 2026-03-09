@@ -64,16 +64,8 @@ class IncrementalIngestionManager:
         if tracking:
             logger.info(f"Found tracking record for {source}: {tracking.last_successful_date}")
             return tracking.last_successful_date
-        
-        # Fall back to querying actual climate data
-        # This handles the case where tracking table doesn't exist yet
-        last_record = self.db.query(func.max(ClimateData.date)).scalar()
-        
-        if last_record:
-            logger.info(f"Found last climate data record for {source}: {last_record}")
-            return last_record
-        
-        logger.info(f"No previous data found for {source}")
+
+        logger.info(f"No tracking record found for {source}")
         return None
     
     def calculate_fetch_range(self, source: str, end_date: Optional[date] = None) -> DateRange:

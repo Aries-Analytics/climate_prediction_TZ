@@ -322,7 +322,7 @@ def test_pagination_with_filters(client, db, auth_headers):
     
     # Should return 10 drought events
     assert len(items) == 10
-    assert all(item["trigger_type"] == "drought" for item in items)
+    assert all(item["triggerType"] == "drought" for item in items)
     
     # Request second page of drought events
     response = client.get(
@@ -335,4 +335,4 @@ def test_pagination_with_filters(client, db, auth_headers):
     
     # Should return remaining 10 drought events
     assert len(items) == 10
-    assert all(item["trigger_type"] == "drought" for item in items)
+    assert all(item["triggerType"] == "drought" for item in items)
