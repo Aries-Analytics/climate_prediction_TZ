@@ -62,6 +62,14 @@
 - **ForecastLog never auto-evaluated:** Stage 3 added to `orchestrator.py:execute_pipeline()` on 2026-03-07.
 - **Scheduler fires at wrong time (UTC not EAT):** `CronTrigger.from_crontab()` must receive `timezone=self.timezone` explicitly — not inherited from `BackgroundScheduler(timezone=...)`. Fixed 2026-03-08 in `backend/app/services/pipeline/scheduler.py:215`.
 - **Climate data seed loaded 313 rows instead of 1,878:** `load_climate_data.py` hardcoded `TANZANIA_LAT/LON` for all rows, collapsing 6-location upsert. Fix: per-row `row_lat/row_lon` from CSV. Fixed 2026-03-08.
+- **ForecastLog.threshold_used always NULL:** Orchestrator never set it. Fixed 2026-03-09 — `_PROB_THRESHOLDS` dict in `orchestrator.py:_generate_forecasts()` maps hazard → probability threshold (0.65 drought/flood, 0.60 heat_stress/crop_failure). Commit `33dc78e`.
+- **ForecastLog.forecast_distribution always NULL:** Fixed same commit — now populated with `{horizon_tier, is_insurance_trigger_eligible, confidence_lower, confidence_upper}`.
+
+## Q2 2026 Roadmap (Deferred)
+
+- **Soil moisture dual-index trigger:** DB column + ingestion ready (`SOIL_MOISTURE_FUTURE_ENHANCEMENT.md`). Needs: historical backfill (2020-2025) → retrain models → calibrate dual-index triggers → backtest → deploy. ~1-2 weeks effort.
+- **Kilombero Basin geographic sub-zones:** Need to ingest climate data at basin sub-coordinates (North/Central/South Kilombero) before adding Location records — without data, forecasts fail gracefully but produce nothing useful.
+- **5 training cities (Arusha, DSM, Dodoma, Mbeya, Mwanza) are training diversity tools, NOT production pilot targets.** Do not add them to the `locations` DB table as production forecasting locations.
 
 ## SSH & Deployment
 
@@ -118,8 +126,11 @@
 - Always verify feature count at model load time (GOTCHA Law #6: must be 83)
 - Use in-memory job store + `misfire_grace_time=1` — prevents phantom duplicate runs after restarts
 - ERA5: use `ecmwf-datastores-client` (NOT deprecated `cdsapi`) — the old client had unrecoverable DNS/connection failures
+- **Check docs/configs before inventing constants.** `configs/trigger_thresholds.yaml` has calibrated thresholds already. Added 2026-03-09.
+- **Scheduler "Next run" +03:00 suffix = TZ fix confirmed.** Before TZ fix it showed +00:00; after fix +03:00. Reliable health signal.
+- **0 rows in forecast_logs before 6AM EAT is normal.** Not a bug — shadow run fires at 06:00 EAT only.
 
 ---
 
-*Last updated: 2026-03-08*
+*Last updated: 2026-03-09*
 *This file is the source of truth for persistent facts. Edit directly to update.*
