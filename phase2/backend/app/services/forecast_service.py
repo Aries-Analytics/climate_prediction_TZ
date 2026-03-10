@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import pickle
 import os
+from scipy.stats import norm as _norm_dist
 
 from app.models.forecast import Forecast, ForecastRecommendation, ForecastValidation
 from app.models.trigger_event import TriggerEvent
@@ -23,6 +24,81 @@ from app.schemas.forecast import (
 )
 from app.core.config import settings
 from app.models.location import Location
+
+
+# ---------------------------------------------------------------------------
+# Physical-threshold probability conversion
+# ---------------------------------------------------------------------------
+# The XGBoost model was trained on z-score normalised rainfall_mm (same units
+# as SPI).  We convert its output to a per-trigger probability by asking:
+#   "Given our point prediction and known model uncertainty, what is the
+#    probability that actual rainfall crosses the Kilombero phase threshold?"
+#
+# Source for phase thresholds: rice_thresholds.RAINFALL_THRESHOLDS (TARI/FAO)
+# Source for Morogoro stats:   master_dataset.csv, 312 Morogoro records 2000-2025
+# Source for model RMSE:       outputs/models/latest_training_results.json
+#   XGBoost test RMSE = 0.43 z-score units → 0.43 × 77.06 mm ≈ 33 mm
+# ---------------------------------------------------------------------------
+_MOROGORO_MEAN_MM: float = 79.15
+_MOROGORO_STD_MM:  float = 77.06
+_MODEL_RMSE_MM:    float = 33.1   # 0.43 z-score × 77.06 mm/z-score
+
+
+def _raw_to_probability(raw_prediction: float, trigger_type: str, target_date: date) -> float:
+    """
+    Convert the model's normalised output (z-score ≈ SPI) to a physically
+    meaningful trigger probability using Kilombero phase thresholds.
+
+    Args:
+        raw_prediction: XGBoost output (z-score normalised rainfall)
+        trigger_type:   'drought' | 'flood' | 'crop_failure' | 'heat_stress'
+        target_date:    Forecast target month (determines crop phase & threshold)
+
+    Returns:
+        Probability in [0, 1]
+    """
+    # Denormalise model output to actual mm
+    predicted_mm = raw_prediction * _MOROGORO_STD_MM + _MOROGORO_MEAN_MM
+
+    # Get Kilombero crop phase for the target month
+    season = 'dry' if target_date.month in (7, 8, 9, 10, 11, 12) else 'wet'
+    phase = get_kilombero_stage(target_date, season)
+    thresholds = RAINFALL_THRESHOLDS.get(phase, RAINFALL_THRESHOLDS['germination'])
+
+    rmse = _MODEL_RMSE_MM
+
+    if trigger_type == 'drought':
+        # P(actual_mm < phase.min | predicted_mm)
+        threshold = thresholds['min']
+        prob = float(_norm_dist.cdf((threshold - predicted_mm) / rmse))
+
+    elif trigger_type == 'flood':
+        # P(actual_mm > phase.excessive | predicted_mm)
+        threshold = thresholds['excessive']
+        prob = float(1.0 - _norm_dist.cdf((threshold - predicted_mm) / rmse))
+
+    elif trigger_type == 'crop_failure':
+        # Severe deficit: rainfall < 50% of phase minimum (trigger_thresholds.yaml
+        # rainfall_deficit_pct threshold = 50%)
+        threshold = thresholds['min'] * 0.5
+        prob = float(_norm_dist.cdf((threshold - predicted_mm) / rmse))
+
+    elif trigger_type == 'heat_stress':
+        # No direct rainfall threshold for heat.  Proxy: drought conditions
+        # drive heat stress in Kilombero (lower rainfall → higher temperature).
+        # Scale by 0.6 to reflect lower base rate (~5-8% vs drought ~12%).
+        drought_threshold = thresholds['min']
+        prob = float(_norm_dist.cdf((drought_threshold - predicted_mm) / rmse)) * 0.6
+
+    else:
+        raise ValueError(f"Unknown trigger_type: {trigger_type}")
+
+    prob = max(0.0, min(1.0, prob))
+    print(f"   [{trigger_type}] phase={phase} predicted={predicted_mm:.1f}mm "
+          f"threshold={'min' if trigger_type in ('drought','crop_failure','heat_stress') else 'excessive'}"
+          f"={thresholds.get('min' if trigger_type != 'flood' else 'excessive', '?'):.0f}mm "
+          f"→ P={prob:.3f}")
+    return prob
 
 
 class ForecastGenerator:
@@ -230,11 +306,11 @@ class ForecastGenerator:
         if self.model is not None:
             try:
                 # CRITICAL: Use .predict() for regressors, NEVER .predict_proba()
-                # Models are ensemble regressors (RF, XGBoost) outputting continuous values
+                # Model outputs z-score normalised rainfall (same units as SPI).
+                # Convert to trigger probability via physical phase thresholds
+                # (rice_thresholds.RAINFALL_THRESHOLDS) + model uncertainty (RMSE).
                 raw_prediction = self.model.predict(features_df)[0]
-                # Normalize regressor output to [0, 1] probability range via sigmoid
-                probability = float(1.0 / (1.0 + np.exp(-raw_prediction)))
-                probability = max(0.0, min(1.0, probability))
+                probability = _raw_to_probability(raw_prediction, trigger_type, target_date)
             except Exception as e:
                 print(f"Model prediction failed for {trigger_type}: {e}")
                 return None  # GOTCHA Law #1: No fabricated fallbacks
