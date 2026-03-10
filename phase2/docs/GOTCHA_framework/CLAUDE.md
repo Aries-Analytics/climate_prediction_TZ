@@ -5,11 +5,13 @@
 This system uses the **GOTCHA Framework** — a 6-layer architecture for agentic systems:
 
 **GOT** (The Engine):
+
 - **Goals** (`goals/`) — What needs to happen (process definitions)
 - **Orchestration** — The AI manager (you) that coordinates execution
 - **Tools** (`tools/`) — Deterministic scripts that do the actual work
 
 **CHA** (The Context):
+
 - **Context** (`context/`) — Reference material and domain knowledge
 - **Hard prompts** (`hardprompts/`) — Reusable instruction templates
 - **Args** (`args/`) — Behavior settings that shape how the system acts
@@ -160,6 +162,10 @@ Document Claude-specific mistakes here (not script bugs—those go in goals):
 * **Autonomous bug fixing** — A failing test is a complete bug report. Read the test + production code + fixture chain before asking the user anything.
 * **Self-improvement is mandatory** — After any user correction, write one rule here before the next tool call. Corrections mean a stored assumption was wrong — fix it at the source.
 * **Audit before commit+push (STRICT)** — Before every `git add` + `git commit` + `git push`: (1) run `git diff HEAD` to review every staged line, (2) confirm only intended files are staged, (3) ask "Would a staff engineer approve this diff in a code review?" — only then push. Never push without this audit. This applies to remote pushes only; local commits for work-in-progress are exempt but must be audited before the final push.
+* **No model fallbacks in shadow run** — `load_model()` loads ONLY `primary_model` from `active_model.json`. Fallback candidates are FORBIDDEN. A forecast from the wrong model corrupts the evidence pack — return a hard error instead.
+* **No ingestion bootstrap** — `incremental_manager.py` uses `DEFAULT_LOOKBACK_DAYS=180` (relative to today). There is NO historical start_date fetch. Do not invent a "bootstrap" behavior — it does not exist and violates shadow run design.
+* **`climate_data` is not a pipeline table** — 1,878 rows feed the Climate Insights dashboard. Never wipe it as part of pipeline cleanup. Only wipe `pipeline_executions`, `source_ingestion_tracking`, `data_quality_metrics` when resetting failed runs.
+* **Stale advisory lock → restart the container, not the query.** If scheduler logs "lock already held" with no prior "Pipeline execution starting" in that run's log window, the lock is stale from a prior interrupted session. Fix: `docker restart climate_pipeline_scheduler_dev`. Do NOT issue `pg_advisory_unlock()` manually — the startup `_clear_stale_locks()` handles it cleanly.
 
 *(Add new guardrails as mistakes happen. Keep this under 15 items.)*
 
@@ -268,6 +274,7 @@ print('Memory infrastructure initialized!')
 The system has persistent memory across sessions. At session start, read the memory context:
 
 **Load Memory:**
+
 1. Read `memory/MEMORY.md` for curated facts and preferences
 2. Read today's log: `memory/logs/YYYY-MM-DD.md`
 3. Read yesterday's log for continuity
@@ -277,16 +284,19 @@ python tools/memory/memory_read.py --format markdown
 ```
 
 **During Session:**
+
 - Append notable events to today's log: `python tools/memory/memory_write.py --content "event" --type event`
 - Add facts to the database: `python tools/memory/memory_write.py --content "fact" --type fact --importance 7`
 - For truly persistent facts (always loaded), update MEMORY.md: `python tools/memory/memory_write.py --update-memory --content "New preference" --section user_preferences`
 
 **Search Memory:**
+
 - Keyword search: `python tools/memory/memory_db.py --action search --query "keyword"`
 - Semantic search: `python tools/memory/semantic_search.py --query "related concept"`
 - Hybrid search (best): `python tools/memory/hybrid_search.py --query "what does user prefer"`
 
 **Memory Types:**
+
 - `fact` - Objective information
 - `preference` - User preferences
 - `event` - Something that happened

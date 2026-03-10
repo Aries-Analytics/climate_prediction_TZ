@@ -64,6 +64,9 @@
 - **Climate data seed loaded 313 rows instead of 1,878:** `load_climate_data.py` hardcoded `TANZANIA_LAT/LON` for all rows, collapsing 6-location upsert. Fix: per-row `row_lat/row_lon` from CSV. Fixed 2026-03-08.
 - **ForecastLog.threshold_used always NULL:** Orchestrator never set it. Fixed 2026-03-09 — `_PROB_THRESHOLDS` dict in `orchestrator.py:_generate_forecasts()` maps hazard → probability threshold (0.65 drought/flood, 0.60 heat_stress/crop_failure). Commit `33dc78e`.
 - **ForecastLog.forecast_distribution always NULL:** Fixed same commit — now populated with `{horizon_tier, is_insurance_trigger_eligible, confidence_lower, confidence_upper}`.
+- **LSTM fallback in load_model():** Fallback candidates wired despite shadow-run primary-only requirement — violated GOTCHA Law #1. Removed 2026-03-10. Commit `97da796`.
+- **Sigmoid probability conversion (wrong direction + physically meaningless):** `sigmoid(z_score)` gave low P for low rainfall (wrong for drought), identical values across all trigger types, no connection to Kilombero contract thresholds. Replaced 2026-03-10 with `_raw_to_probability()` using `norm.cdf((phase_threshold - predicted_mm) / rmse_mm)` per trigger type, phase-aware via `get_kilombero_stage()`. Commit `fdb30b9`.
+- **Stale advisory lock blocks 6AM shadow run:** `pg_try_advisory_lock(123456)` held from prior interrupted session → scheduler fires but skips with "lock already held". Fix: `docker restart climate_pipeline_scheduler_dev`. Startup `_clear_stale_locks()` clears it. Signal: "No stale advisory locks found on startup" in logs. Occurred 2026-03-10.
 
 ## Q2 2026 Roadmap (Deferred)
 
@@ -129,8 +132,11 @@
 - **Check docs/configs before inventing constants.** `configs/trigger_thresholds.yaml` has calibrated thresholds already. Added 2026-03-09.
 - **Scheduler "Next run" +03:00 suffix = TZ fix confirmed.** Before TZ fix it showed +00:00; after fix +03:00. Reliable health signal.
 - **0 rows in forecast_logs before 6AM EAT is normal.** Not a bug — shadow run fires at 06:00 EAT only.
+- **Stale advisory lock → container restart, not DB query.** Session-level lock survives ORM commits/rollbacks. Diagnostic: scheduler fires but logs "lock already held" with no prior "Pipeline execution starting". Fix: `docker restart climate_pipeline_scheduler_dev`. Added 2026-03-10.
+- **Sigmoid is directionally wrong for drought probability.** Use `norm.cdf((threshold - predicted_mm) / rmse)` anchored to physical Kilombero thresholds from `rice_thresholds.RAINFALL_THRESHOLDS`. Added 2026-03-10.
+- **Two config trap: CLI vs VS Code extension MCP.** Project-scoped MCP servers in `.claude.json` must match the EXACT working directory path the extension uses — parent dir ≠ subdirectory. Added 2026-03-10.
 
 ---
 
-*Last updated: 2026-03-09*
+*Last updated: 2026-03-10*
 *This file is the source of truth for persistent facts. Edit directly to update.*

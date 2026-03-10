@@ -48,9 +48,9 @@ A comprehensive climate intelligence platform for Tanzania that integrates multi
 5. **NOAA Ocean Indices** - ENSO and IOD patterns
 
 ### Machine Learning Models (6-Location Dataset)
-- **XGBoost**: 86.7% test accuracy (best by R²; primary serving model)
-- **Ensemble**: 84.0% test accuracy (robust generalization)
-- **LSTM**: 78.7% test accuracy (temporal patterns; fallback serving model)
+- **XGBoost**: 86.7% test accuracy (best by R²; **primary serving model — only model used for live forecasts**)
+- **Ensemble**: 84.0% test accuracy (robust generalization; training reference only)
+- **LSTM**: 78.7% test accuracy (temporal patterns; training reference only — no fallback in production)
 - **Random Forest**: 78.1% test accuracy / 85.7% CV accuracy (robust, feature importance)
 
 ### Infrastructure
@@ -305,6 +305,24 @@ A comprehensive climate intelligence platform for Tanzania that integrates multi
 
 **Technical Details**: See [DATA_PIPELINE_TEST_FIXES.md](../reports/DATA_PIPELINE_TEST_FIXES.md)
 
+### March 10, 2026 — Probability Conversion Architecture Fix
+
+**Status**: ✅ Complete
+**Impact**: Shadow-run forecast_logs now carry physically meaningful, phase-aware trigger probabilities
+
+**Key Changes**:
+1. **Removed LSTM fallback** from `load_model()` — XGBoost is the sole production serving model. No silent fallbacks that could corrupt the shadow-run evidence pack.
+2. **Replaced sigmoid with CDF-based conversion** — `_raw_to_probability()` in `forecast_service.py`:
+   - Denormalises model z-score output to predicted mm
+   - Looks up active Kilombero crop phase (April flowering ≠ June harvest)
+   - Computes `P = norm.cdf((RAINFALL_THRESHOLDS[phase] - predicted_mm) / model_rmse_mm)` per trigger type
+   - Drought/flood/crop_failure/heat_stress each get a directionally correct, physically grounded probability
+3. **Stale advisory lock procedure documented** — Scheduler skip-on-lock pattern diagnosed; `docker restart` + startup `_clear_stale_locks()` is the correct recovery path
+
+**Technical Details**: See `memory/logs/2026-03-10.md` and `docs/references/PARAMETRIC_INSURANCE_LOGIC.md`
+
+---
+
 ### January 22, 2026 - Automated Pipeline Deployment
 
 **Status**: ✅ Production Ready  
@@ -390,7 +408,7 @@ A comprehensive climate intelligence platform for Tanzania that integrates multi
 
 ---
 
-**Last Updated**: March 8, 2026
-**Version**: 3.4 (Shadow Run Active)
+**Last Updated**: March 10, 2026
+**Version**: 3.5 (Shadow Run Active — Physical-Threshold Probability Conversion)
 **License**: [Specify license]  
 **Contact**: [Contact information]
