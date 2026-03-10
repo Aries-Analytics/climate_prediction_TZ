@@ -171,7 +171,32 @@ Document Claude-specific mistakes here (not script bugs—those go in goals):
 
 ---
 
-### **7. First Run Initialization**
+### **7. Law #8 — Autonomous Documentation (Doc Update Matrix)**
+
+Every code change triggers mandatory doc updates **in the same session and same commit**. Use this matrix:
+
+| Change Type | Mandatory Files to Update |
+|---|---|
+| ML model change (retrain, features, RMSE, serving logic) | `docs/references/ML_MODEL_REFERENCE.md` · `docs/current/EXECUTIVE_SUMMARY.md` · `docs/Kilombero Pilot/MODEL_METRICS_AND_SHADOW_RUN_IMPLICATIONS.md` · `memory/MEMORY.md` |
+| Pipeline / scheduler change | `docs/references/DATA_PIPELINE_REFERENCE.md` · `docs/AUTOMATED_PIPELINE_DEPLOYMENT.md` · `memory/MEMORY.md` |
+| Insurance logic / threshold / payout change | `docs/references/PARAMETRIC_INSURANCE_FINAL.md` · `docs/current/PARAMETRIC_INSURANCE_LOGIC.md` · `docs/Kilombero Pilot/MODEL_METRICS_AND_SHADOW_RUN_IMPLICATIONS.md` |
+| Test suite change (new tests, patterns, or fixes) | `docs/references/TESTING_REFERENCE.md` · `docs/current/TESTING_MONITORING_INFRASTRUCTURE_JAN2026.md` (or its successor) |
+| Shadow run status or forecast output change | `docs/current/EXECUTIVE_SUMMARY.md` · `docs/current/PIPELINE_STATUS_MARCH2026.md` · `memory/logs/YYYY-MM-DD.md` |
+| Any bug fix | `memory/MEMORY.md` (Known Bugs Fixed section) · `docs/GOTCHA_framework/CLAUDE.md` (guardrail if orchestration mistake) |
+| **Every session end** | `memory/logs/YYYY-MM-DD.md` ← always · `memory/MEMORY.md` ← if new facts/bugs · `docs/current/EXECUTIVE_SUMMARY.md` ← if status changed |
+
+**Archive Rule**: Any `docs/current/` file with a month/year >60 days old in its name (e.g., `JAN2026`) → move to `docs/archive/phase3/` at next session end. Never delete — always archive.
+
+**Monthly Audit** (first session of each month): Run a staleness check against the last 10 commits. Cross-reference each commit's changed files against this matrix. Any column with a gap = doc is stale.
+
+**What NOT to update**:
+- `docs/archive/**` — locked, never modify
+- `docs/reports/` — historical build logs, leave as-is
+- `docs/diagrams/` — only update if architecture actually changed
+
+---
+
+### **8. First Run Initialization**
 
 **On first session in a new environment, check if memory infrastructure exists. If not, create it:**
 

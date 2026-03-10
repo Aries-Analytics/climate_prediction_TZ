@@ -62,7 +62,9 @@ The system combines four complementary models to leverage their individual stren
 | LSTM | 0.7866 | 0.5103 | 0.3286 | Temporal dependencies |
 | Random Forest | 0.7814 | 0.5131 | 0.3201 | Robust, feature importance |
 
-**Active Model for Serving**: Primary = XGBoost (R²=0.8666, highest test R²), Fallback = LSTM (R²=0.7866)
+**Active Model for Serving**: XGBoost only (R²=0.8666, highest test R²). LSTM and Ensemble are training-reference models — **no fallback in production**. Shadow run integrity requires the primary model exclusively; fallback candidates were removed Mar 10 2026 (commit `97da796`).
+
+> **Mar 10 2026 Update**: `load_model()` in `forecast_service.py` now enforces primary-only loading with a hard error if the primary model file is missing. Probability conversion also updated: raw model output (z-score) is now converted to trigger probability via `norm.cdf((phase_threshold - predicted_mm) / rmse_mm)` using Kilombero rice phase thresholds — replacing the physically meaningless sigmoid. See `_raw_to_probability()` in `forecast_service.py`.
 
 > **Note (March 2026 Data Leakage Fix)**: 11 rainfall-derived features (precip_mm, flood_trigger, is_dry_day, consecutive_dry_days, heavy_rain_days_30day, cumulative_excess_7day, and all their lags/rolling variants) were identified as data leakage and removed. The pipeline now uses `utils/data_leakage_prevention.py` for systematic detection. Original features reduced from 279 to 245 before selection; selected features reduced from 84 to 83.
 

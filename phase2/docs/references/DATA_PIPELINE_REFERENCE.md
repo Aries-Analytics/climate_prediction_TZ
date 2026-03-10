@@ -836,7 +836,46 @@ print("✅ All validation checks passed")
 
 ---
 
-**Document Version**: 2.1  
-**Last Updated**: February 5, 2026  
-**Status**: ✅ Production Ready  
+### March 2026 — Scheduler, ForecastLog & Probability Fixes
+
+**Status**: ✅ Complete
+
+#### Mar 8 — Scheduler Timezone Fix
+**Problem**: `CronTrigger.from_crontab("0 6 * * *")` was inheriting UTC timezone from `BackgroundScheduler`, not Africa/Dar_es_Salaam. Pipeline was firing at 06:00 UTC (09:00 EAT) instead of 06:00 EAT.
+**Fix**: Pass `timezone` explicitly to `CronTrigger.from_crontab()`:
+```python
+# CORRECT (file: backend/app/services/pipeline/scheduler.py:215)
+trigger = CronTrigger.from_crontab(self.schedule, timezone=self.timezone)
+# NOT: BackgroundScheduler(timezone=self.timezone) — this does NOT propagate to CronTrigger
+```
+**Signal**: Scheduler logs `next run at: 2026-03-XX 06:00:00+03:00` — the `+03:00` confirms Africa/Dar_es_Salaam is active.
+
+#### Mar 9 — ForecastLog New Fields
+Two fields that were always NULL are now populated from each scheduled run:
+
+| Field | Value | Purpose |
+|---|---|---|
+| `threshold_used` | `0.65` (drought/flood) / `0.60` (heat_stress/crop_failure) | Records the probability threshold used for this trigger type in the evidence pack |
+| `forecast_distribution` | `{horizon_tier, is_insurance_trigger_eligible, confidence_lower, confidence_upper}` | Records horizon classification and insurance eligibility per forecast |
+
+Source: `orchestrator.py:_generate_forecasts()` — `_PROB_THRESHOLDS` dict. Commit `33dc78e`.
+
+#### Mar 10 — Stale Advisory Lock Recovery
+**Pattern**: Scheduler fires at 6AM but logs `"Pipeline execution lock already held (ID: 123456)"` with no prior `"Pipeline execution starting"` → lock is stale from a prior interrupted session.
+**Recovery**:
+```bash
+docker restart climate_pipeline_scheduler_dev
+# Startup _clear_stale_locks() releases it.
+# Confirmation signal: "No stale advisory locks found on startup"
+```
+**Do NOT** issue `pg_advisory_unlock()` manually — the startup routine handles it cleanly.
+
+#### Mar 10 — Probability Conversion (ForecastLog.probability_score)
+Raw model output (z-score) is now converted to trigger probability via physical Kilombero rice phase thresholds instead of sigmoid. See `backend/app/services/forecast_service.py:_raw_to_probability()`. Source: `rice_thresholds.RAINFALL_THRESHOLDS` (TARI/FAO).
+
+---
+
+**Document Version**: 2.2
+**Last Updated**: March 10, 2026
+**Status**: ✅ Production Ready
 **Consolidates**: pipeline_overview.md, AUTOMATED_PIPELINE_GUIDE.md, PIPELINE_EXECUTION_SUMMARY.md, PIPELINE_REPLACEMENT_COMPLETE.md, PIPELINE_REPLACEMENT_SUMMARY.md, PIPELINE_RUN_SUMMARY_2010_2025.md

@@ -311,6 +311,47 @@ python scripts/monitor_pipeline_health.py --send-alerts
 
 ---
 
+## 📋 March 10, 2026 — Test Infrastructure Fixes
+
+Four patterns discovered during Mar 9–10 test suite hardening (83 passed, 0 failed, 68 xfailed):
+
+### 1. MagicMock + SQLAlchemy → PendingRollback Cascade
+
+Passing a `MagicMock` to a SQLAlchemy DB column causes `sqlite3.ProgrammingError`, leaving the session in `PendingRollback`. All subsequent Hypothesis examples then fail with `PendingRollbackError` → Hypothesis reports `Flaky`.
+
+**Fix**: All DB-bound mock return values must use concrete Python types:
+```python
+mock_ingestion.return_value = MagicMock(records_fetched=100, ...)
+mock_forecasting.return_value = MagicMock(recommendations_created=0, ...)
+```
+In `finally` blocks use query-based deletion (not `db.delete(obj)`) + `db.rollback()` guard.
+
+### 2. UTC Datetime in MonitoringService Tests
+
+`MonitoringService._get_forecast_freshness_days()` calls `replace(tzinfo=timezone.utc)` on naive datetimes. Tests using `datetime.now()` on EAT (+3) machines get `freshness_days = -1`.
+
+**Fix**:
+```python
+created_at=datetime.utcnow()  # not datetime.now()
+```
+
+### 3. Hypothesis HealthCheck with Function-Scoped Fixtures
+
+Hypothesis raises `FailedHealthCheck` when `@given` tests use function-scoped fixtures without suppression.
+
+**Fix**: Add to every `@settings` block:
+```python
+@settings(max_examples=20, suppress_health_check=[HealthCheck.function_scoped_fixture])
+```
+
+### 4. Postgres Fixture Trap
+
+Local `db_session` fixtures calling `SessionLocal()` connect to real Postgres (not conftest SQLite), contaminating assertions with production DB state.
+
+**Fix**: Never define local `db_session` fixtures. Always use conftest `db` (SQLite in-memory).
+
+---
+
 ## ✨ Summary
 
 Successfully delivered a production-ready testing and monitoring infrastructure that:

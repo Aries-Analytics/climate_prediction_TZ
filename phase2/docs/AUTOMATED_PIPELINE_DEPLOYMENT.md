@@ -480,6 +480,52 @@ PARALLEL_INGESTION=true
 
 ---
 
-**Support**: For issues, check logs first, then consult troubleshooting section.  
-**Maintained By**: Tanzania Climate Prediction Team  
-**Last Verified**: January 22, 2026
+---
+
+## 📋 March 2026 Updates (Shadow Run Active)
+
+### Mar 8 — Scheduler Timezone Fix (Critical)
+
+**Problem**: Scheduler was running at 06:00 UTC (09:00 EAT) instead of 06:00 EAT.
+**Root Cause**: `CronTrigger.from_crontab()` does NOT inherit timezone from `BackgroundScheduler(timezone=...)` — it must be passed explicitly.
+
+```python
+# backend/app/services/pipeline/scheduler.py:215
+# CORRECT:
+trigger = CronTrigger.from_crontab(self.schedule, timezone=self.timezone)
+```
+
+**Verification**: Check scheduler logs for `+03:00` suffix on "Next scheduled run" — confirms Africa/Dar_es_Salaam is active.
+
+### Mar 8–10 — Shadow Run Active (Mar 7 – Jun 5, 2026)
+
+The system is now in **shadow run** mode — generating forward forecasts for Morogoro that will be evaluated against observed conditions once 3-month windows mature (~Jun 2026).
+
+| Field | Value |
+|---|---|
+| Location | Morogoro (PILOT_LOCATION_ID=6) |
+| Forecasts per run | 12 (3 trigger types × 4 horizons: 3/4/5/6 months) |
+| Schedule | Daily 06:00 EAT (`0 6 * * *`) |
+| Auto-evaluation starts | ~Jun 8, 2026 (Brier Scores) |
+
+### Mar 10 — Stale Advisory Lock Recovery
+
+If the scheduler fires but logs `"lock already held"` with no prior `"Pipeline execution starting"` in the same run window, the lock is stale from a previous interrupted session.
+
+```bash
+# Recovery:
+docker restart climate_pipeline_scheduler_dev
+# Confirmation: "No stale advisory locks found on startup"
+```
+
+Do NOT issue `SELECT pg_advisory_unlock(123456)` manually — the startup `_clear_stale_locks()` routine handles it correctly.
+
+### Mar 10 — Probability Conversion Update
+
+`ForecastLog.probability_score` is now computed via physical CDF thresholds (Kilombero rice phase thresholds from TARI/FAO) rather than sigmoid. See `backend/app/services/forecast_service.py:_raw_to_probability()`.
+
+---
+
+**Support**: For issues, check logs first, then consult troubleshooting section.
+**Maintained By**: Tanzania Climate Prediction Team
+**Last Verified**: March 10, 2026
