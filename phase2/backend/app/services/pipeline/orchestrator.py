@@ -105,31 +105,30 @@ class PipelineOrchestrator:
     def acquire_lock(self) -> bool:
         """
         Acquire execution lock to prevent concurrent runs.
-        
-        Uses a DEDICATED raw DB connection for the advisory lock, separate
-        from the ORM session. This prevents:
-        - Connection pool recycling breaking the lock/unlock pairing
-        - ORM commit()/rollback() accidentally releasing xact-level locks
-        
-        The lock is session-level (pg_try_advisory_lock) on its OWN connection.
-        Release happens when release_lock() explicitly closes this connection.
-        
+
+        Uses a DEDICATED raw DB connection (NullPool) for the advisory lock,
+        separate from the ORM session. NullPool ensures connection.close()
+        truly terminates the PostgreSQL backend — preventing stale session-level
+        advisory locks from persisting across runs due to connection pooling.
+
         Returns:
             True if lock acquired, False if already locked
         """
         try:
             from sqlalchemy import create_engine
+            from sqlalchemy.pool import NullPool
             from app.core.config import settings
-            
-            # Create a dedicated connection ONLY for holding the lock
-            engine = create_engine(settings.DATABASE_URL)
-            self._lock_connection = engine.connect()
-            
+
+            # NullPool: every close() truly closes the underlying Postgres connection,
+            # guaranteeing the session-level advisory lock is released.
+            self._lock_engine = create_engine(settings.DATABASE_URL, poolclass=NullPool)
+            self._lock_connection = self._lock_engine.connect()
+
             result = self._lock_connection.execute(
                 text("SELECT pg_try_advisory_lock(:lock_id)"),
                 {"lock_id": self.LOCK_ID}
             ).scalar()
-            
+
             if result:
                 logger.info(f"Acquired pipeline execution lock (ID: {self.LOCK_ID})")
                 return True
@@ -137,22 +136,35 @@ class PipelineOrchestrator:
                 logger.warning(f"Pipeline execution lock already held (ID: {self.LOCK_ID})")
                 self._lock_connection.close()
                 self._lock_connection = None
+                self._lock_engine.dispose()
+                self._lock_engine = None
                 return False
         except Exception as e:
             logger.error(f"Failed to acquire lock: {e}")
             if hasattr(self, '_lock_connection') and self._lock_connection:
                 self._lock_connection.close()
                 self._lock_connection = None
+            if hasattr(self, '_lock_engine') and self._lock_engine:
+                self._lock_engine.dispose()
+                self._lock_engine = None
             return False
-    
+
     def release_lock(self) -> None:
-        """Release execution lock by closing the dedicated lock connection.
-        
-        Closing the connection automatically releases the session-level
-        advisory lock. This is guaranteed — no silent failures.
+        """Release execution lock by explicitly unlocking then closing the connection.
+
+        Calls pg_advisory_unlock explicitly before close() as a belt-and-suspenders
+        measure, then disposes the NullPool engine to guarantee the underlying
+        PostgreSQL session terminates and the advisory lock is freed.
         """
         try:
             if hasattr(self, '_lock_connection') and self._lock_connection:
+                try:
+                    self._lock_connection.execute(
+                        text("SELECT pg_advisory_unlock(:lock_id)"),
+                        {"lock_id": self.LOCK_ID}
+                    )
+                except Exception:
+                    pass  # Best-effort; engine.dispose() will close the connection regardless
                 self._lock_connection.close()
                 self._lock_connection = None
                 logger.info(f"Released pipeline execution lock (ID: {self.LOCK_ID})")
@@ -161,6 +173,14 @@ class PipelineOrchestrator:
         except Exception as e:
             logger.error(f"Failed to release lock: {e}")
             self._lock_connection = None
+        finally:
+            # Always dispose the engine — with NullPool this terminates the Postgres backend
+            if hasattr(self, '_lock_engine') and self._lock_engine:
+                try:
+                    self._lock_engine.dispose()
+                except Exception:
+                    pass
+                self._lock_engine = None
     
     def execute_pipeline(
         self, 
