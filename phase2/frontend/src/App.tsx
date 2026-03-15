@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react'
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
 import CssBaseline from '@mui/material/CssBaseline'
 import { CircularProgress, Box } from '@mui/material'
@@ -17,6 +17,7 @@ const RiskManagementDashboard = lazy(() => import('./pages/RiskManagementDashboa
 const ForecastDashboard = lazy(() => import('./pages/ForecastDashboard'))
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'))
 const EvidencePackDashboard = lazy(() => import('./pages/EvidencePackDashboard'))
+const LandingPage = lazy(() => import('./pages/LandingPage'))
 
 // Loading component
 const LoadingFallback = () => (
@@ -62,7 +63,7 @@ function App() {
               <Route path="evidence" element={<Suspense fallback={<LoadingFallback />}><EvidencePackDashboard /></Suspense>} />
               <Route path="admin" element={<Suspense fallback={<LoadingFallback />}><AdminDashboard /></Suspense>} />
             </Route>
-            <Route path="/" element={<Navigate to="/dashboard/executive" replace />} />
+            <Route path="/" element={<Suspense fallback={<LoadingFallback />}><LandingPage /></Suspense>} />
           </Routes>
         </Router>
       </AuthProvider>

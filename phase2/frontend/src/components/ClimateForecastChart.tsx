@@ -39,7 +39,7 @@ interface Props {
     title?: string;
 }
 
-export default function ClimateForecastChart({ forecasts, title = "Monthly Rainfall Deficit Forecast" }: Props) {
+export default function ClimateForecastChart({ forecasts }: Props) {
 
     // Transform forecast data to monthly deficit visualization
     const chartData = useMemo(() => {
@@ -164,7 +164,7 @@ export default function ClimateForecastChart({ forecasts, title = "Monthly Rainf
 
     return (
         <Box sx={{ height: '400px', width: '100%' }}>
-            <Bar options={options} data={chartData} />
+            <Bar options={options} data={chartData as any} />
         </Box>
     );
 }

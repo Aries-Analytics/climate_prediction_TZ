@@ -109,7 +109,7 @@ const groupAndSortForecasts = (forecasts: Forecast[]): Map<string, Forecast[]> =
   })
   
   // Sort each group chronologically by targetDate
-  grouped.forEach((group, key) => {
+  grouped.forEach((group) => {
     group.sort((a, b) => new Date(a.targetDate).getTime() - new Date(b.targetDate).getTime())
   })
   

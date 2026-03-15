@@ -1,8 +1,14 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import path from 'path'
 
 export default defineConfig({
   plugins: [react()],
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
   server: {
     port: 3000,
     host: true,
@@ -34,6 +40,8 @@ export default defineConfig({
           chartjs: ['chart.js', 'react-chartjs-2'],
           // MUI into its own cacheable chunk
           mui: ['@mui/material', '@mui/icons-material', '@emotion/react', '@emotion/styled'],
+          // Landing page icons — separate from dashboard bundle
+          landing: ['lucide-react'],
         }
       }
     }

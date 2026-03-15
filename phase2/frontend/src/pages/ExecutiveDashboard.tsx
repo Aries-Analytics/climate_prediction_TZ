@@ -4,7 +4,6 @@ import {
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   CircularProgress, Divider, LinearProgress, Tooltip
 } from '@mui/material'
-import Plot from 'react-plotly.js'
 import axios from 'axios'
 import { API_BASE_URL } from '../config/api'
 import KPICard from '../components/common/KPICard'

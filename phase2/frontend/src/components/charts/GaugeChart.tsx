@@ -17,7 +17,7 @@ const GaugeChart: React.FC<GaugeChartProps> = ({
     title,
     min = 0,
     max = 100,
-    units = 'mm'
+    units: _units = 'mm'
 }) => {
     const theme = useTheme();
 

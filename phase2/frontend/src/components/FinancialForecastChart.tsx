@@ -188,8 +188,6 @@ export default function FinancialForecastChart({
         )
     }
 
-    const exceedsReserves = totalExposure > reserves
-
     return (
         <Card>
             <CardContent>

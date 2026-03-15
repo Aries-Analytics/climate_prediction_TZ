@@ -90,29 +90,6 @@ const getMetricColor = (value: number, type: 'payout' | 'frequency' | 'severity'
     }
 };
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-interface RegionProperties {
-    shapeName: string;
-    shapeISO: string;
-    shapeID: string;
-    shapeGroup: string;
-    shapeType: string;
-    name?: string; // Add optional name
-    Name?: string; // Add optional Name
-    avgSeverity?: number;
-    counts?: {
-        drought: number;
-        flood: number;
-        crop_failure: number;
-    };
-    locationId?: number;
-    totalPayout?: number;
-    triggerCount?: number;
-    triggerStatus?: 'critical' | 'warning' | 'safe';
-    triggerDeviation?: number;
-    triggerThreshold?: number;
-    triggerType?: string;
-}
 
 interface LocationRiskData {
     locationId: number

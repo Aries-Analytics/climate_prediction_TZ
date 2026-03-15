@@ -10,15 +10,6 @@ interface PayoutActionCardProps {
     totalFarmers?: number;
 }
 
-const PAYOUT_RATES: Reading = {
-    'drought': 60,
-    'flood': 75,
-    'crop_failure': 90,
-    'excessive_rainfall': 75, // mapping for consistency
-    'deficit_rainfall': 60    // mapping for consistency
-};
-
-type Reading = { [key: string]: number };
 
 const PayoutActionCard: React.FC<PayoutActionCardProps> = ({
     activeTriggers = [],

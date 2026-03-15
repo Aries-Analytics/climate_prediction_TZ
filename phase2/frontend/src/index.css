@@ -1,3 +1,29 @@
+/* Tailwind — scoped to landing page only.
+   preflight is disabled in tailwind.config.ts so MUI styles are not affected. */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* shadcn CSS custom properties */
+@layer base {
+  :root {
+    --background: 222 47% 11%;
+    --foreground: 0 0% 98%;
+    --primary: 172 66% 35%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 222 47% 18%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 222 47% 18%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 186 80% 45%;
+    --accent-foreground: 222 47% 11%;
+    --border: 222 47% 22%;
+    --input: 222 47% 18%;
+    --ring: 172 66% 35%;
+    --radius: 0.5rem;
+  }
+}
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',

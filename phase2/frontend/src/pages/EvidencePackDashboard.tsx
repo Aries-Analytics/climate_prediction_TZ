@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
     Box,
     Typography,
@@ -16,7 +16,6 @@ import {
     Chip,
     Button,
 } from '@mui/material';
-import AssessmentIcon from '@mui/material/Icon';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import ScienceIcon from '@mui/icons-material/Science';
 import GetAppIcon from '@mui/icons-material/GetApp';

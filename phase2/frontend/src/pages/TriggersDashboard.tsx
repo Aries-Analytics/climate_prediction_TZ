@@ -19,7 +19,6 @@ import axios from 'axios'
 import { API_BASE_URL } from '../config/api'
 import LoadingSpinner from '../components/common/LoadingSpinner'
 import DataTable from '../components/common/DataTable'
-import Chart from '../components/charts/Chart'
 import GeographicMap from '../components/GeographicMap'
 import GaugeChart from '../components/charts/GaugeChart'
 import Sparkline from '../components/charts/Sparkline'
@@ -47,10 +46,6 @@ const getPhaseImportance = (stage: string) => {
   if (s.includes('vegetative')) return { label: 'HIGH PRIORITY', color: 'warning' as const };
   if (s.includes('germination')) return { label: 'MODERATE', color: 'info' as const };
   return { label: 'LOW PRIORITY', color: 'default' as const };
-}
-
-const formatCurrency = (value: number) => {
-  return '$' + Math.round(value).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
 }
 
 export default function TriggersDashboard() {
@@ -181,7 +176,7 @@ export default function TriggersDashboard() {
     {
       id: 'trend',
       label: 'Trend (3 Mo)',
-      format: (val: any, row: any) => {
+      format: (_val: any, row: any) => {
         if (!row.history || row.history.length === 0) {
           return (
             <Typography variant="caption" color="text.secondary">
@@ -254,7 +249,6 @@ export default function TriggersDashboard() {
               const typeAlerts = filteredAlerts.filter(a => a.alert_type === tt)
               const triggered = typeAlerts.length
               const worst = typeAlerts.reduce((w, a) => a.deviation < w ? a.deviation : w, 0)
-              const color = triggered > 0 ? 'error' : 'success'
               return (
                 <Grid item xs={12} sm={4} key={tt}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>

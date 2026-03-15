@@ -6,15 +6,9 @@ import {
   Card,
   CardContent,
   Alert,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   Chip,
-  SelectChangeEvent,
   Button,
   Stack,
-  Tooltip,
   Divider
 } from '@mui/material'
 import {
@@ -31,7 +25,6 @@ import { API_BASE_URL } from '../config/api'
 import LoadingSpinner from '../components/common/LoadingSpinner'
 import EmptyState from '../components/common/EmptyState'
 import Chart from '../components/charts/Chart'
-import { prepareForecastTraces } from '../utils/forecastChartUtils'
 import GeographicMap from '../components/GeographicMap'
 import FinancialForecastChart from '../components/FinancialForecastChart'
 import ClimateForecastChart from '../components/ClimateForecastChart'
@@ -71,16 +64,14 @@ interface ForecastWithRecommendations extends Forecast {
 export default function ForecastDashboard() {
   const [forecasts, setForecasts] = useState<Forecast[]>([])
   const [recommendations, setRecommendations] = useState<Recommendation[]>([])
-  const [selectedTriggerType, setSelectedTriggerType] = useState<string>('all')
-  const [selectedHorizon, setSelectedHorizon] = useState<string>('all')
+  const [selectedTriggerType] = useState<string>('all')
+  const [selectedHorizon] = useState<string>('all')
   const [isLoading, setIsLoading] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [, setSuccessMessage] = useState<string | null>(null)
 
   const [portfolioRisk, setPortfolioRisk] = useState<any>(null)
-  const [triggerTypes] = useState(['drought', 'flood', 'crop_failure'])
-  const [horizons] = useState([3, 4, 5, 6])
 
   // Transform forecasts into location risk data for map (MUST be before conditional returns)
   const locationRisk = useMemo(() => {
@@ -199,13 +190,6 @@ export default function ForecastDashboard() {
     }
   }
 
-  const handleTriggerTypeChange = (event: SelectChangeEvent) => {
-    setSelectedTriggerType(event.target.value)
-  }
-
-  const handleHorizonChange = (event: SelectChangeEvent) => {
-    setSelectedHorizon(event.target.value)
-  }
 
   const handleExportCSV = () => {
     const filteredForecasts = getFilteredForecasts()
