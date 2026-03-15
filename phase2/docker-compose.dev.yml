@@ -67,7 +67,7 @@ services:
       - GOOGLE_APPLICATION_CREDENTIALS=/root/.config/earthengine/credentials
       - PIPELINE_TIMEZONE=Africa/Dar_es_Salaam
       - ALERT_EMAIL_ENABLED=false
-      - ALERT_SLACK_ENABLED=true
+      - ALERT_SLACK_ENABLED=${ALERT_SLACK_ENABLED:-false}  # false locally; server .env sets true
       - ALERT_SLACK_WEBHOOK_URL=${ALERT_SLACK_WEBHOOK_URL}
       - ECMWF_DATASTORES_URL=https://cds.climate.copernicus.eu/api
       - ECMWF_DATASTORES_KEY=${ERA5_API_KEY}
