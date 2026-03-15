@@ -16,8 +16,8 @@
 | **Period** | March 7, 2026 → June 5, 2026 |
 | **Purpose** | Forward validation of 3–6 month forecasts against observed outcomes |
 | **Schedule** | Daily 06:00 EAT (`0 6 * * *`, Africa/Dar_es_Salaam) |
-| **Forecasts/run** | 12 (4 trigger types × 3 horizons) |
-| **Trigger types** | drought, flood, crop_failure, heat_stress |
+| **Forecasts/run** | 12 (3 trigger types × 4 horizons) |
+| **Trigger types** | drought, flood, crop_failure *(heat_stress excluded — pending dedicated temperature model)* |
 | **Horizons** | 3 months (primary/trigger-eligible), 4–6 months (advisory) |
 | **Auto-evaluation** | ~June 8, 2026 (Brier Score computation as 3-month windows mature) |
 
