@@ -32,7 +32,7 @@ export default function LandingNavbar() {
             <img
               src="/hewasense-logo.png"
               alt="HewaSense"
-              className="h-10 transition-transform duration-200 group-hover:scale-105"
+              className="h-14 transition-transform duration-200 group-hover:scale-105"
               onError={(e) => {
                 const target = e.currentTarget
                 target.style.display = 'none'

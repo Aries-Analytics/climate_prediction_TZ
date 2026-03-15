@@ -15,7 +15,7 @@ export default function LandingFooter() {
             <img
               src="/hewasense-logo.png"
               alt="HewaSense"
-              className="h-8"
+              className="h-12"
               onError={(e) => {
                 e.currentTarget.style.display = 'none';
                 (e.currentTarget.nextElementSibling as HTMLElement | null)?.removeAttribute('hidden')
