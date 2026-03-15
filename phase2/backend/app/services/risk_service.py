@@ -16,36 +16,44 @@ PAYOUT_RATES = {
 }
 PREMIUM_PER_FARMER = 91  # Validated sustainable premium from backtesting ($91/farmer)
 HIGH_RISK_THRESHOLD = 0.75
+PRIMARY_HORIZON_MAX = 4  # Months: primary tier (3-4) is insurance-trigger eligible; advisory (5-6) is early warning only
 
 
 def get_portfolio_metrics(db: Session) -> dict:
     """
-    Calculate portfolio-level risk metrics for Morogoro pilot
-    Based on forecasts, not historical triggers
+    Calculate portfolio-level risk metrics for Morogoro pilot.
+
+    Uses PRIMARY TIER forecasts only (horizon_months <= 4).
+    Advisory tier (5-6 months) is early warning only — never triggers a payout.
+    Per trigger_type, uses the MAX probability forecast to avoid double-counting
+    across horizons (a farmer is paid once per event, not once per forecast row).
     """
     today = date.today()
-    horizon_end = today + timedelta(days=180)  # 6-month horizon
-    
-    # Get high-risk forecasts for Morogoro
-    high_risk_forecasts = db.query(Forecast).filter(
+    horizon_end = today + timedelta(days=180)  # 6-month window
+
+    # Primary tier only: one expected payout per trigger_type at max probability
+    best_per_type = db.query(
+        Forecast.trigger_type,
+        func.max(Forecast.probability).label('max_prob')
+    ).filter(
         and_(
             Forecast.location_id == PILOT_LOCATION_ID,
             Forecast.probability >= HIGH_RISK_THRESHOLD,
             Forecast.target_date >= today,
-            Forecast.target_date <= horizon_end
+            Forecast.target_date <= horizon_end,
+            Forecast.horizon_months <= PRIMARY_HORIZON_MAX
         )
-    ).all()
-    
+    ).group_by(Forecast.trigger_type).all()
+
     # Calculate expected payouts
     expected_payouts = 0.0
     trigger_breakdown = {"drought": 0.0, "flood": 0.0, "crop_failure": 0.0}
 
-    for forecast in high_risk_forecasts:
-        trigger_type = forecast.trigger_type
+    for trigger_type, max_prob in best_per_type:
         payout_rate = PAYOUT_RATES.get(trigger_type, 0)
-        payout = TOTAL_FARMERS * payout_rate * float(forecast.probability)
+        payout = TOTAL_FARMERS * payout_rate * float(max_prob)
         expected_payouts += payout
-        trigger_breakdown[trigger_type] += payout
+        trigger_breakdown[trigger_type] = payout
     
     # Calculate total premium income (annual)
     total_premium_income = TOTAL_FARMERS * PREMIUM_PER_FARMER

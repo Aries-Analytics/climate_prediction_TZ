@@ -109,9 +109,12 @@ def get_active_alerts(
     from datetime import timedelta
     
     # Query Forecast directly (Source of Truth for Portfolio Risk)
+    # PRIMARY TIER ONLY (horizon_months <= 4): these are insurance-trigger eligible.
+    # Advisory tier (5-6 months) is early warning — excluded from payout alerts.
     query = db.query(Forecast).filter(
         Forecast.target_date >= date.today(),
-        Forecast.probability >= 0.75  # High confidence threshold
+        Forecast.probability >= 0.75,  # High confidence threshold
+        Forecast.horizon_months <= 4   # Primary tier only
     )
     
     # PILOT RESTRICTION: Default to Morogoro if no location specified

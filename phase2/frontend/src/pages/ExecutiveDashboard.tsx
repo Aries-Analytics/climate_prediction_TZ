@@ -13,7 +13,7 @@ const generateMockData = (year: number) => {
   // 1. Solvency History (5 Year Trend) - Scaled to Pilot Size
   // MOROGORO PILOT: $150k reserves, ~$60-90k max annual payout exposure
   const STARTING_CAPITAL = 150000; // $150k - Morogoro pilot reserves
-  const ANNUAL_PREMIUMS = 75000; // ~$75/farmer × 1000 farmers (estimated)
+  const ANNUAL_PREMIUMS = 91000;  // $91/farmer × 1000 farmers (validated from backtesting)
 
   let cumulativeReserves = STARTING_CAPITAL;
   const solvencyTrend = Array.from({ length: 5 }, (_, i) => {
