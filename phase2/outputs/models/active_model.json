@@ -11,12 +11,5 @@
     "expected_features": 83,
     "trained_at": "2026-03-05T07:40:45.689433+00:00"
   },
-  "fallback_model": {
-    "filename": "lstm_climate.pkl",
-    "type": "lstm",
-    "version": "lstm_vleakage_",
-    "r2_score": 0.7865704699408195,
-    "expected_features": 83,
-    "trained_at": "2026-03-05T07:40:45.689433+00:00"
-  }
+  "fallback_model": null
 }
