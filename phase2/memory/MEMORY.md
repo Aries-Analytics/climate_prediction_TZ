@@ -30,9 +30,9 @@
 - **Production model file:** Determined by `outputs/models/active_model.json` (currently `xgboost_climate.pkl`, R²=0.8666, 83 features). NEVER hardcode model names
 - Model selection driven entirely by `active_model.json` — if missing or invalid, fail explicitly (GOTCHA Law #1)
 - **Pipeline schedule (shadow-run ACTIVE):** `0 6 * * *` Africa/Dar_es_Salaam (6 AM EAT daily). Deployed to `root@37.27.200.227`, `docker-compose.dev.yml`. Scheduler confirmed next run `2026-03-09 06:00:00+03:00`.
-- **Pipeline status (March 2026):** Shadow run ACTIVE Mar 7 – Jun 5, 2026. 12 forecasts/run (3 triggers × 4 horizons × Morogoro). Evidence Pack accumulates; Brier Score auto-evaluation starts ~Jun 8.
+- **Pipeline status (March 2026):** Shadow run ACTIVE Mar 7 – Jun 5, 2026. 12 forecasts/run (3 triggers × 4 horizons × Morogoro). 2 valid runs logged (Mar 11, Mar 15). Mar 12–14 blocked by stale lock (now fixed). Evidence Pack accumulates; Brier Score auto-evaluation starts ~Jun 8.
 - Lock contention alerts are suppressed in Slack (expected during brief overlaps)
-- **Advisory lock:** Uses a **dedicated raw DB connection** (separate from ORM session). ORM `commit()` works normally without releasing the lock. Lock released by closing the dedicated connection.
+- **Advisory lock:** Uses a **dedicated NullPool engine + connection** (separate from ORM session). ORM `commit()` works normally without releasing the lock. Lock released by explicit `pg_advisory_unlock` + `engine.dispose()`. NullPool is mandatory — QueuePool keeps the Postgres session alive and leaks the lock.
 - **Scheduler job store:** In-memory (NOT persistent SQLAlchemyJobStore). Prevents phantom runs from stale `next_run_times` after container restarts.
 - Scheduler clears stale advisory locks on startup (`_clear_stale_locks()` terminates old PostgreSQL backends)
 - Forecast lookback: 7 months + `.replace(day=1)` to capture ≥6 monthly records
@@ -67,6 +67,8 @@
 - **LSTM fallback in load_model():** Fallback candidates wired despite shadow-run primary-only requirement — violated GOTCHA Law #1. Removed 2026-03-10. Commit `97da796`.
 - **Sigmoid probability conversion (wrong direction + physically meaningless):** `sigmoid(z_score)` gave low P for low rainfall (wrong for drought), identical values across all trigger types, no connection to Kilombero contract thresholds. Replaced 2026-03-10 with `_raw_to_probability()` using `norm.cdf((phase_threshold - predicted_mm) / rmse_mm)` per trigger type, phase-aware via `get_kilombero_stage()`. Commit `fdb30b9`.
 - **Stale advisory lock blocks 6AM shadow run:** `pg_try_advisory_lock(123456)` held from prior interrupted session → scheduler fires but skips with "lock already held". Fix: `docker restart climate_pipeline_scheduler_dev`. Startup `_clear_stale_locks()` clears it. Signal: "No stale advisory locks found on startup" in logs. Occurred 2026-03-10.
+- **SQLAlchemy QueuePool keeps Postgres session alive after connection.close():** Session-level advisory lock persists indefinitely. Permanent fix (2026-03-15): use `NullPool` in `acquire_lock()` + explicit `pg_advisory_unlock` + `engine.dispose()` in `release_lock()`. Blocked Mar 12–14 runs. Commit `55055b8`.
+- **mark_ingestion_complete() never called from orchestrator:** `source_ingestion_tracking` table stayed empty — every run re-fetched 180 days, DB frozen at 1,884. Fix (2026-03-15): call after each source succeeds in `execute_ingestion()`. Seeded table with actual last data dates. Commit `7b9716c`.
 
 ## Q2 2026 Roadmap (Deferred)
 
@@ -132,11 +134,20 @@
 - **Check docs/configs before inventing constants.** `configs/trigger_thresholds.yaml` has calibrated thresholds already. Added 2026-03-09.
 - **Scheduler "Next run" +03:00 suffix = TZ fix confirmed.** Before TZ fix it showed +00:00; after fix +03:00. Reliable health signal.
 - **0 rows in forecast_logs before 6AM EAT is normal.** Not a bug — shadow run fires at 06:00 EAT only.
-- **Stale advisory lock → container restart, not DB query.** Session-level lock survives ORM commits/rollbacks. Diagnostic: scheduler fires but logs "lock already held" with no prior "Pipeline execution starting". Fix: `docker restart climate_pipeline_scheduler_dev`. Added 2026-03-10.
+- **Stale advisory lock → check pg_stat_activity first.** Session-level lock survives ORM commits/rollbacks AND container restarts if Postgres session is still alive. Diagnostic: `SELECT a.pid FROM pg_stat_activity a JOIN pg_locks l ON a.pid=l.pid WHERE l.objid=123456` → kill PID, then restart scheduler. Root cause is QueuePool keeping session alive — permanent fix uses NullPool. Added 2026-03-15.
+- **Pipeline math: 3 trigger types × 4 horizons = 12 forecasts/run.** heat_stress excluded (rainfall model ≠ temperature model). Horizons: 3, 4 (primary/trigger-eligible), 5, 6 (advisory). Added 2026-03-15.
+- **DB total frozen = source_ingestion_tracking is empty.** Every run logs "No tracking record found". mark_ingestion_complete() must be called explicitly after each source succeeds — it is not automatic. Added 2026-03-15.
 - **Sigmoid is directionally wrong for drought probability.** Use `norm.cdf((threshold - predicted_mm) / rmse)` anchored to physical Kilombero thresholds from `rice_thresholds.RAINFALL_THRESHOLDS`. Added 2026-03-10.
 - **Two config trap: CLI vs VS Code extension MCP.** Project-scoped MCP servers in `.claude.json` must match the EXACT working directory path the extension uses — parent dir ≠ subdirectory. Added 2026-03-10.
 
 ---
 
-*Last updated: 2026-03-10*
+## Logs Index
+
+| Date | Key Events |
+|------|-----------|
+| 2026-03-10 | Sigmoid→CDF fix, LSTM fallback removal, doc sweep |
+| 2026-03-15 | Stale lock NullPool fix, incremental tracking fix, heat_stress doc, LSTM JSON cleanup |
+
+*Last updated: 2026-03-15*
 *This file is the source of truth for persistent facts. Edit directly to update.*

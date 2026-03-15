@@ -101,6 +101,10 @@ class PipelineOrchestrator:
             backoff_factor=1.0,  # No exponential increase
             max_delay=300.0
         )
+        # Advisory lock resources — initialised explicitly so release_lock() is
+        # safe to call even if acquire_lock() was never called (e.g. in tests).
+        self._lock_engine = None
+        self._lock_connection = None
     
     def acquire_lock(self) -> bool:
         """
@@ -163,8 +167,8 @@ class PipelineOrchestrator:
                         text("SELECT pg_advisory_unlock(:lock_id)"),
                         {"lock_id": self.LOCK_ID}
                     )
-                except Exception:
-                    pass  # Best-effort; engine.dispose() will close the connection regardless
+                except Exception as unlock_err:
+                    logger.warning(f"pg_advisory_unlock failed (non-fatal, proceeding with dispose): {unlock_err}")
                 self._lock_connection.close()
                 self._lock_connection = None
                 logger.info(f"Released pipeline execution lock (ID: {self.LOCK_ID})")

@@ -3,7 +3,7 @@
 **Status**: ✅ **SHADOW RUN ACTIVE**
 **Pilot**: Morogoro (Kilombero Basin)
 **Version**: 4.0
-**Last Updated**: March 10, 2026
+**Last Updated**: March 15, 2026
 
 > Supersedes: `docs/archive/phase3/AUTOMATED_PIPELINE_STATUS_JAN2026.md`
 
@@ -23,11 +23,11 @@
 
 ---
 
-## 📊 Current State (as of March 10, 2026)
+## 📊 Current State (as of March 15, 2026)
 
 | Metric | Value |
 |---|---|
-| `forecast_logs` rows | ~90 (12/day × days running) |
+| `forecast_logs` rows | 24 (2 valid runs: Mar 11, Mar 15 — Mar 12–14 blocked by stale lock, now fixed) |
 | All log status | `pending` (awaiting Jun 2026 outcome data) |
 | `threshold_used` | Populated from Mar 9 onwards (0.65 drought/flood, 0.60 others) |
 | `forecast_distribution` | Populated from Mar 9 onwards (horizon_tier, is_insurance_trigger_eligible, confidence bounds) |
@@ -43,7 +43,7 @@
 - **Image**: `docker-compose.dev.yml`
 - **Server**: `root@37.27.200.227` (hewasense.majaribio.com)
 - **Timezone**: Africa/Dar_es_Salaam (explicit on `CronTrigger.from_crontab()`)
-- **Lock**: `pg_try_advisory_lock(123456)` on dedicated raw connection (not ORM)
+- **Lock**: `pg_try_advisory_lock(123456)` on dedicated **NullPool** connection — NullPool mandatory, QueuePool leaks session-level advisory locks
 - **Job store**: In-memory (not persistent — prevents phantom runs after restarts)
 
 ### Forecast Generation
@@ -73,9 +73,14 @@ ssh hewasense "docker logs climate_pipeline_scheduler_dev --tail 20 2>&1"
 ### Stale advisory lock (run skipped)
 ```bash
 # Symptom: "lock already held" with no prior "Pipeline execution starting"
-docker restart climate_pipeline_scheduler_dev
+# Step 1: identify and kill the zombie Postgres session
+docker exec climate_db_dev psql -U user -d climate_dev -c \
+  "SELECT pg_terminate_backend(a.pid) FROM pg_stat_activity a JOIN pg_locks l ON a.pid=l.pid WHERE l.locktype='advisory' AND l.objid=123456;"
+# Step 2: restart scheduler so _clear_stale_locks() runs on startup
+docker compose -f docker-compose.dev.yml restart pipeline-scheduler
 # Confirmation: "No stale advisory locks found on startup"
 ```
+**Root cause (permanent fix deployed Mar 15):** `acquire_lock()` now uses `NullPool` — ensures `connection.close()` truly terminates the Postgres session. `release_lock()` calls `pg_advisory_unlock` explicitly before dispose.
 
 ### Check forecast_logs count
 ```bash
@@ -101,6 +106,7 @@ docker exec climate_backend_dev python scripts/seed_models_and_forecasts.py
 | Mar 8, 2026 | Scheduler TZ bug fixed (UTC → EAT) |
 | Mar 9, 2026 | ForecastLog.threshold_used + forecast_distribution populated |
 | Mar 10, 2026 | LSTM fallback removed; CDF probability conversion deployed |
+| Mar 15, 2026 | NullPool advisory lock fix; incremental tracking wired; heat_stress doc corrected |
 | ~Jun 8, 2026 | First Brier Score auto-evaluation (3-month windows mature) |
 
 ---
