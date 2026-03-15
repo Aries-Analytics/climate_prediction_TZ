@@ -16,7 +16,7 @@ const STEPS: Step[] = [
     icon: CloudDownload,
     title: 'Ingest Climate Data',
     description:
-      'ERA5 reanalysis, CHIRPS precipitation, and Google Earth Engine satellite indices are ingested daily via the automated pipeline scheduler at 6 AM EAT.',
+      'ERA5 reanalysis, CHIRPS precipitation, and Google Earth Engine satellite data are ingested daily via the automated pipeline at 6 AM EAT.',
     gradient: 'from-cyan-500 to-teal-500',
   },
   {
@@ -24,7 +24,7 @@ const STEPS: Step[] = [
     icon: Brain,
     title: 'ML Forecast Engine',
     description:
-      'Gradient-boosted ensemble models produce 12-horizon probabilistic forecasts for drought, flood, and crop failure with cross-validated R² confidence intervals.',
+      'The forecast engine produces probabilistic risk assessments for drought, flood, and crop failure — each with confidence metrics that quantify model certainty before a trigger decision is made.',
     gradient: 'from-teal-500 to-teal-600',
   },
   {
@@ -40,7 +40,7 @@ const STEPS: Step[] = [
     icon: DollarSign,
     title: 'Automated Payout',
     description:
-      'TIRA-compliant evidence packs are generated automatically. Payouts are calculated by formula — no loss adjuster, no claim filing, no delay.',
+      'The payout amount is calculated by formula based on the breach magnitude — farmer receives funds directly, with no claim filing, no loss adjuster, and no delay.',
     gradient: 'from-amber-500 to-amber-400',
     isLast: true,
   },

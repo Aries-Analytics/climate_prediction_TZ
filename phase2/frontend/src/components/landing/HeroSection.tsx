@@ -1,9 +1,7 @@
-import { useNavigate } from 'react-router-dom'
 import { ArrowRight, ChevronDown } from 'lucide-react'
 
 // Deterministic positions for constellation dots (avoids random re-renders)
 const DOTS = [
-  { top: '15%', left: '8%',  delay: '0s' },
   { top: '25%', left: '88%', delay: '0.4s' },
   { top: '45%', left: '5%',  delay: '0.8s' },
   { top: '60%', left: '92%', delay: '1.2s' },
@@ -13,12 +11,10 @@ const DOTS = [
   { top: '80%', left: '85%', delay: '1.0s' },
   { top: '35%', left: '95%', delay: '1.4s' },
   { top: '65%', left: '3%',  delay: '1.8s' },
-  { top: '10%', left: '50%', delay: '0.3s' },
   { top: '88%', left: '45%', delay: '0.9s' },
 ]
 
 export default function HeroSection() {
-  const navigate = useNavigate()
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
@@ -58,7 +54,7 @@ export default function HeroSection() {
 
         {/* Headline */}
         <h1 className="text-4xl sm:text-5xl lg:text-7xl font-extrabold text-white leading-[1.1] mb-6 animate-fade-in-up tracking-tight">
-          AI-Powered Climate{' '}
+          AI-Powered{' '}
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-cyan-400">
             Parametric Insurance
           </span>
@@ -67,15 +63,17 @@ export default function HeroSection() {
 
         {/* Sub-headline */}
         <p className="text-slate-300 text-lg sm:text-xl max-w-3xl mx-auto mb-10 leading-relaxed animate-fade-in-up">
-          HewaSense protects smallholder farmers in the Kilombero Basin from drought,
-          flood, and crop failure using machine-learning forecasts, transparent
-          parametric triggers, and TIRA-compliant evidence packs — no adjuster required.
+          HewaSense aims to protect smallholder farmers across Tanzania's high-risk
+          agricultural zones — starting with the Kilombero Basin — from drought, flood,
+          and crop failure. When a trigger is breached, payouts are automatically
+          calculated — no loss adjuster,
+          no claim filing, no delay.
         </p>
 
         {/* CTAs */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-fade-in-up">
           <button
-            onClick={() => navigate('/login')}
+            onClick={() => window.open('/login', '_blank', 'noopener,noreferrer')}
             className="flex items-center gap-2 bg-teal-600 hover:bg-teal-500 text-white px-8 py-3.5 rounded-xl font-semibold text-base transition-all duration-200 hover:scale-105 hover:shadow-xl hover:shadow-teal-500/25"
           >
             Access Dashboard

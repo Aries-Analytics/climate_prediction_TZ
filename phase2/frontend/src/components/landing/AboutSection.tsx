@@ -53,7 +53,7 @@ export default function AboutSection() {
           <div className="bg-[#0f2040] border border-teal-600/20 rounded-2xl p-8">
             <div className="text-center mb-6">
               <div className="inline-block bg-teal-600/20 rounded-xl px-4 py-2 text-teal-300 text-sm font-medium">
-                HewaSense Pilot 2024–2025
+                HewaSense Pilot 2025–2026
               </div>
             </div>
             <div className="space-y-0">

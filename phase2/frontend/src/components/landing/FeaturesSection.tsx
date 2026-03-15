@@ -1,4 +1,4 @@
-import { BarChart3, Shield, FileText, Activity, CloudRain, BadgeCheck } from 'lucide-react'
+import { BarChart3, Shield, FileText, Activity, CloudRain, Coins } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
 interface Feature {
@@ -13,21 +13,21 @@ const FEATURES: Feature[] = [
     icon: BarChart3,
     title: 'ML Forecasting',
     description:
-      'Gradient-boosted ensemble with 12-month horizon, cross-validated R² metrics, and feature importance transparency for regulatory audit.',
+      'Probabilistic forecasts for drought, flood, and crop failure — issued ahead of the season with confidence metrics, so insurers and agronomists can act before losses occur, not after.',
     badge: 'Model Performance',
   },
   {
     icon: Shield,
     title: 'Parametric Triggers',
     description:
-      'Rule-based strike thresholds for drought, flood, and crop failure. Trigger rates calibrated to 15–30% actuarial target bands.',
+      'Independently verifiable strike thresholds for drought, flood, and crop failure — calibrated against historical climate data so trigger frequency is actuarially sound and commercially viable.',
     badge: 'Trigger Events',
   },
   {
     icon: FileText,
     title: 'Evidence Packs',
     description:
-      'Auto-generated TIRA-compliant evidence bundles with climate data provenance, model confidence intervals, and payout calculation.',
+      'For every trigger event, the platform auto-generates a structured evidence report — documenting the forecast, the threshold breach, and the basis for payout. Ready to download for regulatory review or stakeholder reporting.',
     badge: 'Evidence Pack',
   },
   {
@@ -45,11 +45,11 @@ const FEATURES: Feature[] = [
     badge: 'Climate Insights',
   },
   {
-    icon: BadgeCheck,
-    title: 'TIRA-Compliant',
+    icon: Coins,
+    title: 'Payout Analytics',
     description:
-      'Designed for Tanzania Insurance Regulatory Authority compliance with auditable data pipelines and transparent regulatory reporting.',
-    badge: 'Regulatory',
+      'Track cumulative payout exposure, loss ratios, and per-peril trigger frequency across the active policy portfolio with season-over-season comparison.',
+    badge: 'Analytics',
   },
 ]
 

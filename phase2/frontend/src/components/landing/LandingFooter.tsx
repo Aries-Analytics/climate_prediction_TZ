@@ -8,14 +8,14 @@ export default function LandingFooter() {
   return (
     <footer className="bg-[#040d1a] border-t border-teal-600/10 py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className="flex flex-col items-center gap-6">
 
           {/* Brand */}
           <div className="flex items-center">
             <img
               src="/hewasense-logo.png"
               alt="HewaSense"
-              className="h-12"
+              className="h-24"
               onError={(e) => {
                 e.currentTarget.style.display = 'none';
                 (e.currentTarget.nextElementSibling as HTMLElement | null)?.removeAttribute('hidden')

@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
 
 const NAV_LINKS = [
   { label: 'About', href: '#about' },
@@ -9,7 +8,6 @@ const NAV_LINKS = [
 
 export default function LandingNavbar() {
   const [scrolled, setScrolled] = useState(false)
-  const navigate = useNavigate()
 
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 20)
@@ -26,13 +24,13 @@ export default function LandingNavbar() {
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex items-center justify-between h-28">
           {/* Logo */}
           <a href="/" className="flex items-center group">
             <img
               src="/hewasense-logo.png"
               alt="HewaSense"
-              className="h-14 transition-transform duration-200 group-hover:scale-105"
+              className="h-24 transition-transform duration-200 group-hover:scale-105"
               onError={(e) => {
                 const target = e.currentTarget
                 target.style.display = 'none'
@@ -64,13 +62,7 @@ export default function LandingNavbar() {
             ))}
           </div>
 
-          {/* CTA */}
-          <button
-            onClick={() => navigate('/login')}
-            className="bg-teal-600 hover:bg-teal-500 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 hover:shadow-lg hover:shadow-teal-500/25"
-          >
-            Access Platform
-          </button>
+
         </div>
       </div>
     </nav>
