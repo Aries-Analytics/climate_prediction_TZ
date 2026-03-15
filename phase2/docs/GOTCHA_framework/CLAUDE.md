@@ -174,6 +174,7 @@ Document Claude-specific mistakes here (not script bugs—those go in goals):
 
 * **Kiro IDE File Lock Trap** — `codex.exe` (Kiro IDE) holds exclusive file locks on open documents, separate from VS Code. If an Edit tool call returns `EBUSY` or `Permission denied`, the file is open in Kiro — not VS Code. Ask the user to close the file tab in Kiro before retrying. Do NOT retry blindly or assume VS Code is the cause. Closing the VS Code tab has no effect on Kiro's lock.
 * **Dollar Sign Math Parser Trap** — In markdown tables, `$` signs (e.g. `$6/year | $25`) trigger VS Code's math/KaTeX extension — the `|` between dollar signs is swallowed as LaTeX content, not a column separator. This shifts all columns left and leaves the last column empty. Always escape currency values as `\$` in all markdown table cells. Applies to payout tables, premium tables, and any financial comparison table.
+* **Docker Restart vs Force-Recreate Trap** — `docker compose restart <service>` reuses the existing container environment. It does NOT re-read `.env` or `docker-compose.yml`. Any environment variable change (e.g. `PIPELINE_SCHEDULE`) requires `docker compose -f docker-compose.dev.yml up -d --force-recreate <service>` to take effect. Always verify with `docker compose logs <service> | grep Schedule` after applying schedule changes.
 
 *(Add new guardrails as mistakes happen. Keep this under 15 items.)*
 
