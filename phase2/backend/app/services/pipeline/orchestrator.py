@@ -5,7 +5,7 @@ Coordinates pipeline stages, manages execution locking, and handles retries.
 """
 import logging
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from typing import Optional, NamedTuple
 from sqlalchemy.orm import Session
 from sqlalchemy import text
@@ -229,7 +229,7 @@ class PipelineOrchestrator:
             
             # Stage 1: Data Ingestion
             logger.info("Stage 1: Data Ingestion")
-            ingestion_result = self.execute_ingestion(incremental=incremental)
+            ingestion_result = self.execute_ingestion(incremental=incremental, execution_id=execution_id)
             
             # Update execution with ingestion results
             execution.records_fetched = ingestion_result.records_fetched
@@ -332,42 +332,43 @@ class PipelineOrchestrator:
             # Always release lock
             self.release_lock()
     
-    def execute_ingestion(self, incremental: bool = True) -> IngestionResult:
+    def execute_ingestion(self, incremental: bool = True, execution_id: Optional[str] = None) -> IngestionResult:
         """
         Execute data ingestion with incremental update logic and graceful degradation
-        
+
         Implements graceful degradation: if one data source fails, continue with others.
         Uses retry logic for each source (3 attempts with exponential backoff).
-        
+
         Args:
             incremental: Whether to use incremental fetching
-            
+            execution_id: Pipeline execution ID for tracking records
+
         Returns:
             IngestionResult with summary
         """
         logger.info("Executing data ingestion (incremental={})".format(incremental))
-        
+
         # Data sources to ingest
         sources = ['chirps', 'nasa_power', 'era5', 'ndvi', 'ocean_indices']
-        
+
         total_records_fetched = 0
         total_records_stored = 0
         sources_succeeded = []
         sources_failed = []
         per_source_records = {}  # Track per-source record counts
         errors = []
-        
+
         # Process each source independently (graceful degradation)
         for source in sources:
             try:
                 logger.info(f"Ingesting data from source: {source}")
-                
+
                 # Use retry handler for API calls
                 def _ingest_source():
                     return self._ingest_single_source(source, incremental)
-                
+
                 result = self.data_retry_handler.retry(_ingest_source)
-                
+
                 if result is None:
                     # All retries exhausted
                     logger.error(f"Source {source} failed after all retries")
@@ -381,6 +382,12 @@ class PipelineOrchestrator:
                     per_source_records[source] = records_stored
                     sources_succeeded.append(source)
                     logger.info(f"Source {source} succeeded: {records_stored} records stored")
+                    # Mark ingestion complete so next run fetches only new data
+                    self.incremental_manager.mark_ingestion_complete(
+                        source=source,
+                        end_date=date.today(),
+                        execution_id=execution_id
+                    )
                     
             except Exception as e:
                 # Catch any unexpected errors
