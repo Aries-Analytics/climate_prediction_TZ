@@ -398,6 +398,7 @@ USE_TIERED_PAYOUTS = False  # True parametric (fixed rates, not tiered)
 > **Purpose**: 90 valid-run-day forward validation (= 1,080 ForecastLog entries at 12/day). Pipeline runs daily at 06:00 EAT. No real payouts during this phase — forecasts are logged and evaluated against actual observations to build the evidence pack for reinsurers and TIRA.
 
 **Run schedule:**
+
 - **Nominal start**: Mar 7, 2026
 - **First correct run**: Mar 9, 2026 (Mar 7 started late; Mar 8 missed — scheduler timezone bug, fixed)
 - **Additional missed days**: 5 (pipeline failures post-Mar 9) — total missed: 7
