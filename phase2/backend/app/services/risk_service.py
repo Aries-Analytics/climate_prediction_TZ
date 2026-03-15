@@ -79,7 +79,12 @@ def get_portfolio_metrics(db: Session) -> dict:
             "crop_failure": round(trigger_breakdown["crop_failure"], 2)
         },
         "timeframe": "6-month forecast",
-        "pilotLocation": "Morogoro (Location ID 6)"
+        "pilotLocation": "Morogoro (Location ID 6)",
+        "shadowRunConfig": {
+            "start": "Mar 7, 2026",
+            "end": "Jun 12, 2026",
+            "brierEvalDate": "~Jun 9, 2026"
+        }
     }
 
 

@@ -20,6 +20,7 @@ interface PortfolioMetrics {
   triggerBreakdown: { drought: number; flood: number; crop_failure: number }
   timeframe: string
   pilotLocation: string
+  shadowRunConfig: { start: string; end: string; brierEvalDate: string }
 }
 
 interface ForecastRow {
@@ -147,7 +148,7 @@ export default function ExecutiveDashboard() {
             <Chip label="LIVE DATA" color="success" size="small" variant="outlined" />
           </Box>
           <Typography variant="body2" color="text.secondary">
-            Morogoro Rice Pilot · 1,000 Farmers · Shadow Run: Mar 7 – Jun 5, 2026 · Brier Score evaluation: ~Jun 8
+            Morogoro Rice Pilot · 1,000 Farmers · Shadow Run: {portfolio ? `${portfolio.shadowRunConfig.start} – ${portfolio.shadowRunConfig.end}` : 'Mar 7 – Jun 12, 2026'} · Brier Score evaluation: {portfolio?.shadowRunConfig.brierEvalDate ?? '~Jun 9, 2026'}
           </Typography>
         </Box>
       </Box>
@@ -354,7 +355,7 @@ export default function ExecutiveDashboard() {
             <Divider sx={{ my: 2 }} />
             <Typography variant="caption" color="text.secondary" display="block">
               <strong>Shadow run context:</strong> Advisory signals at this horizon are consistent with XGBoost's
-              capability range. Accuracy is evaluated when 3-month windows mature (~Jun 8, 2026).
+              capability range. Accuracy is evaluated when 3-month windows mature ({portfolio?.shadowRunConfig.brierEvalDate ?? '~Jun 9, 2026'}).
               These warnings support farmer preparation, not insurance payouts.
             </Typography>
           </Paper>
