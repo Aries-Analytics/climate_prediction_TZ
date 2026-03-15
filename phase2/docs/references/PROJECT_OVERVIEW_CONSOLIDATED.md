@@ -779,7 +779,7 @@ This project represents a foundation for climate intelligence in East Africa. We
 
 ## 📋 Current Status
 
-**Phase**: Pilot-Ready — Shadow Run ACTIVE (Mar 7 – Jun 5, 2026)
+**Phase**: Pilot-Ready — Shadow Run ACTIVE (Mar 7 – Jun 12, 2026 revised)
 **Completion**: Core features implemented and documented
 **Testing**: Comprehensive test suite validated (80%+ coverage)
 **Documentation**: Complete user and technical guides (80+ pages)
@@ -824,5 +824,5 @@ As climate variability increases, tools like this may become increasingly valuab
 
 **Document Version**: 4.2
 **Last Updated**: March 8, 2026
-**Status**: Shadow Run ACTIVE (Mar 7 – Jun 5, 2026)
+**Status**: Shadow Run ACTIVE (Mar 7 – Jun 12, 2026 revised)
 **Consolidates**: PROJECT_OVERVIEW.md, PROJECT_SUMMARY.md, EXECUTIVE_SUMMARY.md, PHASE_2_KEY_ACHIEVEMENTS.md, IMPLEMENTATION_COMPLETE.md

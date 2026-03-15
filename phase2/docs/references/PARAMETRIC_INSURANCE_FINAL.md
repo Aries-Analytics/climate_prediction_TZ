@@ -255,7 +255,7 @@ USE_TIERED_PAYOUTS = False  # True parametric (fixed rates, not tiered)
 - **Farmers**: 1,000 smallholder rice farmers (target; enrolment pending Phase 3 gate)
 - **Crop**: Rice (intensive cultivation area)
 - **Coverage**: ~500 hectares total (0.5 ha per farmer)
-- **Current Phase**: Shadow Run ACTIVE (Mar 7 – Jun 5, 2026) — technical validation, no live payouts
+- **Current Phase**: Shadow Run ACTIVE (Mar 7 – Jun 12, 2026 revised) — technical validation, no live payouts
 - **Live Pilot Timeline**: Q3 2026+ contingent on June 2026 go-live gate (Brier Score < 0.25)
 - **Duration**: 12-month pilot once live
 

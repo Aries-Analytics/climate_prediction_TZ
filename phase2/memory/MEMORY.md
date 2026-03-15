@@ -18,7 +18,7 @@
 - **98.4%/98.3%:** Single-location/older dataset benchmarks — historical only, NOT the production number
 - **Basis Risk:** 20% (Phase-Based Dynamic Model) — production. 10% (April threshold) — baseline only.
 - **Phase-Based Model:** Catches 100% of confirmed crop disasters (2017/2018 and 2021/2022), zero false negatives
-- **Premium:** $20/farmer/year, Loss Ratio: 22.6% (retrospective; forward validation ACTIVE — shadow run Mar 7 – Jun 5, 2026)
+- **Premium:** $20/farmer/year, Loss Ratio: 22.6% (retrospective; forward validation ACTIVE — shadow run Mar 7 – Jun 12, 2026 revised)
 - **HewaSense Engine V4 (Feb 2026):** Dynamic GDD tracking, cumulative flood limits (120-160mm over 5 days)
 - **Out-of-Sample Validation:** 9.6% historic loss ratio (2000-2014)
 - **Spatial Validation:** CHIRPS 5km grid correlated at r=0.888 against local gauges
@@ -30,7 +30,7 @@
 - **Production model file:** Determined by `outputs/models/active_model.json` (currently `xgboost_climate.pkl`, R²=0.8666, 83 features). NEVER hardcode model names
 - Model selection driven entirely by `active_model.json` — if missing or invalid, fail explicitly (GOTCHA Law #1)
 - **Pipeline schedule (shadow-run ACTIVE):** `0 6 * * *` Africa/Dar_es_Salaam (6 AM EAT daily). Deployed to `root@37.27.200.227`, `docker-compose.dev.yml`. Scheduler confirmed next run `2026-03-09 06:00:00+03:00`.
-- **Pipeline status (March 2026):** Shadow run ACTIVE Mar 7 – Jun 5, 2026. 12 forecasts/run (3 triggers × 4 horizons × Morogoro). 2 valid runs logged (Mar 11, Mar 15). Mar 12–14 blocked by stale lock (now fixed). Evidence Pack accumulates; Brier Score auto-evaluation starts ~Jun 8.
+- **Pipeline status (March 2026):** Shadow run ACTIVE Mar 7 – Jun 12, 2026 (revised — 7 missed days). 12 forecasts/run (3 triggers × 4 horizons × Morogoro). 2 valid runs logged (Mar 11, Mar 15). Mar 12–14 blocked by stale lock (now fixed). Evidence Pack accumulates; Brier Score auto-evaluation starts ~Jun 9.
 - Lock contention alerts are suppressed in Slack (expected during brief overlaps)
 - **Advisory lock:** Uses a **dedicated NullPool engine + connection** (separate from ORM session). ORM `commit()` works normally without releasing the lock. Lock released by explicit `pg_advisory_unlock` + `engine.dispose()`. NullPool is mandatory — QueuePool keeps the Postgres session alive and leaks the lock.
 - **Scheduler job store:** In-memory (NOT persistent SQLAlchemyJobStore). Prevents phantom runs from stale `next_run_times` after container restarts.

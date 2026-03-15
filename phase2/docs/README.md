@@ -1,7 +1,7 @@
 # Tanzania Climate Intelligence Platform - Documentation
 
 **Last Updated**: March 8, 2026
-**Status**: 🔵 Shadow Run ACTIVE (Mar 7 – Jun 5, 2026)
+**Status**: 🔵 Shadow Run ACTIVE (Mar 7 – Jun 12, 2026 revised)
 **Version**: 3.4 (Shadow Run + Evidence Pack + Historical Validation)
 
 ---
@@ -326,14 +326,14 @@ See [JANUARY_2026_PIPELINE_IMPROVEMENTS.md](./current/JANUARY_2026_PIPELINE_IMPR
 **Phase**: Forward Validation (Shadow Run)
 **Version**: 3.4
 **Last Updated**: March 8, 2026
-**Status**: 🔵 Shadow Run ACTIVE (Mar 7 – Jun 5, 2026)
+**Status**: 🔵 Shadow Run ACTIVE (Mar 7 – Jun 12, 2026 revised)
 
 **Validated**:
 - ✅ All features implemented and documented
 - ✅ Comprehensive testing (180+ tests, 80%+ coverage)
 - ✅ Docker-ready deployment (live at hewasense.majaribio.com)
 - ✅ Documentation consolidated and organized
-- 🔵 Forward validation in progress — first Brier Scores ~Jun 8, 2026
+- 🔵 Forward validation in progress — first Brier Scores ~Jun 9, 2026
 
 ---
 

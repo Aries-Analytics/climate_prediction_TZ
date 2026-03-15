@@ -498,5 +498,5 @@ TOTAL_FARMERS = 6000
 
 ---
 
-**Document Status:** Shadow Run ACTIVE (Mar 7 – Jun 5, 2026) — Retrospective Validation Complete
-**Next Review:** June 2026 (Evidence Pack compilation, Brier Score evaluation begins ~Jun 8)
+**Document Status:** Shadow Run ACTIVE (Mar 7 – Jun 12, 2026 revised) — Retrospective Validation Complete
+**Next Review:** Late June 2026 (Evidence Pack compilation, Brier Score evaluation begins ~Jun 9)

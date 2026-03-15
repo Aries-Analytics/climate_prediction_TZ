@@ -497,7 +497,7 @@ trigger = CronTrigger.from_crontab(self.schedule, timezone=self.timezone)
 
 **Verification**: Check scheduler logs for `+03:00` suffix on "Next scheduled run" — confirms Africa/Dar_es_Salaam is active.
 
-### Mar 8–10 — Shadow Run Active (Mar 7 – Jun 5, 2026)
+### Mar 8–10 — Shadow Run Active (Mar 7 – Jun 12, 2026 revised)
 
 The system is now in **shadow run** mode — generating forward forecasts for Morogoro that will be evaluated against observed conditions once 3-month windows mature (~Jun 2026).
 
@@ -506,7 +506,7 @@ The system is now in **shadow run** mode — generating forward forecasts for Mo
 | Location | Morogoro (PILOT_LOCATION_ID=6) |
 | Forecasts per run | 12 (3 trigger types × 4 horizons: 3/4/5/6 months) |
 | Schedule | Daily 06:00 EAT (`0 6 * * *`) |
-| Auto-evaluation starts | ~Jun 8, 2026 (Brier Scores) |
+| Auto-evaluation starts | ~Jun 9, 2026 (Brier Scores) |
 
 ### Mar 10 — Stale Advisory Lock Recovery
 
