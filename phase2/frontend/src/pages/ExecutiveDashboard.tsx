@@ -266,7 +266,7 @@ export default function ExecutiveDashboard() {
                             {prob === null ? (
                               <Typography variant="caption" color="text.disabled">—</Typography>
                             ) : (
-                              <Tooltip title={f ? `Target: ${new Date(f.targetDate).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })} · CI: ${(f.confidenceLower*100).toFixed0()}–${(f.confidenceUpper*100).toFixed(0)}%` : ''}>
+                              <Tooltip title={f ? `Target: ${new Date(f.targetDate).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })} · CI: ${(f.confidenceLower*100).toFixed(0)}–${(f.confidenceUpper*100).toFixed(0)}%` : ''}>
                                 <Box>
                                   <Typography variant="body2" fontWeight="bold" color={color}>
                                     {(prob * 100).toFixed(0)}%
