@@ -1,8 +1,8 @@
 # Tanzania Climate Intelligence Platform - Executive Summary
 
 **Project Phase**: 3.2 (Forward Validation & Pilot Preparation)
-**Date**: March 8, 2026
-**Status**: Retrospective Validation Complete · Shadow Run ACTIVE (Mar 7 – Jun 5, 2026)
+**Date**: March 15, 2026
+**Status**: Retrospective Validation Complete · Shadow Run ACTIVE (Mar 7 – Jun 12, 2026 revised — Day 9 of 90)
 
 ---
 
@@ -305,6 +305,22 @@ A comprehensive climate intelligence platform for Tanzania that integrates multi
 
 **Technical Details**: See [DATA_PIPELINE_TEST_FIXES.md](../reports/DATA_PIPELINE_TEST_FIXES.md)
 
+### March 15, 2026 — Payout Logic Fixes + Shadow Run Extension + System Health KPI
+
+**Status**: ✅ Complete
+**Impact**: Correct financial exposure displayed; shadow run progress now visible across all surfaces
+
+**Key Changes**:
+1. **Payout advisory tier bug fixed** — `/api/forecasts/portfolio-risk` now filters `horizon_months <= 4`. Advisory tier (5-6 month) never triggers payouts.
+2. **Multi-run dedup fix** — `generateFinancialProjections()` now deduplicates by MAX probability per `triggerType × calendar month` — no double-counting across pipeline runs.
+3. **Map tooltip corrected** — `locationRisk` useMemo replaced with `portfolioRisk.expectedPayouts` as single source of truth.
+4. **Shadow run extended to Jun 12** — 7 missed days (Mar 7-14) compensated; end date extended from Jun 5; Brier Score eval ~Jun 9.
+5. **System Health KPI scoped to ForecastLog** — Admin panel + Slack alert now show `Shadow Run: XX / 1,080` instead of raw `ClimateData` row count.
+
+**Commits**: `cb336ab`, `cde3d8f`, `f3c0c36`, `c6f5a35`, `dc40e51`, `4a18f1a`, `1834c57`
+
+---
+
 ### March 10, 2026 — Probability Conversion Architecture Fix
 
 **Status**: ✅ Complete
@@ -349,13 +365,13 @@ A comprehensive climate intelligence platform for Tanzania that integrates multi
 ✅ **Phase-based parametric model** validated (20% basis risk, zero false negatives)  
 
 ### What Still Needs Validation
-- **Forward prediction accuracy** — Shadow run ACTIVE (Mar 7, 2026 → Jun 5, 2026). Brier Score auto-evaluation begins ~Jun 8 as 3-month forecast windows mature.
+- **Forward prediction accuracy** — Shadow run ACTIVE (Mar 7, 2026 → Jun 12, 2026 revised). 7 missed days compensated by extending end date. Brier Score auto-evaluation begins ~Jun 9 as 3-month forecast windows mature. Target: 1,080 ForecastLog entries (90 valid run-days × 12/day).
 - **Kilombero-specific yield correlation** — Retrospective validation used national yield averages, not farm-level Kilombero data.
 - **Data resolution alignment** — CHIRPS (5km) and NASA POWER (50km) satellite grids may not perfectly reflect micro-farm conditions. Correlation (r=0.888) is strong but not definitive.
 - **Farmer adoption and trust** — Untested in real field conditions.
 
 ### Next Steps
-1. **Forward Validation** *(IN PROGRESS)*: Shadow run live Mar 7 – Jun 5, 2026. First Brier Score evaluation ~Jun 8.
+1. **Forward Validation** *(IN PROGRESS)*: Shadow run live Mar 7 – Jun 12, 2026 (revised). Day 9 of 90. First Brier Score evaluation ~Jun 9. Go-live decision: late June 2026.
 2. **Underwriter Engagement**: Present validated prototype to insurance underwriters
 3. **Ground-Truth Data**: Source Kilombero-specific yield data via Tanzania NBS regional reports
 4. **Rain Gauge Calibration**: Deploy 2-3 ground-truthing stations to calibrate satellite resolution
@@ -408,7 +424,7 @@ A comprehensive climate intelligence platform for Tanzania that integrates multi
 
 ---
 
-**Last Updated**: March 10, 2026
-**Version**: 3.5 (Shadow Run Active — Physical-Threshold Probability Conversion)
+**Last Updated**: March 15, 2026
+**Version**: 3.6 (Shadow Run Active — Payout Logic Hardened + System Health KPI)
 **License**: [Specify license]  
 **Contact**: [Contact information]
