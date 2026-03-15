@@ -107,3 +107,4 @@ test_pack.zip
 htmlcov/
 .claude/
 .pytest_cache/
+backend/data_seed.csv
