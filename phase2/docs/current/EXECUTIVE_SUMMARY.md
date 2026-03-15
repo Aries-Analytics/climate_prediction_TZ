@@ -317,7 +317,21 @@ A comprehensive climate intelligence platform for Tanzania that integrates multi
 4. **Shadow run extended to Jun 12** — 7 missed days (Mar 7-14) compensated; end date extended from Jun 5; Brier Score eval ~Jun 9.
 5. **System Health KPI scoped to ForecastLog** — Admin panel + Slack alert now show `Shadow Run: XX / 1,080` instead of raw `ClimateData` row count.
 
-**Commits**: `cb336ab`, `cde3d8f`, `f3c0c36`, `c6f5a35`, `dc40e51`, `4a18f1a`, `1834c57`
+**Commits**: `cb336ab`, `cde3d8f`, `f3c0c36`, `c6f5a35`, `dc40e51`, `4a18f1a`, `1834c57`, `1f3150b`, `6da38d8`, `306de7d`, `b56fda0`, `a07c888`
+
+---
+
+### March 15, 2026 (Session 2) — Dashboard Data-Driven Dates + Full Doc Audit Sweep
+
+**Status**: ✅ Complete
+**Impact**: Shadow run dates propagated consistently across all 10 doc files; no hardcoded dates remain in dashboard
+
+**Key Changes**:
+1. **Shadow run dates made data-driven** — `risk_service.py` `get_portfolio_metrics()` now returns `shadowRunConfig{start, end, brierEvalDate}`. `ExecutiveDashboard.tsx` subtitle and Brier eval context note read from API — single source of truth in backend.
+2. **Full audit sweep** — grep scan found Jun 5/Jun 8 still present in 7 files missed by earlier sweeps: `KILOMBERO_BASIN_PILOT_SPECIFICATION.md`, `AUTOMATED_PIPELINE_DEPLOYMENT.md`, `docs/README.md` (×2), `PARAMETRIC_INSURANCE_FINAL.md`, `PROJECT_OVERVIEW_CONSOLIDATED.md` (×2), `memory/MEMORY.md` (×2). All corrected to Jun 12 / ~Jun 9.
+3. **GOTCHA guardrail added** — "Incomplete Doc Sweep Trap": lists all 10 files that require updates on any shadow run config change + grep verification command.
+
+**Commits**: `b56fda0`, `a07c888`
 
 ---
 
@@ -425,6 +439,6 @@ A comprehensive climate intelligence platform for Tanzania that integrates multi
 ---
 
 **Last Updated**: March 15, 2026
-**Version**: 3.6 (Shadow Run Active — Payout Logic Hardened + System Health KPI)
+**Version**: 3.7 (Shadow Run Active — Dates Data-Driven + Full Doc Audit Sweep)
 **License**: [Specify license]  
 **Contact**: [Contact information]
