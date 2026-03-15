@@ -84,7 +84,7 @@ Implemented true parametric insurance with market-competitive rates aligned with
 | **Pula Zambia**   | $6/year      | $25         | Drought                         | Zambia            |
 | **KLIP Kenya**    | N/A          | $10/animal  | Drought                         | Kenya (livestock) |
 | **ACRE Kenya**    | $8/year      | $40         | Drought, Flood                  | Kenya             |
-| **TCI (Ours)**    | **$10/year** | **$90**     | **Drought, Flood, Crop Failure**| **Tanzania**      |
+| **TCI (Ours)**    | **$10/year** | **$90**     | **Drought, Flood, Crop Failure** | **Tanzania**      |
 
 ### Value Proposition
 
