@@ -367,6 +367,87 @@ USE_TIERED_PAYOUTS = False  # True parametric (fixed rates, not tiered)
 2. **Scale economies**: >500 farmers → reduce subsidy need
 3. **Multi-peril value**: Attracts more farmers than single-peril competitors
 
+---
+
+## Milestone Tracker (Updated: March 15, 2026)
+
+### Phase 1 — Technical Foundation (Complete)
+
+1. ✅ ML pipeline deployed — XGBoost V4.0 (R²=0.8666, 83 clean features, zero data leakage)
+2. ✅ Dashboard live — 5 views (Early Warning, Executive Snapshot, Climate Insights, Historical Validation, Evidence Pack)
+3. ✅ Automated daily ingestion — CHIRPS, NASA POWER, ERA5, NDVI, Ocean Indices
+4. ✅ Parametric trigger logic validated — calibrated thresholds in `configs/trigger_thresholds.yaml`
+5. ✅ Payout calculation validated — per-farmer fixed rates, primary-tier only, deduplication enforced (Mar 15)
+6. ✅ JWT auth, health checks, Slack alerts operational
+
+### Phase 2 — Shadow Run (Mar 7 – Jun 5, 2026) 🔄 ACTIVE — Day 9 of 90
+
+> **Purpose**: 90-day forward validation. Pipeline runs daily at 06:00 EAT. No real payouts during this phase — forecasts are logged and evaluated against actual observations to build the evidence pack for reinsurers and TIRA.
+
+**Current state (as of Mar 15, 2026):**
+
+- ✅ Pipeline executing daily since Mar 9 (Mar 7–8 missed due to scheduler timezone bug — fixed)
+- ✅ 12 forecasts/run: drought × 4 horizons + flood × 4 horizons + heat_stress × 4 horizons
+- ✅ `ForecastLog` evidence pack: `threshold_used` (0.65/0.60) + `forecast_distribution` (horizon_tier, insurance_eligible, confidence bounds) populated on every entry
+- ✅ `horizon_months <= 4` guard enforced in both backend endpoints — advisory tier never enters financial exposure
+- ⏳ ForecastLog entries status: all `pending` — validity windows are 3–6 months ahead; auto-evaluation begins ~Jun 8
+- ⏳ 90-day evidence pack compilation (metrics.json + logs_export.csv + model_compliance_statement.txt)
+
+### Phase 3 — Go-Live Decision (June 2026) ⏳ PENDING
+
+> Gate criteria: Brier Score < 0.25 AND Basis Risk < 30%
+
+- ⏳ Shadow run debrief — predicted vs actual trigger alignment
+- ⏳ TIRA regulatory submission with evidence pack
+- ⏳ Reinsurer review
+- ⏳ Go/No-Go: live payouts authorised OR shadow run extended + model retrained on 2026 data
+
+### Phase 4 — Live Pilot (Q3 2026+, contingent on Phase 3 gate)
+
+- ⏳ TIRA approval confirmed
+- ⏳ Government subsidy MOU signed (50% commitment)
+- ⏳ Farmer education materials distributed (Kilombero Basin cooperatives)
+- ⏳ Enrol 1,000 farmers — collect premiums ($10/farmer after subsidy)
+- ⏳ First live payout issued within 5–7 days of confirmed primary-tier trigger
+- ⏳ Measure farmer satisfaction + calculate actual loss ratio
+- ⏳ Prepare scale-up plan for 2027
+
+### Phase 5 — Q2 2026 Technical Enhancements (Parallel Track)
+
+- ⏳ Soil moisture dual-index trigger: backfill ERA5 2020–2025 → retrain → calibrate (1–2 weeks)
+- ⏳ Kilombero Basin geographic sub-zones: ingest North/Central/South coordinates → add Location records
+
+---
+
+## Success Criteria
+
+### Shadow Run (Jun 2026 gate)
+
+- Brier Score < 0.25 on evaluated forecasts
+- Basis risk < 30% (predicted vs actual trigger alignment)
+- ≥90 consecutive daily pipeline runs with no data-integrity failures
+- Zero forecasts from non-primary model (XGBoost V4.0 only)
+
+### Live Pilot Financial
+
+- Loss ratio stays 50–85%
+- 70%+ farmers renew for Year 2
+- Government subsidy maintained at 50%
+
+### Live Pilot Operational
+
+- Payout delays < 7 days from confirmed primary-tier trigger
+- Zero disputed payouts (parametric = automatic, objective threshold)
+- Dashboard uptime > 99%
+
+### Impact
+
+- Farmers protected from climate shocks in Kilombero Basin
+- Evidence pack accepted by reinsurer as operational reliability proof
+- Model replicable for national scale-up post-2026
+
+---
+
 ## References
 
 - [Insurance Trigger Recalibration](./INSURANCE_TRIGGER_RECALIBRATION_SUMMARY.md)
