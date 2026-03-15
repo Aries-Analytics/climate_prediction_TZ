@@ -1,8 +1,8 @@
 # True Parametric Insurance - Final Implementation
 
-**Date**: January 1, 2026
-**Status**: ✅ PILOT-READY
-**Version**: 3.0 (Market-Competitive)
+**Date**: March 15, 2026
+**Status**: 🔄 SHADOW RUN ACTIVE (Mar 7 – Jun 5, 2026) — Live pilot pending June 2026 gate
+**Version**: 4.0 (Phase-Based + Horizon Tiers)
 
 ---
 
@@ -14,7 +14,7 @@ Implemented true parametric insurance with market-competitive rates aligned with
 
 ## 1. Product Summary
 
-- **Type**: Hybrid Parametric Insurance (Drought + Flood)
+- **Type**: Multi-Peril Parametric Insurance (Drought + Flood + Crop Failure)
 - **Target**: Smallholder Rice Farmers (0.5 - 2 hectares)
 - **Region**: Kilombero Basin (Morogoro)
 - **Premium**: **$20 / season** (Affordable for smallholders)
@@ -119,21 +119,31 @@ PAYOUT_RATES = {"drought": 400, "flood": 500, "crop": 600}
 - **Result**: $66/year premium (unaffordable)
 - **Status**: ❌ Rejected
 
-### Iteration 3: Market-Competitive (Final) ✅
+### Iteration 3: Market-Competitive Rates (Jan 2026) ✅
 
 ```python
 PAYOUT_RATES = {"drought": 60, "flood": 75, "crop": 90}
 ```
 
 - **Result**: $10/year premium (competitive)
-- **Status**: ✅ **PILOT-READY**
+- **Status**: ✅ In production
 
 ### Iteration 4: Phase-Based Precision (Jan 23, 2026) ✅
 
 Aligned triggers with **Rice Growth Phases** (Germination, Vegetative, Flowering, Maturity).
 
-- **Benefit**: Removes "basis risk" by ensuring payouts match biological reality (e.g., critical flowering deficits).
-- **Implementation**: Fixed rules applied to variable forecasts.
+- **Benefit**: Removes "basis risk" — payouts match biological reality (e.g., critical flowering deficits)
+- **Implementation**: Fixed rules applied to variable forecasts
+- **Status**: ✅ In production
+
+### Iteration 5: Horizon Tier Enforcement (Mar 15, 2026) ✅
+
+Enforced primary/advisory tier split throughout backend and frontend.
+
+- **Primary** (≤4mo, ≥75%): payout-eligible — counted in all financial exposure calculations
+- **Advisory** (5-6mo, ≥50%): early warning only — never triggers payout or reserve earmarking
+- **Deduplication**: MAX probability per `triggerType×month` prevents double-counting from multiple pipeline runs
+- **Status**: ✅ In production (shadow run)
 
 ---
 
@@ -145,17 +155,18 @@ The system uses a **scientific, objective approach** to determine when payouts o
 
 #### Step 1: Climate Variable Prediction
 
-Machine learning models forecast actual climate variables for the next 3-6 months:
+The primary serving model (XGBoost V4.0) forecasts actual climate variables for the next 3-6 months:
 
-- **Rainfall** (mm): Predicted using ensemble regression models (Random Forest, Gradient Boosting, XGBoost)
-- **NDVI**: Vegetation health index from satellite data
-- **Soil Moisture** (%): Predicted from ERA5 climate data
+- **Rainfall** (mm): XGBoost primary model (83 features, post-leakage fix)
+- **NDVI**: Vegetation health index from satellite data (MODIS)
+- **Soil Moisture** (%): Planned Q2 2026 — ERA5/NASA POWER backfill required before activation
 
-**Model Performance**:
+**Model Performance** (as of Mar 5, 2026 training):
 
-- R² Score: 0.8666 (XGBoost, primary serving model); Ensemble: 0.840
-- Spatial Cross-Validation: 84.6% accuracy (XGBoost temporal CV)
-- 6-month forecasting horizon
+- R² Score: 0.8666 (XGBoost, **only model used for live forecasts**); Ensemble: 0.840 (training reference)
+- Temporal Cross-Validation: 84.6% (5-fold, no look-ahead bias)
+- Forecast Horizon: 3–6 months (4 horizons: 3mo, 4mo, 5mo, 6mo)
+- LSTM and Random Forest: training reference only — not used in production
 
 #### Step 2: Threshold Comparison
 
@@ -238,14 +249,15 @@ USE_TIERED_PAYOUTS = False  # True parametric (fixed rates, not tiered)
 
 ## Pilot Deployment Parameters
 
-### Target Specifications (Updated: Jan 2026)
+### Target Specifications (Updated: Mar 2026)
 
 - **Location**: Morogoro Region, Kilombero Basin
-- **Farmers**: 1,000 smallholder rice farmers
+- **Farmers**: 1,000 smallholder rice farmers (target; enrolment pending Phase 3 gate)
 - **Crop**: Rice (intensive cultivation area)
 - **Coverage**: ~500 hectares total (0.5 ha per farmer)
-- **Timeline**: Q1 2026 launch
-- **Duration**: 12-month pilot
+- **Current Phase**: Shadow Run ACTIVE (Mar 7 – Jun 5, 2026) — technical validation, no live payouts
+- **Live Pilot Timeline**: Q3 2026+ contingent on June 2026 go-live gate (Brier Score < 0.25)
+- **Duration**: 12-month pilot once live
 
 **Rationale for Kilombero Basin**:
 
@@ -275,12 +287,13 @@ USE_TIERED_PAYOUTS = False  # True parametric (fixed rates, not tiered)
 
 ### TIRA (Tanzania Insurance Regulatory Authority)
 
-✅ **Parametric Insurance Standards Met**:
+**Design Compliance** (pending formal TIRA submission with evidence pack — Phase 3):
 
-- Fixed payout schedule (disclosed upfront)
-- Objective triggers (no loss adjustment)
-- Clear policy terms
-- No claims process required
+- ✅ Fixed payout schedule (disclosed upfront, transparent rates)
+- ✅ Objective triggers (no loss adjustment, no claims form)
+- ✅ Clear policy terms (parametric = automatic payout on threshold breach)
+- ✅ No claims process required
+- ⏳ Formal TIRA submission — scheduled for June 2026 with shadow run evidence pack
 
 ### Policy Documentation
 
