@@ -1,7 +1,7 @@
 # True Parametric Insurance - Final Implementation
 
 **Date**: March 15, 2026
-**Status**: 🔄 SHADOW RUN ACTIVE (Mar 7 – Jun 5, 2026) — Live pilot pending June 2026 gate
+**Status**: 🔄 SHADOW RUN ACTIVE (Mar 7 – Jun 12, 2026 revised) — Live pilot pending late June 2026 gate
 **Version**: 4.0 (Phase-Based + Horizon Tiers)
 
 ---
@@ -393,22 +393,31 @@ USE_TIERED_PAYOUTS = False  # True parametric (fixed rates, not tiered)
 5. ✅ Payout calculation validated — per-farmer fixed rates, primary-tier only, deduplication enforced (Mar 15)
 6. ✅ JWT auth, health checks, Slack alerts operational
 
-### Phase 2 — Shadow Run (Mar 7 – Jun 5, 2026) 🔄 ACTIVE — Day 9 of 90
+### Phase 2 — Shadow Run 🔄 ACTIVE — Day 9 of 90 valid run-days
 
-> **Purpose**: 90-day forward validation. Pipeline runs daily at 06:00 EAT. No real payouts during this phase — forecasts are logged and evaluated against actual observations to build the evidence pack for reinsurers and TIRA.
+> **Purpose**: 90 valid-run-day forward validation (= 1,080 ForecastLog entries at 12/day). Pipeline runs daily at 06:00 EAT. No real payouts during this phase — forecasts are logged and evaluated against actual observations to build the evidence pack for reinsurers and TIRA.
+
+**Run schedule:**
+- **Nominal start**: Mar 7, 2026
+- **First correct run**: Mar 9, 2026 (Mar 7 started late; Mar 8 missed — scheduler timezone bug, fixed)
+- **Additional missed days**: 5 (pipeline failures post-Mar 9) — total missed: 7
+- **Nominal end**: Jun 5, 2026 — extended by 7 days to compensate
+- **Revised end date**: **Jun 12, 2026** (to achieve 90 valid run-days = 1,080 entries)
+- **Brier Score auto-evaluation**: begins ~Jun 9 when first 3-month forecasts (issued ~Mar 9) mature
 
 **Current state (as of Mar 15, 2026):**
 
-- ✅ Pipeline executing daily since Mar 9 (Mar 7–8 missed due to scheduler timezone bug — fixed)
+- ✅ Pipeline executing daily since Mar 9 (scheduler TZ bug fixed Mar 8)
 - ✅ 12 forecasts/run: drought × 4 horizons + flood × 4 horizons + heat_stress × 4 horizons
 - ✅ `ForecastLog` evidence pack: `threshold_used` (0.65/0.60) + `forecast_distribution` (horizon_tier, insurance_eligible, confidence bounds) populated on every entry
 - ✅ `horizon_months <= 4` guard enforced in both backend endpoints — advisory tier never enters financial exposure
-- ⏳ ForecastLog entries status: all `pending` — validity windows are 3–6 months ahead; auto-evaluation begins ~Jun 8
+- ⏳ ForecastLog entries status: all `pending` — validity windows are 3–6 months ahead; auto-evaluation begins ~Jun 9
 - ⏳ 90-day evidence pack compilation (metrics.json + logs_export.csv + model_compliance_statement.txt)
 
-### Phase 3 — Go-Live Decision (June 2026) ⏳ PENDING
+### Phase 3 — Go-Live Decision (Late June 2026) ⏳ PENDING
 
 > Gate criteria: Brier Score < 0.25 AND Basis Risk < 30%
+> Timing: shadow run completes Jun 12 → evidence pack compiled → debrief ~Jun 15–20
 
 - ⏳ Shadow run debrief — predicted vs actual trigger alignment
 - ⏳ TIRA regulatory submission with evidence pack
@@ -472,7 +481,7 @@ USE_TIERED_PAYOUTS = False  # True parametric (fixed rates, not tiered)
 
 **Document Owner**: Climate Prediction & Insurance Team
 **Last Updated**: March 15, 2026
-**Next Review**: June 2026 (post 90-day shadow run — review against Brier Score results)
+**Next Review**: Late June 2026 (post 90 valid-run-day shadow run — review against Brier Score results; shadow run extended to Jun 12 to compensate for 7 missed days)
 
 ---
 
