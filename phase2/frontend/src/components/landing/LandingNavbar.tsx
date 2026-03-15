@@ -28,11 +28,11 @@ export default function LandingNavbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <a href="/" className="flex items-center gap-2 group">
+          <a href="/" className="flex items-center group">
             <img
-              src="/hewasense-logo.svg"
+              src="/hewasense-logo.png"
               alt="HewaSense"
-              className="h-9 w-9 transition-transform duration-200 group-hover:scale-105"
+              className="h-10 transition-transform duration-200 group-hover:scale-105"
               onError={(e) => {
                 const target = e.currentTarget
                 target.style.display = 'none'
@@ -40,14 +40,14 @@ export default function LandingNavbar() {
                 if (fallback) fallback.style.display = 'flex'
               }}
             />
-            {/* Fallback badge if image fails */}
-            <span
-              className="hidden w-9 h-9 rounded-lg bg-gradient-to-br from-teal-500 to-cyan-400 items-center justify-center text-[#0a1628] font-bold text-sm"
-            >
-              HS
-            </span>
-            <span className="text-white font-bold text-lg tracking-tight">
-              Hewa<span className="text-teal-400">Sense</span>
+            {/* Fallback if image fails */}
+            <span className="hidden items-center gap-2">
+              <span className="w-9 h-9 rounded-lg bg-gradient-to-br from-teal-500 to-cyan-400 flex items-center justify-center text-[#0a1628] font-bold text-sm">
+                HS
+              </span>
+              <span className="text-white font-bold text-lg tracking-tight">
+                Hewa<span className="text-teal-400">Sense</span>
+              </span>
             </span>
           </a>
 

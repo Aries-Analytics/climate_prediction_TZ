@@ -52,7 +52,7 @@ export default function HeroSection() {
         <div className="inline-flex items-center gap-2 bg-teal-600/20 border border-teal-500/40 rounded-full px-4 py-1.5 mb-8 animate-fade-in-up">
           <span className="w-2 h-2 rounded-full bg-teal-400 animate-pulse" />
           <span className="text-teal-300 text-sm font-medium">
-            Omdena Capstone · Tanzania Pilot · Kilombero Basin
+            HewaSense · Tanzania Pilot · Kilombero Basin
           </span>
         </div>
 

@@ -11,14 +11,17 @@ export default function LandingFooter() {
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
 
           {/* Brand */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center">
             <img
-              src="/hewasense-logo.svg"
+              src="/hewasense-logo.png"
               alt="HewaSense"
-              className="h-7 w-7"
-              onError={(e) => { e.currentTarget.style.display = 'none' }}
+              className="h-8"
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+                (e.currentTarget.nextElementSibling as HTMLElement | null)?.removeAttribute('hidden')
+              }}
             />
-            <span className="text-white font-bold">
+            <span hidden className="text-white font-bold">
               Hewa<span className="text-teal-400">Sense</span>
             </span>
           </div>
