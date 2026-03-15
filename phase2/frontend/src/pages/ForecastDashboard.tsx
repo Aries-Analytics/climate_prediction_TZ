@@ -91,16 +91,11 @@ export default function ForecastDashboard() {
     const cropFailureProb = forecasts.filter(f => f.triggerType === 'crop_failure').reduce((max, f) => Math.max(max, f.probability), 0);
     const overallRisk = Math.max(droughtProb, floodProb, cropFailureProb);
     const riskLevel = overallRisk >= 0.75 ? 'Critical' : overallRisk >= 0.50 ? 'High' : overallRisk >= 0.30 ? 'Medium' : 'Low';
-    // Calculate estimated payout using per-farmer model
-    const PAYOUT_RATES_MAP = { drought: 60, flood: 75, crop_failure: 90 };
-    const PILOT_FARMERS_MAP = 1000;
-    const estimatedPayout = forecasts.filter(f => f.probability >= 0.50).reduce((sum, f) => {
-      const affectedFarmers = PILOT_FARMERS_MAP * f.probability;
-      const rate = PAYOUT_RATES_MAP[f.triggerType as keyof typeof PAYOUT_RATES_MAP] || 0;
-      return sum + Math.round(affectedFarmers * rate);
-    }, 0);
+    // Use backend-calculated expectedPayouts (primary tier ≥75%, MAX per trigger type)
+    // to avoid double-counting across horizons — same logic as risk_service.py
+    const estimatedPayout = portfolioRisk?.expectedPayouts ?? 0;
     return [{ ...morogoroLocation, droughtProbability: droughtProb, floodProbability: floodProb, cropFailureProbability: cropFailureProb, overallRiskIndex: overallRisk, riskLevel, estimatedPayout }];
-  }, [forecasts]);
+  }, [forecasts, portfolioRisk]);
 
   useEffect(() => {
     fetchForecasts()
@@ -348,19 +343,24 @@ export default function ForecastDashboard() {
   const horizonData = getForecastByHorizonData(filteredForecasts)
   const uncertainty = getUncertaintyMetrics(filteredForecasts)
 
-  // Calculate highest risk forecast for annotation
-  const highestRiskForecast = filteredForecasts.length > 0
-    ? filteredForecasts.reduce((max, f) => f.probability > max.probability ? f : max)
+  // Highest-risk PRIMARY-tier forecast for chart annotation (primary = horizon ≤ 4, ≥75%)
+  // Advisory-tier forecasts excluded — they never trigger payouts
+  const primaryForecasts = filteredForecasts.filter(f => f.horizonMonths <= 4 && f.probability >= 0.75)
+  const highestRiskForecast = primaryForecasts.length > 0
+    ? primaryForecasts.reduce((max, f) => f.probability > max.probability ? f : max)
     : null;
 
 
   // --- Data Derivation for Financial Chart ---
   const generateFinancialProjections = () => {
-    // Group forecasts by month (next 6 months)
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'] // Simplified for demo, should appear dynamic based on date
-    const currentMonth = new Date().getMonth()
+    // PRIMARY TIER ONLY (horizon ≤ 4mo, ≥75%) — mirrors risk_service.py.
+    // Advisory tier (5-6mo) is early warning only, never triggers a payout.
+    // Deduplicate by triggerType × month (MAX probability) to avoid double-counting
+    // across pipeline runs that target the same calendar month.
+    const PAYOUT_RATES = { drought: 60, flood: 75, crop_failure: 90 };
+    const PILOT_FARMERS = 1000;
 
-    // Initialize projections
+    const currentMonth = new Date().getMonth()
     const projections = Array.from({ length: 6 }, (_, i) => {
       const date = new Date()
       date.setMonth(currentMonth + i)
@@ -375,45 +375,33 @@ export default function ForecastDashboard() {
       }
     })
 
-    // Populate data from High Risk Forecasts using PER-FARMER PAYOUT MODEL
-    // Formula: Affected Farmers × Rate per Trigger
-    // Rates: Drought=$60, Flood=$75, Crop Failure=$90 (from MOROGORO_RICE_PILOT_SPECIFICATION.md)
-    const PAYOUT_RATES = {
-      drought: 60,
-      flood: 75,
-      crop_failure: 90
-    };
-    const PILOT_FARMERS = 1000;
-
-    filteredForecasts.forEach(f => {
-      // Use ADVISORY_THRESHOLD (50%) for financial impact calculations
-      if (f.probability >= 0.50) {
-        const fDate = new Date(f.targetDate)
-        // Find matching month in projections
-        const projIndex = projections.findIndex(p => p.monthName === fDate.toLocaleString('default', { month: 'long', year: 'numeric' }))
-
-        if (projIndex !== -1) {
-          const affectedFarmers = PILOT_FARMERS * f.probability;
-          const payoutPerFarmer = PAYOUT_RATES[f.triggerType as keyof typeof PAYOUT_RATES] || 0;
-          const amount = Math.round(affectedFarmers * payoutPerFarmer);
-
-          if (f.triggerType === 'drought') projections[projIndex].droughtPayout += amount
-          else if (f.triggerType === 'flood') projections[projIndex].floodPayout += amount
-          else projections[projIndex].cropPayout += amount
-
-          projections[projIndex].total += amount
+    // One payout per triggerType per calendar month — take MAX probability
+    const maxByTypeAndMonth: Record<string, { prob: number; triggerType: string }> = {}
+    filteredForecasts
+      .filter(f => f.horizonMonths <= 4 && f.probability >= 0.75)
+      .forEach(f => {
+        const monthName = new Date(f.targetDate).toLocaleString('default', { month: 'long', year: 'numeric' })
+        const key = `${f.triggerType}|${monthName}`
+        if (!maxByTypeAndMonth[key] || f.probability > maxByTypeAndMonth[key].prob) {
+          maxByTypeAndMonth[key] = { prob: f.probability, triggerType: f.triggerType }
         }
+      })
+
+    Object.entries(maxByTypeAndMonth).forEach(([key, { prob, triggerType }]) => {
+      const monthName = key.split('|')[1]
+      const projIndex = projections.findIndex(p => p.monthName === monthName)
+      if (projIndex !== -1) {
+        const amount = Math.round(PILOT_FARMERS * prob * (PAYOUT_RATES[triggerType as keyof typeof PAYOUT_RATES] || 0))
+        if (triggerType === 'drought') projections[projIndex].droughtPayout += amount
+        else if (triggerType === 'flood') projections[projIndex].floodPayout += amount
+        else projections[projIndex].cropPayout += amount
+        projections[projIndex].total += amount
       }
     })
 
-    // Calculate cumulative
-    let runningTotal = 0;
-    projections.forEach(p => {
-      runningTotal += p.total;
-      p.cumulative = runningTotal;
-    })
-
-    return projections;
+    let runningTotal = 0
+    projections.forEach(p => { runningTotal += p.total; p.cumulative = runningTotal })
+    return projections
   }
 
   const financialProjections = generateFinancialProjections();

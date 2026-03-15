@@ -195,7 +195,7 @@ export default function FinancialForecastChart({
             <CardContent>
                 <Box sx={{ mb: 2, position: 'relative' }}>
                     <Typography variant="body2" color="text.secondary">
-                        Expected monthly payouts based on forecast probabilities (≥50% risk threshold)
+                        Expected monthly payouts — primary tier only (horizon ≤ 4mo, ≥75% probability). Advisory tier (5-6mo) is early warning only.
                     </Typography>
 
 
@@ -221,7 +221,7 @@ export default function FinancialForecastChart({
                             {new Date(highestRiskForecast.targetDate).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}: {getTriggerLabel(highestRiskForecast.triggerType)}
                         </Typography>
                         <Box component="ul" sx={{ m: 0, pl: 2, fontSize: '0.7rem', color: 'text.secondary' }}>
-                            <li>{(highestRiskForecast.probability * 100).toFixed(1)}% probability (Advisory threshold)</li>
+                            <li>{(highestRiskForecast.probability * 100).toFixed(1)}% probability (primary tier ≥75% — payout eligible)</li>
                             {highestRiskForecast.expectedDeficit && (
                                 <li>Expected deficit: {Math.abs(highestRiskForecast.expectedDeficit).toFixed(0)}mm</li>
                             )}
