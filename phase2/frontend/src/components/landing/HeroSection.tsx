@@ -43,11 +43,11 @@ export default function HeroSection() {
       ))}
 
       {/* Content */}
-      <div className="relative z-10 text-center max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-20">
+      <div className="relative z-10 text-center max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 sm:pt-24 lg:pt-32">
         {/* Pill badge */}
-        <div className="inline-flex items-center gap-2 bg-teal-600/20 border border-teal-500/40 rounded-full px-4 py-1.5 mb-8 animate-fade-in-up">
-          <span className="w-2 h-2 rounded-full bg-teal-400 animate-pulse" />
-          <span className="text-teal-300 text-sm font-medium">
+        <div className="inline-flex items-center gap-2 bg-teal-600/20 border border-teal-500/40 rounded-full px-3 py-1 sm:px-4 sm:py-1.5 mb-6 sm:mb-8 animate-fade-in-up">
+          <span className="w-2 h-2 rounded-full bg-teal-400 animate-pulse flex-shrink-0" />
+          <span className="text-teal-300 text-xs sm:text-sm font-medium whitespace-nowrap">
             HewaSense · Tanzania Pilot · Kilombero Basin
           </span>
         </div>

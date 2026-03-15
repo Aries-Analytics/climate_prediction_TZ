@@ -24,13 +24,13 @@ export default function LandingNavbar() {
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-28">
+        <div className="flex items-center justify-between h-16 sm:h-20 lg:h-28">
           {/* Logo */}
           <a href="/" className="flex items-center group">
             <img
               src="/hewasense-logo.png"
               alt="HewaSense"
-              className="h-24 transition-transform duration-200 group-hover:scale-105"
+              className="h-12 sm:h-16 lg:h-24 transition-transform duration-200 group-hover:scale-105"
               onError={(e) => {
                 const target = e.currentTarget
                 target.style.display = 'none'
