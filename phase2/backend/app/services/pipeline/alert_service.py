@@ -132,13 +132,15 @@ class AlertService:
         quality_score = None
         source_records: Dict[str, int] = dict(per_source_records or {})
         total_db_records: Optional[int] = None
+        forecast_log_count: Optional[int] = None
         
         if db is not None:
             try:
                 from app.models.pipeline_execution import DataQualityMetrics
                 from app.models.climate_data import ClimateData
+                from app.models.forecast_log import ForecastLog
                 from sqlalchemy import func
-                
+
                 # Per-source record counts from this execution's quality metrics
                 quality_rows = (
                     db.query(DataQualityMetrics)
@@ -150,12 +152,15 @@ class AlertService:
                     source_records[qm.source] = qm.total_records
                     if qm.quality_score is not None:
                         scores.append(float(qm.quality_score))
-                
+
                 if scores:
                     quality_score = round(sum(scores) / len(scores) * 100)
-                
-                # Total climate data records
+
+                # Total climate data records (reference data, not tracked for shadow run)
                 total_db_records = db.query(func.count(ClimateData.id)).scalar()
+
+                # ForecastLog count — the shadow run KPI
+                forecast_log_count = db.query(func.count(ForecastLog.id)).scalar()
             except Exception as e:
                 logger.warning(f"Failed to query enrichment data for success alert: {e}")
         
@@ -190,8 +195,13 @@ class AlertService:
         else:
             quality_line = "Score: N/A"
         
-        # ── DB records line ──
-        db_line = f"Database: {total_db_records:,} total records" if total_db_records else "Database: N/A"
+        # ── Shadow run progress line ──
+        SHADOW_RUN_TARGET = 1080
+        if forecast_log_count is not None:
+            pct = forecast_log_count / SHADOW_RUN_TARGET * 100
+            db_line = f"Shadow Run: {forecast_log_count} / {SHADOW_RUN_TARGET} forecasts ({pct:.1f}%)"
+        else:
+            db_line = "Shadow Run: N/A"
         
         # ── Next run ──
         next_run_line = f"_Next run: {next_run_time}_" if next_run_time else ""

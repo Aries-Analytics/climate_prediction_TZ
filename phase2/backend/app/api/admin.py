@@ -10,6 +10,7 @@ from app.core.database import get_db
 from app.core.auth import get_current_user, require_role
 from app.models.user import User
 from app.models.audit_log import AuditLog
+from app.models.forecast_log import ForecastLog
 from app.schemas.user import UserResponse, UserCreate, UserUpdate
 from app.schemas.audit_log import AuditLogResponse
 from app.services.auth_service import create_user, update_user, delete_user
@@ -156,12 +157,15 @@ async def admin_health_check(
         # Get some basic stats
         user_count = db.query(User).count()
         audit_log_count = db.query(AuditLog).count()
-        
+        forecast_log_count = db.query(ForecastLog).count()
+
         return {
             "status": "healthy",
             "database": "connected",
             "users": user_count,
-            "audit_logs": audit_log_count
+            "audit_logs": audit_log_count,
+            "forecast_logs": forecast_log_count,
+            "shadow_run_target": 1080
         }
     except Exception as e:
         return {

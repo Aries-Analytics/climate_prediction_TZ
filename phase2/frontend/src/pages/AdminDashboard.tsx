@@ -26,6 +26,8 @@ interface SystemHealth {
   database: string;
   users: number;
   audit_logs: number;
+  forecast_logs: number;
+  shadow_run_target: number;
 }
 
 const AdminDashboard: React.FC = () => {
@@ -358,6 +360,15 @@ const AdminDashboard: React.FC = () => {
                 <div className="bg-white rounded-lg shadow p-6">
                   <h3 className="text-sm font-medium text-gray-500 mb-2">Audit Logs</h3>
                   <p className="text-2xl font-bold text-purple-600">{systemHealth.audit_logs}</p>
+                </div>
+                <div className="bg-white rounded-lg shadow p-6">
+                  <h3 className="text-sm font-medium text-gray-500 mb-2">Shadow Run Forecasts</h3>
+                  <p className="text-2xl font-bold text-orange-600">
+                    {systemHealth.forecast_logs} / {systemHealth.shadow_run_target}
+                  </p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    {((systemHealth.forecast_logs / systemHealth.shadow_run_target) * 100).toFixed(1)}% complete
+                  </p>
                 </div>
               </div>
             </div>
