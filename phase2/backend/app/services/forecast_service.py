@@ -324,7 +324,21 @@ class ForecastGenerator:
         base_uncertainty = 0.15
         horizon_uncertainty = base_uncertainty + (0.02 * (horizon_months - 3))
         confidence_lower, confidence_upper = self.calculate_confidence_intervals(probability, horizon_uncertainty)
-        
+
+        # Compute expected deficit (mirrors _raw_to_probability threshold logic)
+        predicted_mm = raw_prediction * _MOROGORO_STD_MM + _MOROGORO_MEAN_MM
+        season_type = 'dry' if target_date.month in (7, 8, 9, 10, 11, 12) else 'wet'
+        _phase = get_kilombero_stage(target_date, season_type)
+        _thresholds = RAINFALL_THRESHOLDS.get(_phase, RAINFALL_THRESHOLDS.get('germination', {}))
+        if trigger_type == 'drought':
+            expected_deficit = max(0.0, _thresholds.get('min', 0.0) - predicted_mm)
+        elif trigger_type == 'flood':
+            expected_deficit = max(0.0, predicted_mm - _thresholds.get('excessive', 0.0))
+        elif trigger_type == 'crop_failure':
+            expected_deficit = max(0.0, _thresholds.get('min', 0.0) * 0.5 - predicted_mm)
+        else:
+            expected_deficit = None
+
         return ForecastCreate(
             location_id=location.id if location else None,
             forecast_date=start_date,
@@ -334,7 +348,8 @@ class ForecastGenerator:
             probability=probability,
             confidence_lower=confidence_lower,
             confidence_upper=confidence_upper,
-            model_version=self.model_version
+            model_version=self.model_version,
+            expected_deficit=expected_deficit
         )
 
 
@@ -505,22 +520,22 @@ def get_forecasts(
         forecast_response.threshold_value = threshold
         
         # 4. Expected Deficit / Deviation
-        # Only query if meaningful
-        if threshold > 0:
+        # Stored in DB by generate_forecast() at creation time.
+        # ClimateForecast join kept for forward-compatibility if that table is ever populated.
+        # No runtime estimate fallback — expected_deficit must come from stored model output.
+        if threshold > 0 and forecast_response.expected_deficit is None:
             cf = db.query(ClimateForecast).filter(
                 and_(
                     ClimateForecast.location_id == f.location_id,
                     ClimateForecast.target_date == f.target_date
                 )
             ).first()
-            
+
             if cf:
                 forecast_val = float(cf.rainfall_mm or 0.0)
                 if t_type == 'drought':
-                    # Deficit: Threshold - Actual (e.g. 100 - 80 = 20mm deficit)
                     forecast_response.expected_deficit = max(0.0, threshold - forecast_val)
                 elif t_type == 'flood':
-                    # Excess: Actual - Threshold (e.g. 300 - 250 = 50mm excess)
                     forecast_response.expected_deficit = max(0.0, forecast_val - threshold)
         
         result.append(forecast_response)

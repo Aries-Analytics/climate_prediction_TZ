@@ -1,456 +1,457 @@
 import { useEffect, useState, useMemo } from 'react'
-import { Box, Grid, Typography, Alert, FormControl, InputLabel, Select, MenuItem, Tooltip, IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Chip } from '@mui/material'
-import InfoIcon from '@mui/icons-material/Info'
+import {
+  Box, Grid, Typography, Alert, Chip, Paper,
+  Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
+  CircularProgress, Divider, LinearProgress, Tooltip
+} from '@mui/material'
 import Plot from 'react-plotly.js'
 import axios from 'axios'
 import { API_BASE_URL } from '../config/api'
-import { useAuth } from '../contexts/AuthContext'
 import KPICard from '../components/common/KPICard'
 
-// --- MOCK DATA GENERATOR (Demo Mode - Shows Strategic Vision) ---
-// Updated to reflect Morogoro Rice Pilot parameters (1000 farmers, $150k reserves)
-const generateMockData = (year: number) => {
-  // 1. Solvency History (5 Year Trend) - Scaled to Pilot Size
-  // MOROGORO PILOT: $150k reserves, ~$60-90k max annual payout exposure
-  const STARTING_CAPITAL = 150000; // $150k - Morogoro pilot reserves
-  const ANNUAL_PREMIUMS = 91000;  // $91/farmer × 1000 farmers (validated from backtesting)
+// ─── types ───────────────────────────────────────────────────────────────────
+interface PortfolioMetrics {
+  totalPremiumIncome: number
+  expectedPayouts: number
+  lossRatio: number
+  numberOfPolicies: number
+  totalExposure: number
+  reserves: number
+  triggerBreakdown: { drought: number; flood: number; crop_failure: number }
+  timeframe: string
+  pilotLocation: string
+}
 
-  let cumulativeReserves = STARTING_CAPITAL;
-  const solvencyTrend = Array.from({ length: 5 }, (_, i) => {
-    const y = year - 4 + i;
+interface ForecastRow {
+  id: number
+  triggerType: string
+  horizonMonths: number
+  probability: number
+  targetDate: string
+  confidenceLower: number
+  confidenceUpper: number
+  stage?: string
+}
 
-    // Generate Loss Ratio (30% - 110% to show sustainable and stress scenarios)
-    // Pilot-scale: More volatile due to smaller portfolio
-    const lossRatio = 0.30 + (Math.random() * 0.80); // 30% - 110%
+interface TriggerAlert {
+  id: number
+  alert_type: string
+  location_name?: string
+  location_id?: number
+  forecast_value: number
+  threshold_value: number
+  deviation: number
+  phenology_stage: string
+  urgency_days: number
+  recommended_action: string
+  alert_date: string
+}
 
-    // Calculate Payout based on Loss Ratio
-    const payout = ANNUAL_PREMIUMS * lossRatio;
-
-    // Update Cumulative Reserves (can go negative if LR > 100%)
-    cumulativeReserves = cumulativeReserves + ANNUAL_PREMIUMS - payout;
-
-    return {
-      year: y,
-      ratio: lossRatio,
-      payout: payout,
-      reserves: Math.max(0, cumulativeReserves) // Floor at $0 for visualization
-    };
-  });
-
-  // 2. Basis Risk Data (Scatter: VHI vs Payout)
-  // MOROGORO PILOT: Focus on single location, but show expansion vision
-  const regions = ['Morogoro (Pilot)', 'Mbeya', 'Dodoma', 'Arusha', 'Mwanza', 'Dar es Salaam'];
-  const basisRiskPoints = regions.map((r, idx) => ({
-    region: r,
-    vhi: idx === 0 ? 0.45 + Math.random() * 0.35 : 0.2 + Math.random() * 0.6, // Morogoro more stable
-    payoutStatus: Math.random() > 0.6 ? 'Paid' : 'No Payout',
-    severity: idx === 0 ? Math.random() * 60 : Math.random() * 100 // Morogoro less severe
-  }));
-
-  return {
-    kpis: {
-      farmers_protected: 1000, // MOROGORO PILOT: Exactly 1000 farmers
-      hectares_insured: 1000, // ~1 hectare per farmer average
-      avg_payout_days: 12 + Math.floor(Math.random() * 10), // 12-22 days
-      loss_ratio_ytd: solvencyTrend[4].ratio
-    },
-    solvency_history: solvencyTrend,
-    basis_risk: basisRiskPoints,
-    watchlist: basisRiskPoints.filter(p => p.vhi < 0.35).sort((a, b) => a.vhi - b.vhi)
-  };
-};
+// ─── constants ───────────────────────────────────────────────────────────────
+const TRIGGER_COLORS: Record<string, string> = {
+  drought: '#d32f2f',
+  flood: '#1565c0',
+  crop_failure: '#e65100',
+}
+const HORIZON_LABELS: Record<number, string> = { 3: '3-mo', 4: '4-mo', 5: '5-mo*', 6: '6-mo*' }
+const PRIMARY_HORIZONS = [3, 4]
+const ADVISORY_HORIZONS = [5, 6]
+const PAYOUT_THRESHOLD = 0.75
+const ADVISORY_THRESHOLD = 0.50
 
 export default function ExecutiveDashboard() {
-  const [selectedYear, setSelectedYear] = useState<number>(2025);
-  const [realAlerts, setRealAlerts] = useState<any[] | null>(null);
+  const [portfolio, setPortfolio] = useState<PortfolioMetrics | null>(null)
+  const [forecasts, setForecasts] = useState<ForecastRow[]>([])
+  const [alerts, setAlerts] = useState<TriggerAlert[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  // Mock data computed synchronously — no network call, no spinner
-  const data = useMemo(() => generateMockData(selectedYear), [selectedYear]);
-
-  // Fetch real alerts on mount, parallel with render
   useEffect(() => {
-    const fetchRealAlerts = async () => {
-      try {
-        const token = localStorage.getItem('token')
-        if (!token) return;
-        const response = await axios.get(`${API_BASE_URL}/climate-forecasts/alerts`, {
-          headers: { Authorization: `Bearer ${token}` }
-        })
-        setRealAlerts(response.data);
-      } catch (err) {
-        console.error("Failed to fetch real alerts for Executive Dashboard", err)
+    const token = localStorage.getItem('token')
+    const headers = { Authorization: `Bearer ${token}` }
+
+    Promise.all([
+      axios.get(`${API_BASE_URL}/risk/portfolio`, { headers }),
+      axios.get(`${API_BASE_URL}/forecasts`, { headers, params: { location_id: 6, days: 180 } }),
+      axios.get(`${API_BASE_URL}/climate-forecasts/alerts`, { headers }),
+    ])
+      .then(([p, f, a]) => {
+        setPortfolio(p.data)
+        setForecasts(f.data)
+        setAlerts(a.data)
+      })
+      .catch(err => setError(err.message))
+      .finally(() => setLoading(false))
+  }, [])
+
+  // ── derived: forecast probability grid (trigger × horizon, latest run) ────
+  const probGrid = useMemo(() => {
+    if (!forecasts.length) return {}
+    // keep most-recent forecast per (triggerType, horizonMonths)
+    const grid: Record<string, Record<number, ForecastRow>> = {}
+    for (const f of forecasts) {
+      if (!grid[f.triggerType]) grid[f.triggerType] = {}
+      const existing = grid[f.triggerType][f.horizonMonths]
+      if (!existing || new Date(f.targetDate) > new Date(existing.targetDate)) {
+        grid[f.triggerType][f.horizonMonths] = f
       }
     }
-    fetchRealAlerts();
-  }, []);
+    return grid
+  }, [forecasts])
 
-  // Merge real alert liability into KPIs when available
-  const kpis = useMemo(() => {
-    if (!realAlerts || realAlerts.length === 0) return data.kpis;
-    const PAYOUT_PER_LOCATION = 50000;
-    const realLiability = realAlerts.length * PAYOUT_PER_LOCATION;
-    return { ...data.kpis, loss_ratio_ytd: Math.max(data.kpis.loss_ratio_ytd, realLiability / 10000000) };
-  }, [data.kpis, realAlerts]);
-
-  // --- DERIVED METRICS ---
-  const criticalRegions = data.watchlist.filter((r: any) => r.vhi < 0.3);
-  const criticalCount = criticalRegions.length;
-
-  // Insight Logic
-  const currentLossRatio = kpis.loss_ratio_ytd;
-  let solvencyStatus: 'success' | 'warning' | 'error' = 'success';
-  let solvencyMessage = "Fund is healthy. Retained earnings are growing.";
-  if (currentLossRatio > 0.8) {
-    solvencyStatus = 'error';
-    solvencyMessage = "UNSUSTAINABLE: Claims exceed 80% of premiums. Immediate capital injection or reinsurance trigger required.";
-  } else if (currentLossRatio > 0.6) {
-    solvencyStatus = 'warning';
-    solvencyMessage = "CAUTION: Loss ratio approaching break-even point. Monitor claim frequency closely.";
-  }
-
-  const basisRiskIssues = data.basis_risk.filter((p: any) => p.vhi < 0.3 && p.payoutStatus !== 'Paid').length;
-  let basisStatus: 'success' | 'warning' | 'error' = 'success';
-  let basisMessage = "Model Performance Optimal: High correlation between triggers and ground truth.";
-  if (basisRiskIssues > 2) {
-    basisStatus = 'error';
-    basisMessage = `CRITICAL MISMATCH: ${basisRiskIssues} regions show crop failure signals (Low VHI) but NO payout triggered. Verify ground data.`;
-  } else if (basisRiskIssues > 0) {
-    basisStatus = 'warning';
-    basisMessage = `Model Drift Detected: ${basisRiskIssues} potential false negatives requires investigation.`;
-  }
-
-  // --- CHART CONFIGS ---
-  const solvencyChartLayout = {
-    autosize: true,
-    height: 300,
-    margin: { l: 60, r: 20, t: 30, b: 40 },
-    showlegend: false,
-    dragmode: false,
-    xaxis: { title: 'Year', fixedrange: true },
-    yaxis: {
-      title: { text: 'Loss Ratio', standoff: 15 },
-      tickformat: '.0%',
-      range: [0, 1.2],
-      fixedrange: true,
-      shapes: [
-        { type: 'line', y0: 0.6, y1: 0.6, x0: 0, x1: 1, xref: 'paper', line: { color: '#ed6c02', width: 2, dash: 'dot' } }, // Warning Orange
-        { type: 'line', y0: 0.8, y1: 0.8, x0: 0, x1: 1, xref: 'paper', line: { color: '#d32f2f', width: 2, dash: 'dot' } }  // Error Red
-      ]
+  // ── derived: advisory warnings (5-6 month, above advisory threshold) ──────
+  const advisoryWarnings = useMemo(() => {
+    const seen = new Map<string, ForecastRow>()
+    for (const f of forecasts) {
+      if (!ADVISORY_HORIZONS.includes(f.horizonMonths)) continue
+      if (f.probability < ADVISORY_THRESHOLD) continue
+      const key = f.triggerType
+      const existing = seen.get(key)
+      if (!existing || f.probability > existing.probability) seen.set(key, f)
     }
-  };
+    return Array.from(seen.values()).sort((a, b) => b.probability - a.probability)
+  }, [forecasts])
 
-  const capitalChartLayout = {
-    autosize: true,
-    height: 300,
-    margin: { l: 60, r: 20, t: 30, b: 40 },
-    barmode: 'group', // Changed from 'stack' to 'group' for better comparison
-    dragmode: false,
-    xaxis: { title: 'Year', fixedrange: true },
-    yaxis: { title: 'Amount (USD)', tickprefix: '$', tickformat: 's', fixedrange: true }, // Added tickformat 's' for SI prefix
-    showlegend: true,
-    legend: { orientation: 'h', y: 1.1 }
-  };
+  // ── loss ratio status ─────────────────────────────────────────────────────
+  const lrStatus = !portfolio ? 'success' :
+    portfolio.lossRatio > 0.8 ? 'error' :
+    portfolio.lossRatio > 0.6 ? 'warning' : 'success'
 
+  const lrLabel = !portfolio ? '—' :
+    portfolio.lossRatio > 0.8 ? 'CRITICAL' :
+    portfolio.lossRatio > 0.6 ? 'Monitor' : 'Healthy'
 
+  if (loading) return (
+    <Box sx={{ display: 'flex', justifyContent: 'center', mt: 8 }}>
+      <CircularProgress />
+    </Box>
+  )
 
-  const basisRiskChartLayout = {
-    autosize: true,
-    height: 300,
-    margin: { l: 50, r: 20, t: 30, b: 40 },
-    dragmode: false,
-    xaxis: { title: 'Vegetation Health Index (VHI)', range: [0, 1], fixedrange: true },
-    yaxis: { title: 'Severity (%)', fixedrange: true },
-    showlegend: true,
-    legend: { orientation: 'h', y: 1.1 }
-  };
+  if (error) return (
+    <Box sx={{ p: 3 }}>
+      <Alert severity="error">Failed to load executive data: {error}</Alert>
+    </Box>
+  )
+
+  const triggerTypes = ['drought', 'flood', 'crop_failure']
+  const allHorizons = [3, 4, 5, 6]
 
   return (
     <Box sx={{ pb: 4 }}>
-      {/* HEADER */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+      {/* ── header ─────────────────────────────────────────────────────── */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 3 }}>
         <Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
-            <Typography variant="h4" fontWeight="bold" color="text.primary" sx={{ mb: 0 }}>
-              Executive Command Center
-            </Typography>
-            <Chip
-              label="SIMULATION DATA"
-              size="small"
-              variant="outlined"
-              color="info"
-              sx={{ fontWeight: 'bold', borderRadius: 1 }}
-            />
-            <Chip
-              label="PARAMETRIC MODEL ACTIVE"
-              size="small"
-              color="success"
-              sx={{ fontWeight: 'bold', borderRadius: 1 }}
-            />
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 0.5 }}>
+            <Typography variant="h4" fontWeight="bold">Executive Command Center</Typography>
+            <Chip label="SHADOW RUN ACTIVE" color="warning" size="small" sx={{ fontWeight: 'bold' }} />
+            <Chip label="LIVE DATA" color="success" size="small" variant="outlined" />
           </Box>
-          <Typography variant="body1" color="text.secondary">
-            Crop Insurance Portfolio Performance & Strategic Risks
+          <Typography variant="body2" color="text.secondary">
+            Morogoro Rice Pilot · 1,000 Farmers · Shadow Run: Mar 7 – Jun 5, 2026 · Brier Score evaluation: ~Jun 8
           </Typography>
         </Box>
-        <FormControl size="small" sx={{ minWidth: 150 }}>
-          <InputLabel>Year</InputLabel>
-          <Select value={selectedYear} label="Year" onChange={(e) => setSelectedYear(Number(e.target.value))}>
-            {[2025, 2024, 2023, 2022, 2021].map(y => <MenuItem key={y} value={y}>{y}</MenuItem>)}
-          </Select>
-        </FormControl>
       </Box>
 
-      {/* GLOBAL ALERT BLOCK */}
-      {criticalCount > 0 ? (
-        <Alert severity="warning" variant="filled" sx={{ mb: 4, borderRadius: 2 }}>
-          <strong>Attention Needed:</strong> {criticalCount} regions are showing signs of potential Basis Risk (Low VHI without Payout).
+      {/* ── global status banner ────────────────────────────────────────── */}
+      {alerts.length > 0 ? (
+        <Alert severity="error" variant="filled" sx={{ mb: 3 }}>
+          <strong>{alerts.length} active payout trigger{alerts.length > 1 ? 's' : ''}:</strong>{' '}
+          {alerts.map(a => `${a.alert_type} @ ${a.location_name}`).join(' · ')}
         </Alert>
       ) : (
-        <Alert severity="success" variant="filled" sx={{ mb: 4, borderRadius: 2 }}>
-          <strong>Portfolio Status Healthy:</strong> No basis risk anomalies detected in the current view.
+        <Alert severity="success" variant="filled" sx={{ mb: 3 }}>
+          <strong>No active payout triggers.</strong> All primary-tier (3–4 month) forecasts are below the 75% payout threshold.
+          {advisoryWarnings.length > 0 && ` ${advisoryWarnings.length} advisory warning${advisoryWarnings.length > 1 ? 's' : ''} flagged (see below).`}
         </Alert>
       )}
 
-      {/* TOP ROW: KPI CARDS */}
+      {/* ── KPI row ─────────────────────────────────────────────────────── */}
+      {portfolio && (
+        <Grid container spacing={3} sx={{ mb: 4 }}>
+          <Grid item xs={12} sm={6} md={3}>
+            <KPICard
+              title="Farmers Covered"
+              value={portfolio.numberOfPolicies.toLocaleString()}
+              status="success"
+              subtitle="Active policyholders"
+              insight="Morogoro pilot — 1 ha/farmer average"
+              insightSeverity="info"
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <KPICard
+              title="Reserves"
+              value={`$${portfolio.reserves.toLocaleString()}`}
+              status={portfolio.reserves > portfolio.expectedPayouts ? 'success' : 'error'}
+              subtitle={`Exposure: $${portfolio.totalExposure.toLocaleString()}`}
+              insight="100% Capital Adequacy Ratio target"
+              insightSeverity="info"
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <KPICard
+              title="Expected Payouts"
+              value={`$${portfolio.expectedPayouts.toLocaleString()}`}
+              status={portfolio.expectedPayouts > 0 ? 'warning' : 'success'}
+              subtitle={portfolio.timeframe}
+              insight="Primary-tier forecasts ≥75% only"
+              insightSeverity={portfolio.expectedPayouts > 0 ? 'warning' : 'success'}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <KPICard
+              title="Loss Ratio"
+              value={`${(portfolio.lossRatio * 100).toFixed(1)}%`}
+              status={lrStatus}
+              subtitle={lrLabel}
+              insight="Payouts / 6-month premiums. >80% = critical."
+              insightSeverity={lrStatus}
+            />
+          </Grid>
+        </Grid>
+      )}
+
+      {/* ── forecast probability grid + advisory warnings ────────────────── */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
-        {/* 1. FARMERS PROTECTED */}
-        <Grid item xs={12} sm={6} md={3}>
-          <KPICard
-            title="Farmers Covered"
-            value={kpis.farmers_protected.toLocaleString()}
-            status="success"
-            trend="up"
-            subtitle="+12% vs LY"
-            insight="Unique policyholders with active coverage."
-            insightSeverity="info"
-          />
-        </Grid>
-
-        {/* 2. HECTARES INSURED */}
-        <Grid item xs={12} sm={6} md={3}>
-          <KPICard
-            title="Hectares Insured"
-            value={`${kpis.hectares_insured.toLocaleString()} ha`}
-            status="success"
-            subtitle={`Est. Yield Value: $${(kpis.hectares_insured * 450).toLocaleString()}`}
-            insight="Total land area covered. Estimated yield based on crop type."
-            insightSeverity="info"
-          />
-        </Grid>
-
-        {/* 3. REPLANTING SPEED */}
-        <Grid item xs={12} sm={6} md={3}>
-          <KPICard
-            title="Replanting Speed"
-            value={`${kpis.avg_payout_days} Days`}
-            status={kpis.avg_payout_days > 21 ? 'error' : (kpis.avg_payout_days > 14 ? 'warning' : 'success')}
-            trend={kpis.avg_payout_days > 21 ? 'down' : 'up'}
-            subtitle={kpis.avg_payout_days > 21 ? 'Missed Replanting Window' : 'Optimal for Replanting'}
-            insight="Avg days from Trigger to Payout. Target < 14 Days."
-            insightSeverity={kpis.avg_payout_days > 21 ? 'error' : 'success'}
-          />
-        </Grid>
-
-        {/* 4. SOLVENCY RATIO */}
-        <Grid item xs={12} sm={6} md={3}>
-          <KPICard
-            title="Loss Ratio (YTD)"
-            value={`${(kpis.loss_ratio_ytd * 100).toFixed(1)}%`}
-            status={solvencyStatus}
-            subtitle={solvencyStatus === 'error' ? 'UNSUSTAINABLE' : (solvencyStatus === 'warning' ? 'Monitor Closely' : 'Sustainable')}
-            insight="Payouts / Premiums collected. >80% is Critical."
-            insightSeverity={solvencyStatus}
-          />
-        </Grid>
-      </Grid>
-
-      {/* MIDDLE ROW: STRATEGIC CHARTS */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        {/* SOLVENCY TREND */}
-        <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
-            <Typography variant="h6" gutterBottom>Financial Solvency Trend (5-Year)</Typography>
-            <Box sx={{ flexGrow: 1, minHeight: 300 }}>
-              <Plot
-                data={[
-                  {
-                    x: data.solvency_history.map((d: any) => d.year),
-                    y: data.solvency_history.map((d: any) => d.ratio),
-                    type: 'scatter',
-                    mode: 'lines+markers',
-                    marker: { color: solvencyStatus === 'error' ? '#d32f2f' : '#1976d2', size: 8 },
-                    line: { width: 3 }
-                  }
-                ]}
-                layout={{
-                  ...solvencyChartLayout,
-                  height: 300,
-                }}
-                useResizeHandler={true}
-                style={{ width: '100%', height: '100%' }}
-                config={{ displayModeBar: false, scrollZoom: false }}
-              />
-            </Box>
-            {/* STRATEGIC INSIGHT BLOCK */}
-            <Alert
-              severity={solvencyStatus}
-              sx={{ mt: 2, '& .MuiAlert-message': { width: '100%' } }}
-            >
-              <strong>Strategy Insight:</strong> {solvencyMessage}
-            </Alert>
-          </Paper>
-        </Grid>
-
-        {/* NEW: CAPITAL UTILIZATION CHART */}
-        <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
-            <Typography variant="h6" gutterBottom>Capital Utilization & Liquidity</Typography>
-            <Box sx={{ flexGrow: 1, minHeight: 300 }}>
-              <Plot
-                data={[
-                  {
-                    x: data.solvency_history.map((d: any) => d.year),
-                    y: data.solvency_history.map((d: any) => d.payout),
-                    type: 'bar',
-                    name: 'Payouts',
-                    marker: { color: '#ed6c02' } // Orange
-                  },
-                  {
-                    x: data.solvency_history.map((d: any) => d.year),
-                    y: data.solvency_history.map((d: any) => d.reserves),
-                    type: 'bar',
-                    name: 'Available Reserves',
-                    marker: { color: '#2e7d32' } // Green
-                  }
-                ]}
-                layout={{ ...capitalChartLayout, height: 300 }}
-                useResizeHandler={true}
-                style={{ width: '100%', height: '100%' }}
-                config={{ displayModeBar: false, scrollZoom: false }}
-              />
-            </Box>
-            <Alert severity="info" sx={{ mt: 2, bgcolor: '#e3f2fd' }}>
-              <strong>Liquidity Check:</strong> Reserves (Green) vs Payouts (Orange). Gap indicates safety margin.
-            </Alert>
-          </Paper>
-        </Grid>
-
-        {/* BASIS RISK SCATTER - MOVED TO NEW ROW */}
-        <Grid item xs={12} md={12}>
-          <Paper sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
-            <Typography variant="h6" gutterBottom>Basis Risk Indicator (Model Accuracy)</Typography>
-            <Alert severity="info" sx={{ mb: 2, py: 0, bgcolor: '#e3f2fd' }}>
-              <Typography variant="body2">
-                <strong>How to read:</strong> X-Axis = VHI (0=Dead Crops, 1=Healthy). Red X markers on the <strong>LEFT side (VHI &lt; 0.3, No Payout)</strong> are False Negatives (Basis Risk).
+        {/* probability heatmap */}
+        <Grid item xs={12} md={7}>
+          <Paper sx={{ p: 2 }}>
+            <Typography variant="h6" gutterBottom>Forecast Risk Landscape</Typography>
+            <Alert severity="info" sx={{ mb: 2, py: 0.5 }}>
+              <Typography variant="caption">
+                Latest forecast probabilities per trigger type and horizon. <strong>Columns marked * are advisory tier</strong> (early warning only — no payout). Payout threshold = 75%.
               </Typography>
             </Alert>
-            <Box sx={{ flexGrow: 1, minHeight: 300 }}>
-              <Plot
-                data={[
-                  {
-                    x: data.basis_risk.filter((d: any) => d.payoutStatus === 'Paid').map((d: any) => d.vhi),
-                    y: data.basis_risk.filter((d: any) => d.payoutStatus === 'Paid').map((d: any) => d.severity),
-                    mode: 'markers',
-                    type: 'scatter',
-                    name: 'Paid (Success)',
-                    marker: { color: '#2e7d32', size: 10, symbol: 'circle' }
-                  },
-                  {
-                    x: data.basis_risk.filter((d: any) => d.payoutStatus !== 'Paid').map((d: any) => d.vhi),
-                    y: data.basis_risk.filter((d: any) => d.payoutStatus !== 'Paid').map((d: any) => d.severity),
-                    mode: 'markers',
-                    type: 'scatter',
-                    name: 'No Payout',
-                    marker: { color: '#d32f2f', size: 10, symbol: 'x' }
-                  }
-                ]}
-                layout={{ ...basisRiskChartLayout, height: 300 }}
-                useResizeHandler={true}
-                style={{ width: '100%', height: '100%' }}
-                config={{ displayModeBar: false }}
-              />
+
+            <TableContainer>
+              <Table size="small">
+                <TableHead>
+                  <TableRow sx={{ bgcolor: 'grey.100' }}>
+                    <TableCell><strong>Trigger Type</strong></TableCell>
+                    {allHorizons.map(h => (
+                      <TableCell key={h} align="center">
+                        <Typography variant="caption" fontWeight="bold">
+                          {HORIZON_LABELS[h]}
+                          {ADVISORY_HORIZONS.includes(h) && (
+                            <Typography component="span" variant="caption" color="text.secondary"> advisory</Typography>
+                          )}
+                        </Typography>
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {triggerTypes.map(tt => (
+                    <TableRow key={tt} hover>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: TRIGGER_COLORS[tt] }} />
+                          <Typography variant="body2" fontWeight="medium">
+                            {tt.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase())}
+                          </Typography>
+                        </Box>
+                      </TableCell>
+                      {allHorizons.map(h => {
+                        const f = probGrid[tt]?.[h]
+                        const prob = f?.probability ?? null
+                        const isPrimary = PRIMARY_HORIZONS.includes(h)
+                        const bg = prob === null ? 'grey.50' :
+                          prob >= PAYOUT_THRESHOLD ? '#ffebee' :
+                          prob >= ADVISORY_THRESHOLD ? '#fff8e1' : '#e8f5e9'
+                        const color = prob === null ? 'text.disabled' :
+                          prob >= PAYOUT_THRESHOLD ? 'error.main' :
+                          prob >= ADVISORY_THRESHOLD ? 'warning.main' : 'success.main'
+                        return (
+                          <TableCell key={h} align="center" sx={{ bgcolor: bg }}>
+                            {prob === null ? (
+                              <Typography variant="caption" color="text.disabled">—</Typography>
+                            ) : (
+                              <Tooltip title={f ? `Target: ${new Date(f.targetDate).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })} · CI: ${(f.confidenceLower*100).toFixed0()}–${(f.confidenceUpper*100).toFixed(0)}%` : ''}>
+                                <Box>
+                                  <Typography variant="body2" fontWeight="bold" color={color}>
+                                    {(prob * 100).toFixed(0)}%
+                                  </Typography>
+                                  {!isPrimary && (
+                                    <Typography variant="caption" color="text.secondary">advisory</Typography>
+                                  )}
+                                  {isPrimary && prob >= PAYOUT_THRESHOLD && (
+                                    <Chip label="TRIGGER" color="error" size="small" sx={{ height: 16, fontSize: '0.6rem', mt: 0.3 }} />
+                                  )}
+                                </Box>
+                              </Tooltip>
+                            )}
+                          </TableCell>
+                        )
+                      })}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+
+            <Box sx={{ mt: 1.5, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+              {[
+                { color: '#ffebee', label: '≥75% — Payout trigger' },
+                { color: '#fff8e1', label: '50–75% — Advisory warning' },
+                { color: '#e8f5e9', label: '<50% — No concern' },
+              ].map(({ color, label }) => (
+                <Box key={label} sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  <Box sx={{ width: 14, height: 14, bgcolor: color, border: '1px solid #ddd', borderRadius: 0.5 }} />
+                  <Typography variant="caption" color="text.secondary">{label}</Typography>
+                </Box>
+              ))}
             </Box>
-            {/* STRATEGIC INSIGHT BLOCK */}
-            <Alert
-              severity={basisStatus}
-              sx={{ mt: 2, '& .MuiAlert-message': { width: '100%' } }}
-            >
-              <strong>Model Check:</strong> {basisMessage}
+          </Paper>
+        </Grid>
+
+        {/* advisory warnings panel */}
+        <Grid item xs={12} md={5}>
+          <Paper sx={{ p: 2, height: '100%' }}>
+            <Typography variant="h6" gutterBottom>Advisory Early Warnings</Typography>
+            <Alert severity="info" sx={{ mb: 2, py: 0.5 }}>
+              <Typography variant="caption">
+                5–6 month horizon forecasts above 50%. <strong>No payout triggered</strong> — these are early signals to inform farmer advisories and planning.
+              </Typography>
             </Alert>
+
+            {advisoryWarnings.length === 0 ? (
+              <Alert severity="success" variant="outlined">
+                No advisory-tier risks above 50% threshold.
+              </Alert>
+            ) : (
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                {advisoryWarnings.map(f => {
+                  const pct = Math.round(f.probability * 100)
+                  const color = f.probability >= 0.80 ? 'error' : 'warning'
+                  return (
+                    <Box key={f.id}>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: TRIGGER_COLORS[f.triggerType] }} />
+                          <Typography variant="body2" fontWeight="bold">
+                            {f.triggerType.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase())}
+                          </Typography>
+                          <Chip label={`${f.horizonMonths}-month`} size="small" variant="outlined" />
+                        </Box>
+                        <Chip label={`${pct}%`} color={color} size="small" />
+                      </Box>
+                      <LinearProgress
+                        variant="determinate"
+                        value={pct}
+                        color={color}
+                        sx={{ height: 6, borderRadius: 1 }}
+                      />
+                      <Typography variant="caption" color="text.secondary">
+                        Target: {new Date(f.targetDate).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })}
+                        {f.stage ? ` · Phase: ${f.stage}` : ''}
+                      </Typography>
+                    </Box>
+                  )
+                })}
+              </Box>
+            )}
+
+            <Divider sx={{ my: 2 }} />
+            <Typography variant="caption" color="text.secondary" display="block">
+              <strong>Shadow run context:</strong> Advisory signals at this horizon are consistent with XGBoost's
+              capability range. Accuracy is evaluated when 3-month windows mature (~Jun 8, 2026).
+              These warnings support farmer preparation, not insurance payouts.
+            </Typography>
           </Paper>
         </Grid>
       </Grid>
 
-      <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
-        {realAlerts ? "Active Trigger Alerts (Real-Time)" : "Priority Watchlist (Low VHI Regions)"}
+      {/* ── reserve adequacy bar ────────────────────────────────────────── */}
+      {portfolio && (
+        <Paper sx={{ p: 2, mb: 4 }}>
+          <Typography variant="h6" gutterBottom>Reserve Adequacy</Typography>
+          <Grid container spacing={3} alignItems="center">
+            <Grid item xs={12} md={6}>
+              {[
+                { label: 'Annual Premiums', value: portfolio.totalPremiumIncome, max: portfolio.reserves, color: '#2e7d32' },
+                { label: 'Expected Payouts (6-mo)', value: portfolio.expectedPayouts, max: portfolio.reserves, color: '#d32f2f' },
+                { label: 'Reserves', value: portfolio.reserves, max: portfolio.reserves, color: '#1565c0' },
+              ].map(({ label, value, max, color }) => (
+                <Box key={label} sx={{ mb: 1.5 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <Typography variant="body2">{label}</Typography>
+                    <Typography variant="body2" fontWeight="bold">${value.toLocaleString()}</Typography>
+                  </Box>
+                  <LinearProgress
+                    variant="determinate"
+                    value={Math.min(100, (value / max) * 100)}
+                    sx={{ height: 8, borderRadius: 1, bgcolor: 'grey.200', '& .MuiLinearProgress-bar': { bgcolor: color } }}
+                  />
+                </Box>
+              ))}
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <Alert severity={portfolio.reserves >= portfolio.expectedPayouts ? 'success' : 'error'}>
+                <strong>Capital buffer: ${(portfolio.reserves - portfolio.expectedPayouts).toLocaleString()}</strong>
+                {' '}({portfolio.reserves > 0 ? ((1 - portfolio.expectedPayouts / portfolio.reserves) * 100).toFixed(1) : '100'}% of reserves intact)
+              </Alert>
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                Worst-case full exposure: ${portfolio.totalExposure.toLocaleString()} (all 1,000 farmers trigger crop failure)
+              </Typography>
+            </Grid>
+          </Grid>
+        </Paper>
+      )}
+
+      {/* ── active payout triggers table ───────────────────────────────── */}
+      <Typography variant="h6" gutterBottom>
+        Active Payout Triggers
+        <Chip
+          label={alerts.length === 0 ? 'None' : `${alerts.length} active`}
+          color={alerts.length === 0 ? 'success' : 'error'}
+          size="small"
+          sx={{ ml: 1 }}
+        />
       </Typography>
       <TableContainer component={Paper}>
         <Table size="small">
-          <TableHead sx={{ bgcolor: '#eee' }}>
+          <TableHead sx={{ bgcolor: 'grey.100' }}>
             <TableRow>
-              <TableCell><strong>Region</strong></TableCell>
-              <TableCell><strong>Indicator</strong></TableCell>
-              <TableCell><strong>Status</strong></TableCell>
-              <TableCell align="center"><strong>Stage</strong></TableCell>
-              <TableCell align="right"><strong>Est. Payout Needed</strong></TableCell>
+              <TableCell><strong>Location</strong></TableCell>
+              <TableCell><strong>Trigger Type</strong></TableCell>
+              <TableCell><strong>Growth Phase</strong></TableCell>
+              <TableCell align="right"><strong>Forecast (mm)</strong></TableCell>
+              <TableCell align="right"><strong>Threshold (mm)</strong></TableCell>
+              <TableCell align="right"><strong>Deviation</strong></TableCell>
+              <TableCell align="right"><strong>Days to Impact</strong></TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {realAlerts ? (
-              // RENDER REAL ALERTS
-              realAlerts.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} align="center">No active triggers detected in real-time monitoring.</TableCell>
-                </TableRow>
-              ) : (
-                realAlerts.map((alert: any, idx: number) => (
-                  <TableRow key={idx}>
-                    <TableCell>{alert.location_name}</TableCell>
-                    <TableCell>Rainfall: {alert.forecast_value}mm (vs {alert.threshold_value}mm)</TableCell>
-                    <TableCell sx={{ color: 'error.main', fontWeight: 'bold' }}>
-                      {alert.deviation.toFixed(1)} Deviation
-                    </TableCell>
-                    <TableCell align="center">
-                      <Chip
-                        label={alert.phenology_stage?.toUpperCase()}
-                        color="warning"
-                        size="small"
-                      />
-                    </TableCell>
-                    <TableCell align="right">$50,000</TableCell>
-                  </TableRow>
-                ))
-              )
+            {alerts.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={7} align="center" sx={{ py: 3, color: 'text.secondary' }}>
+                  No active payout triggers — all primary-tier forecasts are below the 75% threshold.
+                </TableCell>
+              </TableRow>
             ) : (
-              // RENDER MOCK WATCHLIST
-              data.watchlist.map((row: any) => (
-                <TableRow key={row.region}>
-                  <TableCell>{row.region}</TableCell>
-                  <TableCell sx={{
-                    color: row.vhi < 0.3 ? 'error.main' : 'warning.main',
-                    fontWeight: 'bold'
-                  }}>
-                    VHI: {row.vhi.toFixed(2)}
-                  </TableCell>
-                  <TableCell>{row.severity.toFixed(1)}% Sev</TableCell>
-                  <TableCell align="center">
+              alerts.map((a, idx) => (
+                <TableRow key={idx}>
+                  <TableCell>{a.location_name}</TableCell>
+                  <TableCell>
                     <Chip
-                      label={row.vhi < 0.3 ? "CRITICAL" : "MONITOR"}
-                      color={row.vhi < 0.3 ? "error" : "warning"}
+                      label={a.alert_type.replace('_', ' ').toUpperCase()}
                       size="small"
+                      sx={{ bgcolor: TRIGGER_COLORS[a.alert_type] + '22', color: TRIGGER_COLORS[a.alert_type], fontWeight: 'bold' }}
                     />
                   </TableCell>
-                  <TableCell align="right">${(row.severity * 1500).toLocaleString()}</TableCell>
+                  <TableCell>{a.phenology_stage}</TableCell>
+                  <TableCell align="right">{a.forecast_value}mm</TableCell>
+                  <TableCell align="right">{a.threshold_value}mm</TableCell>
+                  <TableCell align="right" sx={{ color: a.deviation < 0 ? 'error.main' : 'success.main', fontWeight: 'bold' }}>
+                    {a.deviation > 0 ? '+' : ''}{a.deviation.toFixed(1)}mm
+                  </TableCell>
+                  <TableCell align="right">{a.urgency_days}d</TableCell>
                 </TableRow>
               ))
-            )}
-            {!realAlerts && data.watchlist.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={5} align="center">No critical regions detected.</TableCell>
-              </TableRow>
             )}
           </TableBody>
         </Table>
       </TableContainer>
     </Box>
-  );
+  )
 }

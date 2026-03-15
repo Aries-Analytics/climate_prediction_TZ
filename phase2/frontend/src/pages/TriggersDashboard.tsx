@@ -243,6 +243,54 @@ export default function TriggersDashboard() {
         </Typography>
       </Box>
 
+      {/* ── threshold summary bar ─────────────────────────────────────── */}
+      {(
+        <Paper sx={{ p: 2, mb: 3, bgcolor: 'grey.50' }}>
+          <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
+            Threshold Status Summary — {filteredAlerts.length === 0 ? 'All clear' : `${filteredAlerts.length} active payout alert${filteredAlerts.length !== 1 ? 's' : ''}`} (primary tier ≥75%)
+          </Typography>
+          <Grid container spacing={2}>
+            {(['drought', 'flood', 'crop_failure'] as const).map(tt => {
+              const typeAlerts = filteredAlerts.filter(a => a.alert_type === tt)
+              const triggered = typeAlerts.length
+              const worst = typeAlerts.reduce((w, a) => a.deviation < w ? a.deviation : w, 0)
+              const color = triggered > 0 ? 'error' : 'success'
+              return (
+                <Grid item xs={12} sm={4} key={tt}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                    <Box
+                      sx={{
+                        width: 36, height: 36, borderRadius: '50%',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        bgcolor: triggered > 0 ? 'error.light' : 'success.light',
+                      }}
+                    >
+                      <Typography variant="caption" fontWeight="bold" color={triggered > 0 ? 'error.dark' : 'success.dark'}>
+                        {triggered > 0 ? '!' : '✓'}
+                      </Typography>
+                    </Box>
+                    <Box>
+                      <Typography variant="body2" fontWeight="bold">
+                        {tt.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase())}
+                      </Typography>
+                      {triggered > 0 ? (
+                        <Typography variant="caption" color="error.main">
+                          {triggered} trigger{triggered > 1 ? 's' : ''} · worst: {worst.toFixed(1)}mm deficit
+                        </Typography>
+                      ) : (
+                        <Typography variant="caption" color="success.main">
+                          Below payout threshold
+                        </Typography>
+                      )}
+                    </Box>
+                  </Box>
+                </Grid>
+              )
+            })}
+          </Grid>
+        </Paper>
+      )}
+
       <Grid container spacing={3}>
         {/* Consolidated Action Card & KPIs */}
         <Grid item xs={12} md={6}>

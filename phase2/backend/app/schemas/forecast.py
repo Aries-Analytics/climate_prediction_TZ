@@ -37,7 +37,7 @@ class ForecastBase(BaseModel):
 
 
 class ForecastCreate(ForecastBase):
-    pass
+    expected_deficit: Optional[float] = None
 
 
 class ForecastResponse(ForecastBase):
