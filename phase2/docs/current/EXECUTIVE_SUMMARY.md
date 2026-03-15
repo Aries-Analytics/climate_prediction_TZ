@@ -321,6 +321,21 @@ A comprehensive climate intelligence platform for Tanzania that integrates multi
 
 ---
 
+### March 15, 2026 (Session 4) — Scheduler Fix + Dollar Sign Bug + Final Audit
+
+**Status**: ✅ Complete
+**Impact**: Server running correct 6 AM EAT daily schedule; all markdown tables render correctly
+
+**Key Changes**:
+1. **Server schedule fixed** — `/opt/hewasense/app/phase2/.env` had `PIPELINE_SCHEDULE=*/30 * * * *` (dev leftover). Fixed to `0 3 * * *` (06:00 EAT). Container restarted, confirmed `Next scheduled run: 2026-03-16 06:00:00+03:00`.
+2. **DB pollution confirmed clean** — 30-min runs sent Slack alerts but dedup logic blocked extra `ForecastLog` entries. Only 24 entries exist (Mar 11 × 12, Mar 15 × 12).
+3. **Dollar sign math parser bug fixed** — VS Code KaTeX extension treated `$6/year | $25` as LaTeX, swallowing `|` separators and shifting table columns. Escaped all `\$` in `PARAMETRIC_INSURANCE_FINAL.md` tables. Commit `acde1e0`.
+4. **Full doc audit sweep completed** — stale Jun 5/Jun 8 dates corrected across all 10 doc files.
+
+**Commits**: `953dc7d`, `82f6c93`, `a07c888`, `b56fda0`, `acde1e0`
+
+---
+
 ### March 15, 2026 (Session 2) — Dashboard Data-Driven Dates + Full Doc Audit Sweep
 
 **Status**: ✅ Complete
