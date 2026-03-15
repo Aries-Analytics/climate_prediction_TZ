@@ -37,7 +37,7 @@ export default function LandingFooter() {
 
           {/* Copyright */}
           <p className="text-slate-600 text-xs text-center">
-            © 2025 HewaSense · Tanzania Climate Intelligence
+            © 2026 HewaSense · Tanzania Climate Intelligence
           </p>
 
         </div>
