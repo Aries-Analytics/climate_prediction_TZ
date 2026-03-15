@@ -79,12 +79,12 @@ Implemented true parametric insurance with market-competitive rates aligned with
 
 ### Apples-to-Apples Comparison (0.5 hectare)
 
-| Program               | Premium                            | Max Payout           | Perils             | Location          |
-| --------------------- | ---------------------------------- | -------------------- | ------------------ | ----------------- |
-| **Pula Zambia** | $6/year | $25                      | 1 (drought)          | Zambia             |                   |
-| **KLIP Kenya**  | N/A                                | $10/animal           | 1 (drought)        | Kenya (livestock) |
-| **ACRE Kenya**  | $8/year | $40                      | 1-2 (D/F)            | Kenya              |                   |
-| **TCI (Ours)**  | **$10/year** | **$90** | **3 (D/F/CF)** | **Tanzania** |                   |
+| Program           | Premium      | Max Payout  | Perils                          | Location          |
+| ----------------- | ------------ | ----------- | ------------------------------- | ----------------- |
+| **Pula Zambia**   | $6/year      | $25         | Drought                         | Zambia            |
+| **KLIP Kenya**    | N/A          | $10/animal  | Drought                         | Kenya (livestock) |
+| **ACRE Kenya**    | $8/year      | $40         | Drought, Flood                  | Kenya             |
+| **TCI (Ours)**    | **$10/year** | **$90**     | **Drought, Flood, Crop Failure**| **Tanzania**      |
 
 ### Value Proposition
 
