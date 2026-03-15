@@ -10,6 +10,10 @@ export default defineConfig({
     watch: {
       usePolling: true,
       interval: 1000,
+      ignored: ['**/Dockerfile*', '**/.dockerignore', '**/nginx*', '**/*.sh'],
+    },
+    fs: {
+      deny: ['Dockerfile', 'Dockerfile.dev', '.dockerignore'],
     },
     proxy: {
       '/api': {

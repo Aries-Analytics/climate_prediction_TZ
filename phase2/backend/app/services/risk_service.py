@@ -38,12 +38,12 @@ def get_portfolio_metrics(db: Session) -> dict:
     
     # Calculate expected payouts
     expected_payouts = 0.0
-    trigger_breakdown = {"drought": 0, "flood": 0, "crop_failure": 0}
-    
+    trigger_breakdown = {"drought": 0.0, "flood": 0.0, "crop_failure": 0.0}
+
     for forecast in high_risk_forecasts:
         trigger_type = forecast.trigger_type
         payout_rate = PAYOUT_RATES.get(trigger_type, 0)
-        payout = TOTAL_FARMERS * payout_rate * forecast.probability
+        payout = TOTAL_FARMERS * payout_rate * float(forecast.probability)
         expected_payouts += payout
         trigger_breakdown[trigger_type] += payout
     
