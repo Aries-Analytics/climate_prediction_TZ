@@ -1,6 +1,6 @@
 # Model Metrics Implications for the Kilombero Pilot & Shadow Run
 
-> **Date:** 2026-03-05
+> **Date:** 2026-03-15 (updated) | Originally: 2026-03-05
 > **Context:** Post data-leakage fix — 11 leaky rainfall-derived features removed, all models retrained on 83 clean features
 > **Primary Model:** XGBoost (R²=0.8666, RMSE=0.4008)
 > **Branch:** `phase2/feature-expansion`
@@ -42,10 +42,14 @@ ML Model (±35mm uncertainty)
         ↓
 Phase-Based Thresholds (50-80mm, conservative)
         ↓
-Confidence Gating (>50% probability required)
+Horizon Tier Gate (≤4 months = primary / 5-6 months = advisory)
         ↓
-Fixed Payouts ($60-$90 per trigger type)
+Confidence Gating (≥75% for primary / ≥50% for advisory)
+        ↓
+Fixed Payouts ($60-$90 per trigger type) — PRIMARY TIER ONLY
 ```
+
+**Advisory-tier forecasts (5-6 month horizon)** surface in the Early Warning panel but never trigger payouts or reserve earmarking. This prevents premature financial commitments against high-uncertainty long-range forecasts.
 
 - **Conservative thresholds** — drought triggers at 50-80mm are below the 82.74mm mean, so the model needs to detect below-average rainfall (which it does well at R²=0.87)
 - **Phase weighting** — flowering phase gets 35% of payout weight, matching biological reality

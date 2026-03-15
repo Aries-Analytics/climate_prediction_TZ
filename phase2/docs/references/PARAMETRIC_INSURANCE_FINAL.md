@@ -1,7 +1,7 @@
 # True Parametric Insurance - Final Implementation
 
-**Date**: January 1, 2026  
-**Status**: ✅ PILOT-READY  
+**Date**: January 1, 2026
+**Status**: ✅ PILOT-READY
 **Version**: 3.0 (Market-Competitive)
 
 ---
@@ -13,6 +13,7 @@ Implemented true parametric insurance with market-competitive rates aligned with
 **Key Achievement**: Reduced sustainable premium from **$91/year** (Lump Sum Model) to **$20/year** (Phase-Based Model) without requiring heavy subsidies. This was achieved by moving from binary "all-or-nothing" payouts to weighted, phase-specific coverage.
 
 ## 1. Product Summary
+
 - **Type**: Hybrid Parametric Insurance (Drought + Flood)
 - **Target**: Smallholder Rice Farmers (0.5 - 2 hectares)
 - **Region**: Kilombero Basin (Morogoro)
@@ -29,12 +30,12 @@ Implemented true parametric insurance with market-competitive rates aligned with
 
 **FINAL CALIBRATED RATES** (Effective Jan 2026):
 
-| Trigger Type | Payout | Rationale |
-|--------------|--------|-----------|
-| **Drought** | $60 | Market rate aligned with Pula (~$50-70) |
-| **Flood** | $75 | 25% premium for higher risk |
-| **Crop Failure** | $90 | Critical impact, highest payout |
-| **Severe Stress** | $45 | Supplementary coverage |
+| Trigger Type            | Payout                                        | Rationale                       |
+| ----------------------- | --------------------------------------------- | ------------------------------- |
+| **Drought**       | $60 | Market rate aligned with Pula (~$50-70) |                                 |
+| **Flood**         | $75                                           | 25% premium for higher risk     |
+| **Crop Failure**  | $90                                           | Critical impact, highest payout |
+| **Severe Stress** | $45                                           | Supplementary coverage          |
 
 **Coverage**: 0.5 hectare per farmer (typical smallholder size)
 
@@ -52,8 +53,8 @@ Implemented true parametric insurance with market-competitive rates aligned with
 
 ### 26-Year Historical Analysis
 
-**Total Payouts**: $41,325  
-**Average Payout**: $68/event  
+**Total Payouts**: $41,325
+**Average Payout**: $68/event
 **Annual Payouts**: $1,590/year (avg 23.5 events/year)
 
 ### Premium Structure (100-farmer pilot)
@@ -65,12 +66,12 @@ Implemented true parametric insurance with market-competitive rates aligned with
 
 ### Sustainability Metrics
 
-| Metric | Value | Status |
-|--------|-------|--------|
-| Loss Ratio | 75% | ✅ Sustainable (target <80%) |
-| Premium/Payout Ratio | 1:3.1 | ✅ Adequate coverage |
-| Subsidy Requirement | 50% | ✅ Manageable for government |
-| Farmer Affordability | $10/year | ✅ ~2 days' wages |
+| Metric               | Value    | Status                       |
+| -------------------- | -------- | ---------------------------- |
+| Loss Ratio           | 75%      | ✅ Sustainable (target <80%) |
+| Premium/Payout Ratio | 1:3.1    | ✅ Adequate coverage         |
+| Subsidy Requirement  | 50%      | ✅ Manageable for government |
+| Farmer Affordability | $10/year | ✅ ~2 days' wages            |
 
 ---
 
@@ -78,16 +79,17 @@ Implemented true parametric insurance with market-competitive rates aligned with
 
 ### Apples-to-Apples Comparison (0.5 hectare)
 
-| Program | Premium | Max Payout | Perils | Location |
-|---------|---------|------------|--------|----------|
-| **Pula Zambia** | $6/year | $25 | 1 (drought) | Zambia |
-| **KLIP Kenya** | N/A | $10/animal | 1 (drought) | Kenya (livestock) |
-| **ACRE Kenya** | $8/year | $40 | 1-2 (D/F) | Kenya |
-| **TCI (Ours)** | **$10/year** | **$90** | **3 (D/F/CF)** | **Tanzania** |
+| Program               | Premium                            | Max Payout           | Perils             | Location          |
+| --------------------- | ---------------------------------- | -------------------- | ------------------ | ----------------- |
+| **Pula Zambia** | $6/year | $25                      | 1 (drought)          | Zambia             |                   |
+| **KLIP Kenya**  | N/A                                | $10/animal           | 1 (drought)        | Kenya (livestock) |
+| **ACRE Kenya**  | $8/year | $40                      | 1-2 (D/F)            | Kenya              |                   |
+| **TCI (Ours)**  | **$10/year** | **$90** | **3 (D/F/CF)** | **Tanzania** |                   |
 
 ### Value Proposition
 
 **vs Pula Zambia** (most comparable):
+
 - **Price**: $10 vs $6 (+67% more)
 - **Payout**: $90 vs $25 (+260% more)
 - **Perils**: 3 vs 1 (+200% more)
@@ -98,30 +100,38 @@ Implemented true parametric insurance with market-competitive rates aligned with
 ## Evolution History
 
 ### Iteration 1: Variable Model (Rejected)
+
 ```python
 payout = base_payout * (0.5 + severity) * confidence
 ```
+
 - **Problem**: Semi-parametric, not regulatory compliant
 - **Result**: $271 avg payout (too variable)
 - **Status**: ❌ Rejected
 
 ### Iteration 2: Fixed Premium Model (Rejected)
+
 ```python
 PAYOUT_RATES = {"drought": 400, "flood": 500, "crop": 600}
 ```
+
 - **Problem**: 11x more expensive than competitors
 - **Result**: $66/year premium (unaffordable)
 - **Status**: ❌ Rejected
 
 ### Iteration 3: Market-Competitive (Final) ✅
+
 ```python
 PAYOUT_RATES = {"drought": 60, "flood": 75, "crop": 90}
 ```
+
 - **Result**: $10/year premium (competitive)
 - **Status**: ✅ **PILOT-READY**
 
 ### Iteration 4: Phase-Based Precision (Jan 23, 2026) ✅
+
 Aligned triggers with **Rice Growth Phases** (Germination, Vegetative, Flowering, Maturity).
+
 - **Benefit**: Removes "basis risk" by ensuring payouts match biological reality (e.g., critical flowering deficits).
 - **Implementation**: Fixed rules applied to variable forecasts.
 
@@ -134,42 +144,50 @@ Aligned triggers with **Rice Growth Phases** (Germination, Vegetative, Flowering
 The system uses a **scientific, objective approach** to determine when payouts occur:
 
 #### Step 1: Climate Variable Prediction
+
 Machine learning models forecast actual climate variables for the next 3-6 months:
+
 - **Rainfall** (mm): Predicted using ensemble regression models (Random Forest, Gradient Boosting, XGBoost)
 - **NDVI**: Vegetation health index from satellite data
 - **Soil Moisture** (%): Predicted from ERA5 climate data
 
 **Model Performance**:
+
 - R² Score: 0.8666 (XGBoost, primary serving model); Ensemble: 0.840
 - Spatial Cross-Validation: 84.6% accuracy (XGBoost temporal CV)
 - 6-month forecasting horizon
 
 #### Step 2: Threshold Comparison
+
 Forecasted climate values are compared to calibrated thresholds:
 
 **Drought Detection**:
+
 ```
 IF predicted_rainfall < 120mm for 30 days (SPI-30 < -0.60)
 THEN trigger = "drought" → Payout = $60
 ```
 
 **Flood Detection**:
+
 ```
 IF predicted_daily_rainfall > 258mm AND 7-day_rainfall > 1,169mm
 THEN trigger = "flood" → Payout = $75
 ```
 
 **Crop Failure Detection**:
+
 ```
 IF predicted_NDVI < -1.56σ OR predicted_VCI < 3.33
 THEN trigger = "crop_failure" → Payout = $90
 ```
 
 #### Step 3: Phase-Based Logic (The "Decider")
+
 **Crucial Distinction**: The insurance payout is determined by a **Phase-Based Logic Layer** that sits on TOP of the ML forecasts.
 
-*   **ML Models** (Step 1): Predict rainfall/NDVI.
-*   **Phase Logic** (Step 3): Checks if the prediction breaches the threshold for the *specific biological phase* (e.g., Flowering).
+* **ML Models** (Step 1): Predict rainfall/NDVI.
+* **Phase Logic** (Step 3): Checks if the prediction breaches the threshold for the *specific biological phase* (e.g., Flowering).
 
 > **Note**: You do NOT need to retrain ML models to adjust these rules. The logic is parametric (rule-based).
 
@@ -187,34 +205,33 @@ THEN trigger = "crop_failure" → Payout = $90
 
 ## Implementation Details
 
-### Code Location
+### Code Locations
 
-**Primary File**: `reporting/business_metrics.py` (lines 193-213)
+**Payout Rates (backend)**:
 
-**Configuration**:
 ```python
-USE_TIERED_PAYOUTS = False  # True parametric (fixed)
-
+# backend/app/api/forecasts.py (also mirrored in frontend)
 PAYOUT_RATES = {
-    "drought_trigger": 60,
-    "flood_trigger": 75,
-    "crop_failure_trigger": 90,
-    "severe_stress_trigger": 45,
+    "drought": 60,
+    "flood": 75,
+    "crop_failure": 90,
 }
+PILOT_FARMERS = 1000
+# Expected payout = PILOT_FARMERS × probability × PAYOUT_RATES[trigger_type]
 ```
 
-### Scripts
+**Horizon tier enforcement**:
 
-- **Generate Reports**: `python scripts/reporting/generate_business_reports.py`
-- **Recalibrate Thresholds**: `python scripts/calibration/recalibrate_thresholds.py`
-- **Load Dashboard**: `python scripts/load_dashboard_data.py --clear`
+- `backend/app/config/rice_thresholds.py` — `HORIZON_TIERS = {3:"primary", 4:"primary", 5:"advisory", 6:"advisory"}` + `get_horizon_tier()`
+- `backend/app/api/forecasts.py` — `/forecasts/portfolio-risk` filters `horizon_months <= 4`
+- `backend/app/api/risk.py` — `/risk/portfolio` filters `horizon_months <= 4`
+- `frontend/src/pages/ForecastDashboard.tsx` — `generateFinancialProjections()` + `highestRiskForecast` both enforce `horizonMonths <= 4 && probability >= 0.75`
+- `frontend/src/components/FinancialForecastChart.tsx` — subtitle and annotation label reflect primary/advisory split
 
-### Canonical Paths (utils/config.py)
+**Configuration**:
 
 ```python
-MASTER_DATASET = data/processed/master_dataset.csv
-PAYOUT_ESTIMATES = outputs/business_reports/payout_estimates.csv
-INSURANCE_TRIGGERS = outputs/business_reports/insurance_triggers_detailed.csv
+USE_TIERED_PAYOUTS = False  # True parametric (fixed rates, not tiered)
 ```
 
 ---
@@ -231,6 +248,7 @@ INSURANCE_TRIGGERS = outputs/business_reports/insurance_triggers_detailed.csv
 - **Duration**: 12-month pilot
 
 **Rationale for Kilombero Basin**:
+
 - Major rice-producing region in Tanzania
 - High climate vulnerability (floods + droughts)
 - Existing farmer cooperatives for distribution
@@ -239,11 +257,13 @@ INSURANCE_TRIGGERS = outputs/business_reports/insurance_triggers_detailed.csv
 ### Budget Requirements
 
 **Per-Farmer Costs**:
+
 - Premium: $20/year
 - Government subsidy (50%): $10/farmer
 - Total farmer cost: $10/year
 
 **1,000-Farmer Pilot (Morogoro)**:
+
 - Total premiums: $20,000/year
 - Government subsidy: $10,000/year
 - Expected payouts: ~$15,900/year (historical avg scaled)
@@ -256,6 +276,7 @@ INSURANCE_TRIGGERS = outputs/business_reports/insurance_triggers_detailed.csv
 ### TIRA (Tanzania Insurance Regulatory Authority)
 
 ✅ **Parametric Insurance Standards Met**:
+
 - Fixed payout schedule (disclosed upfront)
 - Objective triggers (no loss adjustment)
 - Clear policy terms
@@ -264,10 +285,11 @@ INSURANCE_TRIGGERS = outputs/business_reports/insurance_triggers_detailed.csv
 ### Policy Documentation
 
 **Farmer-Facing Language** (Updated for Climate Pivot):
-> "Our weather prediction system forecasts rainfall for the next 6 months.  
-> If the forecast shows **drought conditions** (less than 120mm rainfall for 30 days), you automatically receive **$60**.  
-> If the forecast shows **flood risk** (more than 258mm in one day + heavy weekly rain), you receive **$75**.  
-> If satellite data shows **crop stress** (vegetation health below normal), you receive **$90**.  
+
+> "Our weather prediction system forecasts rainfall for the next 6 months.
+> If the forecast shows **drought conditions** (less than 120mm rainfall for 30 days), you automatically receive **$60**.
+> If the forecast shows **flood risk** (more than 258mm in one day + heavy weekly rain), you receive **$75**.
+> If satellite data shows **crop stress** (vegetation health below normal), you receive **$90**.
 > No waiting, no claims forms—just automatic protection."
 
 **Legal Contract**: Fixed payout amounts based on objective climate forecasts exceeding/falling below predetermined thresholds. No loss adjustment required.
@@ -277,12 +299,14 @@ INSURANCE_TRIGGERS = outputs/business_reports/insurance_triggers_detailed.csv
 ## Technical Validation
 
 ### Data Quality
-- **Historical Period**: 26 years (2000-2025)  
+
+- **Historical Period**: 26 years (2000-2025)
 - **Locations**: 6 (Arusha, Dar es Salaam, Dodoma, Mbeya, Mwanza, Morogoro)
 - **Records**: 1,872 monthly observations
 - **Trigger Events**: 610 (32.6% of records)
 
 ### Threshold Calibration (Climate Variables)
+
 - **Drought Threshold**: Forecasted rainfall < 120mm/30days (SPI-30 < -0.60) → 12.0% historical trigger rate
 - **Flood Threshold**: Forecasted daily >258mm AND 7-day >1,169mm → 9.3% historical trigger rate
 - **Crop Failure Threshold**: Forecasted VCI <3.33 OR NDVI <-1.56σ → 6.2% historical trigger rate
@@ -290,6 +314,7 @@ INSURANCE_TRIGGERS = outputs/business_reports/insurance_triggers_detailed.csv
 *These thresholds were calibrated using 26 years of historical data (2000-2025) to achieve sustainable trigger rates.*
 
 ### Climate Prediction Model Performance
+
 - **Rainfall Forecast R²**: 0.8666 (XGBoost, primary serving model; Ensemble: 0.840)
 - **Temporal Cross-Validation**: 84.6% (validated across 5 temporal CV folds)
 - **Forecast Horizon**: 3-6 months ahead
@@ -297,10 +322,28 @@ INSURANCE_TRIGGERS = outputs/business_reports/insurance_triggers_detailed.csv
 
 *The ML model predicts climate variables (rainfall, NDVI), which are then compared to the calibrated thresholds above to determine if a trigger/payout occurs.*
 
-### Portfolio Risk Monitoring logic
-- **"Farmers at Risk" Metric**: Defined as policyholders in locations where the forecast probability of a trigger event exceeds **75%** (Severe Risk).
-- **Rationale**: This high threshold ensures that financial reserves are only earmarked for high-confidence, near-certain payout events (1-in-4 year severity or worse), aligning with standard parametric insurance business models.
-- **Expected Payout Calculation**: Aggregated sum of `(Payout Rate * Probability)` for each specific location at risk, ensuring granular financial accuracy.
+### Horizon Tiers (Enforced in Code)
+
+| Tier               | Horizon     | Threshold          | Status                                           |
+| ------------------ | ----------- | ------------------ | ------------------------------------------------ |
+| **Primary**  | ≤ 4 months | ≥ 75% probability | Payout-eligible — counted in financial exposure |
+| **Advisory** | 5–6 months | ≥ 50% probability | Early warning only — never triggers payout      |
+
+**Why Advisory Never Triggers**: 5-6 month forecasts carry higher uncertainty. Labelling them advisory prevents premature reserve earmarking while still surfacing emerging risk to operations teams.
+
+### Portfolio Risk Monitoring Logic
+
+- **"Farmers at Risk" Metric**: Policyholders in locations where **primary-tier** (horizon ≤ 4 months) forecast probability ≥ **75%** (Severe Risk).
+- **Rationale**: The 75% threshold ensures reserves are only earmarked for high-confidence, near-certain payout events (≥1-in-4 year severity), aligning with TIRA-compliant parametric insurance practice.
+- **Expected Payout Formula**: `PILOT_FARMERS × probability × payout_rate_per_farmer`
+  - Example (drought at 52.6%): 1,000 × 0.526 × $60 = $31,560
+  - Affected farmers = total farmers × probability (not a binary all-or-nothing count)
+- **Deduplication Rule**: When multiple pipeline runs target the same calendar month, the system takes **MAX probability per trigger_type × month**. This prevents double-counting if two runs both forecast drought in September.
+- **Code enforcement**:
+  - Backend `/api/forecasts/portfolio-risk`: `Forecast.horizon_months <= 4` filter applied before aggregation
+  - Backend `/api/risk/portfolio`: same `horizon_months <= 4` guard
+  - Frontend `generateFinancialProjections()`: deduplicates by `triggerType|monthName` (MAX probability), primary tier only
+  - Frontend `locationRisk` (map tooltip): uses `portfolioRisk.expectedPayouts` from backend — not re-accumulated on the client
 
 ---
 
@@ -309,12 +352,13 @@ INSURANCE_TRIGGERS = outputs/business_reports/insurance_triggers_detailed.csv
 ### Downside Risks
 
 1. **Higher-than-expected trigger rates**: 75% loss ratio leaves only 5% buffer
+
    - **Mitigation**: 26-year calibration provides confidence
-   
 2. **Climate change acceleration**: Historical rates may not hold
+
    - **Mitigation**: Annual recalibration process
-   
 3. **Farmer uptake lower than expected**: Fixed costs diluted
+
    - **Mitigation**: Start with 100-farmer minimum
 
 ### Upside Opportunities
@@ -322,49 +366,6 @@ INSURANCE_TRIGGERS = outputs/business_reports/insurance_triggers_detailed.csv
 1. **Lower trigger rates**: 75% loss ratio → profits for sustainability
 2. **Scale economies**: >500 farmers → reduce subsidy need
 3. **Multi-peril value**: Attracts more farmers than single-peril competitors
-
----
-
-## Next Steps (Q1 2026)
-
-### Pre-Launch (Jan-Feb)
-1. ✅ TIRA regulatory approval application
-2. ✅ Farmer education materials (simple policy explanation)
-3. ✅ Government subsidy MOU (50% commitment)
-4. ✅ Dashboard setup for real-time monitoring
-
-### Pilot Launch (March)
-5. ✅ Recruit 100-500 farmers
-6. ✅ Collect premiums ($10/farmer)
-7. ✅ Begin monitoring trigger events
-8. ✅ First payout within 5-7 days of trigger
-
-### Q2-Q3 Monitoring
-9. Track actual trigger rates vs historical
-10. Measure farmer satisfaction
-11. Calculate actual loss ratio
-12. Prepare scale-up plan for 2027
-
----
-
-## Success Criteria
-
-### Financial
-- Loss ratio stays 50-85% ✅
-- 70%+ farmers renew for year 2
-- Government subsidy maintained
-
-### Operational
-- Payout delays <7 days from trigger
-- Zero disputed payouts (parametric = automatic)
-- Dashboard uptime >99%
-
-### Impact
-- Farmers protected from climate shocks
-- Crop losses reduced by insurance coverage
-- Model for national scale-up
-
----
 
 ## References
 
@@ -375,6 +376,17 @@ INSURANCE_TRIGGERS = outputs/business_reports/insurance_triggers_detailed.csv
 
 ---
 
-**Document Owner**: Climate Prediction & Insurance Team  
-**Last Updated**: March 9, 2026
+**Document Owner**: Climate Prediction & Insurance Team
+**Last Updated**: March 15, 2026
 **Next Review**: June 2026 (post 90-day shadow run — review against Brier Score results)
+
+---
+
+## Changelog
+
+| Date         | Change                                                                                                                                                                                                                                                                                                                                                                      |
+| ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Mar 15, 2026 | Added Horizon Tiers section. Corrected payout formula to per-farmer fixed rate (`PILOT_FARMERS × probability × rate`). Added deduplication rule (MAX probability per trigger_type × month). Updated code locations to reflect backend + frontend enforcement. Fixed double-counting bug: advisory tier (5-6 month forecasts) no longer included in financial exposure. |
+| Mar 9, 2026  | Updated Next Review date. Initial shadow run doc sweep.                                                                                                                                                                                                                                                                                                                     |
+| Jan 23, 2026 | Phase-based precision iteration added.                                                                                                                                                                                                                                                                                                                                      |
+| Jan 1, 2026  | Version 3.0 — market-competitive rates finalised.                                                                                                                                                                                                                                                                                                                          |
