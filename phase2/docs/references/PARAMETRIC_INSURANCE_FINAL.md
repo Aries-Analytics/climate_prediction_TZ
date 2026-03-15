@@ -32,10 +32,10 @@ Implemented true parametric insurance with market-competitive rates aligned with
 
 | Trigger Type      | Payout | Rationale                               |
 | ----------------- | ------ | --------------------------------------- |
-| **Drought**       | $60    | Market rate aligned with Pula (~$50-70) |
-| **Flood**         | $75    | 25% premium for higher risk             |
-| **Crop Failure**  | $90    | Critical impact, highest payout         |
-| **Severe Stress** | $45    | Supplementary coverage                  |
+| **Drought**       | \$60   | Market rate aligned with Pula (~\$50-70)|
+| **Flood**         | \$75   | 25% premium for higher risk             |
+| **Crop Failure**  | \$90   | Critical impact, highest payout         |
+| **Severe Stress** | \$45   | Supplementary coverage                  |
 
 **Coverage**: 0.5 hectare per farmer (typical smallholder size)
 
@@ -79,12 +79,12 @@ Implemented true parametric insurance with market-competitive rates aligned with
 
 ### Apples-to-Apples Comparison (0.5 hectare)
 
-| Program           | Premium      | Max Payout  | Perils                           | Location          |
-| ----------------- | ------------ | ----------- | -------------------------------- | ----------------- |
-| **Pula Zambia**   | $6/year      | $25         | Drought                          | Zambia            |
-| **KLIP Kenya**    | N/A          | $10/animal  | Drought                          | Kenya (livestock) |
-| **ACRE Kenya**    | $8/year      | $40         | Drought, Flood                   | Kenya             |
-| **TCI (Ours)**    | **$10/year** | **$90**     | **Drought, Flood, Crop Failure** | **Tanzania**      |
+| Program           | Premium       | Max Payout  | Perils                           | Location          |
+| ----------------- | ------------- | ----------- | -------------------------------- | ----------------- |
+| **Pula Zambia**   | \$6/year      | \$25        | Drought                          | Zambia            |
+| **KLIP Kenya**    | N/A           | \$10/animal | Drought                          | Kenya (livestock) |
+| **ACRE Kenya**    | \$8/year      | \$40        | Drought, Flood                   | Kenya             |
+| **TCI (Ours)**    | **\$10/year** | **\$90**    | **Drought, Flood, Crop Failure** | **Tanzania**      |
 
 ### Value Proposition
 
