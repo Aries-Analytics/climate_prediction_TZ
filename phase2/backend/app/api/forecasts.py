@@ -335,7 +335,8 @@ def get_portfolio_risk(
             Forecast.location_id == PILOT_LOCATION_ID,  # ← MOROGORO PILOT FILTER
             Forecast.probability >= 0.75,
             Forecast.target_date >= today,
-            Forecast.target_date <= target_end
+            Forecast.target_date <= target_end,
+            Forecast.horizon_months <= 4  # PRIMARY TIER ONLY — advisory (5-6mo) never triggers payout
         ).all()
         
         # Group forecasts by location to calculate granular risk
