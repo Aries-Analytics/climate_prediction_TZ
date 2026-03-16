@@ -11,11 +11,11 @@ export default function LandingFooter() {
         <div className="flex flex-col items-center gap-6">
 
           {/* Brand */}
-          <div className="flex items-center">
+          <div className="flex flex-col items-center">
             <img
               src="/hewasense-logo.png"
               alt="HewaSense"
-              className="h-24"
+              className="h-24 mx-auto"
               onError={(e) => {
                 e.currentTarget.style.display = 'none';
                 (e.currentTarget.nextElementSibling as HTMLElement | null)?.removeAttribute('hidden')
