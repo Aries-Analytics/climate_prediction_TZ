@@ -1,12 +1,42 @@
 # Frontend Dashboards - Complete Reference
 
-**Last Updated**: January 10, 2026
-**Version**: 2.1 (Climate Index Pivot)
+**Last Updated**: March 16, 2026
+**Version**: 2.2 (Landing Page Added)
 
 ## 📌 Overview
-This document serves as the single source of truth for all frontend dashboards in the HewaSense Early Warning System.
+This document serves as the single source of truth for all frontend dashboards and pages in the HewaSense Early Warning System.
 
 > **Note**: For detailed architecture and backend logic of the Climate Pivot, see [Climate Index Pivot Reference](../climate_pivot/climate_index_pivot_reference.md).
+
+## 0. Public Landing Page (Live)
+**Route**: `/` (was `<Navigate to="/dashboard/executive" />` — changed March 16, 2026)
+**URL**: `hewasense.majaribio.com`
+**Stack**: Tailwind CSS v3 + shadcn/ui coexisting with MUI v5
+
+**Purpose**: Public-facing entry point for HewaSense. Communicates the platform's value proposition, pilot status, and provides access to the authenticated dashboard.
+
+### Components (`src/components/landing/`)
+| Component | Purpose |
+|---|---|
+| `LandingNavbar.tsx` | Fixed, scroll-aware, responsive navigation |
+| `HeroSection.tsx` | Full-viewport dark navy hero with CTAs |
+| `StatsBar.tsx` | 4 KPIs (1,000 farmers, 25 yrs historical, 3 perils, 86.7% accuracy) + Shadow Run Active amber badge |
+| `HowItWorksSection.tsx` | 4-step pipeline explanation (outcomes only, no architecture exposure) |
+| `FeaturesSection.tsx` | 6 feature cards (one per dashboard module) |
+| `AboutSection.tsx` | Mission + spec table |
+| `AccessCTASection.tsx` | Shadow run framing — real forecasts, no real payouts yet |
+| `LandingFooter.tsx` | Brand, nav links, copyright 2026 |
+
+### Copy Policy
+Public copy describes **outcomes only**. XGBoost is acceptable to name. Never expose: model architecture details, R² thresholds, horizon counts, internal service names.
+
+### Stats (canonical)
+- Farmers: **1,000** (exact — not 1,000+)
+- Historical data: **25 years**
+- Perils monitored: **3** (drought, flood, crop failure — not "12 forecast horizons")
+- Accuracy: **86.7% R²** (6-location dataset, XGBoost post data-leakage fix)
+
+---
 
 ## 1. Climate Index Insurance Dashboard (New!)
 **Route**: `/forecast` (Replaces legacy Forecast Dashboard)

@@ -1,8 +1,8 @@
 # Tanzania Climate Intelligence Platform
 
-**Last Updated**: March 8, 2026
-**Version**: 4.1 (Data Leakage Fix Update)  
-**Status**: ✅ Actuarial Validation Complete
+**Last Updated**: March 16, 2026
+**Version**: 4.2 (Landing Page Live)
+**Status**: ✅ Actuarial Validation Complete — Shadow Run ACTIVE
 
 ---
 
@@ -784,6 +784,7 @@ This project represents a foundation for climate intelligence in East Africa. We
 **Testing**: Comprehensive test suite validated (80%+ coverage)
 **Documentation**: Complete user and technical guides (80+ pages)
 **Deployment**: Live on `root@37.27.200.227`, Docker containers running, 6 AM EAT daily
+**Public Landing Page**: Live at `hewasense.majaribio.com` (route `/` renders `LandingPage` — March 16, 2026)
 
 **Next Step**: Monitor shadow run evidence chain; present Evidence Pack to underwriters ~Jun 2026
 
@@ -822,7 +823,7 @@ As climate variability increases, tools like this may become increasingly valuab
 
 ---
 
-**Document Version**: 4.2
-**Last Updated**: March 8, 2026
-**Status**: Shadow Run ACTIVE (Mar 7 – Jun 12, 2026 revised)
+**Document Version**: 4.3
+**Last Updated**: March 16, 2026
+**Status**: Shadow Run ACTIVE (Mar 7 – Jun 12, 2026 revised) — Landing Page LIVE
 **Consolidates**: PROJECT_OVERVIEW.md, PROJECT_SUMMARY.md, EXECUTIVE_SUMMARY.md, PHASE_2_KEY_ACHIEVEMENTS.md, IMPLEMENTATION_COMPLETE.md

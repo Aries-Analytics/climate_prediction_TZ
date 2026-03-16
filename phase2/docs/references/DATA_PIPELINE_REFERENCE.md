@@ -1,7 +1,7 @@
 # Data Pipeline Reference
 
-**Last Updated**: February 5, 2026  
-**Version**: 2.1  
+**Last Updated**: March 10, 2026
+**Version**: 2.2
 **Status**: ✅ Production Ready
 
 ---
@@ -13,7 +13,7 @@ The Tanzania Climate Intelligence Platform data pipeline is a comprehensive syst
 ### Key Features
 
 - **Multi-Source Integration**: 5 authoritative climate data sources
-- **Automated Scheduling**: Daily execution at 06:00 UTC (configurable)
+- **Automated Scheduling**: Daily execution at 06:00 EAT (Africa/Dar_es_Salaam — configurable)
 - **Incremental Updates**: Fetches only new data since last run
 - **Real-Time Processing**: Live data from APIs and satellite sources
 - **Quality Validation**: Comprehensive data quality checks
