@@ -5,13 +5,13 @@ const SPECS = [
   { label: 'Secondary Peril',     value: 'Flood (Precipitation exceedance)' },
   { label: 'Tertiary Peril',      value: 'Crop Failure (NDVI composite)' },
   { label: 'Regulatory Framework',value: 'TIRA (Tanzania)' },
-  { label: 'Forecast Engine',     value: 'Gradient Boosting Ensemble' },
+  { label: 'Forecast Engine',     value: 'Probabilistic ML forecasting' },
   { label: 'Data Sources',        value: 'ERA5, CHIRPS, GEE' },
 ]
 
 const HIGHLIGHTS = [
   { icon: MapPin,  text: 'Kilombero Basin, Morogoro Region, Tanzania' },
-  { icon: Users,   text: '1,000+ rice farmers in initial pilot coverage area' },
+  { icon: Users,   text: '1,000 rice farmers in initial pilot coverage area' },
   { icon: Leaf,    text: 'Rice crop calendar aligned trigger seasons' },
 ]
 
