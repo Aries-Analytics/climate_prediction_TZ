@@ -76,6 +76,7 @@
 - **Kilombero Basin geographic sub-zones:** Need to ingest climate data at basin sub-coordinates (North/Central/South Kilombero) before adding Location records — without data, forecasts fail gracefully but produce nothing useful.
 - **5 training cities (Arusha, DSM, Dodoma, Mbeya, Mwanza) are training diversity tools, NOT production pilot targets.** Do not add them to the `locations` DB table as production forecasting locations.
 - **Season-over-season payout comparison (Analytics dashboard):** Yearly summary data already generated in `backtesting_service.py` (`yearly_summary` dict, lines 596-626) and exported to `outputs/business_reports/payout_summary_by_year.csv`. Needs: API endpoint `/dashboard/comparison/year-over-year` + frontend YoY comparison chart. Blocked on: enough live pilot seasons to make comparison meaningful.
+- **Interest / waitlist contact form (landing page):** Add a "Request Access" button on `AccessCTASection` alongside the existing "Access Dashboard" button. Opens a simple form (name, email, role/org). Store in new `contact_submissions` DB table. Send email notification on submit. **Build trigger:** when ready to share platform externally (~4-6 weeks before target onboarding date). Scope: ~1 day — form component + POST `/api/contact` endpoint + DB migration + email notification.
 
 ## Public Landing Page (live Mar 16, 2026)
 
