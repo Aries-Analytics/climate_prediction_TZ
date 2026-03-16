@@ -207,16 +207,6 @@ export default function TriggersDashboard() {
     }
   ], [])
 
-  if (isLoading) return <LoadingSpinner message="Loading parametric triggers..." />
-
-  if (error) {
-    return (
-      <Box sx={{ p: 3 }}>
-        <Alert severity="error">{error}</Alert>
-      </Box>
-    )
-  }
-
   const triggerSummary = useMemo(() => {
     const types = ['drought', 'flood', 'crop_failure'] as const
     return types.map(tt => {
@@ -228,6 +218,16 @@ export default function TriggersDashboard() {
       }
     })
   }, [filteredAlerts])
+
+  if (isLoading) return <LoadingSpinner message="Loading parametric triggers..." />
+
+  if (error) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Alert severity="error">{error}</Alert>
+      </Box>
+    )
+  }
 
   // Transform alerts to map format
   const triggerMapData = filteredAlerts.map(alert => ({
