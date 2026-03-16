@@ -119,7 +119,7 @@ You should see all 5 containers (`db`, `backend`, `frontend`, `pipeline-schedule
 The system is now completely autonomous. You can safely close your laptop.
 
 - **At 6:00 AM EAT every day:** The `pipeline-scheduler` will wake up, run the ingestion, select the active model (`xgboost_climate.pkl`, 83 features), and generate the 12 Evidence Pack forecasts.
-- **At 6:30 AM EAT:** Your phone will receive the enriched `#climate-pipeline-daily` Slack notification.
+- **At 6:00 AM EAT:** Your phone will receive the enriched `#climate-pipeline-daily` Slack notification (pipeline runs and notifies at the same time).
 - **To view the Evidence Pack Dashboard:** Open a web browser to `http://<YOUR_SERVER_IP>:3000` (ensure port 3000 is open in your server's firewall/security group).
 
 If you ever need to manually check logs on the server:
