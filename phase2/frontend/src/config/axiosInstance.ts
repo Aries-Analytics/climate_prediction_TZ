@@ -22,7 +22,7 @@ function _cacheKey(config: { method?: string; url?: string; params?: unknown }):
   return url + params
 }
 
-const axiosInstance = axios.create({ baseURL: API_BASE_URL })
+const axiosInstance = axios.create()
 
 // Attach access token to every request
 axiosInstance.interceptors.request.use((config) => {
