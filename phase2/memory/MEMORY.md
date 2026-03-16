@@ -76,6 +76,16 @@
 - **Kilombero Basin geographic sub-zones:** Need to ingest climate data at basin sub-coordinates (North/Central/South Kilombero) before adding Location records — without data, forecasts fail gracefully but produce nothing useful.
 - **5 training cities (Arusha, DSM, Dodoma, Mbeya, Mwanza) are training diversity tools, NOT production pilot targets.** Do not add them to the `locations` DB table as production forecasting locations.
 
+## Public Landing Page (live Mar 16, 2026)
+
+- **URL:** `hewasense.majaribio.com` (also `localhost:3000/`)
+- **Route:** `/` now renders `LandingPage` (was `<Navigate to="/dashboard/executive" />`)
+- **Stack:** Tailwind CSS v3 + shadcn/ui coexisting with MUI v5 via `corePlugins: { preflight: false }` in `tailwind.config.ts`
+- **Copy rule:** Public copy must NEVER expose model architecture (gradient-boosted, XGBoost, horizon count, R² thresholds). Describe outcomes only — calibrated triggers, probabilistic assessments, evidence reports. Verified against codebase before writing.
+- **Shadow run badge:** StatsBar shows amber "Shadow Run Active" pill; AccessCTA section explains shadow run context (real forecasts, no real payouts). Both are accurate and intentional.
+- **Stats accuracy:** 1,000 farmers (exact, not 1,000+); 25 yrs historical; 3 perils (not 12 horizons — horizon stat was misleading); 86.7% R².
+- **Docker install trap:** If tailwindcss not found in container after force-recreate, run `docker run --rm -v /opt/hewasense/app/phase2/frontend:/app -w /app node:18-alpine npm install` to install directly into bind-mounted host directory. Anonymous volume shadows the bind mount.
+
 ## SSH & Deployment
 
 - **Server:** `root@37.27.200.227`, domain `hewasense.majaribio.com`, deploy dir `/opt/hewasense/app/phase2`
@@ -148,6 +158,7 @@
 |------|-----------|
 | 2026-03-10 | Sigmoid→CDF fix, LSTM fallback removal, doc sweep |
 | 2026-03-15 | Stale lock NullPool fix, incremental tracking fix, heat_stress doc, LSTM JSON cleanup |
+| 2026-03-16 | Public landing page built + deployed to hewasense.majaribio.com; copy corrections (IP protection); mobile responsiveness; Docker npm install trap resolved |
 
-*Last updated: 2026-03-15*
+*Last updated: 2026-03-16*
 *This file is the source of truth for persistent facts. Edit directly to update.*

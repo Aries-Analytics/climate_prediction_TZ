@@ -305,6 +305,23 @@ A comprehensive climate intelligence platform for Tanzania that integrates multi
 
 **Technical Details**: See [DATA_PIPELINE_TEST_FIXES.md](../reports/DATA_PIPELINE_TEST_FIXES.md)
 
+### March 16, 2026 — Public Landing Page Launched
+
+**Status**: ✅ Live at `hewasense.majaribio.com`
+**Impact**: Platform now has a public-facing presence before the login wall
+
+**Key Changes**:
+1. **Landing page built** — `src/pages/LandingPage.tsx` + 8 components under `src/components/landing/`. Route `/` now renders the landing page instead of redirecting to `/dashboard/executive`.
+2. **Stack:** Tailwind CSS v3 + shadcn/ui added alongside MUI v5; coexistence enforced via `corePlugins: { preflight: false }` — MUI styles unaffected.
+3. **Sections:** Hero · StatsBar (Shadow Run Active badge) · HowItWorks · Features · About · AccessCTA (shadow run framing) · Footer.
+4. **Copy policy:** All public copy describes outcomes only — no model architecture, horizon counts, calibration thresholds, or R² values exposed. Verified against codebase before writing.
+5. **Mobile responsive:** Navbar collapses to `h-16` on mobile; hero padding adjusted to prevent overlap; pill badge `whitespace-nowrap`.
+6. **Docker install trap resolved:** Anonymous `/app/node_modules` volume shadowed bind-mount; fixed via direct host-dir `npm install` using `docker run`.
+
+**Commits**: `eb218c3` → `2524f09` on `phase2/feature-expansion`.
+
+---
+
 ### March 15, 2026 — Payout Logic Fixes + Shadow Run Extension + System Health KPI
 
 **Status**: ✅ Complete
@@ -453,7 +470,7 @@ A comprehensive climate intelligence platform for Tanzania that integrates multi
 
 ---
 
-**Last Updated**: March 15, 2026
-**Version**: 3.7 (Shadow Run Active — Dates Data-Driven + Full Doc Audit Sweep)
+**Last Updated**: March 16, 2026
+**Version**: 3.8 (Public Landing Page Live at hewasense.majaribio.com)
 **License**: [Specify license]  
 **Contact**: [Contact information]
