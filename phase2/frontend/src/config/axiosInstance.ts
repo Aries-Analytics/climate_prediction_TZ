@@ -34,16 +34,20 @@ axiosInstance.interceptors.request.use((config) => {
   const key = _cacheKey(config)
   if (key) {
     const hit = _responseCache.get(key)
-    if (hit && Date.now() - hit.ts < _CACHE_TTL_MS) {
-      config._fromCache = true
-      config.adapter = () => Promise.resolve({
-        data: hit.data,
-        status: 200,
-        statusText: 'OK',
-        headers: {},
-        config,
-        request: undefined,
-      })
+    if (hit) {
+      if (Date.now() - hit.ts < _CACHE_TTL_MS) {
+        config._fromCache = true
+        config.adapter = () => Promise.resolve({
+          data: hit.data,
+          status: 200,
+          statusText: 'OK',
+          headers: {},
+          config,
+          request: undefined,
+        })
+      } else {
+        _responseCache.delete(key) // lazy-evict stale entry to prevent unbounded growth
+      }
     }
   }
   return config
