@@ -13,7 +13,7 @@ const FEATURES: Feature[] = [
     icon: BarChart3,
     title: 'ML Forecasting',
     description:
-      'Probabilistic forecasts for drought, flood, and crop failure — issued ahead of the season with confidence metrics, so insurers and agronomists can act before losses occur, not after.',
+      'Probabilistic forecasts for drought, flood, and crop failure — issued ahead of the season with confidence metrics, so insurers and agronomists can become proactive, not reactive.',
     badge: 'Model Performance',
   },
   {
@@ -34,7 +34,7 @@ const FEATURES: Feature[] = [
     icon: Activity,
     title: 'Real-time Monitoring',
     description:
-      'Executive snapshot KPIs, live trigger alerts, and portfolio loss ratio tracking in a role-gated dashboard interface.',
+      'Executive snapshot KPIs, live trigger alerts, and portfolio loss ratio tracking in a role-based dashboard interface.',
     badge: 'Executive',
   },
   {
