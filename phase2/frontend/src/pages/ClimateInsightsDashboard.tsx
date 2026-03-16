@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import {
   Box,
   Typography,
@@ -21,7 +21,7 @@ import {
   Chip,
 } from '@mui/material'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
-import axios from 'axios'
+import axios from '../config/axiosInstance'
 import { API_BASE_URL } from '../config/api'
 import LoadingSpinner from '../components/common/LoadingSpinner'
 import Chart from '../components/charts/Chart'
@@ -48,10 +48,17 @@ export default function ClimateInsightsDashboard() {
   const [selectedVariables, setSelectedVariables] = useState<string[]>(['temperature', 'rainfall', 'ndvi'])
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
+  const fetchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Climate Data Effect
+  // Climate Data Effect — debounced so rapid date input changes don't fire multiple requests
   useEffect(() => {
-    fetchClimateData()
+    if (fetchDebounceRef.current) clearTimeout(fetchDebounceRef.current)
+    fetchDebounceRef.current = setTimeout(() => {
+      fetchClimateData()
+    }, 400)
+    return () => {
+      if (fetchDebounceRef.current) clearTimeout(fetchDebounceRef.current)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [startDate, endDate])
 

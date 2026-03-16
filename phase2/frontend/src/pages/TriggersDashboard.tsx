@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import {
   Box,
   Typography,
@@ -15,7 +15,7 @@ import {
   Paper,
   Stack
 } from '@mui/material'
-import axios from 'axios'
+import axios from '../config/axiosInstance'
 import { API_BASE_URL } from '../config/api'
 import LoadingSpinner from '../components/common/LoadingSpinner'
 import DataTable from '../components/common/DataTable'
@@ -50,7 +50,6 @@ const getPhaseImportance = (stage: string) => {
 
 export default function TriggersDashboard() {
   const [alerts, setAlerts] = useState<TriggerAlert[]>([])
-  const [filteredAlerts, setFilteredAlerts] = useState<TriggerAlert[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -58,18 +57,16 @@ export default function TriggersDashboard() {
   const [selectedLocation, setSelectedLocation] = useState<string>('all')
   const [locations, setLocations] = useState<any[]>([])
 
+  const filteredAlerts = useMemo(() =>
+    selectedLocation === 'all'
+      ? alerts
+      : alerts.filter(a => a.location_id?.toString() === selectedLocation),
+    [alerts, selectedLocation]
+  )
+
   useEffect(() => {
     fetchClimateAlerts()
   }, [])
-
-  // Filter Logic
-  useEffect(() => {
-    if (selectedLocation === 'all') {
-      setFilteredAlerts(alerts);
-    } else {
-      setFilteredAlerts(alerts.filter(a => a.location_id?.toString() === selectedLocation));
-    }
-  }, [selectedLocation, alerts]);
 
   const fetchClimateAlerts = async () => {
     try {
@@ -218,6 +215,18 @@ export default function TriggersDashboard() {
     )
   }
 
+  const triggerSummary = useMemo(() => {
+    const types = ['drought', 'flood', 'crop_failure'] as const
+    return types.map(tt => {
+      const typeAlerts = filteredAlerts.filter(a => a.alert_type === tt)
+      return {
+        tt,
+        triggered: typeAlerts.length,
+        worst: typeAlerts.reduce((w, a) => a.deviation < w ? a.deviation : w, 0),
+      }
+    })
+  }, [filteredAlerts])
+
   // Transform alerts to map format
   const triggerMapData = filteredAlerts.map(alert => ({
     location_id: alert.location_id,
@@ -245,10 +254,7 @@ export default function TriggersDashboard() {
             Threshold Status Summary — {filteredAlerts.length === 0 ? 'All clear' : `${filteredAlerts.length} active payout alert${filteredAlerts.length !== 1 ? 's' : ''}`} (primary tier ≥75%)
           </Typography>
           <Grid container spacing={2}>
-            {(['drought', 'flood', 'crop_failure'] as const).map(tt => {
-              const typeAlerts = filteredAlerts.filter(a => a.alert_type === tt)
-              const triggered = typeAlerts.length
-              const worst = typeAlerts.reduce((w, a) => a.deviation < w ? a.deviation : w, 0)
+            {triggerSummary.map(({ tt, triggered, worst }) => {
               return (
                 <Grid item xs={12} sm={4} key={tt}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>

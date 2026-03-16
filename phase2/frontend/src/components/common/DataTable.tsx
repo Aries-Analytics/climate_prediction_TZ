@@ -1,4 +1,4 @@
-import { useState, ReactNode } from 'react'
+import { useState, useMemo, ReactNode } from 'react'
 import {
   Table,
   TableBody,
@@ -56,28 +56,34 @@ export default function DataTable({ columns, rows, searchable = false, loading =
     setOrderBy(columnId)
   }
 
-  // Filter rows based on search term
-  const filteredRows = searchTerm
-    ? rows.filter((row) =>
-      columns.some((column) => {
-        const value = row[column.id]
-        return value?.toString().toLowerCase().includes(searchTerm.toLowerCase())
-      })
-    )
-    : rows
+  // Filter rows based on search term — memoized to avoid O(n×m) on every render
+  const filteredRows = useMemo(() =>
+    searchTerm
+      ? rows.filter((row) =>
+          columns.some((column) => {
+            const value = row[column.id]
+            return value?.toString().toLowerCase().includes(searchTerm.toLowerCase())
+          })
+        )
+      : rows,
+    [rows, columns, searchTerm]
+  )
 
-  const sortedRows = [...filteredRows].sort((a, b) => {
-    if (!orderBy) return 0
-    const aVal = a[orderBy]
-    const bVal = b[orderBy]
-    if (aVal < bVal) return order === 'asc' ? -1 : 1
-    if (aVal > bVal) return order === 'asc' ? 1 : -1
-    return 0
-  })
+  const sortedRows = useMemo(() =>
+    [...filteredRows].sort((a, b) => {
+      if (!orderBy) return 0
+      const aVal = a[orderBy]
+      const bVal = b[orderBy]
+      if (aVal < bVal) return order === 'asc' ? -1 : 1
+      if (aVal > bVal) return order === 'asc' ? 1 : -1
+      return 0
+    }),
+    [filteredRows, orderBy, order]
+  )
 
-  const paginatedRows = sortedRows.slice(
-    page * rowsPerPage,
-    page * rowsPerPage + rowsPerPage
+  const paginatedRows = useMemo(() =>
+    sortedRows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage),
+    [sortedRows, page, rowsPerPage]
   )
 
   const handleExportClick = (event: React.MouseEvent<HTMLElement>) => {

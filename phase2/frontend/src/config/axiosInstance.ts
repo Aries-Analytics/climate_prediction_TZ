@@ -1,6 +1,19 @@
 import axios from 'axios'
 import { API_BASE_URL } from './api'
 
+// Simple in-memory GET cache (2-minute TTL) — prevents duplicate requests across dashboard navigation
+const _responseCache = new Map<string, { data: unknown; ts: number }>()
+const _CACHE_TTL_MS = 2 * 60 * 1000
+const _NO_CACHE = ['/auth/', '/admin/']
+
+function _cacheKey(config: { method?: string; url?: string; params?: unknown }): string | null {
+  if (config.method?.toLowerCase() !== 'get') return null
+  const url = config.url ?? ''
+  if (_NO_CACHE.some(p => url.includes(p))) return null
+  const params = config.params ? '?' + new URLSearchParams(config.params as Record<string, string>).toString() : ''
+  return url + params
+}
+
 const axiosInstance = axios.create({ baseURL: API_BASE_URL })
 
 // Attach access token to every request
@@ -9,12 +22,33 @@ axiosInstance.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }
+  // Serve from cache if fresh
+  const key = _cacheKey(config)
+  if (key) {
+    const hit = _responseCache.get(key)
+    if (hit && Date.now() - hit.ts < _CACHE_TTL_MS) {
+      config.adapter = () => Promise.resolve({
+        data: hit.data,
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+        config,
+        request: undefined,
+      })
+    }
+  }
   return config
 })
 
 // On 401: silently refresh access token and retry; on full failure redirect to login
 axiosInstance.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    const key = _cacheKey(response.config)
+    if (key && response.status === 200 && response.statusText !== 'OK') {
+      _responseCache.set(key, { data: response.data, ts: Date.now() })
+    }
+    return response
+  },
   async (error) => {
     const originalRequest = error.config
 

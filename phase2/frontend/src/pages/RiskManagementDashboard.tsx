@@ -25,7 +25,7 @@ import {
   Tab,
   Paper
 } from '@mui/material'
-import axios from 'axios'
+import axios from '../config/axiosInstance'
 import { API_BASE_URL } from '../config/api'
 import LoadingSpinner from '../components/common/LoadingSpinner'
 import KPICard from '../components/common/KPICard'
