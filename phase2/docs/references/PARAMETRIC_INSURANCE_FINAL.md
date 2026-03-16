@@ -30,12 +30,12 @@ Implemented true parametric insurance with market-competitive rates aligned with
 
 **FINAL CALIBRATED RATES** (Effective Jan 2026):
 
-| Trigger Type      | Payout | Rationale                               |
-| ----------------- | ------ | --------------------------------------- |
-| **Drought**       | \$60   | Market rate aligned with Pula (~\$50-70)|
-| **Flood**         | \$75   | 25% premium for higher risk             |
-| **Crop Failure**  | \$90   | Critical impact, highest payout         |
-| **Severe Stress** | \$45   | Supplementary coverage                  |
+| Trigger Type            | Payout | Rationale                                |
+| ----------------------- | ------ | ---------------------------------------- |
+| **Drought**       | \$60   | Market rate aligned with Pula (~\$50-70) |
+| **Flood**         | \$75   | 25% premium for higher risk              |
+| **Crop Failure**  | \$90   | Critical impact, highest payout          |
+| **Severe Stress** | \$45   | Supplementary coverage                   |
 
 **Coverage**: 0.5 hectare per farmer (typical smallholder size)
 
@@ -79,12 +79,12 @@ Implemented true parametric insurance with market-competitive rates aligned with
 
 ### Apples-to-Apples Comparison (0.5 hectare)
 
-| Program           | Premium       | Max Payout  | Perils                           | Location          |
-| ----------------- | ------------- | ----------- | -------------------------------- | ----------------- |
-| **Pula Zambia**   | \$6/year      | \$25        | Drought                          | Zambia            |
-| **KLIP Kenya**    | N/A           | \$10/animal | Drought                          | Kenya (livestock) |
-| **ACRE Kenya**    | \$8/year      | \$40        | Drought, Flood                   | Kenya             |
-| **TCI (Ours)**    | **\$10/year** | **\$90**    | **Drought, Flood, Crop Failure** | **Tanzania**      |
+| Program               | Premium             | Max Payout     | Perils                                 | Location           |
+| --------------------- | ------------------- | -------------- | -------------------------------------- | ------------------ |
+| **Pula Zambia** | \$6/year            | \$25           | Drought                                | Zambia             |
+| **KLIP Kenya**  | N/A                 | \$10/animal    | Drought                                | Kenya (livestock)  |
+| **ACRE Kenya**  | \$8/year            | \$40           | Drought, Flood                         | Kenya              |
+| HewaSense             | **\$10/year** | **\$90** | **Drought, Flood, Crop Failure** | **Tanzania** |
 
 ### Value Proposition
 
@@ -337,10 +337,10 @@ USE_TIERED_PAYOUTS = False  # True parametric (fixed rates, not tiered)
 
 ### Horizon Tiers (Enforced in Code)
 
-| Tier           | Horizon    | Threshold          | Status                                          |
-| -------------- | ---------- | ------------------ | ----------------------------------------------- |
-| **Primary**    | ≤ 4 months | ≥ 75% probability  | Payout-eligible — counted in financial exposure |
-| **Advisory**   | 5–6 months | ≥ 50% probability  | Early warning only — never triggers payout      |
+| Tier               | Horizon     | Threshold          | Status                                           |
+| ------------------ | ----------- | ------------------ | ------------------------------------------------ |
+| **Primary**  | ≤ 4 months | ≥ 75% probability | Payout-eligible — counted in financial exposure |
+| **Advisory** | 5–6 months | ≥ 50% probability | Early warning only — never triggers payout      |
 
 **Why Advisory Never Triggers**: 5-6 month forecasts carry higher uncertainty. Labelling them advisory prevents premature reserve earmarking while still surfacing emerging risk to operations teams.
 
