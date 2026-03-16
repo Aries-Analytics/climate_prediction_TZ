@@ -63,11 +63,10 @@ export default function HeroSection() {
 
         {/* Sub-headline */}
         <p className="text-slate-300 text-lg sm:text-xl max-w-3xl mx-auto mb-10 leading-relaxed animate-fade-in-up">
-          HewaSense aims to protect smallholder farmers across Tanzania's high-risk
-          agricultural zones — starting with the Kilombero Basin — from drought, flood,
-          and crop failure. When a trigger is breached, payouts are automatically
-          calculated — no loss adjuster,
-          no claim filing, no delay.
+          An ML-powered parametric insurance product built for smallholder farmers
+          in Tanzania's Kilombero Basin. When a climate trigger is breached, payouts
+          are automatically calculated by formula — no loss adjuster, no claim filing,
+          no delay.
         </p>
 
         {/* CTAs */}
