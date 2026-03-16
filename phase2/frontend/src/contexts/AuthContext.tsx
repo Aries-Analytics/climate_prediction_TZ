@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import axiosInstance from '../config/axiosInstance'
+import { API_BASE_URL } from '../config/api'
 
 interface User {
   id: number
@@ -37,7 +38,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const fetchCurrentUser = async () => {
     try {
-      const response = await axiosInstance.get('/auth/me')
+      const response = await axiosInstance.get(`${API_BASE_URL}/auth/me`)
       setUser(response.data)
     } catch (error) {
       // Interceptor already handled token refresh or redirect to /login
@@ -49,7 +50,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const login = async (username: string, password: string) => {
-    const response = await axiosInstance.post('/auth/login', { username, password })
+    const response = await axiosInstance.post(`${API_BASE_URL}/auth/login`, { username, password })
     const { access_token, refresh_token } = response.data
     setToken(access_token)
     localStorage.setItem('token', access_token)
