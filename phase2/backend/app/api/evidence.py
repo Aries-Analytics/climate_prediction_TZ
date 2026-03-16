@@ -1,9 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, Body
 from typing import List, Dict, Any
 from sqlalchemy.orm import Session
+from sqlalchemy import func as sqlfunc
 from app.core.database import get_db
 from app.services.evaluation_service import ForecastEvaluator
 from app.services.evidence_generator import EvidencePackGenerator
+from app.models.pipeline_execution import PipelineExecution
+from app.models.forecast_log import ForecastLog
 
 router = APIRouter(prefix="/v1/evidence-pack", tags=["Evidence Pack"])
 
@@ -48,6 +51,50 @@ def backfill_observations(
         evaluator = ForecastEvaluator(db)
         result = evaluator.backfill_observations(observations)
         return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/execution-log")
+def get_execution_log(db: Session = Depends(get_db)):
+    """
+    Returns shadow run progress (total forecast_logs vs 1080 target)
+    and the last 30 pipeline execution records for the Evidence Pack dashboard.
+    """
+    try:
+        total_logs = db.query(sqlfunc.count(ForecastLog.id)).scalar() or 0
+        target = 1080  # 90 days × 12 forecasts/day
+
+        executions = (
+            db.query(PipelineExecution)
+            .order_by(PipelineExecution.started_at.desc())
+            .limit(30)
+            .all()
+        )
+
+        return {
+            "shadow_run": {
+                "total_forecast_logs": total_logs,
+                "target": target,
+                "pct_complete": round((total_logs / target) * 100, 1) if target > 0 else 0,
+                "start_date": "2026-03-07",
+                "end_date": "2026-06-12",
+            },
+            "executions": [
+                {
+                    "id": e.id,
+                    "execution_type": e.execution_type,
+                    "status": e.status,
+                    "started_at": e.started_at.isoformat() if e.started_at else None,
+                    "duration_seconds": e.duration_seconds,
+                    "forecasts_generated": e.forecasts_generated,
+                    "records_stored": e.records_stored,
+                    "sources_succeeded": e.sources_succeeded or [],
+                    "sources_failed": e.sources_failed or [],
+                    "error_message": e.error_message,
+                }
+                for e in executions
+            ],
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
