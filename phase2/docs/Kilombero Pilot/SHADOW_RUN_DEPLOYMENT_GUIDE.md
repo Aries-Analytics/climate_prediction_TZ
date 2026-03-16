@@ -1,7 +1,7 @@
 # Server Deployment Guide for Shadow Run
 
 > **Purpose**: Step-by-step instructions to take the HewaSense pipeline from a local laptop to an always-on remote server for the 90-day shadow run.
-> **Date**: March 5, 2026
+> **Date**: March 16, 2026 (updated: "Tanzania Climate Prediction" → "HewaSense")
 
 To achieve the 90-day unbroken chain of evidence required by reinsurers, the HewaSense pipeline must run on an always-on server. If it runs locally, a closed laptop at 6:00 AM EAT means a permanently missed forecast day (due to `misfire_grace_time=1` and the in-memory job store).
 

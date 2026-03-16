@@ -1,9 +1,9 @@
 # Kilombero Basin Rice Pilot Specification
 ## Morogoro Region, Tanzania
 
-**Document Version:** 1.3
+**Document Version:** 1.4
 **Created:** January 12, 2026
-**Updated:** March 8, 2026 (Shadow run ACTIVE Mar 7, 2026 — live on root@37.27.200.227)  
+**Updated:** March 16, 2026 (HewaSense rebrand; XGBoost-only serving model clarified; reserves updated to $150k/112.3% CAR)  
 **Location:** Kilombero Basin, Morogoro Region, Tanzania  
 **Purpose:** Single-location pilot to validate the XGBoost climate prediction model with dual-index triggers before engaging an underwriter for a real pilot deployment
 
