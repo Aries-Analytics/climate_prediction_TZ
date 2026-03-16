@@ -48,7 +48,7 @@ const FEATURES: Feature[] = [
     icon: Coins,
     title: 'Payout Analytics',
     description:
-      'Track cumulative payout exposure, loss ratios, and per-peril trigger frequency across the active policy portfolio with season-over-season comparison.',
+      'Track cumulative payout exposure, loss ratios, and per-peril trigger frequency across the active policy portfolio — with 12-month rolling trend and target threshold tracking.',
     badge: 'Analytics',
   },
 ]

@@ -75,6 +75,7 @@
 - **Soil moisture dual-index trigger:** DB column + ingestion ready (`SOIL_MOISTURE_FUTURE_ENHANCEMENT.md`). Needs: historical backfill (2020-2025) → retrain models → calibrate dual-index triggers → backtest → deploy. ~1-2 weeks effort.
 - **Kilombero Basin geographic sub-zones:** Need to ingest climate data at basin sub-coordinates (North/Central/South Kilombero) before adding Location records — without data, forecasts fail gracefully but produce nothing useful.
 - **5 training cities (Arusha, DSM, Dodoma, Mbeya, Mwanza) are training diversity tools, NOT production pilot targets.** Do not add them to the `locations` DB table as production forecasting locations.
+- **Season-over-season payout comparison (Analytics dashboard):** Yearly summary data already generated in `backtesting_service.py` (`yearly_summary` dict, lines 596-626) and exported to `outputs/business_reports/payout_summary_by_year.csv`. Needs: API endpoint `/dashboard/comparison/year-over-year` + frontend YoY comparison chart. Blocked on: enough live pilot seasons to make comparison meaningful.
 
 ## Public Landing Page (live Mar 16, 2026)
 
