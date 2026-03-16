@@ -5,7 +5,7 @@ const SPECS = [
   { label: 'Secondary Peril',     value: 'Flood (Precipitation exceedance)' },
   { label: 'Tertiary Peril',      value: 'Crop Failure (NDVI composite)' },
   { label: 'Regulatory Framework',value: 'TIRA (Tanzania)' },
-  { label: 'Forecast Engine',     value: 'Probabilistic ML forecasting' },
+  { label: 'Forecast Engine',     value: 'XGBoost (probabilistic)' },
   { label: 'Data Sources',        value: 'ERA5, CHIRPS, GEE' },
 ]
 
