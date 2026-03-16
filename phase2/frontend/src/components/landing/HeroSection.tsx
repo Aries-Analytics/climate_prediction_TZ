@@ -87,8 +87,8 @@ export default function HeroSection() {
         </div>
       </div>
 
-      {/* Scroll indicator */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
+      {/* Scroll indicator — hidden on mobile (CTA link serves same purpose) */}
+      <div className="hidden sm:block absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
         <ChevronDown className="w-6 h-6 text-teal-400/60" />
       </div>
     </section>
