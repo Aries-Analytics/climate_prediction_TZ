@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, lazy, Suspense } from 'react'
 import {
   Box,
   Typography,
@@ -13,13 +13,15 @@ import {
   MenuItem,
   Tooltip,
   Paper,
-  Stack
+  Stack,
+  CircularProgress
 } from '@mui/material'
 import axios from '../config/axiosInstance'
 import { API_BASE_URL } from '../config/api'
 import LoadingSpinner from '../components/common/LoadingSpinner'
 import DataTable from '../components/common/DataTable'
-import GeographicMap from '../components/GeographicMap'
+// Lazy-load GeographicMap (1.97 MB — includes Tanzania GeoJSON) so map tab doesn't block initial render
+const GeographicMap = lazy(() => import('../components/GeographicMap'))
 import GaugeChart from '../components/charts/GaugeChart'
 import Sparkline from '../components/charts/Sparkline'
 import PayoutActionCard from '../components/PayoutActionCard'
@@ -99,7 +101,7 @@ export default function TriggersDashboard() {
     }
   }
 
-  const columns = [
+  const columns = useMemo(() => [
     {
       id: 'location_name',
       label: 'Location',
@@ -203,7 +205,7 @@ export default function TriggersDashboard() {
       minWidth: 200,
       format: (val: string) => <Typography variant="body2" sx={{ fontStyle: 'italic' }}>{val}</Typography>
     }
-  ]
+  ], [])
 
   if (isLoading) return <LoadingSpinner message="Loading parametric triggers..." />
 
@@ -346,10 +348,12 @@ export default function TriggersDashboard() {
             <Alert severity="info" sx={{ mb: 2, py: 0 }}>
               <strong>Visualization Guide:</strong> Red regions indicate locations where rainfall is below the specific threshold for the current growth phase (e.g., Flowering &lt; 120mm).
             </Alert>
-            <GeographicMap
-              mode="trigger"
-              triggers={triggerMapData}
-            />
+            <Suspense fallback={<Box sx={{ height: 400, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><CircularProgress /></Box>}>
+              <GeographicMap
+                mode="trigger"
+                triggers={triggerMapData}
+              />
+            </Suspense>
           </Paper>
         </Grid>
 

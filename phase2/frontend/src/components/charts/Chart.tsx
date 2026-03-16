@@ -1,7 +1,9 @@
-import Plot from 'react-plotly.js'
-import { Box, IconButton, Tooltip, Menu, MenuItem } from '@mui/material'
+import { lazy, Suspense, useState } from 'react'
+import { Box, IconButton, Tooltip, Menu, MenuItem, CircularProgress } from '@mui/material'
 import DownloadIcon from '@mui/icons-material/Download'
-import { useState } from 'react'
+
+// Lazy-load Plotly (4.7 MB minified) so it doesn't block initial dashboard render
+const Plot = lazy(() => import('react-plotly.js'))
 
 interface ChartProps {
   data: any[]
@@ -85,15 +87,17 @@ export default function Chart({ data, layout = {}, config = {}, title, onRelayou
           <MenuItem onClick={() => handleExport('pdf')}>Export as PDF</MenuItem>
         </Menu>
       </Box>
-      <Plot
-        ref={(ref: any) => setPlotRef(ref)}
-        data={data}
-        layout={defaultLayout}
-        config={defaultConfig}
-        style={{ width: '100%', height: '100%', minHeight: '400px' }}
-        useResizeHandler={true}
-        onRelayout={onRelayout}  // Forward the event handler
-      />
+      <Suspense fallback={<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '400px' }}><CircularProgress size={32} /></Box>}>
+        <Plot
+          ref={(ref: any) => setPlotRef(ref)}
+          data={data}
+          layout={defaultLayout}
+          config={defaultConfig}
+          style={{ width: '100%', height: '100%', minHeight: '400px' }}
+          useResizeHandler={true}
+          onRelayout={onRelayout}
+        />
+      </Suspense>
     </Box>
   )
 }

@@ -1,6 +1,14 @@
 import axios from 'axios'
 import { API_BASE_URL } from './api'
 
+// Extend axios config type to carry cache sentinel and retry flag
+declare module 'axios' {
+  interface InternalAxiosRequestConfig {
+    _fromCache?: boolean
+    _retry?: boolean
+  }
+}
+
 // Simple in-memory GET cache (2-minute TTL) — prevents duplicate requests across dashboard navigation
 const _responseCache = new Map<string, { data: unknown; ts: number }>()
 const _CACHE_TTL_MS = 2 * 60 * 1000
@@ -27,6 +35,7 @@ axiosInstance.interceptors.request.use((config) => {
   if (key) {
     const hit = _responseCache.get(key)
     if (hit && Date.now() - hit.ts < _CACHE_TTL_MS) {
+      config._fromCache = true
       config.adapter = () => Promise.resolve({
         data: hit.data,
         status: 200,
@@ -44,7 +53,7 @@ axiosInstance.interceptors.request.use((config) => {
 axiosInstance.interceptors.response.use(
   (response) => {
     const key = _cacheKey(response.config)
-    if (key && response.status === 200 && response.statusText !== 'OK') {
+    if (key && response.status === 200 && !response.config._fromCache) {
       _responseCache.set(key, { data: response.data, ts: Date.now() })
     }
     return response

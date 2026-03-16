@@ -33,6 +33,19 @@ interface ValidationMetric {
   avgBrierScore: number | null
 }
 
+const metricsColumns = [
+  { id: 'modelName', label: 'Model Name' },
+  { id: 'r2Score', label: 'R² Score', format: (v: number) => v?.toFixed(4) ?? 'N/A' },
+  { id: 'rmse', label: 'RMSE', format: (v: number) => v?.toFixed(4) ?? 'N/A' },
+  { id: 'mae', label: 'MAE', format: (v: number) => v?.toFixed(4) ?? 'N/A' },
+  { id: 'mape', label: 'MAPE', format: (v: number) => (v?.toFixed(2) ?? 'N/A') + '%' },
+  {
+    id: 'trainingDate',
+    label: 'Training Date',
+    format: (v: string) => new Date(v).toLocaleDateString()
+  }
+]
+
 export default function ModelPerformanceDashboard() {
   const [models, setModels] = useState<ModelMetrics[]>([])
   const [selectedModel, setSelectedModel] = useState<string>('') // Will be set to best model after loading
@@ -218,18 +231,6 @@ export default function ModelPerformanceDashboard() {
     )
   }
 
-  const metricsColumns = [
-    { id: 'modelName', label: 'Model Name' },
-    { id: 'r2Score', label: 'R² Score', format: (v: number) => v?.toFixed(4) ?? 'N/A' },
-    { id: 'rmse', label: 'RMSE', format: (v: number) => v?.toFixed(4) ?? 'N/A' },
-    { id: 'mae', label: 'MAE', format: (v: number) => v?.toFixed(4) ?? 'N/A' },
-    { id: 'mape', label: 'MAPE', format: (v: number) => (v?.toFixed(2) ?? 'N/A') + '%' },
-    {
-      id: 'trainingDate',
-      label: 'Training Date',
-      format: (v: string) => new Date(v).toLocaleDateString()
-    }
-  ]
 
   // Cleveland dot plot for feature importance
   const featureImportanceData = [
