@@ -16,7 +16,7 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import WarningIcon from '@mui/icons-material/Warning';
 import TimelineIcon from '@mui/icons-material/Timeline';
 import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
-import axios from 'axios';
+import axios from '../../config/axiosInstance';
 import { API_BASE_URL } from '../../config/api';
 import Chart from '../charts/Chart';
 import LoadingSpinner from '../common/LoadingSpinner';

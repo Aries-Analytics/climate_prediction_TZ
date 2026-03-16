@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios from '../config/axiosInstance';
 import { API_BASE_URL } from '../config/api';
 
 export interface ApproveBatchRequest {
