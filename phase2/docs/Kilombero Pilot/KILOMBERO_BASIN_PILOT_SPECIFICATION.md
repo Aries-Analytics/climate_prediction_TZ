@@ -5,13 +5,13 @@
 **Created:** January 12, 2026
 **Updated:** March 8, 2026 (Shadow run ACTIVE Mar 7, 2026 — live on root@37.27.200.227)  
 **Location:** Kilombero Basin, Morogoro Region, Tanzania  
-**Purpose:** Single-location pilot to validate ensemble climate prediction model with dual-index triggers before engaging an underwriter for a real pilot deployment
+**Purpose:** Single-location pilot to validate the XGBoost climate prediction model with dual-index triggers before engaging an underwriter for a real pilot deployment
 
 ---
 
 ## Executive Summary
 
-The **Kilombero Basin Rice Pilot** (Morogoro Region) is a focused, single-location parametric insurance pilot program designed to validate the production-ready ensemble climate prediction model in a real-world agricultural setting. The pilot covers **1,000 smallholder rice farmers** in the flood-prone Kilombero Valley. 
+The **Kilombero Basin Rice Pilot** (Morogoro Region) is a focused, single-location parametric insurance pilot program designed to validate the production-ready XGBoost climate prediction model in a real-world agricultural setting. The pilot covers **1,000 smallholder rice farmers** in the flood-prone Kilombero Valley. 
 
 **Model Selection**: The HewaSense V4 Phase-Based Coverage Service actively models rice phenology via Growing Degree Days (GDD) and mitigates basis risk via continuous 5-day cumulative flood triggers. The model achieved a bounded **9.6% commercial loss ratio** in out-of-sample testing (2000-2014) and a validated **20% basis risk** in retrospective validation (2015-2025), with **zero false negatives** — catching both the 2017/2018 and 2021/2022 crop failures. See `PHASE_BASED_COMPARISON.md` for full validation details.
 
@@ -128,7 +128,7 @@ Morogoro was selected as the pilot location based on **objective model performan
 > **Performance Metrics Explained**: 
 > - **85.5% (Morogoro-specific)**: How well the model performs when trained on 5 locations and tested on Morogoro (spatial cross-validation). This is the key metric for location selection.
 > - **86.7% (XGBoost R²=0.8666)**: The model actually used for forward validation and pilot predictions. After the March 2026 data leakage fix (11 rainfall-derived features removed), this is the most accurate and honest metric.
-> - **Ensemble (R²=0.8402)**: Secondary model available as fallback.
+> - **Ensemble (R²=0.8402)**: Reference benchmark only — not used in production. XGBoost (R²=0.8666) is the sole serving model.
 
 **Conclusion:** Morogoro demonstrates the **best spatial cross-validation performance**, indicating the model generalizes exceptionally well to this location, making it ideal for pilot validation.
 
@@ -187,7 +187,7 @@ This design allows for **future expansion** to other locations without system ch
 
 ## Data Sources (Kilombero Basin - Morogoro)
 
-The ensemble model uses 5 integrated data sources for Kilombero Basin:
+The HewaSense model uses 5 integrated data sources for Kilombero Basin:
 
 | Source | Variables | Resolution | Coverage |
 |--------|-----------|------------|----------|
@@ -438,19 +438,19 @@ TOTAL_FARMERS = 6000
 
 | Risk | Mitigation |
 |------|------------|
-| **Reserves Insufficient** | Current reserve shortfall (detected); secure additional $110k funding |
+| **Reserves** | $150,000 secured (112.3% CAR) — meets TIRA requirement; monitor during multi-event seasons |
 | **Model Overfits to Morogoro** | Monitor performance monthly; compare against other locations |
 | **Single Location Bias** | Document lessons learned for multi-location expansion |
 | **Farmer Adoption Low** | Conduct education workshops; simplify insurance language |
 
 ### Financial Solvency
 
-**Current Status (from dashboard):**
-- Reserves: $25,000
+**Current Status (updated Jan 2026):**
+- Reserves: $150,000
 - Expected Payouts (6-month): $133,557
-- **Buffer: -434.2%** ← **CRITICAL UNDERFUNDING**
+- **Capital Adequacy Ratio: 112.3%** ✅ Meets TIRA 100% minimum
 
-**Immediate Action Required:** Secure minimum $110,000 additional reserves to cover expected liability.
+Reserves are adequate. See Financial Parameters table above for full breakdown.
 
 ---
 

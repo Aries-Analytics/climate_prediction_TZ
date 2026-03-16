@@ -1,9 +1,9 @@
 # Server Deployment Guide for Shadow Run
 
-> **Purpose**: Step-by-step instructions to take the Tanzania Climate Prediction pipeline from a local laptop to an always-on remote server for the 90-day shadow run.
+> **Purpose**: Step-by-step instructions to take the HewaSense pipeline from a local laptop to an always-on remote server for the 90-day shadow run.
 > **Date**: March 5, 2026
 
-To achieve the 90-day unbroken chain of evidence required by reinsurers, the pipeline must run on an always-on server. If it runs locally, a closed laptop at 6:00 AM EAT means a permanently missed forecast day (due to `misfire_grace_time=1` and the in-memory job store).
+To achieve the 90-day unbroken chain of evidence required by reinsurers, the HewaSense pipeline must run on an always-on server. If it runs locally, a closed laptop at 6:00 AM EAT means a permanently missed forecast day (due to `misfire_grace_time=1` and the in-memory job store).
 
 Here is the exact process to securely deploy the Dockerized environment to a remote Linux server (e.g., Ubuntu 22.04 LTS on AWS EC2, DigitalOcean Droplet, or similar).
 
