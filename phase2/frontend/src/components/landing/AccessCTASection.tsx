@@ -9,14 +9,12 @@ export default function AccessCTASection() {
             <BarChart2 className="w-7 h-7 text-teal-400" />
           </div>
           <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
-            Shadow Run — See the Product in Action
+            Shadow Run in Progress
           </h2>
           <p className="text-slate-400 text-lg mb-8 leading-relaxed">
-            We're currently running a structured shadow pilot in the Kilombero Basin:
-            the product operates on real climate forecasts, evaluates trigger conditions
-            each season, and generates evidence packs — without real payouts yet.
-            The dashboard lets insurers, agronomists, and regulators track how the
-            product performs before it goes live.
+            HewaSense is live on real climate data — forecasting triggers, logging
+            evidence packs, and tracking portfolio risk across the Kilombero Basin
+            pilot. No live payouts yet.
           </p>
           <button
             onClick={() => window.open('/login', '_blank', 'noopener,noreferrer')}
