@@ -2,6 +2,7 @@
 Admin API endpoints for user management and audit logs.
 """
 from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from datetime import datetime
@@ -152,7 +153,7 @@ async def admin_health_check(
     """
     try:
         # Check database connection
-        db.execute("SELECT 1")
+        db.execute(text("SELECT 1"))
         
         # Get some basic stats
         user_count = db.query(User).count()
