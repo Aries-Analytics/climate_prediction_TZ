@@ -261,13 +261,13 @@ The go/no-go is binary and the criteria are fixed. This is intentional — a gat
 Scenario: It is October 2026. The pipeline flags a drought trigger for Morogoro with 82% probability on a 3-month horizon (primary tier). Threshold: SPI-30 < -0.60 (< 120mm/30 days).
 
 1. System evaluates: horizon ≤ 4 months ✓, probability ≥ 75% ✓, phase = Flowering ✓
-2. Expected payout computed: 1,000 × 0.82 × \$60 = \$49,200
+2. Reserve earmarked: 1,000 × 0.82 × \$60 = \$49,200 held in reserve (expected financial exposure at this probability level)
 3. Reserve check: \$150,000 available — fully covered ✓
 4. Operations team notified via Slack alert
-5. October observed rainfall confirms trigger (Brier evaluation)
-6. **Payout: \$49,200 distributed to 820 affected farmers within 5–7 days**
+5. October observed rainfall confirms trigger — rainfall falls below 120mm during flowering
+6. **Trigger fires → all 1,000 enrolled Morogoro farmers receive \$60 each → \$60,000 distributed within 5–7 days**
 
-No adjuster. No claim form. No dispute. The farmer gets \$60 in their mobile money account because rainfall was objectively below 120mm during flowering.
+No adjuster. No claim form. No dispute. The farmer gets \$60 in their mobile money account because rainfall was objectively below 120mm during flowering. The payout is zone-level and binary — every enrolled farmer in the zone is paid equally when the threshold is breached. The 82% probability determined reserve sizing; the confirmed observation determines whether the trigger fires at all.
 
 ---
 

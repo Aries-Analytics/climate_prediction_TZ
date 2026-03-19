@@ -129,6 +129,24 @@
 - **Balance rule:** Public draft controls disclosure level. Internal draft provides specific numbers (R², feature counts, 6AM EAT, 12 forecasts). Never reveal architecture, thresholds, or internal service names.
 - **Pre-publish checklist:** (1) link to Part 1, (2) consistent "I" throughout, (3) explain domain terms, (4) concrete time horizons, (5) non-repetitive conclusion, (6) pipeline diagram (not empty dashboard screenshot), (7) cover image.
 
+## Payout Mechanism — Domain Knowledge (Option A / Binary Trigger)
+
+The HewaSense payout design is **zone-level, binary trigger** (Option A). Two stages must not be conflated:
+
+**Stage 1 — Reserve sizing (while forecast is pending):**
+`PILOT_FARMERS × probability × rate` = financial exposure earmarked in reserve
+- Example: 82% drought → 1,000 × 0.82 × $60 = $49,200 held in reserve
+- This does NOT mean 820 farmers get paid. It is a probability-weighted capital allocation.
+
+**Stage 2 — Confirmed payout (when observed data confirms the threshold was breached):**
+`PILOT_FARMERS × rate` if trigger fires, $0 if it does not
+- ALL enrolled farmers in the zone receive the fixed rate equally — no individual farm assessment, no partial payouts, no selection of "affected" farmers
+- Example: drought confirmed → 1,000 × $60 = $60,000 to all enrolled farmers
+
+**Why binary:** The zone index is either breached or it is not. The 82% probability is a reserve-management number, not a payout selector. Paying 82% of $60 per farmer would require identifying which farmers were affected — defeating the entire purpose of parametric insurance. Confirmed 2026-03-19.
+
+---
+
 ## Learned Behaviors
 
 - Always check `tools/manifest.md` before creating new scripts
@@ -164,7 +182,7 @@
 | 2026-03-10 | Sigmoid→CDF fix, LSTM fallback removal, doc sweep |
 | 2026-03-15 | Stale lock NullPool fix, incremental tracking fix, heat_stress doc, LSTM JSON cleanup |
 | 2026-03-16 | Public landing page built + deployed to hewasense.majaribio.com; copy corrections (IP protection); mobile responsiveness; Docker npm install trap resolved |
-| 2026-03-19 | Server startup script + systemd unit; prod-vs-dev drift incident recovered; ghost scheduler removed; March 19 forecasts deleted in error + restored; admin health text() fix; 3 new learned behaviors; shadow run = 72/1,080 |
+| 2026-03-19 | Server startup script + systemd unit; prod-vs-dev drift incident recovered; ghost scheduler removed; March 19 forecasts deleted in error + restored; admin health text() fix; 3 new learned behaviors; shadow run = 72/1,080 — Session 2: HEWASENSE_EXTERNAL_BRIEF.md created; TIRA removed from external docs; Option A binary trigger confirmed + documented across all parametric product docs |
 
 *Last updated: 2026-03-19*
 *This file is the source of truth for persistent facts. Edit directly to update.*

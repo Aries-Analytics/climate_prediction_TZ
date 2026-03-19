@@ -228,7 +228,8 @@ PAYOUT_RATES = {
     "crop_failure": 90,
 }
 PILOT_FARMERS = 1000
-# Expected payout = PILOT_FARMERS × probability × PAYOUT_RATES[trigger_type]
+# Reserve sizing (while forecast is outstanding): PILOT_FARMERS × probability × PAYOUT_RATES[trigger_type]
+# Confirmed payout (when trigger is observed): PILOT_FARMERS × PAYOUT_RATES[trigger_type]  ← binary, all enrolled farmers
 ```
 
 **Horizon tier enforcement**:
@@ -299,11 +300,11 @@ USE_TIERED_PAYOUTS = False  # True parametric (fixed rates, not tiered)
 
 **Farmer-Facing Language** (Updated for Climate Pivot):
 
-> "Our weather prediction system forecasts rainfall for the next 6 months.
-> If the forecast shows **drought conditions** (less than 120mm rainfall for 30 days), you automatically receive **$60**.
-> If the forecast shows **flood risk** (more than 258mm in one day + heavy weekly rain), you receive **$75**.
-> If satellite data shows **crop stress** (vegetation health below normal), you receive **$90**.
-> No waiting, no claims forms—just automatic protection."
+> "Our system monitors rainfall and satellite data every day.
+> If actual rainfall falls below 120mm during your crop's growing season (**drought**), you automatically receive **$60**.
+> If rainfall exceeds the flood threshold during your season (**flood**), you receive **$75**.
+> If satellite data confirms your crop zone is under stress (**crop failure**), you receive **$90**.
+> Every enrolled farmer in the zone receives the same payout. No waiting, no claim forms — just automatic protection when the conditions are objectively confirmed."
 
 **Legal Contract**: Fixed payout amounts based on objective climate forecasts exceeding/falling below predetermined thresholds. No loss adjustment required.
 
@@ -348,9 +349,12 @@ USE_TIERED_PAYOUTS = False  # True parametric (fixed rates, not tiered)
 
 - **"Farmers at Risk" Metric**: Policyholders in locations where **primary-tier** (horizon ≤ 4 months) forecast probability ≥ **75%** (Severe Risk).
 - **Rationale**: The 75% threshold ensures reserves are only earmarked for high-confidence, near-certain payout events (≥1-in-4 year severity), aligning with TIRA-compliant parametric insurance practice.
-- **Expected Payout Formula**: `PILOT_FARMERS × probability × payout_rate_per_farmer`
-  - Example (drought at 52.6%): 1,000 × 0.526 × $60 = $31,560
-  - Affected farmers = total farmers × probability (not a binary all-or-nothing count)
+- **Reserve Sizing Formula**: `PILOT_FARMERS × probability × payout_rate_per_farmer`
+  - Example (drought at 52.6%): 1,000 × 0.526 × $60 = $31,560 earmarked in reserve while forecast is pending
+  - This is a **financial reserve metric**, not an indicator of which farmers get paid
+- **Confirmed Payout (binary)**: When observed data confirms the threshold was breached → ALL enrolled farmers in the zone receive the fixed rate. If the threshold is not breached → no payout.
+  - Example (drought confirmed): 1,000 × $60 = $60,000 distributed to all enrolled Morogoro farmers
+  - The zone-level index applies equally to all enrolled farmers — no individual farm assessment, no partial payouts based on probability
 - **Deduplication Rule**: When multiple pipeline runs target the same calendar month, the system takes **MAX probability per trigger_type × month**. This prevents double-counting if two runs both forecast drought in September.
 - **Code enforcement**:
   - Backend `/api/forecasts/portfolio-risk`: `Forecast.horizon_months <= 4` filter applied before aggregation

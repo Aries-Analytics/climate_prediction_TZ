@@ -13,23 +13,56 @@ This document describes the **implemented and deployed** payout calculation mode
 
 ---
 
-## Production Formula
+## Two-Stage Payout Mechanism
 
-### Per-Farmer Fixed Payout (IMPLEMENTED)
+Payout logic operates in two distinct stages. These must not be conflated.
+
+### Stage 1 — Reserve Sizing (During Forecast Period)
 
 ```
-Expected Payout = PILOT_FARMERS × probability × rate_per_farmer
+Expected Exposure = PILOT_FARMERS × probability × rate_per_farmer
 ```
+
+**Purpose:** Financial reserve management. Used to earmark capital against future liability while a forecast is outstanding.
 
 **Where:**
 - `PILOT_FARMERS = 1,000` (Kilombero Basin smallholder rice farmers)
 - `probability` = XGBoost trigger probability for that horizon/trigger combination
 - `rate_per_farmer` = fixed rate from pilot specification (see table below)
 
-**Example — Drought at 87.4% probability:**
+**Example — Drought forecast at 87.4% probability:**
 ```
-Expected Payout = 1,000 × 0.874 × $60 = $52,440
+Expected Exposure = 1,000 × 0.874 × $60 = $52,440 earmarked in reserve
 ```
+
+This does NOT mean 874 farmers receive $60. It means $52,440 is held as the probability-weighted liability while the forecast is pending confirmation.
+
+### Stage 2 — Confirmed Payout (When Trigger Is Observed)
+
+```
+Confirmed Payout = PILOT_FARMERS × rate_per_farmer   (if trigger fires)
+Confirmed Payout = $0                                  (if trigger does not fire)
+```
+
+**The trigger is binary.** When observed climate data confirms that the threshold was breached (e.g., actual rainfall < 120mm during the covered period):
+
+- **ALL enrolled farmers in the zone receive the fixed rate**
+- No individual farm assessment is made
+- No distinction is drawn between farmers whose fields were more or less affected
+
+**Example — Drought trigger confirmed:**
+```
+Confirmed Payout = 1,000 × $60 = $60,000 distributed to all enrolled farmers
+```
+
+**Design rationale (Option A):** Zone-level index + binary trigger is the correct design for smallholder parametric insurance. The index is objective and pre-disclosed. The payout is equal across all enrolled farmers in the zone. This eliminates all basis risk from individual assessment — which is exactly what a claims process would introduce. A farmer pays $10 because the zone covers them equally, not because their individual loss was measured.
+
+### Summary
+
+| Stage | Formula | Purpose |
+|---|---|---|
+| Reserve sizing (forecast) | `PILOT_FARMERS × probability × rate` | Capital earmarked while forecast is pending |
+| Confirmed payout (observed) | `PILOT_FARMERS × rate` if trigger fires, else $0 | Actual farmer payment on threshold breach |
 
 ---
 
