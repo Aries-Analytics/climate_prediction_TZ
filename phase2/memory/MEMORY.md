@@ -151,6 +151,9 @@
 - **DB total frozen = source_ingestion_tracking is empty.** Every run logs "No tracking record found". mark_ingestion_complete() must be called explicitly after each source succeeds — it is not automatic. Added 2026-03-15.
 - **Sigmoid is directionally wrong for drought probability.** Use `norm.cdf((threshold - predicted_mm) / rmse)` anchored to physical Kilombero thresholds from `rice_thresholds.RAINFALL_THRESHOLDS`. Added 2026-03-10.
 - **Two config trap: CLI vs VS Code extension MCP.** Project-scoped MCP servers in `.claude.json` must match the EXACT working directory path the extension uses — parent dir ≠ subdirectory. Added 2026-03-10.
+- **Pipeline Completion Timestamp Trap:** `ForecastLog.issued_at` is the write time at pipeline *completion*, not the scheduled start time. A 41-minute run starting at 03:00 UTC writes entries at 03:41 UTC — correct behavior. Never assess legitimacy from `issued_at` alone; cross-check `pipeline_executions.started_at`. Added 2026-03-19.
+- **Prod-vs-Dev Compose Drift Trap:** Active stack is always `docker-compose.dev.yml`. If prod containers appear (`climate_db_prod`, `climate_frontend_prod`, `phase2-backend-N`), that is wrong — stop them and restore dev compose. Startup script `/opt/hewasense/start.sh` must always reference dev compose. Added 2026-03-19.
+- **Destructive Action Gate (ALL sensitive work):** Never execute a destructive or irreversible action on user instruction alone. Required: (1) verify independently, (2) show evidence, (3) push back explicitly if data is correct. Applies to shadow run DB, server, git, model artifacts, configs. Reference case: March 19 forecast deletion — 12 valid entries deleted without verifying `issued_at` vs start time. Added 2026-03-19.
 
 ---
 
@@ -161,6 +164,7 @@
 | 2026-03-10 | Sigmoid→CDF fix, LSTM fallback removal, doc sweep |
 | 2026-03-15 | Stale lock NullPool fix, incremental tracking fix, heat_stress doc, LSTM JSON cleanup |
 | 2026-03-16 | Public landing page built + deployed to hewasense.majaribio.com; copy corrections (IP protection); mobile responsiveness; Docker npm install trap resolved |
+| 2026-03-19 | Server startup script + systemd unit; prod-vs-dev drift incident recovered; ghost scheduler removed; March 19 forecasts deleted in error + restored; admin health text() fix; 3 new learned behaviors; shadow run = 72/1,080 |
 
-*Last updated: 2026-03-16*
+*Last updated: 2026-03-19*
 *This file is the source of truth for persistent facts. Edit directly to update.*
