@@ -64,6 +64,8 @@ Implemented true parametric insurance with market-competitive rates aligned with
 - **With 50% Government Subsidy**: **$10/year**
 - **Loss Ratio**: 75% (target: 60-80%) ✅
 
+> **Note on loss ratio arithmetic:** The $1,590/year aggregate payout figure above spans all six training locations. The 75% loss ratio is calibrated for the Morogoro pilot location specifically. Dividing the 6-location aggregate ($1,590) by the single-location pilot premium ($1,988) yields ~80% — a multi-location artefact, not the pilot loss ratio. The Morogoro calibration iterated thresholds against 26 years of location-specific data to reach 75%.
+
 ### Sustainability Metrics
 
 | Metric               | Value    | Status                       |

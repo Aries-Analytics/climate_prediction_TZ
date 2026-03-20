@@ -26,7 +26,7 @@ Tanzania's Kilombero Basin is one of the most productive rice-growing regions in
 - **Floods** when El Niño years bring excess rainfall to an already low-lying basin
 - **Crop failure** from NDVI degradation — sometimes caused by neither drought nor flood, but prolonged cloud cover, pest pressure, or soil waterlogging
 
-These three perils have triggered **610 adverse events** in 26 years of historical data — an average of 23.5 events per year. Each event represents a harvest season where a smallholder farmer had no recourse.
+These three perils have triggered **610 adverse events** in 26 years of historical data — an average of 23.5 events per year. Across six locations and three peril types, thresholds were breached an average of 23.5 times per year — meaning smallholders in the region face multiple distinct climate hazards each season, with no financial safety net currently in place.
 
 ### Why Existing Products Fail Here
 
@@ -103,6 +103,8 @@ This is not a soft guideline. It is enforced at the code level in three location
 - 6.2% historical trigger rate
 
 **All three thresholds were calibrated to achieve a sustainable 75% loss ratio at current premium rates.** The calibration is not arbitrary — it is the result of iterating through 26 years of historical data and selecting thresholds that balance farmer protection with program solvency.
+
+> **Note:** The 75% loss ratio is the Morogoro pilot calibration specifically — derived by iterating thresholds against 26 years of Morogoro location data. Aggregate payout figures spanning all six training locations yield a different arithmetic result (~80%) when divided by the single-location pilot premium; this is a multi-location scale artefact, not a discrepancy in the pilot loss ratio.
 
 ---
 
@@ -205,6 +207,8 @@ Required reserves (TIRA 100% CAR minimum): **\$133,557**
 
 Maximum single-event exposure (1,000 farmers × \$90 crop failure): **\$90,000**
 The reserves cover the worst-case scenario (100% simultaneous crop failure) 1.67 times over.
+
+> **Reserve sizing and event correlation:** Climate events across multiple locations are not independent — a La Niña or Indian Ocean Dipole episode can drive simultaneous threshold breaches across several zones in the same season. The $150,000 reserve is sized conservatively to account for this clustering risk: even if multiple perils fire in the same period, the reserve covers the worst-case single-event exposure 1.67× over, providing a buffer against correlated multi-location payouts.
 
 ### Comparison to Market
 
