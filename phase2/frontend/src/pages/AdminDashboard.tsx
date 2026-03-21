@@ -183,7 +183,7 @@ const AdminDashboard: React.FC = () => {
                           required
                           value={newUser.username}
                           onChange={(e) => setNewUser({ ...newUser, username: e.target.value })}
-                          className="w-full border rounded px-3 py-2"
+                          className="w-full border border-gray-300 bg-white rounded px-3 py-2"
                         />
                       </div>
                       <div className="mb-4">
@@ -193,7 +193,7 @@ const AdminDashboard: React.FC = () => {
                           required
                           value={newUser.email}
                           onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
-                          className="w-full border rounded px-3 py-2"
+                          className="w-full border border-gray-300 bg-white rounded px-3 py-2"
                         />
                       </div>
                       <div className="mb-4">
@@ -203,7 +203,7 @@ const AdminDashboard: React.FC = () => {
                           required
                           value={newUser.password}
                           onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
-                          className="w-full border rounded px-3 py-2"
+                          className="w-full border border-gray-300 bg-white rounded px-3 py-2"
                         />
                       </div>
                       <div className="mb-4">
@@ -211,7 +211,7 @@ const AdminDashboard: React.FC = () => {
                         <select
                           value={newUser.role}
                           onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
-                          className="w-full border rounded px-3 py-2"
+                          className="w-full border border-gray-300 bg-white rounded px-3 py-2"
                         >
                           <option value="analyst">Analyst</option>
                           <option value="manager">Manager</option>

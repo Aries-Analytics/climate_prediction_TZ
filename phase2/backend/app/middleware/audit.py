@@ -6,6 +6,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from sqlalchemy.orm import Session
 from app.models.audit_log import AuditLog
 from app.core.database import SessionLocal
+from app.services.auth_service import verify_token
 import json
 
 
@@ -50,8 +51,11 @@ class AuditMiddleware(BaseHTTPMiddleware):
         # Log audit entry if action should be audited and request was successful
         if action and 200 <= response.status_code < 300:
             try:
-                # Get user ID from request state (set by auth dependency)
-                user_id = getattr(request.state, 'user_id', None)
+                # Extract user ID from Bearer token (dependency injection not available in middleware)
+                user_id = None
+                authorization = request.headers.get('Authorization')
+                if authorization and authorization.startswith('Bearer '):
+                    user_id = verify_token(authorization.split(' ')[1])
                 
                 # Get client IP
                 client_ip = request.client.host if request.client else None
