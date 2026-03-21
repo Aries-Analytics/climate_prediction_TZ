@@ -30,7 +30,7 @@
 - **Production model file:** Determined by `outputs/models/active_model.json` (currently `xgboost_climate.pkl`, R²=0.8666, 83 features). NEVER hardcode model names
 - Model selection driven entirely by `active_model.json` — if missing or invalid, fail explicitly (GOTCHA Law #1)
 - **Pipeline schedule (shadow-run ACTIVE):** `0 6 * * *` Africa/Dar_es_Salaam (6 AM EAT daily). Deployed to `root@37.27.200.227`, `docker-compose.dev.yml`. Scheduler confirmed next run `2026-03-09 06:00:00+03:00`.
-- **Pipeline status (March 2026):** Shadow run ACTIVE Mar 7 – Jun 12, 2026 (revised — 7 missed days). 12 forecasts/run (3 triggers × 4 horizons × Morogoro). **84/1,080 forecasts (7.8%), 7 valid run-days (Mar 11, 15, 16, 17, 18, 19, 20).** Evidence Pack accumulates; Brier Score auto-evaluation starts ~Jun 9.
+- **Pipeline status (March 2026):** Shadow run ACTIVE Mar 7 – Jun 12, 2026 (revised — 7 missed days). 12 forecasts/run (3 triggers × 4 horizons × Morogoro). **96/1,080 forecasts (8.9%), 8 valid run-days (Mar 11, 15, 16, 17, 18, 19, 20, 21).** Evidence Pack accumulates; Brier Score auto-evaluation starts ~Jun 9.
 - Lock contention alerts are suppressed in Slack (expected during brief overlaps)
 - **Advisory lock:** Uses a **dedicated NullPool engine + connection** (separate from ORM session). ORM `commit()` works normally without releasing the lock. Lock released by explicit `pg_advisory_unlock` + `engine.dispose()`. NullPool is mandatory — QueuePool keeps the Postgres session alive and leaks the lock.
 - **Scheduler job store:** In-memory (NOT persistent SQLAlchemyJobStore). Prevents phantom runs from stale `next_run_times` after container restarts.
@@ -184,6 +184,7 @@ The HewaSense payout design is **zone-level, binary trigger** (Option A). Two st
 | 2026-03-16 | Public landing page built + deployed to hewasense.majaribio.com; copy corrections (IP protection); mobile responsiveness; Docker npm install trap resolved |
 | 2026-03-19 | Server startup script + systemd unit; prod-vs-dev drift incident recovered; ghost scheduler removed; March 19 forecasts deleted in error + restored; admin health text() fix; 3 new learned behaviors; shadow run = 72/1,080 — Session 2: HEWASENSE_EXTERNAL_BRIEF.md created; TIRA removed from external docs; Option A binary trigger confirmed + documented across all parametric product docs |
 | 2026-03-20 | Pipeline SUCCESS 40s (84/1,080, 7.8%, 7 run-days); "610 events" framing corrected (location-month-peril exceedances, not independent farmer crises); loss ratio 75% clarified (Morogoro-specific calibration, ~80% is 6-location artefact) — note added to all parametric docs; correlation/reserve note added to Capital Adequacy sections; forecasts accumulated row reformatted (date in value not label) |
+| 2026-03-21 | Pipeline SUCCESS 35s (96/1,080, 8.9%, 8 run-days); CHIRPS/NASA POWER/NDVI 0 records (current data pattern, not a fault); GOTCHA protocol + commit |
 
-*Last updated: 2026-03-20*
+*Last updated: 2026-03-21*
 *This file is the source of truth for persistent facts. Edit directly to update.*
