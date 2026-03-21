@@ -755,6 +755,16 @@ For each of 3 trigger types × 4 horizons:
 
 ### Planned Improvements
 
+**Horizon-Specific Forecast Models** *(data-driven decision — evaluate post-shadow-run)*:
+
+The current design uses a single model run with phase-aware threshold interpretation across all four horizons (3, 4, 5, 6 months). ENSO/IOD features provide genuine multi-month predictive skill — Indian Ocean Dipole events have documented 3–6 month lead time on East African long rains — which makes this approach defensible. A true multi-step model would predict intermediate climate states and feed them forward as inputs to longer-horizon forecasts, better capturing the autocorrelation structure of seasonal climate.
+
+**Decision gate:** Compare Brier Scores by horizon tier once shadow run evaluations begin (~June 2026):
+- If primary-tier (3–4mo) and advisory-tier (5–6mo) Brier Scores are comparable → the single-model design is working; ENSO/IOD features carry the longer-horizon signal. No action required.
+- If advisory-tier Brier Scores are materially worse → implement horizon-specific models or recursive multi-step forecasting as a targeted improvement.
+
+The advisory tier and widening confidence intervals already communicate this uncertainty in the current product design. This enhancement should be triggered by evidence, not by theoretical concern alone.
+
 **Model Architecture**:
 - Transformer-based models for temporal patterns
 - Graph neural networks for spatial relationships
