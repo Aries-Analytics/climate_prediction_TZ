@@ -753,6 +753,51 @@ For each of 3 trigger types × 4 horizons:
 
 ## Future Enhancements
 
+### Where HewaSense Sits on the ML Frontier
+
+The current system is deliberately pragmatic — not cutting-edge research ML, but well above the baseline for smallholder parametric insurance in East Africa. Understanding where the frontier is, and what's realistically achievable at HewaSense scale, informs the improvement roadmap.
+
+**The current frontier (what "cutting-edge" looks like for this problem):**
+
+| Approach | Examples | What it offers |
+|---|---|---|
+| **Climate foundation models** | Google DeepMind GraphCast, ECMWF AIFS, Huawei Pangu-Weather | Large NNs trained on decades of global ERA5 reanalysis; GraphCast (2023) outperforms ECMWF NWP at 10-day forecasts. Training requires petabyte-scale data and million-dollar compute budgets. |
+| **Calibrated ensemble forecasting** | ECMWF ENS (51 perturbed members) | Derives probabilities from ensemble *spread* rather than a single prediction + RMSE approximation. Spread varies by climate state (La Niña year ≠ neutral year uncertainty). More honest than fixed RMSE-based CDF. |
+| **Deep learning downscaling** | Diffusion models, convolutional super-resolution | Takes coarse 50km ERA5 data and produces sub-kilometre resolution — would close the ERA5 (50km) vs CHIRPS (5km) spatial mismatch. |
+| **Physics-informed neural networks** | PINNs, NeuralODE | Embeds atmospheric physics equations as constraints; better generalisation under climate change scenarios outside training distribution. |
+| **Farm-level real-time verification** | Satellite/drone soil moisture + crop stress at field resolution | Near-real-time trigger verification; near-eliminates basis risk. |
+
+**Why HewaSense does not need foundation models to succeed:**
+The constraint limiting impact here is not model sophistication — it is getting any reliable, affordable parametric insurance to Tanzanian smallholders at all. XGBoost at R²=0.8666 with phase-aware thresholds and ENSO/IOD features is more than sufficient for the current pilot and regulatory context. The Brier Score from the shadow run will determine what actually needs improving, not theoretical benchmarks.
+
+---
+
+### Realistic Improvement Path (achievable at HewaSense scale)
+
+These improvements capture most of the frontier benefit without the compute or team requirements of foundation models. They are sequenced by impact and readiness.
+
+**Phase 1 — Post-shadow-run (Q3 2026), triggered by Brier Score results:**
+
+- **Probability calibration (Platt scaling / isotonic regression):** If the shadow run reveals systematic over- or under-confidence in the CDF probability estimates, apply post-hoc calibration to the XGBoost outputs. ~1 week effort. Highest impact per unit of work.
+
+- **Horizon-specific Brier Score comparison:** Evaluate whether advisory-tier (5–6mo) forecasts are materially worse than primary-tier (3–4mo). If yes, proceed to Phase 2 horizon-specific models. If comparable, the current single-run design is validated.
+
+**Phase 2 — Scale preparation (Q4 2026 / Q1 2027):**
+
+- **ECMWF SEAS5 seasonal forecasts as input features:** SEAS5 is a state-of-the-art seasonal forecast system specifically designed for 1–7 month horizons in Africa. Incorporating SEAS5 ensemble members as features effectively outsources the multi-step forecasting problem to ECMWF's operational system — a ~2-week integration that would materially improve longer-horizon skill without building a new model. API access is available at research pricing (~€500/yr). This is the single highest-leverage improvement available.
+
+- **ERA5-Land (9km) replacing ERA5 (50km):** ECMWF's ERA5-Land product provides the same variables at 9km resolution. Switching the ERA5 ingestion module to ERA5-Land would close the spatial resolution gap between CHIRPS (5km) and the current 50km ERA5 variables (temperature, humidity, soil moisture). ~1 week effort.
+
+- **SEAS5 ensemble spread as uncertainty estimate:** Replace the fixed RMSE-based CDF uncertainty with the actual spread of the SEAS5 ensemble members at each forecast point. This means the confidence intervals widen in uncertain climate states (e.g., ENSO transition years) and narrow when the signal is strong — more actuarially honest than a static ±0.15 band.
+
+**Phase 3 — Longer-term (post-commercialisation):**
+
+- **Ensemble forecasting (multiple XGBoost models with perturbed inputs):** Generate an internal ensemble by running the model with bootstrap-sampled feature sets. Derive probabilities from ensemble spread rather than RMSE-CDF. More expensive but produces calibrated uncertainty without depending on external APIs.
+- **Deep learning downscaling:** If sub-kilometre resolution matters for Kilombero Basin sub-zones, apply convolutional or diffusion-model downscaling to ERA5 inputs.
+- **Causal climate teleconnection modelling:** Replace correlation-based ENSO/IOD features with causal inference models that are more robust to distributional shift under climate change.
+
+---
+
 ### Planned Improvements
 
 **Horizon-Specific Forecast Models** *(data-driven decision — evaluate post-shadow-run)*:
@@ -795,7 +840,7 @@ The advisory tier and widening confidence intervals already communicate this unc
 
 ---
 
-**Document Version**: 3.3
+**Document Version**: 3.4
 **Last Updated**: March 21, 2026
 **Status**: ✅ Production Ready
 **Consolidates**: MODEL_DEVELOPMENT_GUIDE.md, feature_engineering.md, UNCERTAINTY_QUANTIFICATION.md, MODEL_IMPROVEMENT_IMPLEMENTATION_GUIDE.md, MODEL_IMPROVEMENTS_RESULTS.md, TRAIN_PIPELINE_MIGRATION.md, RETRAINING_RESULTS_SUMMARY.md, SPATIAL_CV_RESULTS_TASK_15.md
