@@ -613,6 +613,144 @@ def optimize_hyperparameters(model_type, X_train, y_train):
 
 ---
 
+## Inference Mechanics — How Forecasts Are Generated at Runtime
+
+> This section describes the serving-time pipeline: how ingested data is transformed into forecast probabilities each day. This is distinct from model training (covered above) and data ingestion (covered in DATA_PIPELINE_REFERENCE.md).
+
+---
+
+### Step 1 — Daily Ingestion (Collect)
+
+Every day at 06:00 EAT the pipeline fetches incremental updates from five climate sources:
+
+| Source | Provides | Typical Cadence |
+|---|---|---|
+| CHIRPS | Rainfall (5km satellite grid) | Monthly +10–15 day lag |
+| NASA POWER | Temperature, humidity | Daily +1–2 days |
+| ERA5 | Wind, pressure, solar radiation, soil moisture | Monthly +2–3 month lag |
+| NDVI | Vegetation health index | 16-day composite +5–10 days |
+| Ocean Indices | ENSO, IOD (El Niño / Indian Ocean Dipole) | Monthly +10 days |
+
+**Incremental logic:** On the first run, 180 days of history are fetched. Every subsequent run fetches only records newer than the last successful ingestion date (`SourceIngestionTracking` table). Sources returning 0 records on a given day means nothing new exists since the last fetch — this is normal, not a failure.
+
+All records are stored in the `ClimateData` table as **monthly aggregates** at Morogoro's coordinates (lat/lon ±0.01° tolerance).
+
+---
+
+### Step 2 — Feature Preparation (Lookback)
+
+At forecast time, the pipeline looks back **12 months** from today and queries all `ClimateData` records in that window for Morogoro. A minimum of **6 monthly records** is required — if fewer exist, the run is skipped rather than fabricating data (GOTCHA Law #1: no synthetic fallbacks).
+
+From those ~12 monthly rows it engineers **83 features**: lagged values, rolling averages, seasonal signals, ENSO/IOD state, vegetation indices, and GDD-derived crop phase indicators.
+
+> **Note on MEMORY.md:** The project memory references "7 months + `.replace(day=1)`" as the lookback. The code uses 12 months in `prepare_features()` (`forecast_service.py`) and 7 months in earlier lookback utilities. The 12-month window is the operative value at forecast generation time; the 7-month reference relates to the data availability check used upstream.
+
+---
+
+### Step 3 — Model Prediction (Single Run)
+
+The XGBoost model takes the 83-feature vector and outputs a **z-score** — a normalized rainfall value relative to Morogoro's historical distribution:
+
+```
+Mean:  79.15 mm/month  (derived from 312 records, 2000-2025)
+Std:   77.06 mm/month
+RMSE:  33.1 mm          (test-set RMSE = 0.43 z-score × 77.06)
+```
+
+The z-score is converted back to millimetres:
+```
+predicted_mm = z_score × 77.06 + 79.15
+```
+
+**The model runs once per trigger type.** It produces one rainfall prediction. The four horizon outputs are derived from this single prediction, not from four separate model runs.
+
+---
+
+### Step 4 — Horizon Splitting and Probability Conversion
+
+The single rainfall prediction is evaluated against four future target months (3, 4, 5, 6 months ahead). For each target month:
+
+1. **Identify crop phase** — map target month to the Kilombero rice calendar:
+
+```
+Wet season (Jan planting → Jun harvest):
+  Jan → germination  (min 50mm)
+  Feb–Mar → vegetative  (min 100mm)
+  Apr → flowering  (min 120mm)  ← CRITICAL, highest threshold
+  May → grain_fill  (min 60mm)
+  Jun → harvesting  (min 0mm, needs dry: <80mm excessive)
+
+Dry season (Jul planting → Dec harvest):
+  Jul → germination  (min 50mm)
+  Aug–Sep → vegetative  (min 100mm)
+  Oct → flowering  (min 120mm)  ← CRITICAL
+  Nov → grain_fill  (min 60mm)
+  Dec → harvesting  (min 0mm, needs dry)
+```
+
+2. **Calculate probability** using normal distribution CDF anchored to the phase threshold:
+
+```
+Drought:      P(actual_mm < min_threshold)  = CDF((threshold_min - predicted_mm) / RMSE)
+Flood:        P(actual_mm > excessive)       = 1 - CDF((threshold_excessive - predicted_mm) / RMSE)
+Crop failure: P(actual_mm < 50% of min)     = CDF((threshold_min × 0.5 - predicted_mm) / RMSE)
+```
+
+3. **Assign confidence intervals:**
+```
+base_uncertainty = 0.15
+horizon_uncertainty = 0.15 + (0.02 × (horizon_months - 3))
+confidence_lower = max(0, probability - horizon_uncertainty)
+confidence_upper = min(1, probability + horizon_uncertainty)
+```
+
+This produces 12 `ForecastLog` entries per run: 3 trigger types × 4 horizons.
+
+---
+
+### Step 5 — Horizon Tier Assignment
+
+| Horizon | Tier | Meaning |
+|---|---|---|
+| 3 months | **Primary** | Insurance trigger eligible — reliable enough to earmark reserves |
+| 4 months | **Primary** | Insurance trigger eligible |
+| 5 months | **Advisory** | Early warning only — not a payout trigger |
+| 6 months | **Advisory** | Early warning only — directional signal only |
+
+Only **primary-tier** forecasts (≤4 months, ≥75% probability) are counted in financial exposure calculations and reserve sizing. Advisory-tier forecasts are surfaced on the dashboard but excluded from payout logic.
+
+---
+
+### The Full Inference Chain
+
+```
+06:00 EAT daily
+    ↓
+Fetch new climate records (incremental, 5 sources)
+    ↓
+Store as monthly aggregates → ClimateData table
+    ↓
+Look back 12 months → query 6–12 monthly records
+    ↓
+Engineer 83 features
+    ↓
+XGBoost: features → z-score → predicted_mm
+    ↓
+For each of 3 trigger types × 4 horizons:
+  → target_date = today + horizon months
+  → season = 'dry' if month in (7-12) else 'wet'
+  → crop phase = calendar lookup (wet/dry season dict)
+  → threshold = RAINFALL_THRESHOLDS[crop_phase]
+  → probability = CDF calculation (trigger-type specific)
+  → tier = 'primary' if horizon ≤ 4 else 'advisory'
+    ↓
+12 ForecastLog entries written → Evidence Pack grows
+```
+
+> **Key design point:** The model does not predict "what happens in 3 months" vs "what happens in 6 months" separately. It predicts the current climate trajectory once. The horizon granularity comes entirely from applying different crop-phase thresholds to the same prediction — the threshold and crop phase change per horizon, not the underlying model output.
+
+---
+
 ## Future Enhancements
 
 ### Planned Improvements
@@ -647,7 +785,7 @@ def optimize_hyperparameters(model_type, X_train, y_train):
 
 ---
 
-**Document Version**: 3.2
-**Last Updated**: March 8, 2026
+**Document Version**: 3.3
+**Last Updated**: March 21, 2026
 **Status**: ✅ Production Ready
 **Consolidates**: MODEL_DEVELOPMENT_GUIDE.md, feature_engineering.md, UNCERTAINTY_QUANTIFICATION.md, MODEL_IMPROVEMENT_IMPLEMENTATION_GUIDE.md, MODEL_IMPROVEMENTS_RESULTS.md, TRAIN_PIPELINE_MIGRATION.md, RETRAINING_RESULTS_SUMMARY.md, SPATIAL_CV_RESULTS_TASK_15.md
