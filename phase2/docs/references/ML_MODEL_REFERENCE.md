@@ -688,13 +688,29 @@ Dry season (Jul planting → Dec harvest):
   Dec → harvesting  (min 0mm, needs dry)
 ```
 
-2. **Calculate probability** using normal distribution CDF anchored to the phase threshold:
+2. **Calculate probability** using the normal distribution CDF (Cumulative Distribution Function):
 
+**What CDF means here:** The model predicts a single rainfall value (e.g. 45mm), but that prediction carries uncertainty measured by the model's RMSE (33.1mm). The CDF answers: *"given this predicted value and this uncertainty, what is the probability that actual rainfall lands below (or above) the threshold?"* It converts a point prediction into a probability by integrating the uncertainty distribution up to the threshold.
+
+**Why CDF is the right approach:** Instead of a binary "predicted rainfall < threshold = drought risk", the CDF quantifies *how likely* the threshold is to be breached, proportional to how close the prediction is to the threshold relative to the model's own measured error. A prediction of 45mm against a 120mm drought threshold (75mm gap, RMSE 33mm) gives a very different probability than a prediction of 115mm against the same threshold (5mm gap, same RMSE). The uncertainty is grounded in real test-set performance — not assumed.
+
+**Example:**
+```
+Predicted rainfall: 45mm  |  Drought threshold: 120mm  |  RMSE: 33.1mm
+CDF((120 - 45) / 33.1) = CDF(2.27) ≈ 99% drought probability
+
+Predicted rainfall: 115mm  |  Drought threshold: 120mm  |  RMSE: 33.1mm
+CDF((120 - 115) / 33.1) = CDF(0.15) ≈ 56% drought probability
+```
+
+**Formulas by trigger type:**
 ```
 Drought:      P(actual_mm < min_threshold)  = CDF((threshold_min - predicted_mm) / RMSE)
 Flood:        P(actual_mm > excessive)       = 1 - CDF((threshold_excessive - predicted_mm) / RMSE)
 Crop failure: P(actual_mm < 50% of min)     = CDF((threshold_min × 0.5 - predicted_mm) / RMSE)
 ```
+
+For flood the formula is inverted (`1 - CDF`) because flood asks "what is the probability actual rainfall exceeds the threshold" rather than falls below it.
 
 3. **Assign confidence intervals:**
 ```
@@ -869,7 +885,7 @@ The advisory tier and widening confidence intervals already communicate this unc
 
 ---
 
-**Document Version**: 3.5
+**Document Version**: 3.6
 **Last Updated**: March 21, 2026
 **Status**: ✅ Production Ready
 **Consolidates**: MODEL_DEVELOPMENT_GUIDE.md, feature_engineering.md, UNCERTAINTY_QUANTIFICATION.md, MODEL_IMPROVEMENT_IMPLEMENTATION_GUIDE.md, MODEL_IMPROVEMENTS_RESULTS.md, TRAIN_PIPELINE_MIGRATION.md, RETRAINING_RESULTS_SUMMARY.md, SPATIAL_CV_RESULTS_TASK_15.md
