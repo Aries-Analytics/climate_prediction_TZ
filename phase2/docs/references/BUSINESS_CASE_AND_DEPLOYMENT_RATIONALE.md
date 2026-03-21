@@ -185,19 +185,29 @@ The loss ratio (75%) reflects the actual historical claims exposure. It is not a
 - **Tightening thresholds** to fire less often reduces farmer protection and increases basis risk
 - Neither trade-off is appropriate at pilot stage
 
-**The correct interpretation of 75% loss ratio**: Claims are sustainable — the reserve pool will not be depleted by normal trigger events. **But operations require external support at pilot scale**, which is why the government subsidy (50% of premium) and development finance backing are structural inputs, not optional add-ons.
+**The correct interpretation of 75% loss ratio**: Claims are sustainable — the reserve pool will not be depleted by normal trigger events. **But operations require external support at pilot scale** — development finance co-funding (Scenario B) is the preferred near-term mechanism; government subsidy (Scenario C) is the medium-term policy goal.
 
 **Break-even scale is approximately 5,000–10,000 farmers**, where fixed platform costs drop below 10% of gross premium and the combined ratio approaches 100%. The Kilombero pilot with 1,000 farmers is the proof-of-concept phase that earns the right to scale.
 
-### The Premium Structure
+### Premium Scenarios and Funding Pathways
 
-| Stakeholder | Pays                                 | Receives                         |
-| ----------- | ------------------------------------ | -------------------------------- |
-| Farmer      | \$10/season (after subsidy)          | Up to\$90/season coverage        |
-| Government  | \$10/season per farmer (50% subsidy) | Food security, political capital |
-| HewaSense   | \$20/season gross                    | Platform + reserve management    |
+The unsubsidised gross premium is **\$20/farmer/year** — the financially honest baseline. Three scenarios are modelled based on different external funding assumptions:
 
-At 1,000 farmers: **\$20,000/year gross premium**. Expected claims: \$15,000/year. Gap between premium and claims: \$5,000 — this covers a fraction of operational costs and requires the government subsidy (\$10,000/year) plus development finance to bridge the remainder.
+| Scenario | Farmer Cost | External Funding | Break-even Scale |
+| -------- | ----------- | ---------------- | ---------------- |
+| A — No subsidy (baseline) | \$20/year | None | ~10,000 farmers |
+| B — Donor/NGO co-funding (near-term) | ~\$12/year | ~40% grant | ~2,000 farmers |
+| C — Government subsidy (policy goal) | \$10/year | 50% government | Policy-dependent |
+
+**Scenario A** is the honest operational baseline. Break-even requires approximately 10,000 farmers — where fixed platform costs fall below 10% of gross premium. Achievable at scale, but not at pilot stage.
+
+**Scenario B** is the realistic near-term pathway. Donor and development finance co-funding (GIZ, World Bank IDA, IFAD, Syngenta Foundation) specifically targets products at this validation stage. A ~40% grant contribution reduces farmer cost to ~\$12/year and achieves break-even at ~2,000 farmers — without depending on government budget cycles or political continuity.
+
+**Scenario C** models a 50% government subsidy, reducing farmer cost to \$10/year. Precedents exist in the region (KLIP Kenya, CADP Ethiopia, Nigeria NIRSAL), and Tanzania's ASDP has explicit smallholder risk management mandates. The ask (\$10,000/year for 1,000 farmers) is modest in development aid terms — but it requires a budget line, disbursement mechanism, and political will sustained across election cycles. It is a legitimate medium-term policy goal, not a near-term operational assumption.
+
+**For the Kilombero pilot**, the preferred pathway is Scenario B — accessible without a government MOU, achievable at pilot scale, and does not require TIRA approval as a prerequisite. Government subsidy engagement (Scenario C) is pursued in parallel as a medium-term objective.
+
+At 1,000 farmers: **\$20,000/year gross premium**. Expected claims: \$15,000/year. Gap between premium and claims: \$5,000 — operational costs require external support at pilot scale, consistent with how every comparable agricultural parametric program launched (KLIP Kenya, IBLI Ethiopia, ACRE Africa).
 
 ### Capital Adequacy
 
@@ -221,15 +231,9 @@ The reserves cover the worst-case scenario (100% simultaneous crop failure) 1.67
 
 The value proposition is not the cheapest product — it is the **highest value at an affordable price point**. A farmer paying \$10 gets \$90 of coverage. That is 9 months of smallholder daily wages protected for less than 2 days' wages.
 
-### Why 50% Government Subsidy Is Realistic
+### Why the Three-Scenario Model Matters
 
-Agricultural insurance subsidies are standard practice across the world, including in Africa:
-
-- **KLIP (Kenya)**: Fully government-funded livestock insurance
-- **CADP (Ethiopia)**: Government co-funds IBLI premiums
-- **Nigeria NIRSAL**: Government underwrites agricultural credit risk
-
-Tanzania's Agricultural Sector Development Programme (ASDP) has explicit mandates for smallholder risk management. The subsidy request (\$10,000/year for 1,000 farmers) is a rounding error in development aid allocations — and it comes with a measurable food security outcome attached.
+Presenting a single government-subsidy-dependent premium as the baseline does not survive actuarial or investor scrutiny. The three-scenario model is honest about what each pathway requires and does not assume political commitments that have not yet been made. The scenarios are not mutually exclusive — Scenario B can fund the pilot while Scenario C is negotiated in parallel for national scale.
 
 ---
 
@@ -289,7 +293,7 @@ No adjuster. No claim form. No dispute. The farmer gets \$60 in their mobile mon
 
 **Farmer uptake**: Enrollment targets 1,000 farmers but relies on Kilombero cooperatives as distribution partners. If cooperatives are weak or competing products exist, actual enrollment may be lower, diluting the premium pool.
 
-**Government subsidy commitment**: The 50% subsidy is an assumption, not a signed MOU. Without it, the farmer-facing price doubles to \$20, which materially affects affordability. The MOU needs to be negotiated before enrollment opens.
+**External funding dependency**: The pilot requires external co-funding to be farmer-affordable. Scenario B (donor/NGO ~40% grant) is the near-term target — accessible from development finance institutions active in Tanzania without requiring a government MOU. Scenario C (50% government subsidy) is a medium-term policy goal pursued in parallel. Enrollment planning uses Scenario B as the base case; $20/farmer is the unsubsidised fallback if co-funding is delayed.
 
 **Reinsurer pricing**: A reinsurer may accept the evidence pack but price their participation at a rate that consumes the operating buffer. This needs to be stress-tested against reinsurance quotes.
 

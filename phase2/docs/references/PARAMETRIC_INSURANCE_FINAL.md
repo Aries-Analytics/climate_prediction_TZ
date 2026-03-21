@@ -60,9 +60,18 @@ Implemented true parametric insurance with market-competitive rates aligned with
 ### Premium Structure (100-farmer pilot)
 
 - **Annual Premium Total**: $1,988
-- **Per-Farmer Premium**: $20/year
-- **With 50% Government Subsidy**: **$10/year**
+- **Per-Farmer Premium (full)**: $20/year
 - **Loss Ratio**: 75% (target: 60-80%) ✅
+
+#### Premium Scenarios and Funding Pathways
+
+| Scenario | Subsidy Source | Subsidy % | Farmer Pays | Break-Even Farmers |
+|----------|---------------|-----------|-------------|-------------------|
+| **A — No subsidy** | None (self-sustaining) | 0% | **$20/year** | ~10,000 |
+| **B — Donor / NGO grant** | GSMA, GIZ, USAID, WFP, etc. | ~40% | **~$12/year** | ~2,000 |
+| **C — Government subsidy** | Ministry of Agriculture MOU | 50% | **$10/year** | ~2,000 |
+
+> **Scenario A** is the honest, no-subsidy baseline; it requires large scale to be self-sustaining. **Scenario B** is the realistic near-term pathway — donor or NGO co-funding is well-documented in African agricultural insurance programmes (Pula, ACRE Africa). **Scenario C** is the policy aspiration; government agricultural subsidies exist in Tanzania (fertiliser, seed) but are unreliable and budget-constrained — this scenario depends on a signed MOU and must not be assumed until committed.
 
 > **Note on loss ratio arithmetic:** The $1,590/year aggregate payout figure above spans all six training locations. The 75% loss ratio is calibrated for the Morogoro pilot location specifically. Dividing the 6-location aggregate ($1,590) by the single-location pilot premium ($1,988) yields ~80% — a multi-location artefact, not the pilot loss ratio. The Morogoro calibration iterated thresholds against 26 years of location-specific data to reach 75%.
 
@@ -72,8 +81,8 @@ Implemented true parametric insurance with market-competitive rates aligned with
 | -------------------- | -------- | ---------------------------- |
 | Loss Ratio           | 75%      | ✅ Sustainable (target <80%) |
 | Premium/Payout Ratio | 1:3.1    | ✅ Adequate coverage         |
-| Subsidy Requirement  | 50%      | ✅ Manageable for government |
-| Farmer Affordability | $10/year | ✅ ~2 days' wages            |
+| Subsidy Requirement  | 0% (Scenario A) / ~40% donor (B) / 50% govt (C) | A=self-sustaining at scale; B=near-term realistic; C=policy goal |
+| Farmer Affordability | $20 (A) / ~$12 (B) / $10 (C) | B/C ≈ 1–2 days' wages ✅; A viable at scale |
 
 ---
 
@@ -86,16 +95,20 @@ Implemented true parametric insurance with market-competitive rates aligned with
 | **Pula Zambia** | \$6/year            | \$25           | Drought                                | Zambia             |
 | **KLIP Kenya**  | N/A                 | \$10/animal    | Drought                                | Kenya (livestock)  |
 | **ACRE Kenya**  | \$8/year            | \$40           | Drought, Flood                         | Kenya              |
-| HewaSense             | **\$10/year** | **\$90** | **Drought, Flood, Crop Failure** | **Tanzania** |
+| HewaSense             | **\$10–\$20/year** | **\$90** | **Drought, Flood, Crop Failure** | **Tanzania** |
+
+> HewaSense premium shown as range reflecting the three funding scenarios (A: $20 no-subsidy; B: ~$12 donor grant; C: $10 govt subsidy). See Premium Scenarios table above.
 
 ### Value Proposition
 
-**vs Pula Zambia** (most comparable):
+**vs Pula Zambia** (most comparable, Scenario C at $10):
 
 - **Price**: $10 vs $6 (+67% more)
 - **Payout**: $90 vs $25 (+260% more)
 - **Perils**: 3 vs 1 (+200% more)
 - **Value Score**: **3.6x better payout-to-price ratio**
+
+> At Scenario A ($20/year, no subsidy): 1.5x price vs Pula with a 3.1x payout advantage — still strong value given multi-peril coverage.
 
 ---
 
@@ -271,18 +284,23 @@ USE_TIERED_PAYOUTS = False  # True parametric (fixed rates, not tiered)
 
 ### Budget Requirements
 
-**Per-Farmer Costs**:
+**Per-Farmer Costs (by scenario)**:
 
-- Premium: $20/year
-- Government subsidy (50%): $10/farmer
-- Total farmer cost: $10/year
+| Scenario | Full Premium | Subsidy Source | Farmer Pays |
+|----------|-------------|----------------|-------------|
+| A — No subsidy | $20/year | None | $20/year |
+| B — Donor/NGO | $20/year | ~40% grant | ~$12/year |
+| C — Government | $20/year | 50% MOU | $10/year |
 
 **1,000-Farmer Pilot (Morogoro)**:
 
-- Total premiums: $20,000/year
-- Government subsidy: $10,000/year
+- Total premiums collected: $20,000/year (full premium regardless of scenario)
+- External co-funding (Scenario B): ~$8,000/year donor/NGO grant
+- External co-funding (Scenario C): $10,000/year government subsidy
 - Expected payouts: ~$15,900/year (historical avg scaled)
-- Net sustainability: Positive with reserves
+- Net sustainability: Positive with reserves across all three scenarios
+
+> **Funding source note**: Scenario B (donor/NGO) is the recommended near-term target. Approach GSMA M4D, GIZ, USAID, WFP, or IFAD — all have active agricultural insurance co-funding programmes in East Africa.
 
 ---
 
@@ -383,7 +401,7 @@ USE_TIERED_PAYOUTS = False  # True parametric (fixed rates, not tiered)
 ### Upside Opportunities
 
 1. **Lower trigger rates**: 75% loss ratio → profits for sustainability
-2. **Scale economies**: >500 farmers → reduce subsidy need
+2. **Scale economies**: >500 farmers → approach break-even without subsidy (Scenario A viable)
 3. **Multi-peril value**: Attracts more farmers than single-peril competitors
 
 ---
@@ -434,9 +452,9 @@ USE_TIERED_PAYOUTS = False  # True parametric (fixed rates, not tiered)
 ### Phase 4 — Live Pilot (Q3 2026+, contingent on Phase 3 gate)
 
 - ⏳ TIRA approval confirmed
-- ⏳ Government subsidy MOU signed (50% commitment)
+- ⏳ External funding arrangement confirmed (Scenario B: donor/NGO grant ~40%, OR Scenario C: government MOU 50% — Scenario A self-sustaining at scale also viable)
 - ⏳ Farmer education materials distributed (Kilombero Basin cooperatives)
-- ⏳ Enrol 1,000 farmers — collect premiums ($10/farmer after subsidy)
+- ⏳ Enrol 1,000 farmers — collect premiums ($10–$20/farmer depending on funding scenario)
 - ⏳ First live payout issued within 5–7 days of confirmed primary-tier trigger
 - ⏳ Measure farmer satisfaction + calculate actual loss ratio
 - ⏳ Prepare scale-up plan for 2027
@@ -461,7 +479,7 @@ USE_TIERED_PAYOUTS = False  # True parametric (fixed rates, not tiered)
 
 - Loss ratio stays 50–85%
 - 70%+ farmers renew for Year 2
-- Government subsidy maintained at 50%
+- External funding maintained (Scenario B: donor grant renewed; Scenario C: government subsidy; Scenario A: break-even through scale)
 
 ### Live Pilot Operational
 
@@ -487,7 +505,7 @@ USE_TIERED_PAYOUTS = False  # True parametric (fixed rates, not tiered)
 ---
 
 **Document Owner**: Climate Prediction & Insurance Team
-**Last Updated**: March 15, 2026
+**Last Updated**: March 21, 2026
 **Next Review**: Late June 2026 (post 90 valid-run-day shadow run — review against Brier Score results; shadow run extended to Jun 12 to compensate for 7 missed days)
 
 ---
@@ -496,6 +514,7 @@ USE_TIERED_PAYOUTS = False  # True parametric (fixed rates, not tiered)
 
 | Date         | Change                                                                                                                                                                                                                                                                                                                                                                      |
 | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Mar 21, 2026 | Replaced single-subsidy assumption with three-scenario model (A: no subsidy/$20; B: donor ~40%/~$12; C: govt 50%/$10). Updated Premium Structure, Sustainability Metrics, Competitive Analysis, Budget Requirements, Phase 4 milestones, and success criteria to reflect scenario-aware language. |
 | Mar 15, 2026 | Added Horizon Tiers section. Corrected payout formula to per-farmer fixed rate (`PILOT_FARMERS × probability × rate`). Added deduplication rule (MAX probability per trigger_type × month). Updated code locations to reflect backend + frontend enforcement. Fixed double-counting bug: advisory tier (5-6 month forecasts) no longer included in financial exposure. |
 | Mar 9, 2026  | Updated Next Review date. Initial shadow run doc sweep.                                                                                                                                                                                                                                                                                                                     |
 | Jan 23, 2026 | Phase-based precision iteration added.                                                                                                                                                                                                                                                                                                                                      |

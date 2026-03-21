@@ -74,9 +74,10 @@
 | Metric | Verified Value | Source Document |
 |--------|---------------|-----------------|
 | **Loss Ratio** | **75%** (target: 60-80%) | PARAMETRIC_INSURANCE_FINAL.md |
-| **Premium (with subsidy)** | **$10/year** | PARAMETRIC_INSURANCE_FINAL.md |
-| **Premium (full)** | **$20/year** | PARAMETRIC_INSURANCE_FINAL.md |
-| **Government Subsidy** | **50%** | PARAMETRIC_INSURANCE_FINAL.md |
+| **Premium — Scenario A (no subsidy)** | **$20/year** | PARAMETRIC_INSURANCE_FINAL.md |
+| **Premium — Scenario B (donor/NGO ~40%)** | **~$12/year** | PARAMETRIC_INSURANCE_FINAL.md |
+| **Premium — Scenario C (govt 50%)** | **$10/year** | PARAMETRIC_INSURANCE_FINAL.md |
+| **Subsidy source** | None / Donor-NGO / Govt MOU | Three-scenario model (see PARAMETRIC_INSURANCE_FINAL.md) |
 
 ### System Performance
 
@@ -208,7 +209,7 @@
 - ✅ **610 total events** over 26 years
 - ✅ **$60/$75/$90** payout rates
 - ✅ **75% loss ratio**
-- ✅ **$10/year premium** (with 50% subsidy)
+- ✅ **$20/year full premium** (Scenario A: no subsidy) / **~$12/year** (Scenario B: donor grant) / **$10/year** (Scenario C: govt MOU)
 
 ### System
 - ✅ **28 API endpoints**

@@ -50,10 +50,10 @@ A parametric product does not pay based on what a farmer claims they lost. It pa
 | Feature         | Indemnity Insurance          | HewaSense Parametric                         |
 | --------------- | ---------------------------- | -------------------------------------------- |
 | Payout trigger  | Farm-level damage assessment | Climate threshold breach                     |
-| Claims process  | Required                     | **None**                                     |
-| Payout time     | Weeks–months                 | **5–7 days**                                 |
-| Disputes        | Frequent                     | **Not possible** (objective)                 |
-| Scalability     | Low (adjuster-bound)         | **High** (automated)                         |
+| Claims process  | Required                     | **None**                               |
+| Payout time     | Weeks–months                | **5–7 days**                          |
+| Disputes        | Frequent                     | **Not possible** (objective)           |
+| Scalability     | Low (adjuster-bound)         | **High** (automated)                   |
 | Regulatory path | Standard indemnity route     | Parametric route (separate regulatory track) |
 
 This is not a compromise — it is the correct product design for smallholder agriculture in sub-Saharan Africa.
@@ -62,12 +62,12 @@ This is not a compromise — it is the correct product design for smallholder ag
 
 A simple "did it rain enough this month?" trigger misses biological reality. Rice has four distinct growth phases, each with different vulnerability windows:
 
-| Phase           | Duration     | Critical Need                 | Payout Weight |
-| --------------- | ------------ | ----------------------------- | ------------- |
-| Germination     | Weeks 1–2    | Consistent soil moisture      | 15%           |
-| Vegetative      | Weeks 3–8    | Adequate rainfall             | 25%           |
-| **Flowering**   | **Weeks 9–12** | **No drought, no flooding** | **35%**       |
-| Maturity        | Weeks 13–16  | Dry conditions                | 25%           |
+| Phase               | Duration              | Critical Need                     | Payout Weight |
+| ------------------- | --------------------- | --------------------------------- | ------------- |
+| Germination         | Weeks 1–2            | Consistent soil moisture          | 15%           |
+| Vegetative          | Weeks 3–8            | Adequate rainfall                 | 25%           |
+| **Flowering** | **Weeks 9–12** | **No drought, no flooding** | **35%** |
+| Maturity            | Weeks 13–16          | Dry conditions                    | 25%           |
 
 The flowering phase carries the highest weight because drought or waterlogging during this 3-week window destroys the entire season — even if all other months were normal.
 
@@ -158,18 +158,18 @@ Combined Ratio = Loss Ratio + Expense Ratio
 Sustainable    = Combined Ratio < 100%
 ```
 
-| Cost Category                   | 1,000 Farmers         | 5,000 Farmers        | 10,000 Farmers       |
-| ------------------------------- | --------------------- | -------------------- | -------------------- |
-| Gross Premium                   | \$20,000/yr           | \$100,000/yr         | \$200,000/yr         |
-| Expected Claims (75% LR)        | \$15,000/yr           | \$75,000/yr          | \$150,000/yr         |
-| Platform / Infrastructure       | ~\$5,000/yr           | ~\$6,000/yr          | ~\$8,000/yr          |
-| Reinsurance (~12% of premium)   | ~\$2,400/yr           | ~\$12,000/yr         | ~\$24,000/yr         |
-| Distribution / Farmer Education | ~\$3,000/yr           | ~\$8,000/yr          | ~\$12,000/yr         |
-| Regulatory / Operations         | ~\$2,000/yr           | ~\$3,000/yr          | ~\$4,000/yr          |
-| **Total Expenses (non-claims)** | **~\$12,400**         | **~\$29,000**        | **~\$48,000**        |
-| **Expense Ratio**               | **~62%**              | **~29%**             | **~24%**             |
-| **Combined Ratio**              | **~137%**             | **~104%**            | **~99%**             |
-| **Operational Result**          | Loss (needs funding)  | Marginal             | **Break-even**       |
+| Cost Category                         | 1,000 Farmers        | 5,000 Farmers       | 10,000 Farmers       |
+| ------------------------------------- | -------------------- | ------------------- | -------------------- |
+| Gross Premium                         | \$20,000/yr          | \$100,000/yr        | \$200,000/yr         |
+| Expected Claims (75% LR)              | \$15,000/yr          | \$75,000/yr         | \$150,000/yr         |
+| Platform / Infrastructure             | ~\$5,000/yr          | ~\$6,000/yr         | ~\$8,000/yr          |
+| Reinsurance (~12% of premium)         | ~\$2,400/yr          | ~\$12,000/yr        | ~\$24,000/yr         |
+| Distribution / Farmer Education       | ~\$3,000/yr          | ~\$8,000/yr         | ~\$12,000/yr         |
+| Regulatory / Operations               | ~\$2,000/yr          | ~\$3,000/yr         | ~\$4,000/yr          |
+| **Total Expenses (non-claims)** | **~\$12,400**  | **~\$29,000** | **~\$48,000**  |
+| **Expense Ratio**               | **~62%**       | **~29%**      | **~24%**       |
+| **Combined Ratio**              | **~137%**      | **~104%**     | **~99%**       |
+| **Operational Result**          | Loss (needs funding) | Marginal            | **Break-even** |
 
 **At 1,000 farmers, the combined ratio is approximately 137% — the program cannot sustain itself on premium income alone.** This is not a design flaw. It is the expected and honest reality of every parametric agriculture insurance program at pilot scale — KLIP Kenya, IBLI Ethiopia, and ACRE Africa all launched under this structure, supported by development finance until they reached operating scale.
 
@@ -179,19 +179,29 @@ The loss ratio (75%) reflects actual historical claims exposure. It is not adjus
 - **Tightening thresholds** to fire less often reduces farmer protection and increases basis risk
 - Neither trade-off is appropriate at pilot stage
 
-**The correct interpretation of 75% loss ratio**: Claims are sustainable — the reserve pool will not be depleted by normal trigger events. **But operations require external support at pilot scale**, which is why the government subsidy (50% of premium) and development finance backing are structural inputs, not optional add-ons.
+**The correct interpretation of 75% loss ratio**: Claims are sustainable — the reserve pool will not be depleted by normal trigger events. **But operations require external support at pilot scale** — development finance co-funding (Scenario B) is the preferred near-term mechanism; government subsidy (Scenario C) is the medium-term policy goal.
 
 **Break-even scale is approximately 5,000–10,000 farmers**, where fixed platform costs drop below 10% of gross premium and the combined ratio approaches 100%. The Kilombero pilot with 1,000 farmers is the proof-of-concept phase that earns the right to scale.
 
-### The Premium Structure
+### Premium Scenarios and Funding Pathways
 
-| Stakeholder | Pays                                  | Receives                          |
-| ----------- | ------------------------------------- | --------------------------------- |
-| Farmer      | \$10/season (after subsidy)           | Up to \$90/season coverage        |
-| Government  | \$10/season per farmer (50% subsidy)  | Food security, political capital  |
-| HewaSense   | \$20/season gross                     | Platform + reserve management     |
+The unsubsidised gross premium is **\$20/farmer/year** — the financially honest baseline. Three scenarios are modelled based on different external funding assumptions:
 
-At 1,000 farmers: **\$20,000/year gross premium**. Expected claims: \$15,000/year. Gap between premium and claims: \$5,000 — this covers a fraction of operational costs and requires the government subsidy (\$10,000/year) plus development finance to bridge the remainder.
+| Scenario | Farmer Cost | External Funding | Break-even Scale |
+| -------- | ----------- | ---------------- | ---------------- |
+| A — No subsidy (baseline) | \$20/year | None | ~10,000 farmers |
+| B — Donor/NGO co-funding (near-term) | ~\$12/year | ~40% grant | ~2,000 farmers |
+| C — Government subsidy (policy goal) | \$10/year | 50% government | Policy-dependent |
+
+**Scenario A** is the honest operational baseline. Break-even requires approximately 10,000 farmers — where fixed platform costs fall below 10% of gross premium. Achievable, but not at pilot scale.
+
+**Scenario B** is the realistic near-term pathway. Donor and development finance co-funding (GIZ, World Bank IDA, IFAD, Syngenta Foundation) specifically targets products at this validation stage. A ~40% grant contribution reduces farmer cost to ~\$12/year and achieves break-even at ~2,000 farmers — without depending on government budget cycles or political continuity.
+
+**Scenario C** models a 50% government subsidy, reducing farmer cost to \$10/year. Precedents exist in the region (KLIP Kenya, CADP Ethiopia, Nigeria NIRSAL), and Tanzania's ASDP has explicit smallholder risk management mandates. The ask (\$10,000/year for 1,000 farmers) is modest in development aid terms — but it requires a budget line, disbursement mechanism, and political will sustained across election cycles. It is a legitimate medium-term policy goal, not a near-term operational assumption.
+
+**For the Kilombero pilot**, the preferred pathway is Scenario B — accessible without a government MOU, achievable at pilot scale, and does not require TIRA approval as a prerequisite. Government subsidy engagement (Scenario C) is pursued in parallel as a medium-term objective.
+
+At 1,000 farmers: **\$20,000/year gross premium**. Expected claims: \$15,000/year. Gap between premium and claims: \$5,000 — operational costs require external support at pilot scale, which is standard for all agricultural parametric programs at this stage (KLIP Kenya, IBLI Ethiopia, ACRE Africa all launched under similar structures).
 
 ### Capital Adequacy
 
@@ -211,19 +221,13 @@ The reserves cover the worst-case scenario (100% simultaneous crop failure) 1.67
 | Farmer cost           | \$6/year    | \$8/year   | \$10/year        |
 | Max payout            | \$25        | \$40       | \$90             |
 | Perils covered        | 1           | 2          | 3                |
-| Payout-to-price ratio | 4.2×        | 5×         | **9×**           |
+| Payout-to-price ratio | 4.2×       | 5×        | **9×**    |
 
 The value proposition is not the cheapest product — it is the **highest value at an affordable price point**. A farmer paying \$10 gets \$90 of coverage. That is 9 months of smallholder daily wages protected for less than 2 days' wages.
 
-### Why 50% Government Subsidy Is Realistic
+### Comparison to Market
 
-Agricultural insurance subsidies are standard practice across the world, including in Africa:
-
-- **KLIP (Kenya)**: Fully government-funded livestock insurance
-- **CADP (Ethiopia)**: Government co-funds premium payments
-- **Nigeria NIRSAL**: Government underwrites agricultural credit risk
-
-Tanzania's Agricultural Sector Development Programme (ASDP) has explicit mandates for smallholder risk management. The subsidy request (\$10,000/year for 1,000 farmers) is a rounding error in development aid allocations — and it comes with a measurable food security outcome attached.
+The value proposition is not the cheapest product — it is the **highest value at an affordable price point**. At the target pilot cost of ~\$10–12/year (under Scenario B or C co-funding), a farmer receives up to \$90 of coverage — 9× their premium outlay.
 
 ---
 
@@ -231,18 +235,18 @@ Tanzania's Agricultural Sector Development Programme (ASDP) has explicit mandate
 
 If the forward validation returns **Brier Score < 0.25 AND Basis Risk < 30%**, the path to live payouts is clear:
 
-| Milestone                      | Target Date    | Description                                                      |
-| ------------------------------ | -------------- | ---------------------------------------------------------------- |
-| First 3-month forecasts mature | ~June 9, 2026  | Brier Score calculation begins                                   |
-| Validation run completes       | June 12, 2026  | 90 valid run-days reached, 1,080 forecast records in hand        |
-| Evidence pack compiled         | June 15, 2026  | Forecast accuracy metrics + full forecast-actual log finalised   |
-| Internal debrief               | June 15–20     | Predicted vs actual trigger alignment reviewed                   |
-| **Go/No-Go decision**          | **June 20**    | Binary gate — criteria are fixed                                 |
-| Regulatory preparation         | Late June 2026 | Application documentation assembled with evidence pack           |
-| Reinsurer review               | July 2026      | Evidence pack handed to prospective reinsurance partners         |
-| Government subsidy MOU         | July 2026      | Subsidy structure formalised                                     |
-| Farmer enrollment              | Q3 2026        | 1,000 farmers, Kilombero cooperatives                            |
-| **First live policies issued** | **Q3 2026**    | First payout within 5–7 days of confirmed primary-tier trigger   |
+| Milestone                            | Target Date       | Description                                                     |
+| ------------------------------------ | ----------------- | --------------------------------------------------------------- |
+| First 3-month forecasts mature       | ~June 9, 2026     | Brier Score calculation begins                                  |
+| Validation run completes             | June 12, 2026     | 90 valid run-days reached, 1,080 forecast records in hand       |
+| Evidence pack compiled               | June 15, 2026     | Forecast accuracy metrics + full forecast-actual log finalised  |
+| Internal debrief                     | June 15–20       | Predicted vs actual trigger alignment reviewed                  |
+| **Go/No-Go decision**          | **June 20** | Binary gate — criteria are fixed                               |
+| Regulatory preparation               | Late June 2026    | Application documentation assembled with evidence pack          |
+| Reinsurer review                     | July 2026         | Evidence pack handed to prospective reinsurance partners        |
+| Government subsidy MOU               | July 2026         | Subsidy structure formalised                                    |
+| Farmer enrollment                    | Q3 2026           | 1,000 farmers, Kilombero cooperatives                           |
+| **First live policies issued** | **Q3 2026** | First payout within 5–7 days of confirmed primary-tier trigger |
 
 The go/no-go is binary and the criteria are fixed. A gate with room for negotiation is not a gate.
 
@@ -275,7 +279,7 @@ No adjuster. No claim form. No dispute. Every enrolled farmer in the zone receiv
 
 **Farmer uptake**: Enrollment targets 1,000 farmers but relies on Kilombero cooperatives as distribution partners. If cooperatives are weak or competing products exist, actual enrollment may be lower, diluting the premium pool.
 
-**Government subsidy commitment**: The 50% subsidy is an assumption, not a signed MOU. Without it, the farmer-facing price doubles to \$20, which materially affects affordability. The MOU needs to be negotiated before enrollment opens.
+**External funding dependency**: The pilot requires external co-funding to be farmer-affordable at scale. Scenario B (donor/NGO ~40% grant) is the near-term target — this does not require a government MOU and is accessible from development finance institutions active in Tanzania. Scenario C (50% government subsidy) is a medium-term policy goal, not an operational assumption. Enrollment planning uses Scenario B as the base case.
 
 **Reinsurer pricing**: A reinsurer may accept the evidence pack but price their participation at a rate that consumes the operating buffer. This needs to be stress-tested against actual reinsurance quotes.
 
@@ -317,24 +321,26 @@ That is what the validation run is for.
 
 ## Key Numbers at a Glance
 
-| Parameter                   | Value                                       | Basis                                               |
-| --------------------------- | ------------------------------------------- | --------------------------------------------------- |
-| Validation run window       | March 7 – June 12, 2026 (90 run-days)      | Parametric insurance design specification           |
-| Forecast target             | 1,080 forecast records                      | System design KPI                                   |
-| Forecasts accumulated          | 84 (7 valid run-days, Mar 20)            | Live system — updated as shadow run progresses      |
-| Go-live gate: Brier Score   | < 0.25                                      | Climate forecast industry standard                  |
-| Go-live gate: Basis Risk    | < 30%                                       | Retrospective result: 20% (pre-forward validation)  |
-| Primary ML model            | Gradient-boosted ensemble (R²=0.8666)      | Internal model evaluation report                    |
-| Payout: Drought             | \$60/farmer                                 | Parametric insurance final specification            |
-| Payout: Flood               | \$75/farmer                                 | Parametric insurance final specification            |
-| Payout: Crop Failure        | \$90/farmer                                 | Parametric insurance final specification            |
-| Farmer premium (subsidised) | \$10/season                                 | Premium structure design                            |
-| Loss ratio                  | 75%                                         | 26-year historical calibration                      |
-| Capital Adequacy Ratio      | 112.3%                                      | Kilombero Basin Pilot Specification                 |
-| Cash reserves               | \$150,000                                   | Kilombero Basin Pilot Specification                 |
-| Max single-event exposure   | \$90,000                                    | 1,000 farmers × \$90 crop failure payout            |
-| Payout-to-price ratio       | 9×                                          | vs Pula Zambia 4.2×, ACRE Kenya 5×                 |
-| Live pilot target           | Q3 2026                                     | Contingent on June gate and regulatory approval     |
+| Parameter                   | Value                                  | Basis                                              |
+| --------------------------- | -------------------------------------- | -------------------------------------------------- |
+| Validation run window       | March 7 – June 12, 2026 (90 run-days) | Parametric insurance design specification          |
+| Forecast target             | 1,080 forecast records                 | System design KPI                                  |
+| Forecasts accumulated       | 96 (8 valid run-days, Mar 21)          | Live system — updated as shadow run progresses    |
+| Go-live gate: Brier Score   | < 0.25                                 | Climate forecast industry standard                 |
+| Go-live gate: Basis Risk    | < 30%                                  | Retrospective result: 20% (pre-forward validation) |
+| Primary ML model            | Gradient-boosted ensemble (R²=0.8666) | Internal model evaluation report                   |
+| Payout: Drought             | \$60/farmer                            | Parametric insurance final specification           |
+| Payout: Flood               | \$75/farmer                            | Parametric insurance final specification           |
+| Payout: Crop Failure        | \$90/farmer                            | Parametric insurance final specification           |
+| Farmer premium (gross / unsubsidised) | \$20/year | Operational baseline — no external funding |
+| Farmer cost (Scenario B — donor co-funding) | ~\$12/year | ~40% grant contribution; near-term target |
+| Farmer cost (Scenario C — govt subsidy) | \$10/year | 50% government subsidy; medium-term policy goal |
+| Loss ratio                  | 75%                                    | 26-year historical calibration                     |
+| Capital Adequacy Ratio      | 112.3%                                 | Kilombero Basin Pilot Specification                |
+| Cash reserves               | \$150,000                              | Kilombero Basin Pilot Specification                |
+| Max single-event exposure   | \$90,000                               | 1,000 farmers ×\$90 crop failure payout           |
+| Payout-to-price ratio       | 9×                                    | vs Pula Zambia 4.2×, ACRE Kenya 5×               |
+| Live pilot target           | Q3 2026                                | Contingent on June gate and regulatory approval    |
 
 ---
 
