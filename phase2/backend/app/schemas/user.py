@@ -5,14 +5,14 @@ from typing import Optional
 class UserBase(BaseModel):
     username: str = Field(..., min_length=3, max_length=50)
     email: EmailStr
-    role: str = Field(..., pattern="^(admin|analyst|viewer)$")
+    role: str = Field(..., pattern="^(admin|analyst|manager|viewer)$")
 
 class UserCreate(UserBase):
     password: str = Field(..., min_length=8)
 
 class UserUpdate(BaseModel):
     email: Optional[EmailStr] = None
-    role: Optional[str] = Field(None, pattern="^(admin|analyst|viewer)$")
+    role: Optional[str] = Field(None, pattern="^(admin|analyst|manager|viewer)$")
     is_active: Optional[bool] = None
 
 class UserResponse(UserBase):

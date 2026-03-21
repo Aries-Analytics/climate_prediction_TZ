@@ -4,9 +4,7 @@ const config: Config = {
   darkMode: ['class'],
   content: [
     './index.html',
-    './src/pages/LandingPage.tsx',
-    './src/components/landing/**/*.{ts,tsx}',
-    './src/components/ui/**/*.{ts,tsx}',
+    './src/**/*.{ts,tsx}',
   ],
   corePlugins: {
     // CRITICAL: disable Preflight so Tailwind's reset does not clobber MUI styles
