@@ -798,6 +798,35 @@ These improvements capture most of the frontier benefit without the compute or t
 
 ---
 
+### How These Improvements Translate to the Parametric Insurance Product
+
+Every ML improvement in this roadmap has a direct downstream effect on the insurance product — reserve sizing, premium accuracy, reinsurability, farmer protection, and basis risk. The table below maps each technical improvement to its product impact.
+
+| Improvement | Technical Effect | Insurance Product Impact |
+|---|---|---|
+| **Probability calibration (Phase 1)** | Corrects systematic over/under-confidence in CDF probability estimates | Reserve sizing becomes accurate — currently reserves are sized on potentially miscalibrated probabilities. Miscalibrated upward = over-reserved (locked capital); downward = under-reserved (solvency risk). Directly improves actuarial credibility with TIRA and reinsurers. |
+| **Brier Score evidence pack (Phase 1)** | Forward-validated probability calibration on real 2026 data | The single most important reinsurance artefact. A Brier Score < 0.25 on real forward data is the difference between "backtested model" and "underwriteable product." Unlocks reinsurance conversations. |
+| **ECMWF SEAS5 features (Phase 2)** | Multi-month ensemble forecast skill from ECMWF's operational seasonal system incorporated as input features | Earlier trigger signals: a developing La Niña identified 5 months ahead gives farmers time to switch varieties, delay planting, or purchase additional protection. Extends reliable forecast lead time. Reinsurers gain independent signal validation — SEAS5 is a globally recognised system, not proprietary to HewaSense. |
+| **SEAS5 ensemble spread as uncertainty (Phase 2)** | Dynamic confidence intervals that widen in uncertain climate states (ENSO transition years) and narrow when signal is strong | Reserve sizing becomes dynamic rather than static. In a strong La Niña year the 75% drought probability may become 88% — reserves adjust automatically, reducing the risk of being undercapitalised precisely when payouts are most likely. Premiums can be priced dynamically by season, improving long-run sustainability. |
+| **ERA5-Land 9km replacing ERA5 50km (Phase 2)** | Closes the spatial resolution gap between CHIRPS (5km) and current temperature/humidity/soil moisture inputs (50km) | Reduces basis risk. The 50km ERA5 grid means the model currently reads climate conditions averaged over a ~50×50km cell. Kilombero Basin farm conditions within that cell can vary significantly. ERA5-Land at 9km better matches what farmers actually experience, reducing the gap between index trigger and farm-level outcome. |
+| **Horizon-specific models (Phase 2, if triggered)** | Separate calibrated models for each forecast horizon | Enables expanding primary tier to 5 months if accuracy holds → larger trigger-eligible window → more farmer protection per premium dollar. More advance notice of trigger risk = more time to arrange reinsurance capital before a payout event. |
+| **Internal ensemble forecasting (Phase 3)** | Probability estimates derived from ensemble spread rather than RMSE-CDF approximation | More honest uncertainty quantification at every climate state. Actuaries can price reinsurance more accurately. Premiums can reflect genuine seasonal risk variation rather than a fixed annual loss ratio. |
+| **Causal teleconnection modelling (Phase 3)** | Climate relationships modelled causally rather than by correlation | Robustness under climate change: as historical rainfall patterns shift, correlation-based models degrade. Causal models are more stable across distributional shift — important for a 10–20 year product horizon. Makes the product defensible to regulators who ask "what happens when historical patterns change?" |
+
+**The overall product evolution trajectory:**
+
+- **Today (shadow run):** Proof-of-concept phase. XGBoost with CDF probabilities. Evidence pack accumulating. Not yet reinsureable on forward data alone.
+
+- **Post-shadow-run (Q3 2026):** Brier Score available. Probability calibration applied. Evidence pack complete. First reinsurance conversations possible — product moves from "backtested" to "forward-validated."
+
+- **SEAS5 + ERA5-Land integration (Q4 2026):** Forecast lead time extends, spatial resolution improves, reserve sizing becomes dynamic. Product is commercially competitive for TIRA pilot approval and reinsurance placement at 1,000–5,000 farmer scale.
+
+- **Full commercial (post-commercialisation):** Internal ensemble, causal teleconnection modelling, potential farm-level verification integration. Product is defensible at 50,000+ farmer scale across multiple Tanzania basins, with dynamic premium pricing and near-zero basis risk. Comparable in design maturity to ACRE Africa or KLIP Kenya at their current stage.
+
+> **Core principle:** Every ML improvement in this roadmap reduces one of three things — **basis risk** (the gap between index and farm reality), **reserve mispricing** (capital allocated incorrectly due to uncalibrated probabilities), or **reinsurance friction** (the evidence gap preventing external capital from underwriting the product). These are the three constraints that determine whether HewaSense reaches scale.
+
+---
+
 ### Planned Improvements
 
 **Horizon-Specific Forecast Models** *(data-driven decision — evaluate post-shadow-run)*:
@@ -840,7 +869,7 @@ The advisory tier and widening confidence intervals already communicate this unc
 
 ---
 
-**Document Version**: 3.4
+**Document Version**: 3.5
 **Last Updated**: March 21, 2026
 **Status**: ✅ Production Ready
 **Consolidates**: MODEL_DEVELOPMENT_GUIDE.md, feature_engineering.md, UNCERTAINTY_QUANTIFICATION.md, MODEL_IMPROVEMENT_IMPLEMENTATION_GUIDE.md, MODEL_IMPROVEMENTS_RESULTS.md, TRAIN_PIPELINE_MIGRATION.md, RETRAINING_RESULTS_SUMMARY.md, SPATIAL_CV_RESULTS_TASK_15.md
