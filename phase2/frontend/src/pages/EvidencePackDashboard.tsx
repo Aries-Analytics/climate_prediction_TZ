@@ -424,8 +424,8 @@ export default function EvidencePackDashboard() {
                     <Typography variant="h6" gutterBottom>
                         Pipeline Execution History (last 30 runs)
                     </Typography>
-                    <TableContainer component={Paper} elevation={0} variant="outlined">
-                        <Table size="small">
+                    <TableContainer component={Paper} elevation={0} variant="outlined" sx={{ maxHeight: 400 }}>
+                        <Table size="small" stickyHeader>
                             <TableHead>
                                 <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
                                     <TableCell><strong>Date / Time (EAT)</strong></TableCell>
