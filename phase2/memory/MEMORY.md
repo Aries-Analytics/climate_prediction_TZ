@@ -187,7 +187,7 @@ The HewaSense payout design is **zone-level, binary trigger** (Option A). Two st
 | 2026-03-21 | Pipeline SUCCESS 35s (96/1,080, 8.9%, 8 run-days); ML_MODEL_REFERENCE.md v3.2→v3.6 (Inference Mechanics, ML Frontier, roadmap, CDF explanation); Admin panel: 3 bugs fixed — audit user_id null (JWT decode in middleware), form fields invisible (Tailwind content only scanned LandingPage → expanded to src/**), Users (0) (manager missing from Pydantic role pattern); Bimalab deferred to Q3 2026 post Brier Scores |
 | 2026-03-22 | Pipeline SUCCESS 39s (108/1,080, 10.0%, 9 valid run-days — 8 consecutive Mar 15–22 + 1 isolated Mar 11); Three-scenario pricing model completed across 5 docs (PARAMETRIC_INSURANCE_FINAL, BUSINESS_CASE, HEWASENSE_EXTERNAL_BRIEF, PROJECT_OVERVIEW_CONSOLIDATED, CRITICAL_NUMBERS_VERIFICATION); Tabora tobacco expansion scoped — TABORA_TOBACCO_EXPANSION_SCOPING.md created, deferred to post-shadow-run (Jun 2026 gate) |
 | 2026-03-23 | Pipeline SUCCESS 46s (120/1,080, 11.1%, 10 valid run-days — 9 consecutive Mar 15–23 + 1 isolated Mar 11) |
-| 2026-03-24 | Pipeline SUCCESS 49s (132/1,080, 12.2%, 11 valid run-days — 10 consecutive Mar 15–24); all 5 sources clean (first zero-failed-sources run); EvidencePackDashboard execution history table: scrollable maxHeight fix deployed |
+| 2026-03-24 | Pipeline SUCCESS 49s (132/1,080, 12.2%, 11 valid run-days — 10 consecutive Mar 15–24); CHIRPS/NASA POWER/NDVI 0 records (incremental, not errors); EvidencePackDashboard execution history table: scrollable maxHeight fix deployed |
 
 *Last updated: 2026-03-24*
 *This file is the source of truth for persistent facts. Edit directly to update.*
