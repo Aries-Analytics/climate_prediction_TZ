@@ -108,3 +108,10 @@ htmlcov/
 .claude/
 .pytest_cache/
 backend/data_seed.csv
+
+# ===============================================================
+# Playwright E2E (generated artifacts, saved auth state)
+# ===============================================================
+frontend/e2e/.auth/
+frontend/playwright-report/
+frontend/test-results/
