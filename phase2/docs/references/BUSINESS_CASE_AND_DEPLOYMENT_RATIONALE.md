@@ -4,7 +4,7 @@
 
 **Document Type**: Strategic Business Analysis
 **Date**: March 19, 2026
-**Status**: Shadow Run ACTIVE — Day 11 of 90 valid run-days (132/1,080 forecasts, 12.2%)
+**Status**: Shadow Run ACTIVE — Day 14 of 90 valid run-days (168/1,080 forecasts, 15.6%)
 **Author**: HewaSense Climate Intelligence & Insurance Team
 **Audience**: Project Leadership · Potential Underwriters · TIRA Review · Government Partners
 
@@ -339,7 +339,7 @@ That is what the shadow run is for.
 | --------------------------- | ----------------------------------------- | ------------------------------------------------ |
 | Shadow run window           | Mar 7 – Jun 12, 2026 (90 valid run-days) | `PARAMETRIC_INSURANCE_FINAL.md`                |
 | ForecastLog target          | 1,080 entries                             | System health KPI                                |
-| Current entries             | 72                                       | `forecast_logs` table                          |
+| Current entries             | 168                                      | `forecast_logs` table                          |
 | Go-live gate: Brier Score   | < 0.25                                    | `MODEL_METRICS_AND_SHADOW_RUN_IMPLICATIONS.md` |
 | Go-live gate: Basis Risk    | < 30%                                     | Retrospective: 20% (pre-shadow)                  |
 | Primary model               | XGBoost V4.0 (R²=0.8666)                 | `EXECUTIVE_SUMMARY.md`                         |

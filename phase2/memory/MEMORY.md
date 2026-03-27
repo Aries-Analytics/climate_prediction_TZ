@@ -30,7 +30,7 @@
 - **Production model file:** Determined by `outputs/models/active_model.json` (currently `xgboost_climate.pkl`, R²=0.8666, 83 features). NEVER hardcode model names
 - Model selection driven entirely by `active_model.json` — if missing or invalid, fail explicitly (GOTCHA Law #1)
 - **Pipeline schedule (shadow-run ACTIVE):** `0 6 * * *` Africa/Dar_es_Salaam (6 AM EAT daily). Deployed to `root@37.27.200.227`, `docker-compose.dev.yml`. Scheduler confirmed next run `2026-03-09 06:00:00+03:00`.
-- **Pipeline status (March 2026):** Shadow run ACTIVE Mar 7 – Jun 12, 2026 (revised — 7 missed days). 12 forecasts/run (3 triggers × 4 horizons × Morogoro). **132/1,080 forecasts (12.2%), 11 valid run-days (Mar 11, 15–24). Current streak: 10 consecutive (Mar 15–24).** Evidence Pack accumulates; Brier Score auto-evaluation starts ~Jun 9.
+- **Pipeline status (March 2026):** Shadow run ACTIVE Mar 7 – Jun 12, 2026 (revised — 7 missed days). 12 forecasts/run (3 triggers × 4 horizons × Morogoro). **168/1,080 forecasts (15.6%), 14 valid run-days (Mar 11, 15–27). Current streak: 13 consecutive (Mar 15–27).** Evidence Pack accumulates; Brier Score auto-evaluation starts ~Jun 9.
 - Lock contention alerts are suppressed in Slack (expected during brief overlaps)
 - **Advisory lock:** Uses a **dedicated NullPool engine + connection** (separate from ORM session). ORM `commit()` works normally without releasing the lock. Lock released by explicit `pg_advisory_unlock` + `engine.dispose()`. NullPool is mandatory — QueuePool keeps the Postgres session alive and leaks the lock.
 - **Scheduler job store:** In-memory (NOT persistent SQLAlchemyJobStore). Prevents phantom runs from stale `next_run_times` after container restarts.
@@ -188,6 +188,9 @@ The HewaSense payout design is **zone-level, binary trigger** (Option A). Two st
 | 2026-03-22 | Pipeline SUCCESS 39s (108/1,080, 10.0%, 9 valid run-days — 8 consecutive Mar 15–22 + 1 isolated Mar 11); Three-scenario pricing model completed across 5 docs (PARAMETRIC_INSURANCE_FINAL, BUSINESS_CASE, HEWASENSE_EXTERNAL_BRIEF, PROJECT_OVERVIEW_CONSOLIDATED, CRITICAL_NUMBERS_VERIFICATION); Tabora tobacco expansion scoped — TABORA_TOBACCO_EXPANSION_SCOPING.md created, deferred to post-shadow-run (Jun 2026 gate) |
 | 2026-03-23 | Pipeline SUCCESS 46s (120/1,080, 11.1%, 10 valid run-days — 9 consecutive Mar 15–23 + 1 isolated Mar 11) |
 | 2026-03-24 | Pipeline SUCCESS 49s (132/1,080, 12.2%, 11 valid run-days — 10 consecutive Mar 15–24); CHIRPS/NASA POWER/NDVI 0 records (incremental, not errors); EvidencePackDashboard execution history table: scrollable maxHeight fix deployed |
+| 2026-03-25 | Pipeline SUCCESS 52s (144/1,080, 13.3%, 12 valid run-days — 11 consecutive Mar 15–25 + 1 isolated Mar 11) |
+| 2026-03-26 | Pipeline SUCCESS 50s (156/1,080, 14.4%, 13 valid run-days — 12 consecutive Mar 15–26 + 1 isolated Mar 11) |
+| 2026-03-27 | Pipeline SUCCESS 92s (168/1,080, 15.6%, 14 valid run-days — 13 consecutive Mar 15–27 + 1 isolated Mar 11); skills library created (/log-run, /deploy, /e2e) |
 
-*Last updated: 2026-03-24*
+*Last updated: 2026-03-27*
 *This file is the source of truth for persistent facts. Edit directly to update.*

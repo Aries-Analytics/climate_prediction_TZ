@@ -3,7 +3,7 @@
 **Status**: ✅ **SHADOW RUN ACTIVE**
 **Pilot**: Morogoro (Kilombero Basin)
 **Version**: 4.0
-**Last Updated**: March 24, 2026
+**Last Updated**: March 27, 2026
 
 > Supersedes: `docs/archive/phase3/AUTOMATED_PIPELINE_STATUS_JAN2026.md`
 
@@ -28,8 +28,8 @@
 
 | Metric | Value |
 |---|---|
-| `forecast_logs` rows | 132 (11 valid run-days: Mar 11, 15–24) |
-| Valid run-days achieved | 11 of 90 target (12.2%) |
+| `forecast_logs` rows | 168 (14 valid run-days: Mar 11, 15–27) |
+| Valid run-days achieved | 14 of 90 target (15.6%) |
 | Missed days (total) | **7** — Mar 7 (late start), Mar 8 (TZ bug), Mar 9–10 (ForecastLog not generated), Mar 12–14 (stale lock) |
 | All log status | `pending` (validity windows 3–6 months ahead) |
 | `threshold_used` | Populated from Mar 9 onwards (0.65 drought/flood, 0.60 others) |
