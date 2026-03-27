@@ -105,7 +105,9 @@ test_pack.zip
 .hypothesis/
 .coverage
 htmlcov/
-.claude/
+.claude/*
+!.claude/commands/
+!.claude/commands/**
 .pytest_cache/
 backend/data_seed.csv
 
