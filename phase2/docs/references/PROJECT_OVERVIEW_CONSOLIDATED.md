@@ -445,7 +445,7 @@ The framework supports **parametric insurance** concepts through:
 - Historical trigger event analysis
 - Successfully identified 2010-2011 East Africa drought (one of the worst in 60 years)
 - Zero false positives during normal climate years (2018-2019)
-- Market-competitive rates: $20/year full premium (Scenario A: no subsidy) / ~$12/year (Scenario B: donor/NGO ~40% grant) / $10/year (Scenario C: government 50% MOU)
+- Market-competitive rates: $20/year full premium (Scenario A: no subsidy) / ~$12/year (Scenario B: donor/NGO ~40% grant) / $10/year (Scenario C: government 50% subsidy — 3–5 year horizon, aligned with Tanzania TAIS development)
 - Fixed payouts: $60 (drought), $75 (flood), $90 (crop failure)
 - 75% loss ratio (sustainable target: 60-80%)
 
