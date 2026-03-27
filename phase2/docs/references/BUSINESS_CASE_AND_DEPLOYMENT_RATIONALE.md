@@ -303,6 +303,41 @@ Even in a bad outcome, the system has value. If the shadow run misses the Brier 
 
 ---
 
+## 6b. Pre-Enrollment Commercial Decisions (Open — Gate: June 2026)
+
+These questions are not blocking the shadow run but must be resolved before the first farmer is enrolled. Documented here for continuity.
+
+### Q1 — Underwriting partner
+HewaSense operates as a parametric insurance platform/MGA (Managing General Agent). A locally licensed insurance underwriter must be identified and contracted to hold reserves and issue policies. This partner is not yet confirmed.
+
+**Decision required:** Identify and approach 2–3 candidate insurers in Tanzania (and target expansion markets) ahead of the June gate. The evidence pack from the shadow run is the primary commercial document to share with underwriter prospects.
+
+### Q2 — Revenue sharing and fee structure
+The three-scenario pricing model ($20/$12/$10 gross premium per farmer) defines what the farmer or their sponsor pays. HewaSense's actual revenue is a **platform fee — a percentage of the gross premium**. The standard MGA range for comparable African parametric products is 15–20% of gross premium.
+
+The gross premium breakdown needs to be formalised before any partnership agreement:
+
+| Party | Indicative share | On $12 gross (Scenario B) |
+|---|---|---|
+| Distribution partner commission | ~20–25% | ~$2.40–3.00 |
+| HewaSense platform fee | ~15–20% | ~$1.80–2.40 |
+| Reinsurance | ~10–15% | ~$1.20–1.80 |
+| Licensed insurer (reserve + margin) | ~45–50% | ~$5.40–6.00 |
+
+**Decision required:** Formalise HewaSense's fee percentage and confirm that gross premium scenarios remain viable after all parties are accounted for. Stress-test against reinsurance quotes once the evidence pack is available.
+
+### Q3 — Reinsurance coverage
+No parametric product should go live without reinsurance coverage for tail-risk years (multiple simultaneous triggers across enrolled zones). Reinsurance pricing will depend on the evidence pack — specifically the Brier Score, basis risk figure, and historical loss ratio.
+
+**Decision required:** Approach reinsurance brokers (e.g. African Risk Capacity, Global Parametrics, local reinsurance intermediaries) post-June gate with the evidence pack. Determine whether reinsurance is in place from day one of enrollment or only after a defined enrolled premium volume threshold.
+
+### Q4 — Distribution commission in scenario pricing
+The three gross premium scenarios were modelled before the distribution commission structure was formalised. It is not confirmed whether the ~20–25% distribution commission is already embedded in the $20/$12/$10 figures or sits on top of them.
+
+**Decision required:** Confirm whether distribution commission is included in or additive to the scenario premiums. If additive, the gross premiums charged to farmers/sponsors will be higher than currently documented.
+
+---
+
 ## 7. Why This Matters Beyond the Kilombero Basin
 
 The Kilombero pilot is a deliberate choice of difficulty. Kilombero is dual-peril, has high climatic variability, is data-sparse by Western standards, and has a smallholder farmer base with low financial inclusion. If the product works here, it is replicable across Tanzania's remaining agricultural regions and across East Africa.
@@ -358,6 +393,6 @@ That is what the shadow run is for.
 ---
 
 **Document Owner**: HewaSense Climate Intelligence & Insurance Team
-**Last Updated**: March 19, 2026
+**Last Updated**: March 28, 2026
 **Next Review**: June 15, 2026 — post shadow run debrief
 **Status**: Living document — update after June gate decision
