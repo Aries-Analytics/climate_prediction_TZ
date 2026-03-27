@@ -312,19 +312,32 @@ HewaSense operates as a parametric insurance platform/MGA (Managing General Agen
 
 **Decision required:** Identify and approach 2–3 candidate insurers in Tanzania (and target expansion markets) ahead of the June gate. The evidence pack from the shadow run is the primary commercial document to share with underwriter prospects.
 
-### Q2 — Revenue sharing and fee structure
-The three-scenario pricing model ($20/$12/$10 gross premium per farmer) defines what the farmer or their sponsor pays. HewaSense's actual revenue is a **platform fee — a percentage of the gross premium**. The standard MGA range for comparable African parametric products is 15–20% of gross premium.
+### Q2 — Revenue sharing, fee structure, and premium flow direction
 
-The gross premium breakdown needs to be formalised before any partnership agreement:
+HewaSense's actual revenue is a **platform fee — a percentage of the gross premium** paid by the underwriter from collected premiums. Standard MGA range: 15–20% of gross premium (confirmed by McKinsey MGA analysis and comparable to Pula Advisors' per-farmer commission model).
+
+**Critical clarification on premium flow:** The farmer is NOT always the direct premium payer. Research on Africa's most scaled agri-insurtechs shows the primary premium payer is typically an institutional actor:
+
+| Channel | Who pays the premium | Farmer's role |
+|---|---|---|
+| Input bundling | Agri-input company (seed/fertilizer) pays in full | Receives insurance free with input purchase |
+| MFI/loan bundling | MFI adds to loan, collects at repayment | Premium embedded in seasonal loan |
+| Bancassurance | Bank collects from farmer/sponsor, remits to underwriter | May pay directly or via loan |
+| Donor co-funding | Donor covers ~40%, farmer pays ~60% | Co-payment at planting |
+| Pay-at-Harvest | Impact investor pre-finances; cooperative deducts at harvest | Pays from harvest proceeds, not upfront |
+
+The gross premium breakdown (once the institutional payer and channel are known):
 
 | Party | Indicative share | On $12 gross (Scenario B) |
 |---|---|---|
-| Distribution partner commission | ~20–25% | ~$2.40–3.00 |
+| Distribution partner commission | ~15–20% | ~$1.80–2.40 |
 | HewaSense platform fee | ~15–20% | ~$1.80–2.40 |
 | Reinsurance | ~10–15% | ~$1.20–1.80 |
-| Licensed insurer (reserve + margin) | ~45–50% | ~$5.40–6.00 |
+| Licensed insurer (reserve + margin) | ~45–55% | ~$5.40–6.60 |
 
-**Decision required:** Formalise HewaSense's fee percentage and confirm that gross premium scenarios remain viable after all parties are accounted for. Stress-test against reinsurance quotes once the evidence pack is available.
+**Note:** The farmer is NOT the entity paying HewaSense. HewaSense is paid by the underwriter from the premium pool. Distribution partners are also paid from the same pool — they do not pay HewaSense.
+
+**Decision required:** Formalise HewaSense's fee percentage, confirm premium channel (input bundling vs MFI vs bancassurance vs Pay-at-Harvest — see Q5), and stress-test scenarios against reinsurance quotes once the evidence pack is available.
 
 ### Q3 — Reinsurance coverage
 No parametric product should go live without reinsurance coverage for tail-risk years (multiple simultaneous triggers across enrolled zones). Reinsurance pricing will depend on the evidence pack — specifically the Brier Score, basis risk figure, and historical loss ratio.
@@ -332,9 +345,25 @@ No parametric product should go live without reinsurance coverage for tail-risk 
 **Decision required:** Approach reinsurance brokers (e.g. African Risk Capacity, Global Parametrics, local reinsurance intermediaries) post-June gate with the evidence pack. Determine whether reinsurance is in place from day one of enrollment or only after a defined enrolled premium volume threshold.
 
 ### Q4 — Distribution commission in scenario pricing
-The three gross premium scenarios were modelled before the distribution commission structure was formalised. It is not confirmed whether the ~20–25% distribution commission is already embedded in the $20/$12/$10 figures or sits on top of them.
+The three gross premium scenarios were modelled before the distribution commission structure was formalised. It is not confirmed whether the distribution commission is already embedded in the $20/$12/$10 figures or sits on top of them.
 
 **Decision required:** Confirm whether distribution commission is included in or additive to the scenario premiums. If additive, the gross premiums charged to farmers/sponsors will be higher than currently documented.
+
+### Q5 — Premium payment channel and farmer liquidity strategy
+
+This is the highest-impact commercial decision. Research on Africa's agri-insurance market shows voluntary farmer-pays models have <5% uptake. The channel determines both reach and sustainability:
+
+**Option A — Input bundling (Pula's primary model):** Agri-input company pays full premium. Farmer receives insurance free with seed/fertilizer purchase. Pula covers 99% of farmers at $1–3 premium via this channel. Achieved 900,000+ farmers in Zambia through government fertilizer programs. **Risk:** Farmer is passive — no enrollment decision, lower behavioral engagement.
+
+**Option B — Pay-at-Harvest (Pula Nigeria pilot, 2021):** Premium pre-financed by impact investor at planting; deducted from farmer's harvest payment by cooperative/offtaker. Result: 72% take-up vs 5% for pay-upfront — a 14× improvement. Poorest, most liquidity-constrained farmers benefited most. Shell Foundation confirmed: "Pay-at-Harvest increases insurance uptake by 14x in Nigeria." **This is the most promising demand-side innovation in African agri-insurance as of 2024.** For Kilombero rice farmers who sell through cooperatives/offtakers, this channel is structurally feasible.
+
+**Option C — MFI/loan bundling:** Premium added to seasonal input loan. Farmer pays at loan repayment. MFI reduces its own credit default risk — strong institutional incentive to participate. Established model in East Africa (ACRE Africa, One Acre Fund).
+
+**Option D — Donor/NGO co-payment (current Scenario B framing):** Donor covers ~40%, farmer pays ~60% upfront at planting. Liquidity constraint remains for the farmer-facing portion. Less scalable than B or C without continuous donor pipeline.
+
+**Recommendation for Kilombero pilot:** Prioritise Option B (Pay-at-Harvest via rice cooperative/offtaker) as primary channel. Option C (MFI bundling) as secondary. Option A (input bundling, approach agri-input companies operating in Kilombero) as third. Option D can be layered on top of any channel to reduce farmer-facing cost further.
+
+**Decision required:** Identify the primary premium channel before approaching underwriter or distribution partners. The channel determines the partnership structure, contract design, and pre-financing requirements.
 
 ---
 
