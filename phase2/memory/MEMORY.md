@@ -190,7 +190,7 @@ The HewaSense payout design is **zone-level, binary trigger** (Option A). Two st
 | 2026-03-24 | Pipeline SUCCESS 49s (132/1,080, 12.2%, 11 valid run-days — 10 consecutive Mar 15–24); CHIRPS/NASA POWER/NDVI 0 records (incremental, not errors); EvidencePackDashboard execution history table: scrollable maxHeight fix deployed |
 | 2026-03-25 | Pipeline SUCCESS 52s (144/1,080, 13.3%, 12 valid run-days — 11 consecutive Mar 15–25 + 1 isolated Mar 11) |
 | 2026-03-26 | Pipeline SUCCESS 50s (156/1,080, 14.4%, 13 valid run-days — 12 consecutive Mar 15–26 + 1 isolated Mar 11) |
-| 2026-03-27 | Pipeline SUCCESS 92s (168/1,080, 15.6%, 14 valid run-days — 13 consecutive Mar 15–27 + 1 isolated Mar 11); skills library created (/log-run, /deploy, /e2e, /log-session, /log-model-change) |
+| 2026-03-27 | Pipeline SUCCESS 92s (168/1,080, 15.6%, 14 valid run-days — 13 consecutive Mar 15–27 + 1 isolated Mar 11); skills library created (/log-run, /deploy, /e2e, /log-session, /log-model-change); Bimalab warm lead initiated — overview sent, formal application deferred to late Jun/Jul 2026 post-Brier Scores |
 
 *Last updated: 2026-03-27*
 *This file is the source of truth for persistent facts. Edit directly to update.*
