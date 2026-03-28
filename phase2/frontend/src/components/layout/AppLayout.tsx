@@ -11,6 +11,10 @@ import {
 import MenuIcon from '@mui/icons-material/Menu'
 import Sidebar from './Sidebar'
 
+const HS_NAVY = '#0a1628'
+const HS_SIDEBAR = '#0e2440'
+const HS_TEAL_BORDER = 'rgba(45, 212, 191, 0.2)'
+
 const DRAWER_WIDTH = 240
 
 export default function AppLayout() {
@@ -27,6 +31,9 @@ export default function AppLayout() {
         sx={{
           width: { md: `calc(100% - ${DRAWER_WIDTH}px)` },
           ml: { md: `${DRAWER_WIDTH}px` },
+          backgroundColor: HS_NAVY,
+          borderBottom: `1px solid ${HS_TEAL_BORDER}`,
+          boxShadow: '0 2px 12px rgba(0,0,0,0.4)',
         }}
       >
         <Toolbar>
@@ -38,8 +45,14 @@ export default function AppLayout() {
           >
             <MenuIcon />
           </IconButton>
-          <Typography variant="h6" noWrap component="div">
-            Tanzania Climate Prediction Dashboard
+          <Box
+            component="img"
+            src="/hewasense-icon.png"
+            alt="HewaSense"
+            sx={{ height: 46, width: 46, flexShrink: 0, mr: 1.5 }}
+          />
+          <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 800, letterSpacing: '-0.5px' }}>
+            Hewa<Box component="span" sx={{ color: '#2dd4bf' }}>Sense</Box>
           </Typography>
         </Toolbar>
       </AppBar>
@@ -56,7 +69,7 @@ export default function AppLayout() {
           ModalProps={{ keepMounted: true }}
           sx={{
             display: { xs: 'block', md: 'none' },
-            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: DRAWER_WIDTH },
+            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: DRAWER_WIDTH, backgroundColor: HS_SIDEBAR },
           }}
         >
           <Sidebar onClose={handleDrawerToggle} />
@@ -67,7 +80,7 @@ export default function AppLayout() {
           variant="permanent"
           sx={{
             display: { xs: 'none', md: 'block' },
-            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: DRAWER_WIDTH },
+            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: DRAWER_WIDTH, backgroundColor: HS_SIDEBAR },
           }}
           open
         >

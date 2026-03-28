@@ -53,10 +53,10 @@ export default function Sidebar({ onClose }: SidebarProps) {
   }
 
   return (
-    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', color: 'white' }}>
       {/* Logo/Title */}
-      <Box sx={{ p: 2, textAlign: 'center' }}>
-        <Typography variant="h6" color="primary" fontWeight="bold">
+      <Box sx={{ p: 2, textAlign: 'center', borderBottom: '1px solid rgba(45, 212, 191, 0.2)' }}>
+        <Typography variant="h6" fontWeight={700} sx={{ color: '#2dd4bf', letterSpacing: '0.03em' }}>
           Climate Dashboard
         </Typography>
       </Box>
@@ -72,6 +72,13 @@ export default function Sidebar({ onClose }: SidebarProps) {
               <ListItemButton
                 selected={location.pathname === item.path}
                 onClick={() => handleNavigation(item.path)}
+                sx={{
+                  color: 'rgba(255,255,255,0.8)',
+                  '& .MuiListItemIcon-root': { color: 'rgba(255,255,255,0.5)' },
+                  '&:hover': { backgroundColor: 'rgba(45,212,191,0.08)', color: 'white', '& .MuiListItemIcon-root': { color: '#2dd4bf' } },
+                  '&.Mui-selected': { backgroundColor: 'rgba(45,212,191,0.15)', color: 'white', '& .MuiListItemIcon-root': { color: '#2dd4bf' } },
+                  '&.Mui-selected:hover': { backgroundColor: 'rgba(45,212,191,0.2)' },
+                }}
               >
                 <ListItemIcon>{item.icon}</ListItemIcon>
                 <ListItemText primary={item.text} />
@@ -85,14 +92,14 @@ export default function Sidebar({ onClose }: SidebarProps) {
       {/* User Profile */}
       <Box sx={{ p: 2 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-          <Avatar sx={{ width: 32, height: 32, mr: 1, bgcolor: 'primary.main' }}>
+          <Avatar sx={{ width: 32, height: 32, mr: 1, bgcolor: '#2dd4bf', color: '#0a1628' }}>
             {user?.username?.charAt(0).toUpperCase()}
           </Avatar>
           <Box sx={{ flexGrow: 1 }}>
-            <Typography variant="body2" fontWeight="bold">
+            <Typography variant="body2" fontWeight="bold" sx={{ color: 'white' }}>
               {user?.username}
             </Typography>
-            <Typography variant="caption" color="text.secondary">
+            <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)' }}>
               {user?.role}
             </Typography>
           </Box>

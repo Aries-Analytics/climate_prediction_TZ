@@ -337,7 +337,7 @@ The gross premium breakdown (once the institutional payer and channel are known)
 
 **Note:** The farmer is NOT the entity paying HewaSense. HewaSense is paid by the underwriter from the premium pool. Distribution partners are also paid from the same pool — they do not pay HewaSense.
 
-**Decision required:** Formalise HewaSense's fee percentage, confirm premium channel (input bundling vs MFI vs bancassurance vs Pay-at-Harvest — see Q5), and stress-test scenarios against reinsurance quotes once the evidence pack is available.
+**Decision required:** Formalise HewaSense's fee percentage, confirm Pay-at-Harvest as primary premium channel (see Q5 for full analysis), and stress-test scenarios against reinsurance quotes once the evidence pack is available.
 
 ### Q3 — Reinsurance coverage
 No parametric product should go live without reinsurance coverage for tail-risk years (multiple simultaneous triggers across enrolled zones). Reinsurance pricing will depend on the evidence pack — specifically the Brier Score, basis risk figure, and historical loss ratio.
@@ -359,11 +359,24 @@ This is the highest-impact commercial decision. Research on Africa's agri-insura
 
 **Option C — MFI/loan bundling:** Premium added to seasonal input loan. Farmer pays at loan repayment. MFI reduces its own credit default risk — strong institutional incentive to participate. Established model in East Africa (ACRE Africa, One Acre Fund).
 
-**Option D — Donor/NGO co-payment (current Scenario B framing):** Donor covers ~40%, farmer pays ~60% upfront at planting. Liquidity constraint remains for the farmer-facing portion. Less scalable than B or C without continuous donor pipeline.
+**Option D — Donor/NGO co-payment:** Donor covers ~40%, farmer pays ~60% upfront at planting. **Not recommended as a standalone channel for Kilombero pilot.** Liquidity constraint remains for the farmer-facing portion, and requiring upfront payment is precisely the adoption barrier this product is designed to eliminate. Donor co-funding may be relevant as a subsidy layer within Scenario C (government/TAIS alignment, 3–5 year horizon) but should not be the primary channel.
 
-**Recommendation for Kilombero pilot:** Prioritise Option B (Pay-at-Harvest via rice cooperative/offtaker) as primary channel. Option C (MFI bundling) as secondary. Option A (input bundling, approach agri-input companies operating in Kilombero) as third. Option D can be layered on top of any channel to reduce farmer-facing cost further.
+**Recommendation for Kilombero pilot:** Pay-at-Harvest (Option B) is the primary channel — it eliminates the upfront payment barrier entirely and is structurally feasible via Kilombero rice cooperatives/offtakers. Pula Nigeria 2021 evidence (72% vs 5% uptake, 14× improvement) makes this the most defensible choice for a smallholder-facing pilot. Option C (MFI bundling) as secondary if cooperative pre-financing is not secured before pilot launch. Option A (input bundling) as a longer-term opportunity pending agri-input company engagement in Kilombero. Option D is not recommended as a standalone channel.
 
 **Decision required:** Identify the primary premium channel before approaching underwriter or distribution partners. The channel determines the partnership structure, contract design, and pre-financing requirements.
+
+### Q6 — Future revenue stream: weather intelligence as a B2B data product
+
+HewaSense's ML model, location-level forecasts, and trigger logic are assets that have value beyond the insurance product. Agricultural lenders (cooperatives, MFIs, banks) independently need location-level weather risk intelligence to:
+- Price seasonal input credit by risk zone
+- Identify high-risk borrowers in their agricultural loan portfolios
+- Make pre-season lending decisions based on forecast confidence
+
+This creates a potential second revenue stream: a **weather risk data subscription or API** sold directly to agricultural lenders — separate from and additive to the insurance platform fee. In this model, the cooperative or MFI becomes a paying HewaSense customer in its own right, not just a distribution channel.
+
+**Precedent:** aWhere, Descartes Underwriting, and Jupiter Intelligence all monetize weather/climate data as a standalone B2B product alongside or independent of insurance partnerships.
+
+**Status:** Not part of the current go-to-market. Requires separate product definition, pricing, and sales motion. Gate: post-shadow-run, once the evidence pack establishes the model's commercial credibility. Document here for roadmap planning only.
 
 ---
 

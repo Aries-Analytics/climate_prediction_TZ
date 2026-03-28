@@ -6,6 +6,20 @@ Server: `root@37.27.200.227`
 Path: `/opt/hewasense/app/phase2`
 Compose file: `docker-compose.dev.yml`
 
+## Step 0 — Local verification gate
+
+Ask the user: **"Have you tested these changes locally with Docker?"**
+
+- **Yes** → proceed to Step 1
+- **No** → remind them of the local test command and ask if they want to test first:
+
+```bash
+docker compose -f docker-compose.dev.yml up --build frontend
+# then verify at http://localhost:3000
+```
+
+Only proceed without local testing if the user explicitly confirms (e.g. docs-only change, config tweak with no visual/functional impact). Log the bypass reason in your response.
+
 ## Step 1 — Confirm scope
 
 Ask the user which service(s) to deploy:
