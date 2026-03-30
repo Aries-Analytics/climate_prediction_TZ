@@ -120,23 +120,27 @@ def compute_and_cache_baseline(start_year: int = 2015, end_year: int = 2024) -> 
     return baseline
 
 
-def fetch_kilombero_ndvi(target_date: date, search_window_days: int = 10) -> dict:
+def fetch_kilombero_ndvi(target_date: date) -> dict:
     """
-    Fetch MODIS MOD13A2 NDVI for Kilombero nearest to target_date.
+    Fetch MODIS MOD13A2 monthly composite NDVI for Kilombero.
 
-    Searches ±search_window_days for the best available image (lowest cloud cover).
-    MODIS has a ~16-day repeat cycle so not every day has a pass.
+    Queries all 16-day composites available in the calendar month of target_date
+    and reduces to a single median value. Monthly composites are the correct
+    temporal resolution for NDVI stress signals (slow-moving agricultural signal).
+
+    If no images exist in the current month (e.g. early in month before first pass),
+    falls back to the previous calendar month.
 
     Args:
-        target_date: The run_date we want NDVI for.
-        search_window_days: Days either side to search for a valid image.
+        target_date: The pipeline run date — determines which month to composite.
 
     Returns:
         dict with keys: ndvi_mean, observed_date, pixel_coverage, source
 
     Raises:
-        RuntimeError: If GEE fails or no image found in window.
+        RuntimeError: If GEE fails or no image found in month or prior month.
     """
+    import calendar
     import ee
     from modules.ingestion.ndvi_ingestion import _initialize_gee
 
@@ -150,57 +154,52 @@ def fetch_kilombero_ndvi(target_date: date, search_window_days: int = 10) -> dic
         KILOMBERO_BBOX["lat_max"],
     ])
 
-    window_start = target_date - timedelta(days=search_window_days)
-    window_end = target_date + timedelta(days=search_window_days + 1)  # end is exclusive in GEE
-
-    collection = (
-        ee.ImageCollection("MODIS/061/MOD13A2")
-        .filterDate(str(window_start), str(window_end))
-        .filterBounds(region)
-        .select("NDVI")
-    )
-
-    size = collection.size().getInfo()
-    if size == 0:
-        raise RuntimeError(
-            f"No MODIS images found for Kilombero in window "
-            f"{window_start} to {window_end}"
+    def _query_month(year: int, month: int):
+        last_day = calendar.monthrange(year, month)[1]
+        start_str = f"{year}-{month:02d}-01"
+        end_str = f"{year}-{month:02d}-{last_day}"
+        col = (
+            ee.ImageCollection("MODIS/061/MOD13A2")
+            .filterDate(start_str, end_str)
+            .filterBounds(region)
+            .select("NDVI")
         )
+        return col, date(year, month, 1)
 
-    # Sort by distance to target_date — take the closest image
-    # GEE doesn't support direct date-distance sorting, so we list and pick
-    image_list = collection.toList(size)
-    best_image = None
-    best_delta = None
-    best_date = None
+    # Try current month first, fall back to previous if no images yet
+    collection, obs_date = _query_month(target_date.year, target_date.month)
+    size = collection.size().getInfo()
 
-    for i in range(size):
-        img = ee.Image(image_list.get(i))
-        img_date_ms = img.get("system:time_start").getInfo()
-        img_date = date.fromtimestamp(img_date_ms / 1000)
-        delta = abs((img_date - target_date).days)
-        if best_delta is None or delta < best_delta:
-            best_delta = delta
-            best_image = img
-            best_date = img_date
+    if size == 0:
+        # No MODIS pass yet this month — use previous month
+        prev = (target_date.replace(day=1) - timedelta(days=1))
+        collection, obs_date = _query_month(prev.year, prev.month)
+        size = collection.size().getInfo()
+        if size == 0:
+            raise RuntimeError(
+                f"No MODIS images found for Kilombero in "
+                f"{target_date.strftime('%B %Y')} or prior month"
+            )
 
-    # Extract NDVI and pixel coverage for Kilombero
-    stats = best_image.reduceRegion(
+    # Median composite — reduces cloud contamination across available passes
+    composite = collection.median()
+
+    stats = composite.reduceRegion(
         reducer=ee.Reducer.mean(),
         geometry=region,
         scale=1000,
         maxPixels=1e9,
-    )
+    ).getInfo()
 
-    ndvi_raw = stats.get("NDVI").getInfo()
+    ndvi_raw = stats.get("NDVI")
     if ndvi_raw is None:
-        raise RuntimeError(f"NDVI reduceRegion returned None for {best_date}")
+        raise RuntimeError(f"NDVI reduceRegion returned None for {obs_date}")
 
-    ndvi_mean = round(ndvi_raw / 10000.0, 4)
+    ndvi_mean = round(float(ndvi_raw) / 10000.0, 4)
     ndvi_mean = max(-1.0, min(1.0, ndvi_mean))
 
-    # Pixel coverage: fraction of non-masked pixels (proxy via valid data mask)
-    valid_stats = best_image.mask().reduceRegion(
+    # Pixel coverage via valid-data mask mean
+    valid_stats = composite.mask().reduceRegion(
         reducer=ee.Reducer.mean(),
         geometry=region,
         scale=1000,
@@ -210,7 +209,7 @@ def fetch_kilombero_ndvi(target_date: date, search_window_days: int = 10) -> dic
 
     return {
         "ndvi_mean": ndvi_mean,
-        "observed_date": best_date,
+        "observed_date": obs_date,
         "pixel_coverage": pixel_coverage,
         "source": "MODIS_MOD13A2",
     }
