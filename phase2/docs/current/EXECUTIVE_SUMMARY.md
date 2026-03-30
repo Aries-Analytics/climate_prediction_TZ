@@ -2,7 +2,7 @@
 
 **Project Phase**: 3.2 (Forward Validation & Pilot Preparation)
 **Date**: March 15, 2026
-**Status**: Retrospective Validation Complete · Shadow Run ACTIVE (Mar 7 – Jun 12, 2026 revised — Day 15 of 90 · 180/1,080 forecasts · 16.7%)
+**Status**: Retrospective Validation Complete · Shadow Run ACTIVE (Mar 7 – Jun 12, 2026 revised — Day 17 of 90 · 204/1,080 forecasts · 18.9%)
 
 ---
 
@@ -417,7 +417,7 @@ A comprehensive climate intelligence platform for Tanzania that integrates multi
 - **Farmer adoption and trust** — Untested in real field conditions.
 
 ### Next Steps
-1. **Forward Validation** *(IN PROGRESS)*: Shadow run live Mar 7 – Jun 12, 2026 (revised). Day 15 of 90 (180/1,080 forecasts, 16.7%). First Brier Score evaluation ~Jun 9. Go-live decision: late June 2026.
+1. **Forward Validation** *(IN PROGRESS)*: Shadow run live Mar 7 – Jun 12, 2026 (revised). Day 17 of 90 (204/1,080 forecasts, 18.9%). First Brier Score evaluation ~Jun 9. Go-live decision: late June 2026.
 2. **Underwriter Engagement**: Present validated prototype to insurance underwriters
 3. **Ground-Truth Data**: Source Kilombero-specific yield data via Tanzania NBS regional reports
 4. **Rain Gauge Calibration**: Deploy 2-3 ground-truthing stations to calibrate satellite resolution
