@@ -11,6 +11,7 @@ from app.models.location import Location
 from app.models.climate_forecast import ClimateForecast
 from app.models.trigger_alert import TriggerAlert
 from app.models.forecast_log import ForecastLog
+from app.models.ndvi_observation import NdviObservation
 
 __all__ = [
     "User",
@@ -29,4 +30,5 @@ __all__ = [
     "ClimateForecast",
     "TriggerAlert",
     "ForecastLog",
+    "NdviObservation",
 ]

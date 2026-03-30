@@ -258,9 +258,28 @@ class PipelineOrchestrator:
             execution.recommendations_created = forecast_result.recommendations_created
             self.db.commit()
 
-            # Stage 3: Evaluate matured forecasts
+            # Stage 3: Collect NDVI proxy observation for today's run (non-blocking)
+            # Stores Kilombero MODIS NDVI to ndvi_observations for basis-risk validation.
+            # Failure here MUST NOT affect forecast run status.
+            logger.info("Stage 3: Collecting NDVI proxy observation")
+            try:
+                from app.services.ndvi_proxy import collect_ndvi_observation
+                ndvi_obs = collect_ndvi_observation(
+                    db=self.db,
+                    run_date=started_at.date(),
+                    is_backfilled=False,
+                )
+                logger.info(
+                    f"NDVI observation stored: ndvi={ndvi_obs.ndvi_mean} "
+                    f"anomaly={ndvi_obs.ndvi_anomaly} "
+                    f"observed={ndvi_obs.observed_date}"
+                )
+            except Exception as ndvi_err:
+                logger.warning(f"NDVI proxy collection failed (non-blocking): {ndvi_err}")
+
+            # Stage 4: Evaluate matured forecasts
             # Resolve any ForecastLog entries whose valid_until date has passed
-            logger.info("Stage 3: Evaluating matured forecasts")
+            logger.info("Stage 4: Evaluating matured forecasts")
             try:
                 from app.services.evaluation_service import ForecastEvaluator
                 eval_result = ForecastEvaluator(self.db).evaluate_pending_forecasts()
