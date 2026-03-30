@@ -15,7 +15,7 @@ import {
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import WarningIcon from '@mui/icons-material/Warning';
 import TimelineIcon from '@mui/icons-material/Timeline';
-import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import axios from '../../config/axiosInstance';
 import { API_BASE_URL } from '../../config/api';
 import Chart from '../charts/Chart';
@@ -156,23 +156,24 @@ export default function BacktestingValidation() {
 
     return (
         <Box>
-            <Alert severity="success" icon={<VerifiedUserIcon />} sx={{ mb: 3 }}>
+            <Alert severity="info" icon={<InfoOutlinedIcon />} sx={{ mb: 3 }}>
                 <Typography variant="subtitle2">
-                    <strong>Historical Validation Passed:</strong> This model has been backtested against {totalYears} years of historical climate data ({report.executive_summary.period})
-                    and independently detected {(validatedEvents / EXPECTED_EVENT_YEARS * 100).toFixed(0)}% of documented disaster events in {report.executive_summary.location}.
+                    <strong>Historical Backtesting:</strong> This model has been backtested against {totalYears} years of historical climate data ({report.executive_summary.period}).
+                    It detected {validatedEvents} of {EXPECTED_EVENT_YEARS} documented disaster events ({(validatedEvents / EXPECTED_EVENT_YEARS * 100).toFixed(0)}%) independently verified against FEWS NET, WFP &amp; OCHA records in {report.executive_summary.location}.
+                    Blue bars indicate model detections not yet matched to external records; green bars indicate confirmed matches.
                 </Typography>
             </Alert>
 
             {/* Scorecard */}
             <Grid container spacing={3} sx={{ mb: 4 }}>
                 <Grid item xs={12} md={4}>
-                    <Card sx={{ height: '100%', bgcolor: 'success.50', border: '1px solid', borderColor: 'success.200' }}>
+                    <Card sx={{ height: '100%' }}>
                         <CardContent>
                             <Typography color="text.secondary" variant="overline">Validation Score</Typography>
-                            <Typography variant="h3" color="success.dark">{validationScore}%</Typography>
-                            <Chip label={`${validatedEvents}/${EXPECTED_EVENT_YEARS} Major Events Matched`} size="small" color="success" sx={{ mt: 1 }} />
+                            <Typography variant="h3">{validationScore}%</Typography>
+                            <Chip label={`${validatedEvents}/${EXPECTED_EVENT_YEARS} Major Events Matched`} size="small" color="default" sx={{ mt: 1 }} />
                             <Typography variant="caption" display="block" sx={{ mt: 1 }}>
-                                Matched FEWS NET, WFP & OCHA reports
+                                Matched against FEWS NET, WFP &amp; OCHA reports
                             </Typography>
                         </CardContent>
                     </Card>
@@ -187,13 +188,25 @@ export default function BacktestingValidation() {
                                 <Typography variant="subtitle2" color="text.secondary">Loss Ratio</Typography>
                             </Stack>
                             <Chip
-                                label={`Sustainable (Target: 60-80%)`}
+                                label={
+                                    (report.sustainability_analysis.loss_ratio || report.executive_summary.loss_ratio) < 40
+                                        ? "Below target range (< 40%)"
+                                        : (report.sustainability_analysis.loss_ratio || report.executive_summary.loss_ratio) <= 80
+                                        ? "Within target range (40–80%)"
+                                        : "Above target range (> 80%)"
+                                }
                                 size="small"
-                                color={report.sustainability_analysis.is_sustainable ? "success" : "warning"}
+                                color={
+                                    (report.sustainability_analysis.loss_ratio || report.executive_summary.loss_ratio) < 40
+                                        ? "default"
+                                        : (report.sustainability_analysis.loss_ratio || report.executive_summary.loss_ratio) <= 80
+                                        ? "success"
+                                        : "warning"
+                                }
                                 sx={{ mt: 1 }}
                             />
                             <Typography variant="caption" display="block" sx={{ mt: 1 }}>
-                                Based on premium calculations
+                                Simulation loss ratio over {report.executive_summary.period}
                             </Typography>
                         </CardContent>
                     </Card>
