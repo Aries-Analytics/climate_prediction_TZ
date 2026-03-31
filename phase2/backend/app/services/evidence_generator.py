@@ -3,12 +3,25 @@ import csv
 import json
 import zipfile
 import tempfile
+import logging
 from datetime import datetime, timezone
+from pathlib import Path
 from sqlalchemy.orm import Session
 from fastapi.responses import FileResponse
 
 from app.models.forecast_log import ForecastLog
 from app.services.evaluation_service import ForecastEvaluator
+
+logger = logging.getLogger(__name__)
+
+# Persistent path for the shadow run final report (survives container restarts).
+# The /app mount is rw-bound to the host repo, so this file is durable.
+_FINAL_REPORT_PATH = Path(__file__).parent.parent.parent / "data" / "processed" / "shadow_run_final_report.json"
+
+# Go/no-go gate thresholds (must match pitch deck and PARAMETRIC_INSURANCE_FINAL.md)
+BRIER_SCORE_GATE = 0.25
+BASIS_RISK_GATE  = 0.30
+
 
 class EvidencePackGenerator:
     """
@@ -88,10 +101,83 @@ class EvidencePackGenerator:
                 f.write(f"\nLatest Model Version active in this evaluation window: {recent_version}\n")
             zipf.write(statement_path, arcname="model_compliance_statement.txt")
 
-        # Return file response (FastAPI will stream it and we can use background task to clean it up if needed, 
+        # Return file response (FastAPI will stream it and we can use background task to clean it up if needed,
         # but for now FileResponse handles standard files well)
         return FileResponse(
             path=zip_path,
             filename=zip_filename,
             media_type="application/zip"
         )
+
+    def generate_final_report(self, valid_run_days: int) -> dict:
+        """
+        Generate the shadow run completion report and persist it to disk.
+
+        Called automatically by the orchestrator when valid_run_days reaches 90.
+        The persisted JSON is served by the Evidence Pack dashboard API endpoint
+        so the frontend can display go/no-go gate results without re-querying.
+
+        Returns the report dict (also available via get_final_report()).
+        """
+        metrics = self.evaluator.get_aggregate_metrics()
+        now_utc = datetime.now(timezone.utc)
+
+        # Determine gate outcomes
+        brier_score    = metrics.get("brier_score", None)
+        # Basis risk is not yet computable from forecast logs alone (requires harvest
+        # survey or NDVI proxy correlation study).  We record None and mark as pending.
+        basis_risk     = None
+
+        brier_gate_pass = (brier_score is not None and brier_score < BRIER_SCORE_GATE)
+        basis_gate_pass = None  # pending — cannot auto-evaluate without ground truth
+
+        if brier_gate_pass and basis_gate_pass is True:
+            overall_verdict = "GO"
+        elif brier_gate_pass is False:
+            overall_verdict = "NO-GO (Brier Score)"
+        else:
+            overall_verdict = "PENDING — basis risk requires manual review"
+
+        report = {
+            "generated_at": now_utc.isoformat(),
+            "shadow_run": {
+                "valid_run_days": valid_run_days,
+                "target_run_days": 90,
+                "total_forecasts": metrics.get("total_evaluated", 0),
+                "target_forecasts": 1080,
+            },
+            "go_live_gates": {
+                "brier_score": {
+                    "value": brier_score,
+                    "threshold": BRIER_SCORE_GATE,
+                    "pass": brier_gate_pass,
+                },
+                "basis_risk": {
+                    "value": basis_risk,
+                    "threshold": BASIS_RISK_GATE,
+                    "pass": basis_gate_pass,
+                    "note": "Requires manual harvest-survey or NDVI-proxy review",
+                },
+                "overall_verdict": overall_verdict,
+            },
+            "aggregate_metrics": metrics,
+        }
+
+        # Persist to disk — survives container restarts, served by dashboard API
+        _FINAL_REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
+        with open(_FINAL_REPORT_PATH, "w") as f:
+            json.dump(report, f, indent=4)
+        logger.info(f"Shadow run final report written to {_FINAL_REPORT_PATH}")
+
+        return report
+
+    @staticmethod
+    def get_final_report() -> dict | None:
+        """
+        Load the persisted final report from disk.
+        Returns None if the shadow run has not yet completed.
+        """
+        if not _FINAL_REPORT_PATH.exists():
+            return None
+        with open(_FINAL_REPORT_PATH) as f:
+            return json.load(f)

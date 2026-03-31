@@ -98,6 +98,23 @@ def get_execution_log(db: Session = Depends(get_db)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.get("/final-report")
+def get_final_report():
+    """
+    Returns the shadow run completion report generated when valid_run_days reaches 90.
+
+    Includes go/no-go gate results (Brier Score, Basis Risk) and aggregate metrics.
+    Returns 404 before the shadow run completes.  The Evidence Pack dashboard
+    uses this endpoint to display the completion state and gate verdicts.
+    """
+    report = EvidencePackGenerator.get_final_report()
+    if report is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Shadow run not yet complete. Report will be available after 90 valid run-days.",
+        )
+    return report
+
 @router.post("/generate")
 def generate_evidence_pack(db: Session = Depends(get_db)):
     """

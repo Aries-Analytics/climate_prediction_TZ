@@ -264,6 +264,72 @@ class AlertService:
             except Exception as e:
                 logger.error(f"Failed to send email success alert: {e}")
     
+    def send_shadow_run_complete_alert(
+        self,
+        valid_run_days: int,
+        total_forecasts: int,
+        brier_score: Optional[float],
+        brier_gate_pass: Optional[bool],
+        basis_risk: Optional[float],
+        overall_verdict: str,
+    ) -> None:
+        """
+        Send shadow run completion alert with go/no-go gate results.
+
+        Called once when valid_run_days reaches 90.  Basis risk is marked
+        as pending because it requires a harvest survey or NDVI proxy review
+        and cannot be auto-computed from forecast logs alone.
+        """
+        now_eat = datetime.now(timezone.utc).astimezone(EAT_TZ)
+        date_str = now_eat.strftime('%A, %B %d, %Y — %H:%M EAT')
+
+        brier_line = (
+            f"{'✅' if brier_gate_pass else '❌'} Brier Score: "
+            f"{brier_score:.4f} (gate: < 0.25) — {'PASS' if brier_gate_pass else 'FAIL'}"
+            if brier_score is not None
+            else "⏳ Brier Score: Not yet available (forecasts still maturing)"
+        )
+        basis_line = "⏳ Basis Risk: Pending manual review (harvest survey / NDVI proxy)"
+
+        if overall_verdict.startswith("GO"):
+            verdict_emoji = "✅"
+            color = "#36A64F"
+        elif overall_verdict.startswith("NO-GO"):
+            verdict_emoji = "❌"
+            color = "#FF0000"
+        else:
+            verdict_emoji = "⏳"
+            color = "#FFA500"
+
+        text_body = (
+            f"🏁 *HewaSense Shadow Run Complete — 90 Valid Run-Days*\n"
+            f"_{date_str}_\n\n"
+            f"*Shadow Run Summary*\n"
+            f"Valid run-days: {valid_run_days} / 90 ✅\n"
+            f"Total forecasts logged: {total_forecasts} / 1,080\n\n"
+            f"*Go / No-Go Gates*\n"
+            f"{brier_line}\n"
+            f"{basis_line}\n\n"
+            f"*Overall Verdict*\n"
+            f"{verdict_emoji} {overall_verdict}\n\n"
+            f"*Next Steps*\n"
+            f"1. Download Evidence Pack from dashboard for full metrics\n"
+            f"2. Complete basis risk review (NDVI proxy correlation + harvest survey)\n"
+            f"3. Go/No-Go decision meeting with partner underwriter\n"
+        )
+
+        logger.info(f"Shadow run complete alert: verdict={overall_verdict}")
+
+        if self.slack_enabled:
+            try:
+                self._send_rich_slack_alert(
+                    text=text_body,
+                    color=color,
+                    footer_text="HewaSense — Shadow Run Completion Report",
+                )
+            except Exception as e:
+                logger.error(f"Failed to send shadow run complete Slack alert: {e}")
+
     def send_pipeline_failure_rich_alert(
         self,
         execution_id: str,

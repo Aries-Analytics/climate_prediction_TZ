@@ -290,6 +290,41 @@ class PipelineOrchestrator:
                 # Non-fatal — log and continue; forecasts stay pending until next run
                 logger.warning(f"Forecast evaluation stage failed (non-fatal): {eval_err}")
 
+            # Stage 5: Shadow run completion check (non-blocking)
+            # Fires once when valid_run_days reaches 90.  Generates the persistent
+            # final report JSON (read by Evidence Pack dashboard) and sends the
+            # go/no-go Slack alert.  Safe to re-run — generate_final_report()
+            # overwrites the same file idempotently.
+            logger.info("Stage 5: Checking shadow run completion")
+            try:
+                from sqlalchemy import func
+                from app.models.forecast_log import ForecastLog as FL
+                valid_run_days = self.db.query(
+                    func.count(func.distinct(func.date(FL.issued_at)))
+                ).scalar() or 0
+
+                SHADOW_RUN_TARGET_DAYS = 90
+                if valid_run_days >= SHADOW_RUN_TARGET_DAYS:
+                    from app.services.evidence_generator import EvidencePackGenerator
+                    generator = EvidencePackGenerator(self.db)
+                    report = generator.generate_final_report(valid_run_days=valid_run_days)
+                    logger.info(
+                        f"Shadow run complete: {valid_run_days} valid run-days. "
+                        f"Verdict: {report['go_live_gates']['overall_verdict']}"
+                    )
+                    if self.alert_service:
+                        gates = report["go_live_gates"]
+                        self.alert_service.send_shadow_run_complete_alert(
+                            valid_run_days=valid_run_days,
+                            total_forecasts=report["shadow_run"]["total_forecasts"],
+                            brier_score=gates["brier_score"]["value"],
+                            brier_gate_pass=gates["brier_score"]["pass"],
+                            basis_risk=gates["basis_risk"]["value"],
+                            overall_verdict=gates["overall_verdict"],
+                        )
+            except Exception as completion_err:
+                logger.warning(f"Shadow run completion check failed (non-blocking): {completion_err}")
+
             # Determine final status
             if ingestion_result.sources_failed:
                 final_status = 'partial'  # Some sources failed
