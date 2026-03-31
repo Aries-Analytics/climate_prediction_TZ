@@ -122,21 +122,25 @@ class EvidencePackGenerator:
         metrics = self.evaluator.get_aggregate_metrics()
         now_utc = datetime.now(timezone.utc)
 
-        # Determine gate outcomes
-        brier_score    = metrics.get("brier_score", None)
-        # Basis risk is not yet computable from forecast logs alone (requires harvest
-        # survey or NDVI proxy correlation study).  We record None and mark as pending.
-        basis_risk     = None
-
+        # ── Brier Score gate ──
+        brier_score = metrics.get("brier_score", None)
         brier_gate_pass = (brier_score is not None and brier_score < BRIER_SCORE_GATE)
-        basis_gate_pass = None  # pending — cannot auto-evaluate without ground truth
 
+        # ── Basis risk gate (NDVI proxy) ──
+        from app.services.basis_risk_service import compute_ndvi_proxy_basis_risk
+        basis_risk_result = compute_ndvi_proxy_basis_risk(self.db)
+        proxy_pct   = basis_risk_result["proxy_basis_risk_pct"]
+        basis_gate_pass = basis_risk_result["gate_pass"]  # None if insufficient data
+
+        # ── Overall verdict ──
         if brier_gate_pass and basis_gate_pass is True:
             overall_verdict = "GO"
-        elif brier_gate_pass is False:
+        elif not brier_gate_pass:
             overall_verdict = "NO-GO (Brier Score)"
+        elif basis_gate_pass is False:
+            overall_verdict = "NO-GO (Basis Risk)"
         else:
-            overall_verdict = "PENDING — basis risk requires manual review"
+            overall_verdict = "PENDING — basis risk insufficient data for final verdict"
 
         report = {
             "generated_at": now_utc.isoformat(),
@@ -153,10 +157,11 @@ class EvidencePackGenerator:
                     "pass": brier_gate_pass,
                 },
                 "basis_risk": {
-                    "value": basis_risk,
-                    "threshold": BASIS_RISK_GATE,
+                    "value": proxy_pct,
+                    "threshold": BASIS_RISK_GATE * 100,  # stored as % e.g. 30.0
                     "pass": basis_gate_pass,
-                    "note": "Requires manual harvest-survey or NDVI-proxy review",
+                    "label": "NDVI proxy (indicative)",
+                    "detail": basis_risk_result,
                 },
                 "overall_verdict": overall_verdict,
             },

@@ -5,6 +5,7 @@ from sqlalchemy import func as sqlfunc
 from app.core.database import get_db
 from app.services.evaluation_service import ForecastEvaluator
 from app.services.evidence_generator import EvidencePackGenerator
+from app.services.basis_risk_service import compute_ndvi_proxy_basis_risk
 from app.models.pipeline_execution import PipelineExecution
 from app.models.forecast_log import ForecastLog
 
@@ -97,6 +98,26 @@ def get_execution_log(db: Session = Depends(get_db)):
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/basis-risk")
+def get_basis_risk(db: Session = Depends(get_db)):
+    """
+    Returns the live NDVI proxy basis risk computation.
+
+    Available incrementally — does not wait for shadow run completion.
+    Returns the current state based on however many evaluated primary-tier
+    forecasts exist.  Will return empty counts before first 3-month forecasts
+    mature (~June 9, 2026).
+
+    Basis risk = % of primary-tier drought/crop_failure triggers (≥75%, ≤4mo)
+    that are NOT corroborated by a below-normal NDVI anomaly in the same month.
+    Flood triggers are excluded (NDVI is not a reliable flood signal).
+    """
+    try:
+        return compute_ndvi_proxy_basis_risk(db)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.get("/final-report")
 def get_final_report():

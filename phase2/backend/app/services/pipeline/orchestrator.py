@@ -314,12 +314,15 @@ class PipelineOrchestrator:
                     )
                     if self.alert_service:
                         gates = report["go_live_gates"]
+                        basis_detail = gates["basis_risk"].get("detail", {})
                         self.alert_service.send_shadow_run_complete_alert(
                             valid_run_days=valid_run_days,
                             total_forecasts=report["shadow_run"]["total_forecasts"],
                             brier_score=gates["brier_score"]["value"],
                             brier_gate_pass=gates["brier_score"]["pass"],
-                            basis_risk=gates["basis_risk"]["value"],
+                            basis_risk_pct=gates["basis_risk"]["value"],
+                            basis_gate_pass=gates["basis_risk"]["pass"],
+                            basis_risk_detail=basis_detail,
                             overall_verdict=gates["overall_verdict"],
                         )
             except Exception as completion_err:

@@ -270,27 +270,47 @@ class AlertService:
         total_forecasts: int,
         brier_score: Optional[float],
         brier_gate_pass: Optional[bool],
-        basis_risk: Optional[float],
-        overall_verdict: str,
+        basis_risk_pct: Optional[float],
+        basis_gate_pass: Optional[bool],
+        basis_risk_detail: Optional[Dict[str, Any]] = None,
+        overall_verdict: str = "PENDING",
     ) -> None:
         """
         Send shadow run completion alert with go/no-go gate results.
 
-        Called once when valid_run_days reaches 90.  Basis risk is marked
-        as pending because it requires a harvest survey or NDVI proxy review
-        and cannot be auto-computed from forecast logs alone.
+        Called once when valid_run_days reaches 90.  Both Brier Score and
+        NDVI proxy basis risk are reported.  If basis risk data is insufficient
+        (no evaluated primary-tier triggers yet), the gate is marked pending.
         """
         now_eat = datetime.now(timezone.utc).astimezone(EAT_TZ)
         date_str = now_eat.strftime('%A, %B %d, %Y — %H:%M EAT')
 
-        brier_line = (
-            f"{'✅' if brier_gate_pass else '❌'} Brier Score: "
-            f"{brier_score:.4f} (gate: < 0.25) — {'PASS' if brier_gate_pass else 'FAIL'}"
-            if brier_score is not None
-            else "⏳ Brier Score: Not yet available (forecasts still maturing)"
-        )
-        basis_line = "⏳ Basis Risk: Pending manual review (harvest survey / NDVI proxy)"
+        # ── Brier Score line ──
+        if brier_score is not None:
+            brier_emoji = "✅" if brier_gate_pass else "❌"
+            brier_status = "PASS" if brier_gate_pass else "FAIL"
+            brier_line = f"{brier_emoji} Brier Score: {brier_score:.4f} (gate: < 0.25) — {brier_status}"
+        else:
+            brier_line = "⏳ Brier Score: Not yet available (forecasts still maturing)"
 
+        # ── Basis risk line ──
+        if basis_risk_pct is not None:
+            basis_emoji = "✅" if basis_gate_pass else "❌"
+            basis_status = "PASS" if basis_gate_pass else "FAIL"
+            corroborated = (basis_risk_detail or {}).get("corroborated", "?")
+            total_primary = (basis_risk_detail or {}).get("total_primary", "?")
+            basis_line = (
+                f"{basis_emoji} Basis Risk (NDVI proxy): {basis_risk_pct:.1f}% "
+                f"(gate: < 30%) — {basis_status}\n"
+                f"   _{corroborated}/{total_primary} primary triggers corroborated by satellite vegetation_"
+            )
+        else:
+            basis_line = (
+                "⏳ Basis Risk (NDVI proxy): Insufficient evaluated triggers\n"
+                "   _Harvest survey required for verified ground truth_"
+            )
+
+        # ── Verdict colour ──
         if overall_verdict.startswith("GO"):
             verdict_emoji = "✅"
             color = "#36A64F"
@@ -314,7 +334,7 @@ class AlertService:
             f"{verdict_emoji} {overall_verdict}\n\n"
             f"*Next Steps*\n"
             f"1. Download Evidence Pack from dashboard for full metrics\n"
-            f"2. Complete basis risk review (NDVI proxy correlation + harvest survey)\n"
+            f"2. Conduct harvest survey (30-50 farmers) for verified basis risk\n"
             f"3. Go/No-Go decision meeting with partner underwriter\n"
         )
 
