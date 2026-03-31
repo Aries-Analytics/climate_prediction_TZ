@@ -437,7 +437,8 @@ USE_TIERED_PAYOUTS = False  # True parametric (fixed rates, not tiered)
 - ✅ `ForecastLog` evidence pack: `threshold_used` (0.65/0.60) + `forecast_distribution` (horizon_tier, insurance_eligible, confidence bounds) populated on every entry
 - ✅ `horizon_months <= 4` guard enforced in both backend endpoints — advisory tier never enters financial exposure
 - ⏳ ForecastLog entries status: all `pending` — validity windows are 3–6 months ahead; auto-evaluation begins ~Jun 9
-- ⏳ 90-day evidence pack compilation (metrics.json + logs_export.csv + model_compliance_statement.txt)
+- ✅ 90-day evidence pack compilation automated — orchestrator Stage 5 detects completion, generates `shadow_run_final_report.json` (Brier Score + NDVI proxy basis risk), sends Slack go/no-go alert. API: `GET /api/v1/evidence-pack/final-report`
+- ✅ NDVI proxy basis risk automated — `basis_risk_service.py` joins `forecast_logs` × `ndvi_observations` by month; primary-tier drought/crop_failure triggers corroborated by NDVI anomaly < -0.05. API: `GET /api/v1/evidence-pack/basis-risk`
 
 ### Phase 3 — Go-Live Decision (Late June 2026) ⏳ PENDING
 
