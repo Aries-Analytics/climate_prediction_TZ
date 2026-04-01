@@ -335,16 +335,32 @@ class PipelineOrchestrator:
             else:
                 final_status = 'completed'
                 error_msg = None
-            
+
             # Complete execution
             completed_at = datetime.now(timezone.utc)
             duration = int((completed_at - started_at).total_seconds())
-            
+
             execution.status = final_status
             execution.completed_at = completed_at
             execution.duration_seconds = duration
             execution.error_message = error_msg
             self.db.commit()
+
+            # Stage 6: Auto-log — write daily log file, update docs, git push (non-blocking)
+            # Runs on both 'completed' and 'partial' statuses. Any failure here must NEVER
+            # affect pipeline status, Slack alert, or the returned ExecutionResult.
+            logger.info("Stage 6: Auto-log (write docs + git push)")
+            try:
+                from app.services.pipeline.auto_log_service import run_auto_log
+                run_auto_log(
+                    db=self.db,
+                    execution_id=execution_id,
+                    run_date=started_at,
+                    duration_seconds=duration,
+                    sources_failed=ingestion_result.sources_failed,
+                )
+            except Exception as auto_log_err:
+                logger.warning(f"Stage 6 auto-log failed (non-blocking): {auto_log_err}")
             
             logger.info(
                 f"Pipeline execution {execution_id} {final_status}: "
