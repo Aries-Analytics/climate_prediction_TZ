@@ -83,6 +83,8 @@ services:
       - ~/.config/earthengine/credentials:/root/.config/earthengine/credentials:ro
       - ~/.cdsapirc:/root/.cdsapirc:ro
       - ./secrets:/app/secrets:ro
+      # Stage 6 auto-log: mount repo root so the scheduler can write memory/docs and git push
+      - ./:/app/repo_root
     depends_on:
       db:
         condition: service_healthy

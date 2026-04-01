@@ -24,9 +24,10 @@ from typing import Optional
 
 logger = logging.getLogger(__name__)
 
-# Absolute path to the phase2 repo root on the server
-# (same directory the scheduler container is volume-mounted to)
-REPO_ROOT = Path("/app")
+# Absolute path to the phase2 repo root inside the scheduler container.
+# docker-compose mounts ./  (phase2/) → /app/repo_root
+# This gives access to .git/, memory/, docs/ for Stage 6 git operations.
+REPO_ROOT = Path("/app/repo_root")
 
 # Paths relative to repo root
 MEMORY_MD       = REPO_ROOT / "memory" / "MEMORY.md"

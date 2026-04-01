@@ -17,9 +17,10 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install only runtime dependencies
+# Install only runtime dependencies (git required for Stage 6 auto-log push)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     postgresql-client \
+    git \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy Python dependencies from builder
