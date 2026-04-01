@@ -202,7 +202,5 @@ The HewaSense payout design is **zone-level, binary trigger** (Option A). Two st
 | 2026-03-31 | Pipeline SUCCESS 70s (216/1,080, 20.0%, 18 valid run-days — 17 consecutive Mar 15–31 + 1 isolated Mar 11); NDVI hook stale .pyc fixed + baseline file committed to repo; shadow run completion automation implemented — orchestrator Stage 5, generate_final_report(), basis_risk_service.py (NDVI proxy corroboration), send_shadow_run_complete_alert(), /basis-risk + /final-report API endpoints |
 | 2026-04-01 | Pipeline SUCCESS 34s (228/1,080, 21.1%, 19 valid run-days — 18 consecutive Mar 15–Apr 1 + 1 isolated Mar 11); NDVI hook fix completed (container restart 09:07 EAT — Mar 31 .pyc deletion was wrong, Scheduler Module Cache Trap); ingestion month-cap audit: NASA POWER + CHIRPS + NDVI all fixed (NaN/partial-month guard, commits a4bfe9b + 11faebd); NaN April row deleted; Tanzania historical crop failure research started (WFP/VAM 2017/18 + 2021/22); home-dir git removed; Stage 6 auto-log built + deployed (auto_log_service.py — daily log write, MEMORY.md update, 5 business doc updates, git push; 6 infra bugs fixed; git push from container verified commit 45be0a7); /log-session Step 6b added (dual memory sync mandate); external memory backfilled 11 entries; test pollution cleaned up commit 5b00d85 |
 
-| 2026-04-02 | Pipeline SUCCESS — 228/1080 (21.1%), Day 19 |
-
 *Last updated: 2026-04-01*
 *This file is the source of truth for persistent facts. Edit directly to update.*
