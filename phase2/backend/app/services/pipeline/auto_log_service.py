@@ -382,10 +382,11 @@ def _update_business_docs(
     )
 
     # 2. HEWASENSE_EXTERNAL_BRIEF.md  — "Forecasts accumulated" table row
+    # Pattern captures the full row (value cell + trailing cell) to prevent duplication
     _replace_in_file(
         EXTERNAL_BRIEF,
-        r'\| Forecasts accumulated\s+\|[^\|]+\|',
-        f'| Forecasts accumulated       | {total_forecasts} ({valid_run_days} valid run-days, {month_day_yr})         | Live system — updated as shadow run progresses    |',
+        r'\| Forecasts accumulated\s+\|[^\n]+\n',
+        f'| Forecasts accumulated       | {total_forecasts} ({valid_run_days} valid run-days, {month_day_yr})         | Live system — updated as shadow run progresses    |\n',
     )
 
     # 3. EXECUTIVE_SUMMARY.md — line 5 header + Next Steps section (2 places)
