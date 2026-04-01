@@ -83,8 +83,10 @@ services:
       - ~/.config/earthengine/credentials:/root/.config/earthengine/credentials:ro
       - ~/.cdsapirc:/root/.cdsapirc:ro
       - ./secrets:/app/secrets:ro
-      # Stage 6 auto-log: mount repo root so the scheduler can write memory/docs and git push
-      - ./:/app/repo_root
+      # Stage 6 auto-log: mount phase2/ for file writes, outer repo root for git
+      - ./:/app/repo_root           # phase2/ — memory/, docs/
+      - ../:/app/repo_root_parent   # outer repo root (work-tree for git)
+      - ../.git:/app/repo_git       # .git dir for git operations
     depends_on:
       db:
         condition: service_healthy

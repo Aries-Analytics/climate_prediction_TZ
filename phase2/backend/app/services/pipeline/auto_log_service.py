@@ -28,9 +28,9 @@ logger = logging.getLogger(__name__)
 #   /app/repo_root  → phase2/ directory (memory/, docs/, all project files)
 # The .git directory lives one level up (the outer repo root), so git
 # commands use --git-dir and --work-tree to specify both explicitly.
-PHASE2_DIR   = Path("/app/repo_root")          # phase2/ (files to read/write)
-GIT_DIR      = Path("/app/repo_root/../.git")  # actual .git directory
-REPO_ROOT    = PHASE2_DIR                       # alias for file path construction
+PHASE2_DIR   = Path("/app/repo_root")   # phase2/ (files to read/write)
+GIT_DIR      = Path("/app/repo_git")    # ../.git mounted directly (outer repo root)
+REPO_ROOT    = PHASE2_DIR               # alias for file path construction
 
 # Convenience re-exports used throughout
 MEMORY_MD       = PHASE2_DIR / "memory" / "MEMORY.md"
@@ -368,11 +368,17 @@ def _update_business_docs(
     day_str  = str(eat_date)
     month_day_yr = eat_date.strftime("%B %d, %Y").replace(" 0", " ")  # "April 2, 2026"
 
+    # Em-dash U+2014 and en-dash U+2013 must use unicode escapes in regex
+    # strings to avoid encoding mismatches between source file and target docs.
+    EM  = u'\u2014'   # —
+    EN  = u'\u2013'   # –
+    ROT = u'\U0001f504'  # 🔄
+
     # 1. PARAMETRIC_INSURANCE_FINAL.md
     _replace_in_file(
         PARAMETRIC_DOC,
-        r'### Phase 2 — Shadow Run 🔄 ACTIVE — Day \d+ of 90 valid run-days \(\d+/1,080 forecasts, \d+\.\d+%\)',
-        f'### Phase 2 — Shadow Run 🔄 ACTIVE — Day {valid_run_days} of 90 valid run-days ({total_forecasts}/1,080 forecasts, {pct:.1f}%)',
+        u'### Phase 2 \u2014 Shadow Run \U0001f504 ACTIVE \u2014 Day \\d+ of 90 valid run-days \\(\\d+/1,080 forecasts, \\d+\\.\\d+%\\)',
+        f'### Phase 2 {EM} Shadow Run {ROT} ACTIVE {EM} Day {valid_run_days} of 90 valid run-days ({total_forecasts}/1,080 forecasts, {pct:.1f}%)',
     )
 
     # 2. HEWASENSE_EXTERNAL_BRIEF.md  — "Forecasts accumulated" table row
@@ -385,8 +391,8 @@ def _update_business_docs(
     # 3. EXECUTIVE_SUMMARY.md — line 5 header + Next Steps section (2 places)
     _replace_in_file(
         EXECUTIVE_SUM,
-        r'Shadow Run ACTIVE \(Mar 7 – Jun 12, 2026 revised — Day \d+ of 90 · \d+/1,080 forecasts · \d+\.\d+%\)',
-        f'Shadow Run ACTIVE (Mar 7 – Jun 12, 2026 revised — Day {valid_run_days} of 90 · {total_forecasts}/1,080 forecasts · {pct:.1f}%)',
+        u'Shadow Run ACTIVE \\(Mar 7 \u2013 Jun 12, 2026 revised \u2014 Day \\d+ of 90 \u00b7 \\d+/1,080 forecasts \u00b7 \\d+\\.\\d+%\\)',
+        f'Shadow Run ACTIVE (Mar 7 {EN} Jun 12, 2026 revised {EM} Day {valid_run_days} of 90 \u00b7 {total_forecasts}/1,080 forecasts \u00b7 {pct:.1f}%)',
         replace_all=True,
     )
     _replace_in_file(
@@ -417,8 +423,8 @@ def _update_business_docs(
     # 5. BUSINESS_CASE_AND_DEPLOYMENT_RATIONALE.md — header status line
     _replace_in_file(
         BUSINESS_CASE,
-        r'\*\*Status\*\*: Shadow Run ACTIVE — Day \d+ of 90 valid run-days \(\d+/1,080 forecasts, \d+\.\d+%\)',
-        f'**Status**: Shadow Run ACTIVE — Day {valid_run_days} of 90 valid run-days ({total_forecasts}/1,080 forecasts, {pct:.1f}%)',
+        u'\\*\\*Status\\*\\*: Shadow Run ACTIVE \u2014 Day \\d+ of 90 valid run-days \\(\\d+/1,080 forecasts, \\d+\\.\\d+%\\)',
+        f'**Status**: Shadow Run ACTIVE {EM} Day {valid_run_days} of 90 valid run-days ({total_forecasts}/1,080 forecasts, {pct:.1f}%)',
     )
 
     logger.info("Auto-log: updated 5 business docs")
@@ -477,8 +483,8 @@ def _git_commit_and_push(run_date, total_forecasts, pct, valid_run_days) -> None
         "GIT_COMMITTER_NAME": "HewaSense Pipeline",
         "GIT_COMMITTER_EMAIL": "pipeline@hewasense.majaribio.com",
         # Tell git where .git is and what the work-tree root is
-        "GIT_DIR": str(GIT_DIR.resolve()),
-        "GIT_WORK_TREE": str(PHASE2_DIR.parent.resolve()),  # one level up from phase2/
+        "GIT_DIR": str(GIT_DIR),                  # /app/repo_git (mounted ../.git)
+        "GIT_WORK_TREE": "/app/repo_root_parent", # outer repo root (mounted ../)
     }
 
     try:
