@@ -8,12 +8,14 @@ import { claimsService } from '../services/claimsService';
 interface PayoutActionCardProps {
     activeTriggers: any[];
     totalFarmers?: number;
+    shadowRunActive?: boolean;
 }
 
 
 const PayoutActionCard: React.FC<PayoutActionCardProps> = ({
     activeTriggers = [],
-    totalFarmers = 1000
+    totalFarmers = 1000,
+    shadowRunActive = true,
 }) => {
     const [dialogOpen, setDialogOpen] = useState(false);
     const [isApproving, setIsApproving] = useState(false);
@@ -76,10 +78,10 @@ const PayoutActionCard: React.FC<PayoutActionCardProps> = ({
                     <WarningIcon color="warning" sx={{ mr: 1, fontSize: 32 }} />
                     <Box>
                         <Typography variant="h6" fontWeight="bold">
-                            Parametric Payout Liability
+                            Parametric Reserve Requirement
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
-                            Actionable financial impact based on active triggers
+                            Probability-weighted reserve estimate — forecast signal only, not a confirmed payout event
                         </Typography>
                     </Box>
                 </Box>
@@ -88,7 +90,7 @@ const PayoutActionCard: React.FC<PayoutActionCardProps> = ({
 
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                     <Box>
-                        <Typography variant="body2" color="text.secondary">Estimated Payout Required</Typography>
+                        <Typography variant="body2" color="text.secondary">Probability-Weighted Reserve Required</Typography>
                         <Typography variant="h4" fontWeight="bold" sx={{ color: '#d32f2f' }}>
                             ${totalLiability.toLocaleString()}
                         </Typography>
@@ -110,9 +112,15 @@ const PayoutActionCard: React.FC<PayoutActionCardProps> = ({
                     </Box>
                 </Box>
 
-                <Alert severity="warning" sx={{ mb: 2 }}>
-                    <strong>Action Required:</strong> {criticalCount > 0 ? 'Prepare payout disbursements for critical zones.' : 'Monitor developing patterns.'}
-                </Alert>
+                {shadowRunActive ? (
+                    <Alert severity="info" sx={{ mb: 2 }}>
+                        <strong>Shadow Run Active:</strong> Forecast probability exceeds 75% threshold — reserve is being sized. No payout is disbursed until the shadow run completes (~Jun 12, 2026) and Brier Scores confirm model accuracy.
+                    </Alert>
+                ) : (
+                    <Alert severity="warning" sx={{ mb: 2 }}>
+                        <strong>Action Required:</strong> {criticalCount > 0 ? 'Prepare payout disbursements for critical zones.' : 'Monitor developing patterns.'}
+                    </Alert>
+                )}
 
                 <Button
                     variant="contained"
@@ -120,9 +128,9 @@ const PayoutActionCard: React.FC<PayoutActionCardProps> = ({
                     fullWidth
                     startIcon={<PaidIcon />}
                     onClick={handleApproveClick}
-                    disabled={activeTriggers.length === 0}
+                    disabled={activeTriggers.length === 0 || shadowRunActive}
                 >
-                    Approve Payout Batch
+                    {shadowRunActive ? 'Payout Locked — Shadow Run Active' : 'Approve Payout Batch'}
                 </Button>
 
                 {/* Confirmation Dialog */}

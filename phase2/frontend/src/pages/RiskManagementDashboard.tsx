@@ -227,7 +227,7 @@ export default function RiskManagementDashboard() {
               title="Total Premium Income"
               value={`$${(portfolio.totalPremiumIncome || 0).toLocaleString()}`}
               status="success"
-              subtitle="Annual (1000 farmers × $75)"
+              subtitle="Annual (1,000 farmers × $20)"
               insight="Revenue from all active insurance policies in the Morogoro pilot."
               insightSeverity="info"
             />

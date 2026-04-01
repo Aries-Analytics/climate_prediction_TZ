@@ -154,13 +154,13 @@ export default function ExecutiveDashboard() {
 
       {/* ── global status banner ────────────────────────────────────────── */}
       {alerts.length > 0 ? (
-        <Alert severity="error" variant="filled" sx={{ mb: 3 }}>
-          <strong>{alerts.length} active payout trigger{alerts.length > 1 ? 's' : ''}:</strong>{' '}
-          {alerts.map(a => `${a.alert_type} @ ${a.location_name}`).join(' · ')}
+        <Alert severity="warning" variant="filled" sx={{ mb: 3 }}>
+          <strong>{alerts.length} high-probability forecast alert{alerts.length > 1 ? 's' : ''} (≥75% primary tier):</strong>{' '}
+          {alerts.map(a => `${a.alert_type} @ ${a.location_name}`).join(' · ')} — reserve sizing active. Shadow run: no real payout until observed breach confirmed post Jun 12, 2026.
         </Alert>
       ) : (
         <Alert severity="success" variant="filled" sx={{ mb: 3 }}>
-          <strong>No active payout triggers.</strong> All primary-tier (3–4 month) forecasts are below the 75% payout threshold.
+          <strong>No active forecast alerts above payout threshold.</strong> All primary-tier (3–4 month) forecasts are below the 75% probability threshold.
           {advisoryWarnings.length > 0 && ` ${advisoryWarnings.length} advisory warning${advisoryWarnings.length > 1 ? 's' : ''} flagged (see below).`}
         </Alert>
       )}

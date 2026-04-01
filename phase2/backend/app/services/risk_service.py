@@ -14,7 +14,7 @@ PAYOUT_RATES = {
     "flood": 75,
     "crop_failure": 90
 }
-PREMIUM_PER_FARMER = 91  # Validated sustainable premium from backtesting ($91/farmer)
+PREMIUM_PER_FARMER = 20  # Pilot premium: $20/farmer/year (see PARAMETRIC_INSURANCE_FINAL.md Scenario A)
 HIGH_RISK_THRESHOLD = 0.75
 PRIMARY_HORIZON_MAX = 4  # Months: primary tier (3-4) is insurance-trigger eligible; advisory (5-6) is early warning only
 

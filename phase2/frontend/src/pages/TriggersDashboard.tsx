@@ -245,7 +245,7 @@ export default function TriggersDashboard() {
           Parametric Trigger Events
         </Typography>
         <Typography variant="body1" color="text.secondary">
-          Monitoring active insurance triggers based on <strong>Phase-Specific Logic</strong>. Payouts are triggered when environmental conditions breach phase thresholds.
+          Monitoring forecast-based probability alerts based on <strong>Phase-Specific Logic</strong>. Payouts are triggered when <em>observed</em> conditions breach phase thresholds — forecast probability alone does not initiate a payout.
         </Typography>
       </Box>
 
@@ -253,7 +253,7 @@ export default function TriggersDashboard() {
       {(
         <Paper sx={{ p: 2, mb: 3, bgcolor: 'grey.50' }}>
           <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
-            Threshold Status Summary — {filteredAlerts.length === 0 ? 'All clear' : `${filteredAlerts.length} active payout alert${filteredAlerts.length !== 1 ? 's' : ''}`} (primary tier ≥75%)
+            Threshold Status Summary — {filteredAlerts.length === 0 ? 'All clear' : `${filteredAlerts.length} high-probability forecast alert${filteredAlerts.length !== 1 ? 's' : ''}`} (primary tier ≥75% forecast probability — not confirmed observed breach)
           </Typography>
           <Grid container spacing={2}>
             {triggerSummary.map(({ tt, triggered, worst }) => {
@@ -277,7 +277,7 @@ export default function TriggersDashboard() {
                       </Typography>
                       {triggered > 0 ? (
                         <Typography variant="caption" color="error.main">
-                          {triggered} trigger{triggered > 1 ? 's' : ''} · worst: {worst.toFixed(1)}mm deficit
+                          {triggered} forecast alert{triggered > 1 ? 's' : ''} · observed deficit: {worst === 0 ? 'none' : `${worst.toFixed(1)}mm`}
                         </Typography>
                       ) : (
                         <Typography variant="caption" color="success.main">
@@ -296,7 +296,7 @@ export default function TriggersDashboard() {
       <Grid container spacing={3}>
         {/* Consolidated Action Card & KPIs */}
         <Grid item xs={12} md={6}>
-          <PayoutActionCard activeTriggers={filteredAlerts} />
+          <PayoutActionCard activeTriggers={filteredAlerts} shadowRunActive={true} />
         </Grid>
 
         <Grid item xs={12} md={3}>
