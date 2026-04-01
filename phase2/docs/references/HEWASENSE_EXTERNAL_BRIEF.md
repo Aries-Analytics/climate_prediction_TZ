@@ -325,7 +325,7 @@ That is what the validation run is for.
 | --------------------------- | -------------------------------------- | -------------------------------------------------- |
 | Validation run window       | March 7 – June 12, 2026 (90 run-days) | Parametric insurance design specification          |
 | Forecast target             | 1,080 forecast records                 | System design KPI                                  |
-| Forecasts accumulated       | 204 (17 valid run-days, Mar 30)        | Live system — updated as shadow run progresses    |
+| Forecasts accumulated       | 228 (19 valid run-days, Apr 1)         | Live system — updated as shadow run progresses    |
 | Go-live gate: Brier Score   | < 0.25                                 | Climate forecast industry standard                 |
 | Go-live gate: Basis Risk    | < 30%                                  | Retrospective result: 20% (pre-forward validation) |
 | Primary ML model            | Gradient-boosted ensemble (R²=0.8666) | Internal model evaluation report                   |
