@@ -442,7 +442,11 @@ def _replace_in_file(path: Path, pattern: str, replacement: str, replace_all: bo
     else:
         new_content = re.sub(pattern, replacement, content, count=1)
     if new_content == content:
-        logger.warning(f"Auto-log: pattern not matched in {path.name}: {pattern[:60]}")
+        # Distinguish "pattern not found" from "values already current"
+        if re.search(pattern, content):
+            logger.info(f"Auto-log: {path.name} already current (values unchanged)")
+        else:
+            logger.warning(f"Auto-log: pattern not matched in {path.name}: {pattern[:60]}")
     else:
         path.write_text(new_content, encoding="utf-8")
 
