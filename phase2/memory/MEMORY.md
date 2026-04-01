@@ -203,5 +203,5 @@ The HewaSense payout design is **zone-level, binary trigger** (Option A). Two st
 
 | 2026-03-29 | Pipeline SUCCESS — 228/1080 (21.1%), Day 19 |
 
-*Last updated: 2026-03-29*
+*Last updated: 2026-03-28*
 *This file is the source of truth for persistent facts. Edit directly to update.*
