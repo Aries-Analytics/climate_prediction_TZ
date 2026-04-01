@@ -160,6 +160,7 @@ The HewaSense payout design is **zone-level, binary trigger** (Option A). Two st
 - When quoting accuracy, always specify: model name, dataset (single vs 6-loc), and whether retrospective or forward-validated
 - **Never hardcode model filenames** — always use `active_model.json` for dynamic model resolution
 - After code changes in volume-mounted containers, **always restart the container** to reload Python modules
+- **Stage 6 auto-log is autonomous.** After every pipeline run, it writes the daily log file, updates `memory/MEMORY.md` + 5 business docs, and git pushes — no manual `/log-run` needed for doc currency. `/log-run` is now optional (session notes + context only).
 - Advisory lock uses dedicated connection (not xact lock) — ORM commits don't affect it
 - Always verify feature count at model load time (GOTCHA Law #6: must be 83)
 - Use in-memory job store + `misfire_grace_time=1` — prevents phantom duplicate runs after restarts
@@ -199,9 +200,9 @@ The HewaSense payout design is **zone-level, binary trigger** (Option A). Two st
 | 2026-03-30 | Basis risk proxy strategy designed; Kilombero cooperative call list compiled (MVIWATA, RCT, RUDI, KATRIN contacts + IUCN warm door); NDVI proxy validation built + deployed — ndvi_observations table, GEE monthly composite, orchestrator Stage 3 hook, 17-day backfill complete; Mar 2026 anomaly -0.031 (monitoring zone); Alembic stamp fix documented; first basis risk correlation query run — drought ELEVATED (0.53 avg, 0.87 at 5-6m) + NDVI MONITORING = same direction corroboration; 3 inconsistent NDVI rows fixed (monthly composite now consistent across all 17 run-days); pitch deck overclaims identified + balanced redraft provided (Slides 4-5); dashboard validation banner + sustainability chip fixed (honest 3/8 framing, dynamic loss ratio label); deployed f416527; Pipeline SUCCESS 48s (204/1,080, 18.9%, 17 valid run-days — 16 consecutive Mar 15–30 + 1 isolated Mar 11) |
 
 | 2026-03-31 | Pipeline SUCCESS 70s (216/1,080, 20.0%, 18 valid run-days — 17 consecutive Mar 15–31 + 1 isolated Mar 11); NDVI hook stale .pyc fixed + baseline file committed to repo; shadow run completion automation implemented — orchestrator Stage 5, generate_final_report(), basis_risk_service.py (NDVI proxy corroboration), send_shadow_run_complete_alert(), /basis-risk + /final-report API endpoints |
-| 2026-04-01 | Pipeline SUCCESS 34s (228/1,080, 21.1%, 19 valid run-days — 18 consecutive Mar 15–Apr 1 + 1 isolated Mar 11); NDVI hook fix completed (container restart 09:07 EAT — Mar 31 .pyc deletion was wrong, Scheduler Module Cache Trap); ingestion month-cap audit: NASA POWER + CHIRPS + NDVI all fixed (NaN/partial-month guard, commits a4bfe9b + 11faebd); NaN April row deleted; Tanzania historical crop failure research started (WFP/VAM 2017/18 + 2021/22); home-dir git removed |
+| 2026-04-01 | Pipeline SUCCESS 34s (228/1,080, 21.1%, 19 valid run-days — 18 consecutive Mar 15–Apr 1 + 1 isolated Mar 11); NDVI hook fix completed (container restart 09:07 EAT — Mar 31 .pyc deletion was wrong, Scheduler Module Cache Trap); ingestion month-cap audit: NASA POWER + CHIRPS + NDVI all fixed (NaN/partial-month guard, commits a4bfe9b + 11faebd); NaN April row deleted; Tanzania historical crop failure research started (WFP/VAM 2017/18 + 2021/22); home-dir git removed; Stage 6 auto-log built + deployed (auto_log_service.py — daily log write, MEMORY.md update, 5 business doc updates, git push; 6 infra bugs fixed; git push from container verified commit 45be0a7); /log-session Step 6b added (dual memory sync mandate); external memory backfilled 11 entries; test pollution cleaned up commit 5b00d85 |
 
 | 2026-04-02 | Pipeline SUCCESS — 228/1080 (21.1%), Day 19 |
 
-*Last updated: 2026-04-02*
+*Last updated: 2026-04-01*
 *This file is the source of truth for persistent facts. Edit directly to update.*
