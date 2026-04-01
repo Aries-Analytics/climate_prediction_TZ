@@ -91,9 +91,11 @@ Check if `memory/logs/YYYY-MM-DD.md` already exists for today (a pipeline run ma
 
 ---
 
-## Step 6 — Update memory/MEMORY.md
+## Step 6 — Update memory/MEMORY.md (repo)
 
-Two locations:
+File: `phase2/memory/MEMORY.md` (committed to git, source of truth for durable project facts).
+
+Three locations to update:
 
 1. **Logs Index table** — add a new row (or append to today's row if /log-run already added one):
    ```
@@ -104,6 +106,24 @@ Two locations:
 2. **Last updated** date at the bottom of the file.
 
 3. **Key Facts section** — if any persistent facts changed (new URL, new pricing figure, new decision, new deferred item), update the relevant bullet. Do NOT add ephemeral session details to Key Facts — only durable facts belong there.
+
+---
+
+## Step 6b — Update external Claude memory MEMORY.md
+
+File: `C:\Users\YYY\.claude\projects\c--Users-YYY-Omdena-Capstone-project-capstone-project-lordwalt-phase2\memory\MEMORY.md` (Claude Code session memory — NOT committed to git).
+
+This file must be kept in sync with the repo MEMORY.md. Two locations to update:
+
+1. **Logs Index** — add or append a bullet entry in the same format as the repo Logs Index:
+   ```
+   - [YYYY-MM-DD](logs/YYYY-MM-DD.md) — [concise one-line summary]
+   ```
+   If an entry for today already exists, append "; [session summary]" — do NOT add a duplicate.
+
+2. **Known Bugs Fixed / Antipatterns** — if new bugs were fixed or new antipatterns were added to MEMORY.md during the session, verify they are present in the external memory too. The external memory is the canonical antipattern store.
+
+**IMPORTANT:** Both files must be updated every session. Updating only one is a protocol violation. The repo memory is committed to git; the external memory persists in Claude Code across sessions. They serve different purposes but the Logs Index must be consistent in both.
 
 ---
 
@@ -126,6 +146,9 @@ Then push to remote immediately.
 - [ ] Only affected docs updated (no phantom edits)
 - [ ] `Last Updated` dates updated on changed docs
 - [ ] Daily log file created or appended
-- [ ] `memory/MEMORY.md` Logs Index updated (no duplicate rows)
-- [ ] Key Facts updated only if durable facts changed
+- [ ] `memory/MEMORY.md` (repo) Logs Index updated (no duplicate rows)
+- [ ] `memory/MEMORY.md` (repo) Key Facts updated if durable facts changed
+- [ ] `memory/MEMORY.md` (repo) Last Updated date updated
+- [ ] External Claude memory Logs Index updated (same entry, bullet format)
+- [ ] External Claude memory antipatterns/bugs in sync if new ones added
 - [ ] Committed and pushed
