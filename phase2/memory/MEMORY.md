@@ -72,6 +72,9 @@
 - **NASA POWER partial-month NaN ingestion:** `end_date = datetime.now(timezone.utc)` with no month cap fetched current partial month (e.g. April 1 = 1 day of data) → stored as NaN temperature/solar. Stale row deleted. Fix (2026-04-01): cap `end_date` to last complete month end using `now_utc.replace(day=1) - timedelta(days=1)`. Commit `a4bfe9b`.
 - **CHIRPS partial-month silent corruption:** No month cap → partial month `.sum()` returns a real value (~80% too low) — NOT NaN, silently wrong. Fix (2026-04-01): same last-complete-month cap pattern in `ingest_chirps()`. Commit `11faebd`.
 - **NDVI partial-month misrepresentation:** No month cap → monthly aggregate from only first 16-day MODIS composite misrepresents full-month vegetation state. Fix (2026-04-01): same cap pattern in `ingest_ndvi()`. Commit `11faebd`.
+- **Off-season forecasts appearing as active payout triggers:** `GET /climate-forecasts/alerts` had no crop calendar filter — August drought at 88% (4-month horizon, dry season peak) surfaced as a payout trigger despite no insured crop in the field. Fix (2026-04-02): `continue` guard after `get_kilombero_stage()` returns `off_season` in `climate_forecasts.py`. Commits `e2c649f`.
+- **Wrong `PREMIUM_PER_FARMER = 91`:** Stale value from old backtesting scenario. Pilot premium is $20/farmer/year (Scenario A). Was inflating `total_premium_income` to $91,000 and underreporting loss ratio as 114.7% instead of correct 200% cap. Fix (2026-04-02): corrected to `20`. Commit `67aa269`.
+- **Dashboard conflating Stage 1 reserve sizing with confirmed payout trigger:** "1 active payout trigger", red error banner, enabled "Approve Payout Batch" button — all misleading during shadow run with 0mm observed deficit. Fix (2026-04-02): language relabeled to forecast alerts, PayoutActionCard locked with `shadowRunActive` prop, loss ratio split into actuarial vs forward stress. Commits `67aa269`, `e2c649f`, `9a48130`.
 
 ## Q2 2026 Roadmap (Deferred)
 
@@ -202,7 +205,7 @@ The HewaSense payout design is **zone-level, binary trigger** (Option A). Two st
 | 2026-03-31 | Pipeline SUCCESS 70s (216/1,080, 20.0%, 18 valid run-days — 17 consecutive Mar 15–31 + 1 isolated Mar 11); NDVI hook stale .pyc fixed + baseline file committed to repo; shadow run completion automation implemented — orchestrator Stage 5, generate_final_report(), basis_risk_service.py (NDVI proxy corroboration), send_shadow_run_complete_alert(), /basis-risk + /final-report API endpoints |
 | 2026-04-01 | Pipeline SUCCESS 34s (228/1,080, 21.1%, 19 valid run-days — 18 consecutive Mar 15–Apr 1 + 1 isolated Mar 11); NDVI hook fix completed (container restart 09:07 EAT — Mar 31 .pyc deletion was wrong, Scheduler Module Cache Trap); ingestion month-cap audit: NASA POWER + CHIRPS + NDVI all fixed (NaN/partial-month guard, commits a4bfe9b + 11faebd); NaN April row deleted; Tanzania historical crop failure research started (WFP/VAM 2017/18 + 2021/22); home-dir git removed; Stage 6 auto-log built + deployed (auto_log_service.py — daily log write, MEMORY.md update, 5 business doc updates, git push; 6 infra bugs fixed; git push from container verified commit 45be0a7); /log-session Step 6b added (dual memory sync mandate); external memory backfilled 11 entries; test pollution cleaned up commit 5b00d85 |
 
-| 2026-04-02 | Pipeline SUCCESS — 240/1080 (22.2%), Day 20 |
+| 2026-04-02 | Pipeline SUCCESS — 240/1080 (22.2%), Day 20; Stage 6 production-confirmed; off_season alert bug fixed; loss ratio split into actuarial (22.6%) vs forward stress; TRIGGER chip → OFF-SEASON badge; PARAMETRIC_INSURANCE_LOGIC.md updated (sections 6+7) |
 
-*Last updated: 2026-04-02*
+*Last updated: 2026-04-02 (session)*
 *This file is the source of truth for persistent facts. Edit directly to update.*

@@ -1,6 +1,7 @@
 # Parametric Insurance Model: Logic & Architecture
 
 **Date**: March 15, 2026
+**Last Updated**: April 2, 2026
 **Status**: Core Architecture Reference
 
 ## 1. Concept Clarification
@@ -96,3 +97,32 @@ Expected Payout = PILOT_FARMERS × probability × payout_rate_per_farmer
 *   **Adjusting Sensitivity**: If payouts are too frequent, lower the trigger thresholds (e.g., change 120mm to 100mm) in `rice_thresholds.py`.
 *   **New Crops**: To support Maize, create a `maize_thresholds.py` and import it into the logic layer. No ML retraining required.
 *   **Horizon tier changes**: Edit `HORIZON_TIERS` in `rice_thresholds.py`. The backend API filters and frontend calculations both read from the same constant.
+
+---
+
+## 6. Loss Ratio Disambiguation (Added April 2, 2026)
+
+Two distinct loss ratio concepts exist in the platform. They must never be conflated:
+
+| Metric | Formula | What it answers |
+|---|---|---|
+| **Actuarial Loss Ratio** | Historical paid claims ÷ Historical earned premiums | Is the $20/farmer premium sustainably priced over time? |
+| **Forward Reserve Stress Ratio** | Probability-weighted expected payout ÷ 6-month premiums | If this season's forecast triggers, how stressed are current reserves? |
+
+**Actuarial Loss Ratio: 22.6%** — derived from 10-year backtested trigger frequency. This is the basis for the $20/farmer premium (Scenario A in `PARAMETRIC_INSURANCE_FINAL.md`). Well within the industry-healthy range (<60%). Stored as `historicalLossRatio` in the `/risk/portfolio` API response.
+
+**Forward Reserve Stress Ratio** — probability-weighted, can exceed 100% in a high-risk season. This is not a sustainability failure; it means the reserve fund (not premiums alone) would cover the payout. The reserve fund exists precisely for this purpose. Displayed in the Risk Management Dashboard as "Reserve Stress Ratio". Capped at 200% for display.
+
+**Why reserves don't contradict sustainability:** The $150K reserve fund absorbs seasons where forward stress is elevated. The product is sustainably priced if the *actuarial* ratio is healthy over time — a single bad season at 87% forecast probability is the scenario reserves are designed for.
+
+---
+
+## 7. Off-Season Alert Exclusion (Added April 2, 2026)
+
+The wet-season pilot covers **January–June only** (rainfed rice, Jan planting → Jun harvest). Months July–December are off-season — no insured crop is in the field.
+
+The `GET /climate-forecasts/alerts` endpoint explicitly excludes forecasts where `get_kilombero_stage(target_date)` returns `'off_season'`. Without this filter, August/September drought forecasts (which can be high probability — August is Kilombero's dry season peak) would appear as active payout triggers despite having no insured crop attached.
+
+**Why off-season drought probabilities can be high:** The XGBoost model correctly identifies that August/September are dry months in Kilombero — it is a real meteorological signal. But no wet-season crop is in the field, so no policy applies. The Executive Dashboard grid shows these cells with a grey "OFF-SEASON" badge instead of the red "TRIGGER" badge.
+
+**Enforcement location:** `backend/app/api/climate_forecasts.py` — `get_active_alerts()`, stage check before building the alert response object.

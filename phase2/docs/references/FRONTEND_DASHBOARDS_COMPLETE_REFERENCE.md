@@ -1,6 +1,6 @@
 # Frontend Dashboards - Complete Reference
 
-**Last Updated**: March 16, 2026
+**Last Updated**: April 2, 2026
 **Version**: 2.2 (Landing Page Added)
 
 ## 📌 Overview
@@ -503,3 +503,36 @@ All KPI cards now feature **visible color-coded info blocks** instead of hidden 
 
 **Maintained by**: Frontend Development Team  
 **Next Review**: When API integration replaces mock data
+
+---
+
+## April 2026 — Live Dashboard Changes (Real Data, Shadow Run Active)
+
+> These changes apply to the production live dashboards served from `hewasense.majaribio.com`. All data is real (no simulation).
+
+### ExecutiveDashboard.tsx — Forecast Risk Landscape grid
+- **TRIGGER chip** replaced with **OFF-SEASON badge** (grey) for primary-tier (3–4 month) forecasts where `stage === 'off_season'`. Wet-season pilot covers Jan–Jun only; Aug–Sep forecasts can be high-probability (dry season) but have no insured crop attached.
+- Red TRIGGER badge now only shows for in-season primary-tier forecasts ≥75%.
+- Legend updated: added OFF-SEASON entry explaining "≥75% but no insured crop — no payout."
+
+### RiskManagementDashboard.tsx — KPI cards
+- **"Loss Ratio"** KPI card split into two distinct cards:
+  - **"Reserve Stress Ratio"** — forward 6-month probability-weighted projection, capped at 200%. Answers: "how stressed are reserves if this season triggers?" Signal, not sustainability verdict.
+  - **"Actuarial Loss Ratio"** — 22.6% historical 10-yr backtested. Answers: "is the $20 premium sustainably priced?" This is the product health metric.
+- **"Sustainability Status"** card renamed **"Pricing Sustainability"** — now evaluates `historicalLossRatio` (22.6%), not the forward stress ratio. 22.6% → "Sustainably Priced" (green).
+- Scenario analysis legend text updated to explain the scenario loss ratio is a reserve stress test, not an actuarial metric.
+
+### TriggersDashboard.tsx — Language corrections
+- Page subtitle: "active insurance triggers" → "forecast-based probability alerts". Clarifies payouts trigger on *observed* breach, not forecast probability alone.
+- Threshold summary bar: "active payout alert" → "high-probability forecast alert (primary tier ≥75% — not confirmed observed breach)."
+- `PayoutActionCard` receives `shadowRunActive={true}` — button locked, card renamed to "Parametric Reserve Requirement."
+
+### PayoutActionCard.tsx — Shadow run awareness
+- Added `shadowRunActive?: boolean` prop (default `true`).
+- When `true`: card title = "Parametric Reserve Requirement", amount label = "Probability-Weighted Reserve Required", button = "Payout Locked — Shadow Run Active" (disabled), alert = info explaining no disbursement until post Jun 12, 2026.
+- When `false` (post shadow run): original warning alert + enabled "Approve Payout Batch" button.
+
+### Backend: `GET /climate-forecasts/alerts`
+- Now excludes forecasts where phenology stage = `off_season`. Prevents August/September drought alerts appearing as active payout triggers.
+- `risk_service.py`: added `historicalLossRatio: 0.226` to `/risk/portfolio` response. Used by RiskManagementDashboard for the Actuarial Loss Ratio KPI.
+- `types/index.ts`: `PortfolioMetrics` extended with `historicalLossRatio?: number`.
