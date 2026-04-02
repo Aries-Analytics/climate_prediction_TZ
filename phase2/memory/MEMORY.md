@@ -30,7 +30,7 @@
 - **Production model file:** Determined by `outputs/models/active_model.json` (currently `xgboost_climate.pkl`, R²=0.8666, 83 features). NEVER hardcode model names
 - Model selection driven entirely by `active_model.json` — if missing or invalid, fail explicitly (GOTCHA Law #1)
 - **Pipeline schedule (shadow-run ACTIVE):** `0 6 * * *` Africa/Dar_es_Salaam (6 AM EAT daily). Deployed to `root@37.27.200.227`, `docker-compose.dev.yml`. Scheduler confirmed next run `2026-03-09 06:00:00+03:00`.
-- **Pipeline status (April 2026):** Shadow run ACTIVE Mar 7 – Jun 12, 2026 (revised — 7 missed days). 12 forecasts/run (3 triggers × 4 horizons × Morogoro). **228/1080 forecasts (21.1%), 19 valid run-days (Mar 11, Mar 15 – Apr 1). Current streak: 18 consecutive (Mar 15–Apr 1) + 1 isolated earlier.** Evidence Pack accumulates; Brier Score auto-evaluation starts ~Jun 9. Completion auto-detected at day 90 — final report + Slack alert fire automatically.
+- **Pipeline status (April 2026):** Shadow run ACTIVE Mar 7 – Jun 12, 2026 (revised — 7 missed days). 12 forecasts/run (3 triggers × 4 horizons × Morogoro). **240/1080 forecasts (22.2%), 20 valid run-days (Mar 11, Mar 15 – Apr 2). Current streak: 19 consecutive (Mar 15–Apr 2) + 1 isolated earlier.** Evidence Pack accumulates; Brier Score auto-evaluation starts ~Jun 9. Completion auto-detected at day 90 — final report + Slack alert fire automatically.
 - Lock contention alerts are suppressed in Slack (expected during brief overlaps)
 - **Advisory lock:** Uses a **dedicated NullPool engine + connection** (separate from ORM session). ORM `commit()` works normally without releasing the lock. Lock released by explicit `pg_advisory_unlock` + `engine.dispose()`. NullPool is mandatory — QueuePool keeps the Postgres session alive and leaks the lock.
 - **Scheduler job store:** In-memory (NOT persistent SQLAlchemyJobStore). Prevents phantom runs from stale `next_run_times` after container restarts.
@@ -202,5 +202,7 @@ The HewaSense payout design is **zone-level, binary trigger** (Option A). Two st
 | 2026-03-31 | Pipeline SUCCESS 70s (216/1,080, 20.0%, 18 valid run-days — 17 consecutive Mar 15–31 + 1 isolated Mar 11); NDVI hook stale .pyc fixed + baseline file committed to repo; shadow run completion automation implemented — orchestrator Stage 5, generate_final_report(), basis_risk_service.py (NDVI proxy corroboration), send_shadow_run_complete_alert(), /basis-risk + /final-report API endpoints |
 | 2026-04-01 | Pipeline SUCCESS 34s (228/1,080, 21.1%, 19 valid run-days — 18 consecutive Mar 15–Apr 1 + 1 isolated Mar 11); NDVI hook fix completed (container restart 09:07 EAT — Mar 31 .pyc deletion was wrong, Scheduler Module Cache Trap); ingestion month-cap audit: NASA POWER + CHIRPS + NDVI all fixed (NaN/partial-month guard, commits a4bfe9b + 11faebd); NaN April row deleted; Tanzania historical crop failure research started (WFP/VAM 2017/18 + 2021/22); home-dir git removed; Stage 6 auto-log built + deployed (auto_log_service.py — daily log write, MEMORY.md update, 5 business doc updates, git push; 6 infra bugs fixed; git push from container verified commit 45be0a7); /log-session Step 6b added (dual memory sync mandate); external memory backfilled 11 entries; test pollution cleaned up commit 5b00d85 |
 
-*Last updated: 2026-04-01*
+| 2026-04-02 | Pipeline SUCCESS — 240/1080 (22.2%), Day 20 |
+
+*Last updated: 2026-04-02*
 *This file is the source of truth for persistent facts. Edit directly to update.*

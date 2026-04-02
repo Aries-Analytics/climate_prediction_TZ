@@ -4,7 +4,7 @@
 
 **Document Type**: Strategic Business Analysis
 **Date**: March 19, 2026
-**Status**: Shadow Run ACTIVE — Day 19 of 90 valid run-days (228/1,080 forecasts, 21.1%)
+**Status**: Shadow Run ACTIVE — Day 20 of 90 valid run-days (240/1,080 forecasts, 22.2%)
 **Author**: HewaSense Climate Intelligence & Insurance Team
 **Audience**: Project Leadership · Potential Underwriters · TIRA Review · Government Partners
 

@@ -28,8 +28,8 @@
 
 | Metric | Value |
 |---|---|
-| `forecast_logs` rows | 228 (19 valid run-days: Mar 11, Mar 15 – Apr 1) |
-| Valid run-days achieved | 19 of 90 target (21.1%) |
+| `forecast_logs` rows | 240 (20 valid run-days: Mar 11, Mar 15 – Apr 2) |
+| Valid run-days achieved | 20 of 90 target (22.2%) |
 | Missed days (total) | **7** — Mar 7 (late start), Mar 8 (TZ bug), Mar 9–10 (ForecastLog not generated), Mar 12–14 (stale lock) |
 | All log status | `pending` (validity windows 3–6 months ahead) |
 | `threshold_used` | Populated from Mar 9 onwards (0.65 drought/flood, 0.60 others) |
