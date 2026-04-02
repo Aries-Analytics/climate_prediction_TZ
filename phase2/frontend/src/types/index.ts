@@ -142,7 +142,8 @@ export interface Anomaly {
 export interface PortfolioMetrics {
   totalPremiumIncome: number;
   expectedPayouts: number;
-  lossRatio: number;
+  lossRatio: number;         // Forward reserve stress ratio (probability-weighted, capped at 2.0)
+  historicalLossRatio?: number; // Actuarial: 10-yr backtested average — basis for premium pricing
   totalExposure: number;
   numberOfPolicies: number;
   totalFarmers?: number; // Mapped from total_farmers

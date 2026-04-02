@@ -69,7 +69,8 @@ def get_portfolio_metrics(db: Session) -> dict:
     return {
         "totalPremiumIncome": total_premium_income,  # Annual
         "expectedPayouts": round(expected_payouts, 2),  # 6-month projected
-        "lossRatio": min(loss_ratio, 2.0),  # Cap at 200% for display
+        "lossRatio": min(loss_ratio, 2.0),  # Forward reserve stress ratio — capped at 200% for display
+        "historicalLossRatio": 0.226,  # Actuarial: 10-yr backtested average (22.6%) — basis for $20 premium pricing (PARAMETRIC_INSURANCE_FINAL.md)
         "numberOfPolicies": TOTAL_FARMERS,
         "totalExposure": total_exposure,
         "reserves": CURRENT_RESERVES,

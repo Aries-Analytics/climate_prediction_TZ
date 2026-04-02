@@ -258,22 +258,23 @@ export default function RiskManagementDashboard() {
 
           <Grid item xs={12} md={3}>
             <KPICard
-              title="Loss Ratio"
+              title="Reserve Stress Ratio"
               value={`${((portfolio.lossRatio || 0) * 100).toFixed(1)}%`}
               status={getLossRatioStatus(portfolio.lossRatio || 0)}
-              subtitle={
-                (portfolio.lossRatio || 0) > 0.8 ? 'CRITICAL - Unsustainable' :
-                  (portfolio.lossRatio || 0) > 0.6 ? 'At Risk - Monitor' :
-                    'Healthy Range'
-              }
-              insight={
-                (portfolio.lossRatio || 0) > 0.8
-                  ? "🔴 Payouts exceed 80% of premiums - consider reserve increase or coverage adjustment"
-                  : (portfolio.lossRatio || 0) > 0.6
-                    ? "🟡 Approaching break-even - monitor forecast trends closely"
-                    : "🟢 Sustainable ratio - portfolio health good"
-              }
-              insightSeverity={getLossRatioStatus(portfolio.lossRatio || 0)}
+              subtitle="Forward 6-Month Projection"
+              insight="Probability-weighted expected payout vs 6-month premiums. Exceeding 100% means reserves — not premiums — would fund the payout. This is a risk signal, not a sustainability verdict."
+              insightSeverity="warning"
+            />
+          </Grid>
+
+          <Grid item xs={12} md={3}>
+            <KPICard
+              title="Actuarial Loss Ratio"
+              value={`${((portfolio.historicalLossRatio || 0) * 100).toFixed(1)}%`}
+              status="success"
+              subtitle="Historical 10-Year Backtested"
+              insight="Basis for $20/farmer premium pricing. 22.6% is well within the industry-healthy range (<60%). This is the product sustainability metric — it answers: is the premium adequate over time?"
+              insightSeverity="success"
             />
           </Grid>
 
@@ -491,8 +492,9 @@ export default function RiskManagementDashboard() {
 
                       <Alert severity="info" sx={{ mt: 2 }}>
                         <Typography variant="body2">
-                          <strong>Loss Ratio = Payouts ÷ Premiums.</strong> This is the industry standard metric for insurance portfolio health.
-                          "High Impact" scenarios (&gt;80% loss ratio) indicate significant financial stress requiring reserve adjustments or coverage changes.
+                          <strong>Scenario Loss Ratio = Projected Payouts ÷ 6-Month Premiums.</strong> This stress-tests reserve adequacy under a hypothetical climate event.
+                          It is distinct from the <strong>actuarial loss ratio</strong> (22.6% historical), which determines whether the $20 premium is sustainably priced over time.
+                          "High Impact" scenarios indicate reserves would absorb the gap — that is their designed purpose.
                         </Typography>
                       </Alert>
                     </Box>
@@ -536,32 +538,26 @@ export default function RiskManagementDashboard() {
             <Card>
               <CardContent>
                 <Typography variant="h6" gutterBottom>
-                  Sustainability Status
+                  Pricing Sustainability
                 </Typography>
                 <Box sx={{ textAlign: 'center', py: 4 }}>
                   <Chip
                     label={
-                      portfolio.lossRatio <= 0.6 ? 'Sustainable' :
-                        portfolio.lossRatio <= 0.8 ? 'Monitor' :
-                          'At Risk'
+                      (portfolio.historicalLossRatio || 0) <= 0.6 ? 'Sustainably Priced' :
+                        (portfolio.historicalLossRatio || 0) <= 0.8 ? 'Monitor' :
+                          'Repricing Needed'
                     }
-                    color={getLossRatioStatus(portfolio.lossRatio)}
+                    color={getLossRatioStatus(portfolio.historicalLossRatio || 0)}
                     sx={{ fontSize: '1.2rem', py: 3, px: 2 }}
                   />
                   <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-                    Based on current loss ratio of {((portfolio.lossRatio || 0) * 100).toFixed(1)}%
+                    Actuarial loss ratio: {((portfolio.historicalLossRatio || 0) * 100).toFixed(1)}% (10-yr backtested)
                   </Typography>
                 </Box>
-                <Alert
-                  severity={getLossRatioStatus(portfolio.lossRatio || 0)}
-                  sx={{ mt: 2, py: 0.5 }}
-                >
+                <Alert severity="info" sx={{ mt: 2, py: 0.5 }}>
                   <Typography variant="body2">
-                    {(portfolio.lossRatio || 0) <= 0.6
-                      ? '✅ Portfolio is financially sustainable with healthy reserve margins'
-                      : (portfolio.lossRatio || 0) <= 0.8
-                        ? '⚠️ Monitor closely - approaching break-even threshold'
-                        : '🚨 Portfolio at risk - immediate reserve increase or coverage reduction needed'}
+                    Pricing sustainability is judged on the <strong>historical actuarial loss ratio</strong> (22.6%), not the forward reserve stress ratio.
+                    The $150K reserve fund covers seasons where forward stress is elevated — that is its purpose.
                   </Typography>
                 </Alert>
               </CardContent>

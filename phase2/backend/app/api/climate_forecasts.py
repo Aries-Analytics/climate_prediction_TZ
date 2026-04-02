@@ -176,8 +176,14 @@ def get_active_alerts(
         
         # Determine Stage and Threshold
         stage = get_kilombero_stage(f.target_date)
+
+        # Wet-season pilot only covers Jan–Jun. July–Dec is off_season for the main season.
+        # Off-season forecasts have no insured crop in the field → no meaningful threshold → exclude.
+        if stage == 'off_season':
+            continue
+
         threshold_val = 0.0
-        
+
         if t_type == "drought":
             threshold_val = RAINFALL_THRESHOLDS.get(stage, {}).get("min", 0.0)
         elif t_type == "flood":
