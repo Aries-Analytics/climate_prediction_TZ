@@ -274,8 +274,11 @@ export default function ExecutiveDashboard() {
                                   {!isPrimary && (
                                     <Typography variant="caption" color="text.secondary">advisory</Typography>
                                   )}
-                                  {isPrimary && prob >= PAYOUT_THRESHOLD && (
+                                  {isPrimary && prob >= PAYOUT_THRESHOLD && f?.stage !== 'off_season' && (
                                     <Chip label="TRIGGER" color="error" size="small" sx={{ height: 16, fontSize: '0.6rem', mt: 0.3 }} />
+                                  )}
+                                  {isPrimary && prob >= PAYOUT_THRESHOLD && f?.stage === 'off_season' && (
+                                    <Chip label="OFF-SEASON" color="default" size="small" sx={{ height: 16, fontSize: '0.6rem', mt: 0.3 }} />
                                   )}
                                 </Box>
                               </Tooltip>
@@ -291,7 +294,7 @@ export default function ExecutiveDashboard() {
 
             <Box sx={{ mt: 1.5, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
               {[
-                { color: '#ffebee', label: '≥75% — Payout trigger' },
+                { color: '#ffebee', label: '≥75% — Payout trigger (in-season)' },
                 { color: '#fff8e1', label: '50–75% — Advisory warning' },
                 { color: '#e8f5e9', label: '<50% — No concern' },
               ].map(({ color, label }) => (
@@ -300,6 +303,10 @@ export default function ExecutiveDashboard() {
                   <Typography variant="caption" color="text.secondary">{label}</Typography>
                 </Box>
               ))}
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <Chip label="OFF-SEASON" color="default" size="small" sx={{ height: 16, fontSize: '0.6rem' }} />
+                <Typography variant="caption" color="text.secondary">≥75% but no insured crop — no payout</Typography>
+              </Box>
             </Box>
           </Paper>
         </Grid>
