@@ -72,6 +72,8 @@
 - **NASA POWER partial-month NaN ingestion:** `end_date = datetime.now(timezone.utc)` with no month cap fetched current partial month (e.g. April 1 = 1 day of data) → stored as NaN temperature/solar. Stale row deleted. Fix (2026-04-01): cap `end_date` to last complete month end using `now_utc.replace(day=1) - timedelta(days=1)`. Commit `a4bfe9b`.
 - **CHIRPS partial-month silent corruption:** No month cap → partial month `.sum()` returns a real value (~80% too low) — NOT NaN, silently wrong. Fix (2026-04-01): same last-complete-month cap pattern in `ingest_chirps()`. Commit `11faebd`.
 - **NDVI partial-month misrepresentation:** No month cap → monthly aggregate from only first 16-day MODIS composite misrepresents full-month vegetation state. Fix (2026-04-01): same cap pattern in `ingest_ndvi()`. Commit `11faebd`.
+- **ERA5 MARS AccessError -2 (ERA5T restricted access):** `ingest_era5()` last-complete-month cap allowed Feb–Apr 2026 through — these fall in ERA5T (near real-time, <3 months old) which requires a separate restricted subscription. Fix (2026-04-03): replaced cap with `ERA5_LAG_MONTHS=3` boundary; added `end_month=` param to `fetch_era5_data()` so month list never overshoots. Commit `8cd03a3`.
+- **Auto-log git push rejected (non-fast-forward):** Stage 6 runs at 06:00 EAT; `/log-session` commits pushed after that leave server repo behind remote → next morning push fails. Fix (2026-04-03): added `git pull --rebase origin phase2/feature-expansion` between commit and push in `_git_commit_and_push()`. Non-blocking on rebase failure. Commit `8cd03a3`.
 - **Off-season forecasts appearing as active payout triggers:** `GET /climate-forecasts/alerts` had no crop calendar filter — August drought at 88% (4-month horizon, dry season peak) surfaced as a payout trigger despite no insured crop in the field. Fix (2026-04-02): `continue` guard after `get_kilombero_stage()` returns `off_season` in `climate_forecasts.py`. Commits `e2c649f`.
 - **Wrong `PREMIUM_PER_FARMER = 91`:** Stale value from old backtesting scenario. Pilot premium is $20/farmer/year (Scenario A). Was inflating `total_premium_income` to $91,000 and underreporting loss ratio as 114.7% instead of correct 200% cap. Fix (2026-04-02): corrected to `20`. Commit `67aa269`.
 - **Dashboard conflating Stage 1 reserve sizing with confirmed payout trigger:** "1 active payout trigger", red error banner, enabled "Approve Payout Batch" button — all misleading during shadow run with 0mm observed deficit. Fix (2026-04-02): language relabeled to forecast alerts, PayoutActionCard locked with `shadowRunActive` prop, loss ratio split into actuarial vs forward stress. Commits `67aa269`, `e2c649f`, `9a48130`.
@@ -207,7 +209,7 @@ The HewaSense payout design is **zone-level, binary trigger** (Option A). Two st
 
 | 2026-04-02 | Pipeline SUCCESS — 240/1080 (22.2%), Day 20; Stage 6 production-confirmed; off_season alert bug fixed; loss ratio split into actuarial (22.6%) vs forward stress; TRIGGER chip → OFF-SEASON badge; PARAMETRIC_INSURANCE_LOGIC.md updated (sections 6+7) |
 
-| 2026-04-03 | Pipeline SUCCESS — 252/1080 (23.3%), Day 21 |
+| 2026-04-03 | Pipeline PARTIAL — 252/1080 (23.3%), Day 21; ERA5 MARS AccessError (ERA5T restricted, 3-month lag boundary not respected); auto-log git push rejected (server behind remote); both fixed: ERA5_LAG_MONTHS=3 cap + git pull --rebase before push (commit 8cd03a3) |
 
 *Last updated: 2026-04-03*
 *This file is the source of truth for persistent facts. Edit directly to update.*
