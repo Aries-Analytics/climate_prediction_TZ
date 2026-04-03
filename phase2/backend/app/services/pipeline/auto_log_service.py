@@ -514,6 +514,20 @@ def _git_commit_and_push(run_date, total_forecasts, pct, valid_run_days) -> None
             check=True, capture_output=True, text=True, env=git_env,
         )
 
+        # Pull --rebase before push to handle any commits pushed to remote
+        # since the container last synced (e.g. /log-session from a dev machine).
+        # Non-blocking: if rebase fails we still attempt the push so the
+        # commit is at least queued for the next manual sync.
+        pull_result = subprocess.run(
+            ["git", "pull", "--rebase", "origin", "phase2/feature-expansion"],
+            capture_output=True, text=True, env=git_env,
+        )
+        if pull_result.returncode != 0:
+            logger.warning(
+                f"Auto-log: git pull --rebase failed (will attempt push anyway): "
+                f"{pull_result.stderr.strip()}"
+            )
+
         # Push — use the remote URL already configured with PAT
         subprocess.run(
             ["git", "push", "origin", "phase2/feature-expansion"],

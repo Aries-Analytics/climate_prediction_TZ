@@ -27,6 +27,7 @@ def fetch_era5_data(
     dry_run=False,
     start_year=1985,
     end_year=2025,
+    end_month=None,
     bounds=None,
     variables=None,
     *args,
@@ -175,8 +176,11 @@ def fetch_era5_data(
         nc_file = get_data_path("raw", "era5_raw.nc")
         os.makedirs(os.path.dirname(nc_file), exist_ok=True)
 
-        # Cap end_year and months to only complete months.
-        # ECMWF returns 400 if asked for months that haven't ended yet.
+        # Cap end_year and months to stay within finalized ERA5 data.
+        # Two guards applied in order:
+        #   1. Never request the current (incomplete) month (ECMWF 400).
+        #   2. Respect end_month if provided — caller already applied the
+        #      ERA5_LAG_MONTHS cap so this prevents overshooting into ERA5T.
         now = datetime.now(timezone.utc)
         if end_year >= now.year:
             last_complete_month = now.month - 1
@@ -185,8 +189,11 @@ def fetch_era5_data(
                 end_year = now.year - 1
                 months = [f"{m:02d}" for m in range(1, 13)]
             else:
+                # Apply caller's end_month cap if stricter than last_complete_month
+                if end_month is not None:
+                    last_complete_month = min(last_complete_month, end_month)
                 months = [f"{m:02d}" for m in range(1, last_complete_month + 1)]
-            log_info(f"ERA5 months capped to last complete month: up to {end_year}-{months[-1]}")
+            log_info(f"ERA5 months capped to: {end_year}-{months[-1]} (end_month override={end_month})")
         else:
             months = [f"{m:02d}" for m in range(1, 13)]
 
@@ -380,14 +387,26 @@ def ingest_era5(
     if end_date is None:
         end_date = datetime.now(timezone.utc)
 
-    # Cap end_date to the last complete month.
-    # ERA5 monthly reanalysis is only published for finished months;
-    # requesting the current (incomplete) month causes a 400 from ECMWF.
+    # Cap end_date to the ERA5 finalized reanalysis lag boundary (~3 months).
+    # ERA5 proper (finalized) lags the present by ~3 months.
+    # ERA5T (near real-time, < 3 months old) requires a separate restricted
+    # dataset subscription — requesting it returns MARS AccessError -2.
+    # We cap to the last day of (current_month - ERA5_LAG_MONTHS) to stay
+    # entirely within finalized ERA5 data.
+    ERA5_LAG_MONTHS = 3
     now = datetime.now(timezone.utc)
-    last_complete_month_end = now.replace(day=1) - timedelta(days=1)
-    if end_date > last_complete_month_end:
-        end_date = last_complete_month_end
-        log_info(f"ERA5 end_date capped to last complete month: {end_date.date()}")
+    lag_month = now.month - ERA5_LAG_MONTHS
+    lag_year = now.year
+    if lag_month <= 0:
+        lag_month += 12
+        lag_year -= 1
+    # Last day of the lag month = first day of next month - 1 day
+    next_month = lag_month + 1 if lag_month < 12 else 1
+    next_year = lag_year if lag_month < 12 else lag_year + 1
+    era5_safe_end = datetime(next_year, next_month, 1, tzinfo=timezone.utc) - timedelta(days=1)
+    if end_date > era5_safe_end:
+        end_date = era5_safe_end
+        log_info(f"ERA5 end_date capped to finalized ERA5 lag boundary: {end_date.date()} (ERA5T restricted)")
 
     # Ensure dates are pandas-compatible timestamps for comparison
     start_date = pd.to_datetime(start_date)
@@ -396,8 +415,9 @@ def ingest_era5(
     log_info(f"Ingesting ERA5 data from {start_date} to {end_date}")
 
     try:
-        # Fetch data using existing function
-        df = fetch_era5_data(start_year=start_date.year, end_year=end_date.year, dry_run=False)
+        # Fetch data using existing function.
+        # Pass end_month so fetch_era5_data does not overshoot into ERA5T territory.
+        df = fetch_era5_data(start_year=start_date.year, end_year=end_date.year, end_month=end_date.month, dry_run=False)
 
         if df.empty:
             log_info("No ERA5 data fetched")
