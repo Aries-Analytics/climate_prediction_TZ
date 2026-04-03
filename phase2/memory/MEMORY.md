@@ -6,7 +6,7 @@
 ## Project Overview
 
 - **Project:** HewaSense — Climate intelligence for parametric crop insurance (Tanzania)
-- **Framework:** GOTCHA (6-layer) + ATLAS (build workflow) + 4-Persona model
+- **Framework:** GOTCHA (6-layer) + Compound Engineering workflow (/ce:brainstorm → plan → work → review → compound) + 4-Persona model
 - **Current Phase:** Shadow-Run Forward Testing (Phase 4.0)
 - **Pilot:** Morogoro (Kilombero Basin), 1000 rice farmers
 - **Production Model:** Phase-Based Dynamic Model (4-phase GDD tracker)
@@ -159,7 +159,7 @@ The HewaSense payout design is **zone-level, binary trigger** (Option A). Two st
 
 - Always check `tools/manifest.md` before creating new scripts
 - Follow GOTCHA framework: Goals, Orchestration, Tools, Context, Hardprompts, Args
-- Follow ATLAS build workflow: Architect, Trace, Link, Assemble, Stress-test
+- Follow Compound Engineering workflow: /ce:brainstorm → /ce:plan → /ce:work → /ce:review → /ce:compound (plugin: compound-engineering v2.61.0)
 - Read `.agent/rules/SKILL.md` on every model activation
 - After any model retrain or config change, update ALL docs listed in SKILL.md Law #8
 - When quoting accuracy, always specify: model name, dataset (single vs 6-loc), and whether retrospective or forward-validated

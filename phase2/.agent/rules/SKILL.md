@@ -108,6 +108,7 @@
 - **DOCUMENTATION CHECKPOINT**: After completing any task that modifies models, features, configs, or pipelines, run a grep sweep for stale numbers (old feature counts, old metrics) in `docs/` before closing the task. Use `grep_search` for old values and update all active docs (skip `docs/archive/`).
 - **DOC SYNC TRIGGER**: If you retrain models or change `feature_schema.json`, immediately update all 8+ docs files listed in Law #8 — don't wait for the user to ask.
 - **SPRINT AUTO-CLOSE**: After resolving any issue, check `state.json → task_board.resolved` vs `total_issues`. If they match, execute Law #9 immediately — don't wait for the user to notice.
+- Follow Compound Engineering workflow: /ce:brainstorm → /ce:plan → /ce:work → /ce:review → /ce:compound (plugin: compound-engineering v2.61.0)
 
 *(Add new guardrails as mistakes happen. Keep under 15 items.)*
 

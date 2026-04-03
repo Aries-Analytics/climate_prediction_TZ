@@ -236,6 +236,7 @@ cat > memory/MEMORY.md << 'EOF'
 
 - Always check tools/manifest.md before creating new scripts
 - Follow GOTCHA framework: Goals, Orchestration, Tools, Context, Hardprompts, Args
+- Follow Compound Engineering workflow: /ce:brainstorm → /ce:plan → /ce:work → /ce:review → /ce:compound
 
 ## Current Projects
 
@@ -403,7 +404,8 @@ Every failure strengthens the system:
 4. Update the goal with new knowledge
 5. **Update all affected documentation** (metrics, configs, references) — see Law #8 in `.agent/rules/SKILL.md`
 6. Add a guardrail (Section 6) if the failure was an orchestration mistake, not a tool bug
-7. Next time → automatic success
+7. Run `/ce:compound` — codify learnings so the next loop inherits them
+8. Next time → automatic success
 
 ---
 
@@ -443,16 +445,36 @@ Get shit done.
 
 ---
 
-# **Task Execution Checklist**
+# **Compound Engineering Workflow**
 
-For every non-trivial task, follow this sequence:
+The primary development workflow. Each cycle compounds — learnings from each loop make the next easier.
 
-1. **Plan First** — Write plan to `tasks/todo.md` or plan mode with checkable items
-2. **Verify Plan** — Check in with user before starting implementation if scope is ambiguous
-3. **Track Progress** — Mark items complete as you go; never batch completions
-4. **Explain Changes** — High-level summary at each meaningful step
-5. **Document Results** — Add review note after task is done
-6. **Capture Lessons** — Update Section 6 Guardrails after any correction
+```
+Brainstorm → Plan → Work → Review → Compound → Repeat
+     ^
+  Ideate (optional — when you need fresh ideas)
+```
+
+| Stage | Command | What it does |
+|-------|---------|-------------|
+| Ideate | `/ce:ideate` | Discover high-impact improvements through divergent ideation |
+| Brainstorm | `/ce:brainstorm` | Refine requirements through interactive Q&A — main entry point |
+| Plan | `/ce:plan` | Distill into a technical plan agents and humans can execute |
+| Work | `/ce:work` | Execute the plan with task tracking |
+| Review | `/ce:review` | Multi-agent review before merging — catch issues, capture learnings |
+| Compound | `/ce:compound` | Document learnings into a structured wiki for future loops |
+
+**80% of value is in Plan + Review. Only 20% is in Work + Compound.**
+
+## For every non-trivial task, follow this sequence:
+
+1. `/ce:brainstorm` — clarify requirements before any code is written
+2. `/ce:plan` — distill into a technical plan
+3. `/ce:work` — execute the plan
+4. `/ce:review` — review against best practices, identify improvements
+5. `/ce:compound` — codify learnings so the next loop starts smarter
+6. **Document Results** — update docs per Law #8
+7. **Capture Lessons** — update Section 6 Guardrails after any correction
 
 ---
 
