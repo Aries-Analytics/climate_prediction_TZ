@@ -125,8 +125,8 @@
 
 ## Gitignore Rules (phase2/)
 
-- `memory/` — tracked (removed from gitignore 2026-03-08). Negation patterns `!memory/`, `!memory/logs/`, `!memory/logs/**` override root `.gitignore`'s global `logs/` rule.
-- `/logs/` — anchored to root only (pipeline runtime logs). Keeps `memory/logs/` accessible.
+- `memory/` — tracked (removed from gitignore 2026-03-08). `memory/logs/` removed 2026-04-03 (pipeline run history moved to DB + Evidence Pack dashboard).
+- `/logs/` — anchored to root only (pipeline runtime logs).
 - `state.json` — correctly gitignored (Claude Code session state, machine-specific).
 - **VS Code gitignore decoration is unreliable.** Always verify with `git ls-files` or `git check-ignore -v`.
 
@@ -165,7 +165,7 @@ The HewaSense payout design is **zone-level, binary trigger** (Option A). Two st
 - When quoting accuracy, always specify: model name, dataset (single vs 6-loc), and whether retrospective or forward-validated
 - **Never hardcode model filenames** — always use `active_model.json` for dynamic model resolution
 - After code changes in volume-mounted containers, **always restart the container** to reload Python modules
-- **Stage 6 auto-log is autonomous.** After every pipeline run, it writes the daily log file, updates `memory/MEMORY.md` + 5 business docs, and git pushes — no manual `/log-run` needed for doc currency. `/log-run` is now optional (session notes + context only).
+- **Stage 6 auto-log is a structured log line only.** No files written, no git ops. Pipeline run history is in `pipeline_executions` DB table → Evidence Pack dashboard. Session notes go to external Claude memory via `/log-session`.
 - Advisory lock uses dedicated connection (not xact lock) — ORM commits don't affect it
 - Always verify feature count at model load time (GOTCHA Law #6: must be 83)
 - Use in-memory job store + `misfire_grace_time=1` — prevents phantom duplicate runs after restarts
@@ -183,33 +183,6 @@ The HewaSense payout design is **zone-level, binary trigger** (Option A). Two st
 - **Prod-vs-Dev Compose Drift Trap:** Active stack is always `docker-compose.dev.yml`. If prod containers appear (`climate_db_prod`, `climate_frontend_prod`, `phase2-backend-N`), that is wrong — stop them and restore dev compose. Startup script `/opt/hewasense/start.sh` must always reference dev compose. Added 2026-03-19.
 - **Destructive Action Gate (ALL sensitive work):** Never execute a destructive or irreversible action on user instruction alone. Required: (1) verify independently, (2) show evidence, (3) push back explicitly if data is correct. Applies to shadow run DB, server, git, model artifacts, configs. Reference case: March 19 forecast deletion — 12 valid entries deleted without verifying `issued_at` vs start time. Added 2026-03-19.
 
----
-
-## Logs Index
-
-| Date | Key Events |
-|------|-----------|
-| 2026-03-10 | Sigmoid→CDF fix, LSTM fallback removal, doc sweep |
-| 2026-03-15 | Stale lock NullPool fix, incremental tracking fix, heat_stress doc, LSTM JSON cleanup |
-| 2026-03-16 | Public landing page built + deployed to hewasense.majaribio.com; copy corrections (IP protection); mobile responsiveness; Docker npm install trap resolved |
-| 2026-03-19 | Server startup script + systemd unit; prod-vs-dev drift incident recovered; ghost scheduler removed; March 19 forecasts deleted in error + restored; admin health text() fix; 3 new learned behaviors; shadow run = 72/1,080 — Session 2: HEWASENSE_EXTERNAL_BRIEF.md created; TIRA removed from external docs; Option A binary trigger confirmed + documented across all parametric product docs |
-| 2026-03-20 | Pipeline SUCCESS 40s (84/1,080, 7.8%, 7 run-days); "610 events" framing corrected (location-month-peril exceedances, not independent farmer crises); loss ratio 75% clarified (Morogoro-specific calibration, ~80% is 6-location artefact) — note added to all parametric docs; correlation/reserve note added to Capital Adequacy sections; forecasts accumulated row reformatted (date in value not label) |
-| 2026-03-21 | Pipeline SUCCESS 35s (96/1,080, 8.9%, 8 run-days); ML_MODEL_REFERENCE.md v3.2→v3.6 (Inference Mechanics, ML Frontier, roadmap, CDF explanation); Admin panel: 3 bugs fixed — audit user_id null (JWT decode in middleware), form fields invisible (Tailwind content only scanned LandingPage → expanded to src/**), Users (0) (manager missing from Pydantic role pattern); Bimalab deferred to Q3 2026 post Brier Scores |
-| 2026-03-22 | Pipeline SUCCESS 39s (108/1,080, 10.0%, 9 valid run-days — 8 consecutive Mar 15–22 + 1 isolated Mar 11); Three-scenario pricing model completed across 5 docs (PARAMETRIC_INSURANCE_FINAL, BUSINESS_CASE, HEWASENSE_EXTERNAL_BRIEF, PROJECT_OVERVIEW_CONSOLIDATED, CRITICAL_NUMBERS_VERIFICATION); Tabora tobacco expansion scoped — TABORA_TOBACCO_EXPANSION_SCOPING.md created, deferred to post-shadow-run (Jun 2026 gate) |
-| 2026-03-23 | Pipeline SUCCESS 46s (120/1,080, 11.1%, 10 valid run-days — 9 consecutive Mar 15–23 + 1 isolated Mar 11) |
-| 2026-03-24 | Pipeline SUCCESS 49s (132/1,080, 12.2%, 11 valid run-days — 10 consecutive Mar 15–24); CHIRPS/NASA POWER/NDVI 0 records (incremental, not errors); EvidencePackDashboard execution history table: scrollable maxHeight fix deployed |
-| 2026-03-25 | Pipeline SUCCESS 52s (144/1,080, 13.3%, 12 valid run-days — 11 consecutive Mar 15–25 + 1 isolated Mar 11) |
-| 2026-03-26 | Pipeline SUCCESS 50s (156/1,080, 14.4%, 13 valid run-days — 12 consecutive Mar 15–26 + 1 isolated Mar 11) |
-| 2026-03-27 | Pipeline SUCCESS 92s (168/1,080, 15.6%, 14 valid run-days — 13 consecutive Mar 15–27 + 1 isolated Mar 11); skills library created (/log-run, /deploy, /e2e, /log-session, /log-model-change); Bimalab warm lead initiated — overview sent, formal application deferred to late Jun/Jul 2026 post-Brier Scores |
-| 2026-03-28 | Pipeline SUCCESS 54s (180/1,080, 16.7%, 15 valid run-days — 14 consecutive Mar 15–28 + 1 isolated Mar 11); UNDP timbuktoo AgriTech application drafted (Q1/Q2/Q3); Pay-at-Harvest confirmed as primary channel; dashboard rebranded with HewaSense theme (navy/teal, icon crop, favicon) + deployed; Canva MCP connected; pitch deck content ready (manual build); BUSINESS_CASE Q6 B2B data stream added; Scenario C reframed to TAIS 3-5yr; deploy.md Step 0 gate added |
-| 2026-03-30 | Basis risk proxy strategy designed; Kilombero cooperative call list compiled (MVIWATA, RCT, RUDI, KATRIN contacts + IUCN warm door); NDVI proxy validation built + deployed — ndvi_observations table, GEE monthly composite, orchestrator Stage 3 hook, 17-day backfill complete; Mar 2026 anomaly -0.031 (monitoring zone); Alembic stamp fix documented; first basis risk correlation query run — drought ELEVATED (0.53 avg, 0.87 at 5-6m) + NDVI MONITORING = same direction corroboration; 3 inconsistent NDVI rows fixed (monthly composite now consistent across all 17 run-days); pitch deck overclaims identified + balanced redraft provided (Slides 4-5); dashboard validation banner + sustainability chip fixed (honest 3/8 framing, dynamic loss ratio label); deployed f416527; Pipeline SUCCESS 48s (204/1,080, 18.9%, 17 valid run-days — 16 consecutive Mar 15–30 + 1 isolated Mar 11) |
-
-| 2026-03-31 | Pipeline SUCCESS 70s (216/1,080, 20.0%, 18 valid run-days — 17 consecutive Mar 15–31 + 1 isolated Mar 11); NDVI hook stale .pyc fixed + baseline file committed to repo; shadow run completion automation implemented — orchestrator Stage 5, generate_final_report(), basis_risk_service.py (NDVI proxy corroboration), send_shadow_run_complete_alert(), /basis-risk + /final-report API endpoints |
-| 2026-04-01 | Pipeline SUCCESS 34s (228/1,080, 21.1%, 19 valid run-days — 18 consecutive Mar 15–Apr 1 + 1 isolated Mar 11); NDVI hook fix completed (container restart 09:07 EAT — Mar 31 .pyc deletion was wrong, Scheduler Module Cache Trap); ingestion month-cap audit: NASA POWER + CHIRPS + NDVI all fixed (NaN/partial-month guard, commits a4bfe9b + 11faebd); NaN April row deleted; Tanzania historical crop failure research started (WFP/VAM 2017/18 + 2021/22); home-dir git removed; Stage 6 auto-log built + deployed (auto_log_service.py — daily log write, MEMORY.md update, 5 business doc updates, git push; 6 infra bugs fixed; git push from container verified commit 45be0a7); /log-session Step 6b added (dual memory sync mandate); external memory backfilled 11 entries; test pollution cleaned up commit 5b00d85 |
-
-| 2026-04-02 | Pipeline SUCCESS — 240/1080 (22.2%), Day 20; Stage 6 production-confirmed; off_season alert bug fixed; loss ratio split into actuarial (22.6%) vs forward stress; TRIGGER chip → OFF-SEASON badge; PARAMETRIC_INSURANCE_LOGIC.md updated (sections 6+7) |
-
-| 2026-04-03 | Pipeline PARTIAL — 252/1080 (23.3%), Day 21; ERA5 MARS AccessError (ERA5T restricted, 3-month lag boundary not respected); auto-log git push rejected (server behind remote); both fixed: ERA5_LAG_MONTHS=3 cap + git pull --rebase before push (commit 8cd03a3); merge conflict resolved on server |
-
-*Last updated: 2026-04-03 (session)*
+*Last updated: 2026-04-03*
 *This file is the source of truth for persistent facts. Edit directly to update.*
+*Pipeline run history (daily status, forecasts, duration, sources) is in the Evidence Pack dashboard — /v1/evidence-pack/execution-log.*
