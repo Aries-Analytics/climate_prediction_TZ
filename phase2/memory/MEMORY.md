@@ -30,7 +30,7 @@
 - **Production model file:** Determined by `outputs/models/active_model.json` (currently `xgboost_climate.pkl`, R²=0.8666, 83 features). NEVER hardcode model names
 - Model selection driven entirely by `active_model.json` — if missing or invalid, fail explicitly (GOTCHA Law #1)
 - **Pipeline schedule (shadow-run ACTIVE):** `0 6 * * *` Africa/Dar_es_Salaam (6 AM EAT daily). Deployed to `root@37.27.200.227`, `docker-compose.dev.yml`. Scheduler confirmed next run `2026-03-09 06:00:00+03:00`.
-- **Pipeline status (April 2026):** Shadow run ACTIVE Mar 7 – Jun 12, 2026 (revised — 7 missed days). 12 forecasts/run (3 triggers × 4 horizons × Morogoro). **240/1080 forecasts (22.2%), 20 valid run-days (Mar 11, Mar 15 – Apr 2). Current streak: 19 consecutive (Mar 15–Apr 2) + 1 isolated earlier.** Evidence Pack accumulates; Brier Score auto-evaluation starts ~Jun 9. Completion auto-detected at day 90 — final report + Slack alert fire automatically.
+- **Pipeline status (April 2026):** Shadow run ACTIVE Mar 7 – Jun 12, 2026 (revised — 7 missed days). 12 forecasts/run (3 triggers × 4 horizons × Morogoro). **252/1080 forecasts (23.3%), 21 valid run-days (Mar 11, Mar 15 – Apr 3). Current streak: 20 consecutive (Mar 15–Apr 3) + 1 isolated earlier.** Evidence Pack accumulates; Brier Score auto-evaluation starts ~Jun 9. Completion auto-detected at day 90 — final report + Slack alert fire automatically.
 - Lock contention alerts are suppressed in Slack (expected during brief overlaps)
 - **Advisory lock:** Uses a **dedicated NullPool engine + connection** (separate from ORM session). ORM `commit()` works normally without releasing the lock. Lock released by explicit `pg_advisory_unlock` + `engine.dispose()`. NullPool is mandatory — QueuePool keeps the Postgres session alive and leaks the lock.
 - **Scheduler job store:** In-memory (NOT persistent SQLAlchemyJobStore). Prevents phantom runs from stale `next_run_times` after container restarts.
@@ -207,5 +207,7 @@ The HewaSense payout design is **zone-level, binary trigger** (Option A). Two st
 
 | 2026-04-02 | Pipeline SUCCESS — 240/1080 (22.2%), Day 20; Stage 6 production-confirmed; off_season alert bug fixed; loss ratio split into actuarial (22.6%) vs forward stress; TRIGGER chip → OFF-SEASON badge; PARAMETRIC_INSURANCE_LOGIC.md updated (sections 6+7) |
 
-*Last updated: 2026-04-02 (session)*
+| 2026-04-03 | Pipeline SUCCESS — 252/1080 (23.3%), Day 21 |
+
+*Last updated: 2026-04-03*
 *This file is the source of truth for persistent facts. Edit directly to update.*

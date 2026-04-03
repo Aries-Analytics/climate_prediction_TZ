@@ -417,7 +417,7 @@ USE_TIERED_PAYOUTS = False  # True parametric (fixed rates, not tiered)
 5. ✅ Payout calculation validated — per-farmer fixed rates, primary-tier only, deduplication enforced (Mar 15)
 6. ✅ JWT auth, health checks, Slack alerts operational
 
-### Phase 2 — Shadow Run 🔄 ACTIVE — Day 20 of 90 valid run-days (240/1,080 forecasts, 22.2%)
+### Phase 2 — Shadow Run 🔄 ACTIVE — Day 21 of 90 valid run-days (252/1,080 forecasts, 23.3%)
 
 > **Purpose**: 90 valid-run-day forward validation (= 1,080 ForecastLog entries at 12/day). Pipeline runs daily at 06:00 EAT. No real payouts during this phase — forecasts are logged and evaluated against actual observations to build the evidence pack for reinsurers and TIRA.
 
