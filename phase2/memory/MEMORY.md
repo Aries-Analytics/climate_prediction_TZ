@@ -209,7 +209,7 @@ The HewaSense payout design is **zone-level, binary trigger** (Option A). Two st
 
 | 2026-04-02 | Pipeline SUCCESS — 240/1080 (22.2%), Day 20; Stage 6 production-confirmed; off_season alert bug fixed; loss ratio split into actuarial (22.6%) vs forward stress; TRIGGER chip → OFF-SEASON badge; PARAMETRIC_INSURANCE_LOGIC.md updated (sections 6+7) |
 
-| 2026-04-03 | Pipeline PARTIAL — 252/1080 (23.3%), Day 21; ERA5 MARS AccessError (ERA5T restricted, 3-month lag boundary not respected); auto-log git push rejected (server behind remote); both fixed: ERA5_LAG_MONTHS=3 cap + git pull --rebase before push (commit 8cd03a3) |
+| 2026-04-03 | Pipeline PARTIAL — 252/1080 (23.3%), Day 21; ERA5 MARS AccessError (ERA5T restricted, 3-month lag boundary not respected); auto-log git push rejected (server behind remote); both fixed: ERA5_LAG_MONTHS=3 cap + git pull --rebase before push (commit 8cd03a3); merge conflict resolved on server |
 
-*Last updated: 2026-04-03*
+*Last updated: 2026-04-03 (session)*
 *This file is the source of truth for persistent facts. Edit directly to update.*
