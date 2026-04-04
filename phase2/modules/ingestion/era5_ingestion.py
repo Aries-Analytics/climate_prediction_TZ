@@ -27,6 +27,7 @@ def fetch_era5_data(
     dry_run=False,
     start_year=1985,
     end_year=2025,
+    end_month=None,
     bounds=None,
     variables=None,
     *args,
@@ -185,6 +186,24 @@ def fetch_era5_data(
         # Build year list
         years = [str(year) for year in range(start_year, end_year + 1)]
 
+        # Cap months for the end year to avoid requesting ERA5T (restricted).
+        # If end_year is the current year, cap to last complete month.
+        # If end_month is provided (ERA5_LAG_MONTHS boundary), apply as stricter cap.
+        now = datetime.now(timezone.utc)
+        if end_year >= now.year:
+            last_complete_month = now.month - 1
+            if last_complete_month < 1:
+                end_year = now.year - 1
+                years = [str(year) for year in range(start_year, end_year + 1)]
+                months = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"]
+            else:
+                if end_month is not None:
+                    last_complete_month = min(last_complete_month, end_month)
+                months = [f"{m:02d}" for m in range(1, last_complete_month + 1)]
+            log_info(f"ERA5 months capped to: {end_year}-{months[-1]} (end_month override={end_month})")
+        else:
+            months = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"]
+
         # Request data from CDS using new client
         # New API requires list values for most parameters
         c.retrieve(
@@ -193,7 +212,7 @@ def fetch_era5_data(
                 "product_type": ["monthly_averaged_reanalysis"],
                 "variable": variables,
                 "year": years,
-                "month": ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"],
+                "month": months,
                 "time": ["00:00"],
                 "area": [
                     bounds["north"],
@@ -369,7 +388,28 @@ def ingest_era5(
     if start_date is None:
         start_date = datetime(2010, 1, 1)
     if end_date is None:
-        end_date = datetime.now()
+        end_date = datetime.now(timezone.utc)
+
+    # Cap end_date to the ERA5 finalized reanalysis lag boundary (~3 months).
+    # ERA5 proper (finalized) lags the present by ~3 months.
+    # ERA5T (near real-time, < 3 months old) requires a separate restricted
+    # dataset subscription — requesting it returns MARS AccessError -2.
+    ERA5_LAG_MONTHS = 3
+    now = datetime.now(timezone.utc)
+    lag_month = now.month - ERA5_LAG_MONTHS
+    lag_year = now.year
+    if lag_month <= 0:
+        lag_month += 12
+        lag_year -= 1
+    next_month = lag_month + 1 if lag_month < 12 else 1
+    next_year = lag_year if lag_month < 12 else lag_year + 1
+    era5_safe_end = datetime(next_year, next_month, 1, tzinfo=timezone.utc) - timedelta(days=1)
+    # Normalise end_date to UTC-aware for comparison
+    if hasattr(end_date, 'tzinfo') and end_date.tzinfo is None:
+        end_date = end_date.replace(tzinfo=timezone.utc)
+    if end_date > era5_safe_end:
+        end_date = era5_safe_end
+        log_info(f"ERA5 end_date capped to finalized ERA5 lag boundary: {end_date.date()} (ERA5T restricted)")
 
     # Ensure dates are pandas-compatible timestamps for comparison
     start_date = pd.to_datetime(start_date)
@@ -378,8 +418,8 @@ def ingest_era5(
     log_info(f"Ingesting ERA5 data from {start_date} to {end_date}")
 
     try:
-        # Fetch data using existing function
-        df = fetch_era5_data(start_year=start_date.year, end_year=end_date.year, dry_run=False)
+        # Fetch data — pass end_month so fetch_era5_data never overshoots into ERA5T.
+        df = fetch_era5_data(start_year=start_date.year, end_year=end_date.year, end_month=end_date.month, dry_run=False)
 
         if df.empty:
             log_info("No ERA5 data fetched")
