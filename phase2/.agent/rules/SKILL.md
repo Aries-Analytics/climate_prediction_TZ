@@ -109,9 +109,10 @@
 - **DOC SYNC TRIGGER**: If you retrain models or change `feature_schema.json`, immediately update all 8+ docs files listed in Law #8 — don't wait for the user to ask.
 - **SPRINT AUTO-CLOSE**: After resolving any issue, check `state.json → task_board.resolved` vs `total_issues`. If they match, execute Law #9 immediately — don't wait for the user to notice.
 - Follow Compound Engineering workflow: /ce:brainstorm → /ce:plan → /ce:work → /ce:review → /ce:compound (plugin: compound-engineering v2.61.0)
+- **Dual Modules Path Trap** — `docker-compose.dev.yml` mounts `./modules:/app/modules:ro`, which SHADOWS `./backend/modules/` inside the container. Fixes to `phase2/backend/modules/` have zero effect on the running container. Before editing any ingestion file, confirm which path the container reads: `docker inspect climate_pipeline_scheduler_dev | grep modules`. Always apply fixes to `phase2/modules/ingestion/` — that is the live path. Occurred twice with `era5_ingestion.py` (Apr 3 + Apr 4 2026).
 
 *(Add new guardrails as mistakes happen. Keep under 15 items.)*
 
 ---
 
-*Last updated: 2026-04-03*
+*Last updated: 2026-04-04*
