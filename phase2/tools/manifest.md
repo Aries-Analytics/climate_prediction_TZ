@@ -50,6 +50,16 @@
 | Verify Setup | `backend/verify_setup.py` | Verifies database and environment setup. |
 | Check Data | `backend/check_data_availability.py` | Checks data availability for locations. |
 
+## Ground Truth (Yield Calibration)
+
+| Tool | Path | Description |
+|------|------|-------------|
+| Fetch HarvestStat | `tools/ground_truth/fetch_harveststat.py` | Downloads HarvestStat Africa CSV from Dryad, filters to Tanzania rice, saves processed output. NOTE: Blocked by Cloudflare in automated context — requires manual browser download. |
+| Fetch ILRI Kilombero | `tools/ground_truth/fetch_ilri_kilombero.py` | Downloads ILRI NAFAKA yield XLS from Harvard Dataverse. NOTE: File is restricted (`restricted:true`) — requires Harvard Dataverse account. |
+| Fetch MapSPAM | `tools/ground_truth/fetch_mapspam.py` | Downloads MapSPAM 2020 yield ZIP (71 MB) from Harvard Dataverse S3, extracts Kilombero Basin cells, saves rainfed rice yield (rice_r, MT/Ha). |
+| Fetch FAOSTAT / World Bank | `tools/ground_truth/fetch_faostat_worldbank.py` | Fetches Tanzania rice yield from FAOSTAT QCL API (when available) and World Bank AG.YLD.CREL.KG as fallback. No auth required. |
+| Combine Yield Ground Truth | `tools/ground_truth/combine_yield_ground_truth.py` | Combines all ground truth sources into calibration report + JSON recommendation. Computes triangulated Kilombero baseline and loss thresholds. |
+
 ---
 
 *When adding a new tool: create the script, test it, then add a row here.*

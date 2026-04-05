@@ -99,7 +99,7 @@ A comprehensive climate intelligence platform for Tanzania that integrates multi
 - **Basis Risk**: **20%** (2 false positives out of 10 years) — chosen over the 10% April threshold baseline because it catches **all** crop failures
 - **Key Result**: 100% detection of confirmed crop disasters (2017/2018 and 2021/2022)
 - **Premium**: $20/farmer/year, Loss Ratio: 22.6% (sustainable range; pending forward validation)
-- **Caveat**: Retrospective validation used national yield statistics, not Kilombero-specific farm yields. Forward testing will provide the first real-world ground truth.
+- **Yield Calibration (Apr 2026)**: Kilombero-specific yield ground truth sourced — triangulated baseline 2.099 MT/Ha (MapSPAM 2020 rainfed, HarvestStat Morogoro 1980–2022, World Bank 30yr national). Loss trigger threshold: 1.259 MT/Ha. Retrospective validation used national averages (~3.3 MT/Ha); forward triggers will be validated against the calibrated Kilombero threshold.
 - **Details**: See `PHASE_BASED_COMPARISON.md` in `docs/Basis Risk_Validation_Backward Testing/`
 
 ---
@@ -412,14 +412,14 @@ A comprehensive climate intelligence platform for Tanzania that integrates multi
 
 ### What Still Needs Validation
 - **Forward prediction accuracy** — Shadow run ACTIVE (Mar 7, 2026 → Jun 12, 2026 revised). 7 missed days compensated by extending end date. Brier Score auto-evaluation begins ~Jun 9 as 3-month forecast windows mature. Target: 1,080 ForecastLog entries (90 valid run-days × 12/day).
-- **Kilombero-specific yield correlation** — Retrospective validation used national yield averages, not farm-level Kilombero data.
+- **Kilombero-specific yield correlation** — Retrospective validation used national yield averages. Kilombero-calibrated ground truth now available (baseline 2.099 MT/Ha, loss trigger 1.259 MT/Ha). Forward trigger events will be validated against this threshold.
 - **Data resolution alignment** — CHIRPS (5km) and NASA POWER (50km) satellite grids may not perfectly reflect micro-farm conditions. Correlation (r=0.888) is strong but not definitive.
 - **Farmer adoption and trust** — Untested in real field conditions.
 
 ### Next Steps
 1. **Forward Validation** *(IN PROGRESS)*: Shadow run live Mar 7 – Jun 12, 2026 (revised). Day 21 of 90 (252/1,080 forecasts, 23.3%). First Brier Score evaluation ~Jun 9. Go-live decision: late June 2026.
 2. **Underwriter Engagement**: Present validated prototype to insurance underwriters
-3. **Ground-Truth Data**: Source Kilombero-specific yield data via Tanzania NBS regional reports
+3. **Ground-Truth Data** *(DONE Apr 2026)*: Kilombero yield baseline calibrated — 2.099 MT/Ha, loss trigger 1.259 MT/Ha. See `data/external/ground_truth/`.
 4. **Rain Gauge Calibration**: Deploy 2-3 ground-truthing stations to calibrate satellite resolution
 5. **Scale (If Validated)**: Expand to Mbeya and other high-performing locations
 
@@ -470,7 +470,7 @@ A comprehensive climate intelligence platform for Tanzania that integrates multi
 
 ---
 
-**Last Updated**: March 16, 2026
+**Last Updated**: April 5, 2026
 **Version**: 3.8 (Public Landing Page Live at hewasense.majaribio.com)
 **License**: [Specify license]  
 **Contact**: [Contact information]

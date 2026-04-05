@@ -144,7 +144,7 @@ The following trigger events were cross-referenced with external sources:
 | 2019 | Flood | OCHA | Heavy rains, flooding |
 | 2020 | Flood | Tanzania Met | Above-normal rainfall |
 | 2021 | Drought | FEWS NET | Failed long rains |
-| 2023 | Flood | News Reports | El Ni�o flooding |
+| 2023 | Flood | News Reports | El Ni�o flooding |
 
 ---
 
@@ -167,7 +167,7 @@ The following trigger events were cross-referenced with external sources:
 ## Limitations
 
 1. **Simulated Farmers:** Portfolio is synthetic, not actual enrollees
-2. **No Ground Truth:** Actual yield data not available for full validation
+2. **Yield Ground Truth (updated Apr 2026):** Kilombero-specific yield baseline now calibrated — 2.099 MT/Ha triangulated from MapSPAM 2020 rainfed, HarvestStat Morogoro (1980–2022), and World Bank national cereal series. Loss trigger: 1.259 MT/Ha. Retrospective backtesting used national averages (~3.3 MT/Ha); forward validation will use the calibrated Kilombero threshold.
 3. **Basis Risk:** Cannot be fully quantified without farmer loss reports
 4. **Historical Only:** Past performance doesn't guarantee future results
 

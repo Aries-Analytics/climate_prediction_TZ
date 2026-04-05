@@ -178,10 +178,10 @@ Loss ratio of 22.6% is well within the sustainable range (industry target: 20-40
 - **Climate:** NASA POWER Daily Data (2015-2025)
   - Variables: precipitation, soil moisture index, temperature (for GDD)
   - Resolution: Daily, location-specific (Kilombero Basin)
-- **Yield:** National yield statistics (MT/Ha) from Tanzania NBS and USDA-FAS
+- **Yield:** National yield statistics (MT/Ha) from Tanzania NBS and USDA-FAS (retrospective validation baseline)
   - Used as ground truth for trigger validation
-  - Loss threshold: yield < 2.50 MT/Ha
-  - **Limitation:** These are national averages, not Kilombero-specific farm yields. Kilombero rain-fed yields typically range 1.2-1.8 MT/Ha (vs national ~3.3 MT/Ha), introducing potential misalignment. Forward validation with localized data is planned.
+  - Original loss threshold: yield < 2.50 MT/Ha (national average proxy)
+  - **Updated (Apr 2026):** Kilombero-specific yield ground truth now available. Triangulated baseline: **2.099 MT/Ha**. Calibrated loss trigger: **yield < 1.259 MT/Ha** (40% below Kilombero baseline). Sources: MapSPAM 2020 rainfed (n=356 Kilombero cells, mean 3.197 MT/Ha), HarvestStat Africa Morogoro 1980–2022 (n=24, mean 1.562 MT/Ha), World Bank national cereal 30yr avg (mean 1.538 MT/Ha). Files: `data/external/ground_truth/`.
 
 ### Validation Methodology
 1. Load 10 years of daily climate data
@@ -205,9 +205,14 @@ Loss ratio of 22.6% is well within the sustainable range (industry target: 20-40
 This section documents known trade-offs and gaps for transparency. These are not blockers for the prototype but must be addressed during forward validation and underwriter engagement.
 
 ### 8.1 Yield Ground Truth
-Retrospective validation used **national yield averages** from Tanzania NBS/USDA-FAS, not Kilombero district-level data. National averages may mask sub-regional variation. Kilombero rain-fed yields (1.2-1.8 MT/Ha) are significantly lower than the national average (~3.3 MT/Ha), meaning our loss threshold (< 2.50 MT/Ha) may not perfectly reflect local loss conditions.
+Retrospective validation used **national yield averages** from Tanzania NBS/USDA-FAS, not Kilombero district-level data. National averages may mask sub-regional variation. The national average (~3.3 MT/Ha) is significantly higher than Kilombero rain-fed smallholder yields (1.2–1.8 MT/Ha), which inflated the original loss threshold (< 2.50 MT/Ha).
 
-**Mitigation:** Source Kilombero-specific data from Tanzania NBS regional reports, IRRI Tanzania research datasets, or Zenodo research repositories during the pilot phase.
+**Resolved (Apr 2026):** Kilombero-specific yield ground truth sourced and triangulated from 3 independent datasets:
+- **MapSPAM 2020** — 356 Kilombero Basin rainfed grid cells, mean 3.197 MT/Ha (includes commercial operations)
+- **HarvestStat Africa** — Morogoro region 1980–2022, n=24 seasons, mean 1.562 MT/Ha
+- **World Bank cereal** — Tanzania national 30yr average (1994–2023), mean 1.538 MT/Ha
+
+**Calibrated Kilombero baseline: 2.099 MT/Ha. Loss trigger threshold: 1.259 MT/Ha** (40% below baseline). Data files: `data/external/ground_truth/calibration_recommendation.json`. ILRI NAFAKA demo plot data (4th source) pending author access approval.
 
 ### 8.2 Data Resolution Mismatch
 The model relies on satellite data at varying resolutions:
@@ -232,7 +237,7 @@ The 2015/2016 and 2019/2020 false positives may indicate that the germination-ph
 ### Immediate (Forward Validation)
 1. **Run forward predictions** through 2026 growing season and compare against actual outcomes
 2. **Monitor** phase triggers daily using the automated pipeline + Slack alerts
-3. **Collect** ground-truth yield data from Kilombero pilot cohort for real-world validation
+3. **Kilombero yield ground truth sourced (Apr 2026)** — Calibrated baseline 2.099 MT/Ha, loss trigger 1.259 MT/Ha. See `data/external/ground_truth/`. Forward validation will test trigger outcomes against this calibrated threshold.
 4. **Engage underwriter** with validated prototype and retrospective evidence
 
 ### Medium-Term (Season 2)
@@ -250,4 +255,4 @@ The 2015/2016 and 2019/2020 false positives may indicate that the germination-ph
 
 **Maintained By:** Tanzania Climate Prediction Team  
 **Review Schedule:** Monthly  
-**Last Updated:** March 3, 2026
+**Last Updated:** April 5, 2026
