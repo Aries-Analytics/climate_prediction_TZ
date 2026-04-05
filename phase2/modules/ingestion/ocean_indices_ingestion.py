@@ -5,7 +5,7 @@ Data sources: NOAA Climate Prediction Center
 """
 
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, Tuple
 
 import pandas as pd
@@ -13,7 +13,7 @@ import requests
 from sqlalchemy.orm import Session
 
 from utils.config import get_data_path
-from utils.logger import log_error, log_info
+from utils.logger import log_error, log_info, log_warning
 from utils.validator import validate_dataframe
 
 # NOAA Climate Prediction Center URLs
@@ -142,8 +142,9 @@ def fetch_ocean_indices_data(
         elif iod_df is not None:
             df = iod_df
         else:
-            log_error("No ocean indices data was successfully downloaded")
-            raise ValueError("Failed to fetch any ocean indices data")
+            log_warning(f"No ocean indices data found for years {start_year}-{end_year}. (Data might not be available yet)")
+            # Return empty DataFrame with expected columns
+            return pd.DataFrame(columns=["year", "month", "oni", "enso_phase", "iod"])
 
         df = df.sort_values(["year", "month"]).reset_index(drop=True)
 
@@ -309,7 +310,7 @@ def ingest_ocean_indices(
     if start_date is None:
         start_date = datetime(2010, 1, 1)
     if end_date is None:
-        end_date = datetime.now()
+        end_date = datetime.now(timezone.utc)
 
     # Ensure dates are pandas-compatible timestamps for comparison
     start_date = pd.to_datetime(start_date)

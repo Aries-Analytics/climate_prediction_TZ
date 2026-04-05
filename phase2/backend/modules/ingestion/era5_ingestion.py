@@ -137,15 +137,15 @@ def fetch_era5_data(
         log_info("Dry run mode: returning placeholder data")
         return df
 
-    # Check if cdsapi is installed
+    # Check if ecmwf-datastores-client is installed (replaces deprecated cdsapi)
     try:
-        import cdsapi
+        from ecmwf.datastores import Client as ECMWFClient
     except ImportError:
         log_error(
-            "cdsapi package not installed. Install with: pip install cdsapi\n"
-            "Also configure credentials: https://cds.climate.copernicus.eu/api-how-to"
+            "ecmwf-datastores-client package not installed. Install with: pip install ecmwf-datastores-client\n"
+            "Configure credentials: https://ecmwf.github.io/ecmwf-datastores-client/README.html#configuration"
         )
-        raise ImportError("cdsapi package required for ERA5 data fetching")
+        raise ImportError("ecmwf-datastores-client package required for ERA5 data fetching")
 
     # Use default bounds if not specified
     if bounds is None:
@@ -160,17 +160,21 @@ def fetch_era5_data(
             "surface_pressure",
             "10m_u_component_of_wind",
             "10m_v_component_of_wind",
+            "volumetric_soil_water_layer_1",  # Soil moisture (0-7cm depth)
         ]
 
     try:
-        # Initialize CDS API client with explicit endpoint
-        # This prevents warnings about deprecated API endpoints
-        api_key = os.getenv("ERA5_API_KEY")
+        # Initialize the new ECMWF Data Stores client
+        # Reads from env vars: ECMWF_DATASTORES_URL, ECMWF_DATASTORES_KEY
+        # Or from config file: ~/.ecmwfdatastoresrc
+        api_url = os.getenv("ECMWF_DATASTORES_URL", "https://cds.climate.copernicus.eu/api")
+        api_key = os.getenv("ECMWF_DATASTORES_KEY") or os.getenv("ERA5_API_KEY")
+
         if api_key:
-            c = cdsapi.Client(key=api_key)
+            c = ECMWFClient(url=api_url, key=api_key)
         else:
-            # Fall back to .cdsapirc configuration
-            c = cdsapi.Client()
+            # Fall back to ~/.ecmwfdatastoresrc configuration
+            c = ECMWFClient()
 
         # Prepare download path
         nc_file = get_data_path("raw", "era5_raw.nc")
@@ -203,22 +207,23 @@ def fetch_era5_data(
         # Build year list
         years = [str(year) for year in range(start_year, end_year + 1)]
 
-        # Request data from CDS
+        # Request data from CDS using new client
+        # New API requires list values for most parameters
         c.retrieve(
             "reanalysis-era5-single-levels-monthly-means",
             {
-                "product_type": "monthly_averaged_reanalysis",
+                "product_type": ["monthly_averaged_reanalysis"],
                 "variable": variables,
                 "year": years,
                 "month": months,
-                "time": "00:00",
+                "time": ["00:00"],
                 "area": [
                     bounds["north"],
                     bounds["west"],
                     bounds["south"],
                     bounds["east"],
                 ],
-                "format": "netcdf",
+                "data_format": "netcdf",
             },
             nc_file,
         )
