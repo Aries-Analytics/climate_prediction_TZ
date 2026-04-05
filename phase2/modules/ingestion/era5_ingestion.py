@@ -4,7 +4,7 @@ Fetches reanalysis climate data from Copernicus Climate Data Store (CDS)
 """
 
 import os
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from typing import Optional, Tuple
 
 import pandas as pd
