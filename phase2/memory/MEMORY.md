@@ -300,8 +300,8 @@ The HewaSense payout design is **zone-level, binary trigger** (Option A). Two st
 | Date | Summary |
 |------|---------|
 | 2026-04-05 | Rice yield ground truth pipeline built (MapSPAM, HarvestStat, FAOSTAT/WB); Mar 15–Apr 3 session content recovered into MEMORY.md; yield calibration applied to docs — baseline 2.099 MT/Ha, loss trigger 1.259 MT/Ha |
-| 2026-04-06 | Pipeline failure (chirps, nasa_power, ndvi): tz-naive vs tz-aware TypeError in partial-month cap — fixed with pure date arithmetic, deployed to server, scheduler restarted. Next clean run: Apr 7 06:00 EAT; HEWASENSE_EXTERNAL_BRIEF.md Farmer Value table rendering bug fixed ($ signs escaped) |
+| 2026-04-06 | Pipeline failure fixed (tz-naive/tz-aware); Farmer Value table rendering fix; timeline tone standardised across 9 docs (mid-2026 gate, No-Go branch added, TIRA/reinsurer milestones removed); TARI + IITA dataset research; Chuwa email updated to cover both Harvard Dataverse datasets |
 
-*Last updated: 2026-04-06*
+*Last updated: 2026-04-06 (session 2)*
 *This file is the source of truth for persistent facts. Edit directly to update.*
 *Pipeline run history (daily status, forecasts, duration, sources) is in the Evidence Pack dashboard — /v1/evidence-pack/execution-log.*

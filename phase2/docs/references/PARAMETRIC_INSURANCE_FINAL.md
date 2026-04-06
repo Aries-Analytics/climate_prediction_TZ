@@ -505,7 +505,7 @@ USE_TIERED_PAYOUTS = False  # True parametric (fixed rates, not tiered)
 ---
 
 **Document Owner**: Climate Prediction & Insurance Team
-**Last Updated**: March 21, 2026
+**Last Updated**: April 6, 2026
 **Next Review**: Mid-2026 — post shadow run debrief and Go/No-Go decision
 
 ---

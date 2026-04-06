@@ -3,7 +3,7 @@
 **Status**: ✅ **SHADOW RUN ACTIVE**
 **Pilot**: Morogoro (Kilombero Basin)
 **Version**: 4.0
-**Last Updated**: April 3, 2026
+**Last Updated**: April 6, 2026
 
 > Supersedes: `docs/archive/phase3/AUTOMATED_PIPELINE_STATUS_JAN2026.md`
 
