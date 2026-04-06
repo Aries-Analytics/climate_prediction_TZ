@@ -112,13 +112,13 @@ Current reserves cover the worst-case single-event exposure (100% simultaneous c
 
 | Milestone | Target |
 |---|---|
-| Forward validation closes | June 12, 2026 |
-| Evidence pack compiled | June 15, 2026 |
-| Go/No-Go decision | June 20, 2026 |
-| Regulatory preparation | Late June 2026 |
-| Reinsurer review | July 2026 |
-| Farmer enrollment | Q3 2026 |
-| **First live policies + payout capability** | **Q3 2026** |
+| Forward validation closes | June 2026 |
+| Evidence pack compiled | June 2026 |
+| Go/No-Go decision | Mid-2026 |
+| ↳ If No-Go: threshold recalibration, model retraining, or trigger redesign | TBD |
+| Stakeholder engagement — insurance underwriters | Q3 2026 |
+| Pilot alignment — 1,000 farmer enrollment | Q4 2026 |
+| **First live policies + payout capability** | **2026/27 season (target)** |
 
 ### What a First Payout Looks Like
 
