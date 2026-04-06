@@ -498,5 +498,5 @@ Reserves are adequate. See Financial Parameters table above for full breakdown.
 
 ---
 
-**Document Status:** Shadow Run ACTIVE (Mar 7 – Jun 12, 2026 revised) — Retrospective Validation Complete
-**Next Review:** Late June 2026 (Evidence Pack compilation, Brier Score evaluation begins ~Jun 9)
+**Document Status:** Shadow Run ACTIVE (Mar 7 – Jun 2026 revised) — Retrospective Validation Complete
+**Next Review:** Mid-2026 — post shadow run debrief and Go/No-Go decision

@@ -417,7 +417,7 @@ A comprehensive climate intelligence platform for Tanzania that integrates multi
 - **Farmer adoption and trust** — Untested in real field conditions.
 
 ### Next Steps
-1. **Forward Validation** *(IN PROGRESS)*: Shadow run live Mar 7 – Jun 12, 2026 (revised). Day 21 of 90 (252/1,080 forecasts, 23.3%). First Brier Score evaluation ~Jun 9. Go-live decision: late June 2026.
+1. **Forward Validation** *(IN PROGRESS)*: Shadow run live Mar 7 – Jun 2026 (revised). Day 21 of 90 (252/1,080 forecasts, 23.3%). First Brier Score evaluation ~June 2026. Go/No-Go decision: mid-2026. If No-Go: threshold recalibration, model retraining, or trigger redesign.
 2. **Underwriter Engagement**: Present validated prototype to insurance underwriters
 3. **Ground-Truth Data** *(DONE Apr 2026)*: Kilombero yield baseline calibrated — 2.099 MT/Ha, loss trigger 1.259 MT/Ha. See `data/external/ground_truth/`.
 4. **Rain Gauge Calibration**: Deploy 2-3 ground-truthing stations to calibrate satellite resolution

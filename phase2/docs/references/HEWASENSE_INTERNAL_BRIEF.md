@@ -229,20 +229,19 @@ The value proposition is not the cheapest product — it is the **highest value 
 
 ## 5. The Path from Validation to Live Payouts
 
-If the forward validation returns **Brier Score < 0.25 AND Basis Risk < 30%**, the path to live payouts is clear:
+If the forward validation returns **Brier Score < 0.25 AND Basis Risk < 30%**, the path to live payouts is:
 
-| Milestone                            | Target Date       | Description                                                     |
+| Milestone                            | Target            | Description                                                     |
 | ------------------------------------ | ----------------- | --------------------------------------------------------------- |
-| First 3-month forecasts mature       | ~June 9, 2026     | Brier Score calculation begins                                  |
-| Validation run completes             | June 12, 2026     | 90 valid run-days reached, 1,080 forecast records in hand       |
-| Evidence pack compiled               | June 15, 2026     | Forecast accuracy metrics + full forecast-actual log finalised  |
-| Internal debrief                     | June 15–20       | Predicted vs actual trigger alignment reviewed                  |
-| **Go/No-Go decision**          | **June 20** | Binary gate — criteria are fixed                               |
-| Regulatory preparation               | Late June 2026    | Application documentation assembled with evidence pack          |
-| Reinsurer review                     | July 2026         | Evidence pack handed to prospective reinsurance partners        |
-| Government subsidy MOU               | July 2026         | Subsidy structure formalised                                    |
-| Farmer enrollment                    | Q3 2026           | 1,000 farmers, Kilombero cooperatives                           |
-| **First live policies issued** | **Q3 2026** | First payout within 5–7 days of confirmed primary-tier trigger |
+| First 3-month forecasts mature       | ~June 2026        | Brier Score calculation begins                                  |
+| Validation run completes             | June 2026         | 90 valid run-days reached, 1,080 forecast records in hand       |
+| Evidence pack compiled               | June 2026         | Forecast accuracy metrics + full forecast-actual log finalised  |
+| Internal debrief                     | Mid-2026          | Predicted vs actual trigger alignment reviewed                  |
+| **Go/No-Go decision**                | **Mid-2026**      | Binary gate — criteria are fixed                                |
+| ↳ If No-Go: threshold recalibration, model retraining, or trigger redesign | TBD | Depends on which gate fails |
+| Stakeholder engagement — insurance underwriters | Q3 2026  | Evidence pack presented to prospective underwriting partners    |
+| Pilot alignment — 1,000 farmer enrollment | Q4 2026     | Kilombero cooperatives, subject to underwriter alignment        |
+| **First live policies issued**       | **2026/27 season (target)** | First payout within 5–7 days of confirmed primary-tier trigger |
 
 The go/no-go is binary and the criteria are fixed. A gate with room for negotiation is not a gate.
 
@@ -307,7 +306,7 @@ HewaSense is:
 - **Operationally deployable**: Fully automated pipeline running daily since March 9, 2026, real-time monitoring, live dashboard, evidence pack accumulating
 - **Competitively differentiated**: Most comprehensive multi-peril product for Tanzanian smallholders at the most farmer-friendly price point in the East African market
 
-The forward validation run is not a formality. It is the honest acknowledgment that retrospective validation is not the same as forward validation, and that no farmer should receive a payout based on a model that has only been tested on data it helped create. By June 12, 2026, we will have 90 days of evidence that either confirms or challenges every assumption in this document.
+The forward validation run is not a formality. It is the honest acknowledgment that retrospective validation is not the same as forward validation, and that no farmer should receive a payout based on a model that has only been tested on data it helped create. By June 2026, we will have 90 days of evidence that either confirms or challenges every assumption in this document.
 
 If the Brier Score comes back below 0.25 and basis risk below 30%, the answer is unambiguous: **this is real, we can deploy, and farmers will receive payouts when their crops fail**.
 
@@ -336,7 +335,7 @@ That is what the validation run is for.
 | Cash reserves               | \$150,000                              | Kilombero Basin Pilot Specification                |
 | Max single-event exposure   | \$90,000                               | 1,000 farmers ×\$90 crop failure payout           |
 | Payout-to-price ratio       | 9×                                    | vs Pula Zambia 4.2×, ACRE Kenya 5×               |
-| Live pilot target           | Q3 2026                                | Contingent on June gate and regulatory approval    |
+| Live pilot target           | 2026/27 season (target)                | Contingent on mid-2026 gate and underwriter alignment |
 
 ---
 

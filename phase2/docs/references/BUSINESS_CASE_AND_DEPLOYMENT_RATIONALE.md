@@ -242,24 +242,21 @@ Presenting a single government-subsidy-dependent premium as the baseline does no
 If the shadow run returns **Brier Score < 0.25 AND Basis Risk < 30%**, the path to live payouts is:
 
 ```
-June 12 — Shadow run completes (90 valid run-days)
-June 9  — First 3-month forecasts mature, Brier Score calculation begins
-June 15 — Evidence pack compiled (metrics.json + logs_export.csv)
-June 15-20 — Internal debrief: predicted vs actual trigger alignment
-June 20 — Go/No-Go decision
+June 2026  — Shadow run completes (90 valid run-days)
+June 2026  — First 3-month forecasts mature, Brier Score calculation begins
+June 2026  — Evidence pack compiled (metrics.json + logs_export.csv)
+Mid-2026   — Internal debrief: predicted vs actual trigger alignment
+Mid-2026   — Go/No-Go decision
     │
     ├── GO: Brier < 0.25 + Basis < 30%
-    │   ├── TIRA submission with evidence pack
-    │   ├── Reinsurer review (evidence pack handed over)
-    │   ├── Government subsidy MOU signing
-    │   ├── Farmer enrollment (1,000 farmers, Kilombero cooperatives)
-    │   └── Q3 2026: First live policies issued
+    │   ├── Q3 2026: Stakeholder engagement — insurance underwriters
+    │   ├── Q4 2026: Pilot alignment — 1,000 farmer enrollment (Kilombero cooperatives)
+    │   └── 2026/27 season (target): First live policies issued
     │       └── First payout: within 5-7 days of confirmed primary-tier trigger
     │
     └── NO-GO: Numbers outside gate
-        ├── Retrain XGBoost on 2026 data (6-8 weeks)
-        ├── Recalibrate thresholds if bias detected
-        └── Extend shadow run 30 days → re-evaluate
+        ├── Threshold recalibration, model retraining, or trigger redesign
+        └── Depends on which gate fails — timeline TBD
 ```
 
 The go/no-go is binary and the criteria are fixed. This is intentional — a gate with room for negotiation is not a gate.
@@ -429,12 +426,12 @@ That is what the shadow run is for.
 | Cash reserves               | \$150,000                                 | `KILOMBERO_BASIN_PILOT_SPECIFICATION.md`       |
 | Max single-event exposure   | \$90,000                                  | 1,000 farmers ×\$90                             |
 | Payout-to-price ratio       | 9×                                       | vs Pula Zambia 4.2×, ACRE 5×                   |
-| TIRA submission target      | Late June 2026                            | Post shadow run evidence pack                    |
-| Live pilot target           | Q3 2026                                   | Contingent on June gate                          |
+| Stakeholder engagement      | Q3 2026                                   | Insurance underwriters, post Go decision         |
+| Live pilot target           | 2026/27 season (target)                   | Contingent on mid-2026 gate + underwriter alignment |
 
 ---
 
 **Document Owner**: HewaSense Climate Intelligence & Insurance Team
-**Last Updated**: March 28, 2026
-**Next Review**: June 15, 2026 — post shadow run debrief
+**Last Updated**: April 6, 2026
+**Next Review**: Mid-2026 — post shadow run debrief and Go/No-Go decision
 **Status**: Living document — update after June gate decision

@@ -1,7 +1,7 @@
 # True Parametric Insurance - Final Implementation
 
 **Date**: March 15, 2026
-**Status**: 🔄 SHADOW RUN ACTIVE (Mar 7 – Jun 12, 2026 revised) — Live pilot pending late June 2026 gate
+**Status**: 🔄 SHADOW RUN ACTIVE (Mar 7 – Jun 2026 revised) — Live pilot pending mid-2026 Go/No-Go decision
 **Version**: 4.0 (Phase-Based + Horizon Tiers)
 
 ---
@@ -440,22 +440,21 @@ USE_TIERED_PAYOUTS = False  # True parametric (fixed rates, not tiered)
 - ✅ 90-day evidence pack compilation automated — orchestrator Stage 5 detects completion, generates `shadow_run_final_report.json` (Brier Score + NDVI proxy basis risk), sends Slack go/no-go alert. API: `GET /api/v1/evidence-pack/final-report`
 - ✅ NDVI proxy basis risk automated — `basis_risk_service.py` joins `forecast_logs` × `ndvi_observations` by month; primary-tier drought/crop_failure triggers corroborated by NDVI anomaly < -0.05. API: `GET /api/v1/evidence-pack/basis-risk`
 
-### Phase 3 — Go-Live Decision (Late June 2026) ⏳ PENDING
+### Phase 3 — Go-Live Decision (Mid-2026) ⏳ PENDING
 
 > Gate criteria: Brier Score < 0.25 AND Basis Risk < 30%
-> Timing: shadow run completes Jun 12 → evidence pack compiled → debrief ~Jun 15–20
+> Timing: shadow run completes June 2026 → evidence pack compiled → internal debrief
 
 - ⏳ Shadow run debrief — predicted vs actual trigger alignment
-- ⏳ TIRA regulatory submission with evidence pack
-- ⏳ Reinsurer review
-- ⏳ Go/No-Go: live payouts authorised OR shadow run extended + model retrained on 2026 data
+- ⏳ Go/No-Go decision — binary gate, criteria fixed
+- ⏳ If No-Go: threshold recalibration, model retraining, or trigger redesign — timeline TBD depending on which gate fails
 
-### Phase 4 — Live Pilot (Q3 2026+, contingent on Phase 3 gate)
+### Phase 4 — Live Pilot (2026/27 season, target — contingent on Phase 3 gate)
 
-- ⏳ TIRA approval confirmed
+- ⏳ Q3 2026: Stakeholder engagement — insurance underwriters presented with evidence pack
+- ⏳ Q4 2026: Pilot alignment — 1,000 farmer enrollment (Kilombero cooperatives, subject to underwriter alignment)
 - ⏳ External funding arrangement confirmed (Scenario B: donor/NGO grant ~40%, OR Scenario C: government MOU 50% — Scenario A self-sustaining at scale also viable)
 - ⏳ Farmer education materials distributed (Kilombero Basin cooperatives)
-- ⏳ Enrol 1,000 farmers — collect premiums ($10–$20/farmer depending on funding scenario)
 - ⏳ First live payout issued within 5–7 days of confirmed primary-tier trigger
 - ⏳ Measure farmer satisfaction + calculate actual loss ratio
 - ⏳ Prepare scale-up plan for 2027
@@ -507,7 +506,7 @@ USE_TIERED_PAYOUTS = False  # True parametric (fixed rates, not tiered)
 
 **Document Owner**: Climate Prediction & Insurance Team
 **Last Updated**: March 21, 2026
-**Next Review**: Late June 2026 (post 90 valid-run-day shadow run — review against Brier Score results; shadow run extended to Jun 12 to compensate for 7 missed days)
+**Next Review**: Mid-2026 — post shadow run debrief and Go/No-Go decision
 
 ---
 

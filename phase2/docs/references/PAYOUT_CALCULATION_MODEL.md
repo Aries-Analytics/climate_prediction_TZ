@@ -183,7 +183,7 @@ Using the correct formula (per-farmer model):
 | Objective triggers (rainfall thresholds) | ✅ Implemented |
 | Transparent terms (disclosed upfront) | ✅ Documented |
 | No loss adjustment (automatic payout) | ✅ Designed |
-| Parametric guidelines (TIRA 2023) | ✅ Design-compliant — formal submission pending June 2026 |
+| Parametric guidelines (TIRA 2023) | ✅ Design-compliant — formal submission subject to mid-2026 Go/No-Go decision |
 
 ---
 

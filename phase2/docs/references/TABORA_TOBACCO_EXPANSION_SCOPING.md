@@ -1,7 +1,7 @@
 # Tabora Region — Location 7 Expansion Scoping: Tobacco Parametric Insurance
 
 **Date**: March 22, 2026
-**Status**: 📋 SCOPING — Deferred to post-shadow-run (review gate: late June 2026)
+**Status**: 📋 SCOPING — Deferred to post-shadow-run (review gate: mid-2026)
 **Version**: 1.0
 **Author**: HewaSense Climate Intelligence & Parametric Insurance Team
 
@@ -13,7 +13,7 @@ Tabora Region is Tanzania's dominant tobacco-producing area and a strong candida
 
 The primary constraint is **ESG/tobacco financing exclusions**: IFC, World Bank, and most multilateral donors formally exclude tobacco from financing. Major reinsurers (Munich Re, Swiss Re) are withdrawing from tobacco-related underwriting under ESG commitments. The viable funding path runs through tobacco buyers (Alliance One, Mkwawa), the domestic TAIC pool, and Tanzanian commercial banks — not international development finance.
 
-**Decision deferred to post-shadow-run (late June 2026).** Before committing, a scoping conversation with TTB and at least one tobacco buyer is required to confirm current farmer counts and distribution partnership appetite.
+**Decision deferred to post-shadow-run (mid-2026).** Before committing, a scoping conversation with TTB and at least one tobacco buyer is required to confirm current farmer counts and distribution partnership appetite.
 
 ---
 
@@ -341,11 +341,11 @@ Based on literature synthesis and crop-climate interaction analysis:
 
 ### Timing
 
-**Do not proceed before late June 2026.** This is not ready to action during the shadow run period. The shadow run must complete and the evidence pack (Brier Score < 0.25, basis risk < 30%) must be in hand before any expansion conversation. The evidence pack is the credibility foundation for any approach to buyers or TAIC.
+**Do not proceed before mid-2026.** This is not ready to action during the shadow run period. The shadow run must complete and the evidence pack (Brier Score < 0.25, basis risk < 30%) must be in hand before any expansion conversation. The evidence pack is the credibility foundation for any approach to buyers or TAIC.
 
 ### Pre-Conditions Before Commitment
 
-1. **Shadow run gate passed** (Brier Score < 0.25, late June 2026)
+1. **Shadow run gate passed** (Brier Score < 0.25, mid-2026)
 2. **TTB engagement:** Direct query to TTB for current district-level registered farmer counts
 3. **Buyer partnership conversation:** Approach Alliance One or Mkwawa about embedded distribution — are they interested in co-financing insurance as part of their contract farming obligations?
 4. **TAIC alignment:** Confirm TAIC is open to including HewaSense-modelled parametric tobacco product in their pool
@@ -404,7 +404,7 @@ Based on literature synthesis and crop-climate interaction analysis:
 
 ## 10. Next Review
 
-**Review date:** Late June 2026 — coincides with shadow run evidence pack completion and Brier Score evaluation.
+**Review date:** Mid-2026 — coincides with shadow run evidence pack completion and Go/No-Go decision.
 
 **At that review, assess:**
 1. Did the shadow run pass the gate (Brier Score < 0.25)?
@@ -437,5 +437,5 @@ If all four are positive: proceed to Tabora tobacco pilot design in parallel wit
 
 **Document Owner**: HewaSense Climate Intelligence & Parametric Insurance Team
 **Created**: March 22, 2026
-**Next Review**: Late June 2026 (post shadow run gate)
+**Next Review**: Mid-2026 (post shadow run gate)
 **Status**: SCOPING — not committed to roadmap until post-shadow-run pre-conditions are met

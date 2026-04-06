@@ -128,4 +128,4 @@ docker exec climate_backend_dev python scripts/seed_models_and_forecasts.py
 
 **June 12, 2026**: Shadow run target completion — 90 valid run-days, 1,080 ForecastLog entries.
 
-**Late June 2026**: Go-Live Decision — evidence pack (metrics.json + logs_export.csv + compliance statement) compiled and reviewed against Brier Score < 0.25 AND Basis Risk < 30% gate criteria. This provides the first real forward-validation evidence for TIRA submission and underwriter engagement.
+**Mid-2026**: Go/No-Go Decision — evidence pack (metrics.json + logs_export.csv + compliance statement) compiled and reviewed against Brier Score < 0.25 AND Basis Risk < 30% gate criteria. This provides the first real forward-validation evidence for underwriter engagement. If No-Go: threshold recalibration, model retraining, or trigger redesign — timeline TBD.
