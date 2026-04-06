@@ -137,6 +137,7 @@
 - **Off-season forecasts appearing as active payout triggers:** `GET /climate-forecasts/alerts` had no crop calendar filter — August drought at 88% (4-month horizon, dry season peak) surfaced as a payout trigger despite no insured crop in the field. Fix (2026-04-02): `continue` guard after `get_kilombero_stage()` returns `off_season` in `climate_forecasts.py`. Commits `e2c649f`.
 - **Wrong `PREMIUM_PER_FARMER = 91`:** Stale value from old backtesting scenario. Pilot premium is $20/farmer/year (Scenario A). Was inflating `total_premium_income` to $91,000 and underreporting loss ratio as 114.7% instead of correct 200% cap. Fix (2026-04-02): corrected to `20`. Commit `67aa269`.
 - **Dashboard conflating Stage 1 reserve sizing with confirmed payout trigger:** "1 active payout trigger", red error banner, enabled "Approve Payout Batch" button — all misleading during shadow run with 0mm observed deficit. Fix (2026-04-02): language relabeled to forecast alerts, PayoutActionCard locked with `shadowRunActive` prop, loss ratio split into actuarial vs forward stress. Commits `67aa269`, `e2c649f`, `9a48130`.
+- **Partial-month cap: tz-naive vs tz-aware TypeError (Apr 6):** `last_complete_month_end` built from `datetime.now(timezone.utc)` → tz-aware pandas Timestamp; `end_date` stripped to tz-naive. Comparison `end_date > last_complete_month_end` throws `TypeError`. Affected chirps, nasa_power, ndvi (all 3 added the cap on Apr 1). ERA5 unaffected — it normalises `end_date` to UTC-aware before comparison. Only triggered Apr 6 — first day incremental manager returned a current-month end_date. Fix (2026-04-06): replaced `now_utc = datetime.now(timezone.utc)` + tz-aware `pd.to_datetime` with `_today = date.today()` + `date(_today.year, _today.month, 1) - timedelta(days=1)`. Added missing `date` import to nasa_power and ndvi. Commit `40b1bc7`.
 
 ## Q2 2026 Roadmap (Deferred)
 
@@ -299,7 +300,8 @@ The HewaSense payout design is **zone-level, binary trigger** (Option A). Two st
 | Date | Summary |
 |------|---------|
 | 2026-04-05 | Rice yield ground truth pipeline built (MapSPAM, HarvestStat, FAOSTAT/WB); Mar 15–Apr 3 session content recovered into MEMORY.md; yield calibration applied to docs — baseline 2.099 MT/Ha, loss trigger 1.259 MT/Ha |
+| 2026-04-06 | Pipeline failure (chirps, nasa_power, ndvi): tz-naive vs tz-aware TypeError in partial-month cap — fixed with pure date arithmetic, deployed to server, scheduler restarted. Next clean run: Apr 7 06:00 EAT |
 
-*Last updated: 2026-04-05*
+*Last updated: 2026-04-06*
 *This file is the source of truth for persistent facts. Edit directly to update.*
 *Pipeline run history (daily status, forecasts, duration, sources) is in the Evidence Pack dashboard — /v1/evidence-pack/execution-log.*
