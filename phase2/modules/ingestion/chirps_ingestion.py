@@ -437,8 +437,8 @@ def ingest_chirps(
     # sum that is 70-90% too low — a real number, not NaN, so it passes
     # validation silently and corrupts the primary ML feature (rainfall_mm).
     # ERA5 and NASA POWER apply the same guard.
-    now_utc = datetime.now(timezone.utc)
-    last_complete_month_end = pd.to_datetime(now_utc.replace(day=1) - timedelta(days=1))
+    _today = date.today()
+    last_complete_month_end = pd.to_datetime(date(_today.year, _today.month, 1) - timedelta(days=1))
     if end_date > last_complete_month_end:
         end_date = last_complete_month_end
         log_info(f"CHIRPS end_date capped to last complete month: {end_date.date()}")

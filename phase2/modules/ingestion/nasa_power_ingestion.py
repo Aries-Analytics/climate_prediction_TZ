@@ -5,7 +5,7 @@ Fetches climate data from NASA POWER API for Tanzania region
 
 import os
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from typing import Optional, Tuple
 
 import pandas as pd
@@ -312,8 +312,8 @@ def ingest_nasa_power(
     # for all variables that corrupt the ML feature set. ERA5 applies the
     # same guard. The full month becomes available on the 1st of the next
     # month and will be picked up by the next daily pipeline run.
-    now_utc = datetime.now(timezone.utc)
-    last_complete_month_end = pd.to_datetime(now_utc.replace(day=1) - timedelta(days=1))
+    _today = date.today()
+    last_complete_month_end = pd.to_datetime(date(_today.year, _today.month, 1) - timedelta(days=1))
     if end_date > last_complete_month_end:
         end_date = last_complete_month_end
         log_info(f"NASA POWER end_date capped to last complete month: {end_date.date()}")
