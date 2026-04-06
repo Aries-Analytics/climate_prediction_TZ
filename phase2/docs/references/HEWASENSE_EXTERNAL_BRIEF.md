@@ -73,8 +73,8 @@ The program is calibrated to a **75% loss ratio** — $0.75 of every $1 in premi
 
 | | Pula (Zambia) | ACRE (Kenya) | HewaSense |
 |---|---|---|---|
-| Farmer cost | $6/year | $8/year | ~$10–12/year |
-| Max payout | $25 | $40 | $90 |
+| Farmer cost | \$6/year | \$8/year | \$10–12/year |
+| Max payout | \$25 | \$40 | \$90 |
 | Perils covered | 1 | 2 | 3 |
 | Payout-to-price ratio | 4.2× | 5× | **9×** |
 
