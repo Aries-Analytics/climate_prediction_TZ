@@ -63,7 +63,8 @@
 
 | Metric | Value |
 |--------|-------|
-| **Pilot Locations** | 6 (Arusha, Dar es Salaam, Dodoma, Mbeya, Mwanza, Morogoro) |
+| **Production Pilot** | 1 (Morogoro — Kilombero Basin, 1,000 rice farmers) |
+| **Training Locations** | 6 (Arusha, Dar es Salaam, Dodoma, Mbeya, Mwanza, Morogoro) |
 | **Data Sources** | 5 (NASA POWER, ERA5, CHIRPS, NDVI, Ocean Indices) |
 | **Total Samples** | 1,872 (6 locations × 312 months) |
 | **Time Period** | 26 years (2000-2025) |
@@ -83,8 +84,8 @@
 
 ### Key Features
 
-- ✅ **86.7% prediction accuracy** (XGBoost R²=0.8666, 6-location, data leakage fix)
-- ✅ **6 pilot locations** in Tanzania
+- ✅ **86.7% prediction accuracy** (XGBoost R²=0.8666, 6-location training, data leakage fix)
+- ✅ **Morogoro production pilot** — Kilombero Basin, 1,000 rice farmers
 - ✅ **5 authoritative data sources** integrated
 - ✅ **5 interactive dashboards**
 - ✅ **Automated pipeline** with scheduling
@@ -160,8 +161,8 @@
   - [BUSINESS_REPORTS_GUIDE.md](./guides/BUSINESS_REPORTS_GUIDE.md) - Business reporting
   - [MODEL_PIPELINE_README.md](./guides/MODEL_PIPELINE_README.md) - ML pipeline usage
   - [QUICK_START_PROCESSING.md](./guides/QUICK_START_PROCESSING.md) - Data processing
-  - [AUTOMATED_PIPELINE_DEPLOYMENT.md](./AUTOMATED_PIPELINE_DEPLOYMENT.md) - Production deployment
-  - [MOROGORO_PILOT_CONFIGURATION.md](./MOROGORO_PILOT_CONFIGURATION.md) - Pilot setup
+  - [AUTOMATED_PIPELINE_DEPLOYMENT.md](./guides/AUTOMATED_PIPELINE_DEPLOYMENT.md) - Production deployment
+  - [MOROGORO_PILOT_CONFIGURATION.md](./pilots/kilombero/MOROGORO_PILOT_CONFIGURATION.md) - Pilot setup
 
 - **[references/](./references/)** - Core reference documents (sources of truth)
   - [PROJECT_OVERVIEW_CONSOLIDATED.md](./references/PROJECT_OVERVIEW_CONSOLIDATED.md) - Complete overview
@@ -275,77 +276,48 @@ Please create an issue or update the relevant core document.
 
 ## 🆕 What's New
 
-### January 22, 2026 - Testing & Monitoring Infrastructure
+### April 2026 - Documentation Restructure & Pipeline Stability
 
-- ✅ **Mock API implementations** - All 5 data sources (100x faster testing)
-- ✅ **Slack integration** - Real-time pipeline alerts (tested and working)
-- ✅ **Monitoring scripts** - Health checks, quality validation, dev dashboard
-- ✅ **Comprehensive documentation** - Dev deployment, monitoring guide, testing reference
-- ✅ **Integration tests** - Full test suite with mocked external APIs
-- ✅ **Retry best practices** - Documented optimal configurations for dev (3) and prod (5-7)
+- ✅ **Docs Phase A restructure** — `pilots/kilombero/`, `validation/`, `archive/legacy-reports/` created; stale root files cleared
+- ✅ **Pipeline stability** — tz-naive/tz-aware TypeError fixed (chirps, nasa_power, ndvi); ERA5 date/datetime TypeError fixed
+- ✅ **All 4 data sources clean** — chirps, nasa_power, ndvi confirmed Apr 7; era5 fix deployed, expected clean Apr 8
+- ✅ **Scripts reorganised** — `train_pipeline.py`, `run_evaluation.py`, `audit.py`, `verify_data_leakage.py` moved to `scripts/`
 
-**New Documentation**:
-- [DEV_DEPLOYMENT.md](DEV_DEPLOYMENT.md) - Development environment setup
-- [MONITORING_GUIDE.md](MONITORING_GUIDE.md) - Monitoring and alerting
-- [TESTING_MONITORING_REFERENCE.md](TESTING_MONITORING_REFERENCE.md) - Quick reference
-- [Mock API Guide](../tests/mocks/README.md) - Integration testing with mocks
+### March 2026 - Shadow Run Launch & Platform Hardening
 
-### January 22, 2026 (PM) - Automated Pipeline Configuration
+- ✅ **Shadow run active** — daily pipeline at 6 AM EAT, Mar 7 – Jun 12, 2026 (90 run-days, 1,080 forecast target)
+- ✅ **Public landing page live** — `hewasense.majaribio.com`
+- ✅ **Evidence Pack dashboard** — live run-day counter, forecast accumulation, execution history
+- ✅ **Phase-Based Dynamic Model deployed** — 4-phase GDD tracker, 20% basis risk, 100% catch rate on confirmed disasters
+- ✅ **Probabilistic trigger system** — `norm.cdf()` replacing sigmoid; physical Kilombero thresholds from `configs/trigger_thresholds.yaml`
+- ✅ **Stage 6 auto-log** — daily pipeline commits session notes and updates 5 business docs autonomously
+- ✅ **Shadow run completion automation** — Stage 5 detects day-90, generates final Evidence Pack + Brier Score report automatically
 
-- ✅ **Pipeline scheduler configured** - Daily execution at 6:00 AM EAT
-- ✅ **Morogoro pilot focus** - Kilombero Basin, 1,000 rice farmers
-- ✅ **Slack alert strategy** - 7 alert categories with clear examples
-- ✅ **Pipeline strategy assessment** - Comparison of 5 approaches, current approach optimal
-- ✅ **Deployment documentation** - Complete production deployment guide
-- ✅ **Configuration validated** - Pilot mode, coordinates, crop parameters
+### January–February 2026 - Foundation
 
-**New Documentation**:
-- [AUTOMATED_PIPELINE_DEPLOYMENT.md](AUTOMATED_PIPELINE_DEPLOYMENT.md) - Production deployment
-- [SLACK_ALERT_STRATEGY.md](SLACK_ALERT_STRATEGY.md) - Comprehensive alert strategy
-- [MOROGORO_PILOT_CONFIGURATION.md](MOROGORO_PILOT_CONFIGURATION.md) - Pilot setup guide
-- [PIPELINE_STRATEGY_ASSESSMENT.md](PIPELINE_STRATEGY_ASSESSMENT.md) - Approach comparison
-### January 5, 2026 - Data Pipeline Robustness Improvements
-
-- ✅ **Resolved 10 critical test failures** - 100% test pass rate achieved
-- ✅ **Fixed temporal column consistency** - All data sources now include year/month
-- ✅ **Improved NaN handling** - Reduced sample loss from 100% to <10%
-- ✅ **Eliminated duplicates** - Removed 1,872 duplicate records
-- ✅ **Fixed flood triggers** - Insurance triggers now activate correctly
-- ✅ **Production-ready pipeline** - Comprehensive validation and error handling
-
-See [JANUARY_2026_PIPELINE_IMPROVEMENTS.md](./current/JANUARY_2026_PIPELINE_IMPROVEMENTS.md) for details.
-
-### January 4, 2026 - Documentation Consolidation
-
-- ✅ **Consolidated 80+ docs** into 6 core references
-- ✅ **Eliminated duplication** - single source of truth for each topic
-- ✅ **Improved navigation** - clear structure and quick links
-- ✅ **Updated all data** - consistent 6-location metrics
-- ✅ **Archived superseded docs** - organized by phase
-
-### December 30, 2025 - 6-Location Expansion
-
-- ✅ **Added Morogoro** - 6th pilot location
-- ✅ **Improved spatial CV** - R² 0.812 ± 0.046 (+9% vs 5-location)
-- ✅ **Fixed data leakage** - Realistic R² of 0.8666 (XGBoost, 11 leaky features removed)
-- ✅ **Complete automation** - Single-command pipeline
-- ✅ **1,872 total samples** - 26 years across 6 locations
+- ✅ **Data pipeline** — 5 sources, incremental ingestion, month-capping, partial-month guards
+- ✅ **Model training** — XGBoost R²=0.8666 (83 features, 11 leaky features removed)
+- ✅ **Testing infrastructure** — 180+ tests, 80%+ coverage, mock APIs
+- ✅ **Docker deployment** — `docker-compose.dev.yml`, systemd auto-restart on server reboot
+- ✅ **Scheduler** — `CronTrigger` with explicit EAT timezone, in-memory job store, advisory lock (NullPool)
 
 ---
 
 ## 🎯 Project Status
 
 **Phase**: Forward Validation (Shadow Run)
-**Version**: 3.4
-**Last Updated**: March 8, 2026
-**Status**: 🔵 Shadow Run ACTIVE (Mar 7 – Jun 12, 2026 revised)
+**Version**: 3.5
+**Last Updated**: April 7, 2026
+**Status**: 🔵 Shadow Run ACTIVE (Mar 7 – Jun 2026)
 
-**Validated**:
+**Current state**:
 - ✅ All features implemented and documented
 - ✅ Comprehensive testing (180+ tests, 80%+ coverage)
 - ✅ Docker-ready deployment (live at hewasense.majaribio.com)
-- ✅ Documentation consolidated and organized
+- ✅ Documentation restructured (Phase A complete)
+- ✅ Yield ground truth calibrated — baseline 2.099 MT/Ha, loss trigger 1.259 MT/Ha
 - 🔵 Forward validation in progress — first Brier Scores ~Jun 9, 2026
+- ⏳ Go/No-Go decision mid-2026 → underwriter engagement Q3 → pilot alignment Q4
 
 ---
 
