@@ -303,7 +303,7 @@ The HewaSense payout design is **zone-level, binary trigger** (Option A). Two st
 |------|---------|
 | 2026-04-05 | Rice yield ground truth pipeline built (MapSPAM, HarvestStat, FAOSTAT/WB); Mar 15–Apr 3 session content recovered into MEMORY.md; yield calibration applied to docs — baseline 2.099 MT/Ha, loss trigger 1.259 MT/Ha |
 | 2026-04-06 | Pipeline failure fixed (tz-naive/tz-aware); Farmer Value table rendering fix; timeline tone standardised across 9 docs (mid-2026 gate, No-Go branch added, TIRA/reinsurer milestones removed); TARI + IITA dataset research; Chuwa email updated to cover both Harvard Dataverse datasets |
-| 2026-04-07 | ERA5 date vs datetime TypeError fixed (`c77be7a`) — hasattr guard replaced with isinstance check; chirps/nasa_power/ndvi confirmed clean; all 4 sources expected clean Apr 8; docs Phase A restructure complete (pilots/, validation/, archive/ folders); phase2/ root cleared; script path fixes after moves (`73721e2`) |
+| 2026-04-07 | ERA5 date vs datetime TypeError fixed (`c77be7a`) — hasattr guard replaced with isinstance check; chirps/nasa_power/ndvi confirmed clean; all 4 sources expected clean Apr 8; docs Phase A restructure complete (pilots/, validation/, archive/ folders); phase2/ root cleared; script path fixes after moves (`73721e2`); /log-session drift guardrail added; docs/README.md + phase2/README.md comprehensively updated (stale structure, script paths, feature count, ERA5 env var, test count) |
 
 *Last updated: 2026-04-07*
 *This file is the source of truth for persistent facts. Edit directly to update.*
