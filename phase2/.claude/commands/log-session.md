@@ -113,6 +113,19 @@ Three locations to update:
 
 File: `C:\Users\YYY\.claude\projects\c--Users-YYY-Omdena-Capstone-project-capstone-project-lordwalt-phase2\memory\MEMORY.md` (Claude Code session memory — NOT committed to git).
 
+> **Why this file can drift:** The external memory has no git history. If a session runs out of context mid-log, the write may never execute — and the session summary will describe it as done because it was *intended*, not because it was *confirmed*. Always verify by reading the file directly. Never trust a summary claim about this file.
+
+**Verification step (mandatory — do this before writing):**
+
+Read the last few entries of the external memory Logs Index and compare against the repo MEMORY.md Logs Index. If they diverge (dates present in repo but missing in external), backfill the gap first before adding today's entry.
+
+```bash
+# Check last entry date in external memory Logs Index
+grep "202[0-9]-[0-9][0-9]-[0-9][0-9]" "C:\Users\YYY\.claude\projects\c--Users-YYY-Omdena-Capstone-project-capstone-project-lordwalt-phase2\memory\MEMORY.md"
+```
+
+If the last date in external memory is behind the last date in repo MEMORY.md — backfill all missing entries before proceeding.
+
 This file must be kept in sync with the repo MEMORY.md. Two locations to update:
 
 1. **Logs Index** — add or append a bullet entry in the same format as the repo Logs Index:
@@ -149,6 +162,7 @@ Then push to remote immediately.
 - [ ] `memory/MEMORY.md` (repo) Logs Index updated (no duplicate rows)
 - [ ] `memory/MEMORY.md` (repo) Key Facts updated if durable facts changed
 - [ ] `memory/MEMORY.md` (repo) Last Updated date updated
+- [ ] External Claude memory verified by reading (not assumed from summary) — gaps backfilled if found
 - [ ] External Claude memory Logs Index updated (same entry, bullet format)
 - [ ] External Claude memory antipatterns/bugs in sync if new ones added
 - [ ] Committed and pushed
