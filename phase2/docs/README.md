@@ -1,8 +1,8 @@
 # Tanzania Climate Intelligence Platform - Documentation
 
-**Last Updated**: March 8, 2026
-**Status**: 🔵 Shadow Run ACTIVE (Mar 7 – Jun 12, 2026 revised)
-**Version**: 3.4 (Shadow Run + Evidence Pack + Historical Validation)
+**Last Updated**: April 7, 2026
+**Status**: 🔵 Shadow Run ACTIVE (Mar 7 – Jun 2026)
+**Version**: 3.5 (Phase A restructure — pilots/, validation/, legacy-reports/ archived)
 
 ---
 
@@ -183,16 +183,26 @@
   - [dataflow.md](./diagrams/dataflow.md) - Data flow diagrams
   - [sequence.md](./diagrams/sequence.md) - Sequence diagrams
 
-- **[reports/](./reports/)** - Historical status reports and summaries
-  - Timestamped implementation reports
-  - Pipeline execution summaries
-  - Model development diaries
+- **[pilots/kilombero/](./pilots/kilombero/)** - Kilombero Basin pilot operations
+  - [KILOMBERO_BASIN_PILOT_SPECIFICATION.md](./pilots/kilombero/KILOMBERO_BASIN_PILOT_SPECIFICATION.md) - Active pilot spec
+  - [SHADOW_RUN_DEPLOYMENT_GUIDE.md](./pilots/kilombero/SHADOW_RUN_DEPLOYMENT_GUIDE.md) - Deployment guide
+  - [MODEL_METRICS_AND_SHADOW_RUN_IMPLICATIONS.md](./pilots/kilombero/MODEL_METRICS_AND_SHADOW_RUN_IMPLICATIONS.md) - Metrics
+  - [MEDIUM_ARTICLE_PART_2_FINAL.md](./pilots/kilombero/MEDIUM_ARTICLE_PART_2_FINAL.md) - Public write-up
+
+- **[validation/](./validation/)** - Backtesting and basis risk validation
+  - [PHASE_BASED_COMPARISON.md](./validation/PHASE_BASED_COMPARISON.md) - Phase-based model comparison (master)
+  - [KILOMBERO_BACKTESTING_REPORT.md](./validation/KILOMBERO_BACKTESTING_REPORT.md) - Full backtesting report
+  - [KILOMBERO_BACKTESTING_REPORT_IN_SAMPLE.md](./validation/KILOMBERO_BACKTESTING_REPORT_IN_SAMPLE.md) - In-sample
+  - [KILOMBERO_BACKTESTING_REPORT_OUT_OF_SAMPLE.md](./validation/KILOMBERO_BACKTESTING_REPORT_OUT_OF_SAMPLE.md) - Out-of-sample
+  - [BACKTESTING_SUMMARY_v2.md](./validation/BACKTESTING_SUMMARY_v2.md) - Summary (current)
+  - Supporting PDFs: HewaSense_Retrospective_Validation.pdf, BACKTESTING_SUMMARY_v2.pdf
 
 - **[archive/](./archive/)** - Historical documentation (superseded)
+  - [archive/_INDEX.md](./archive/_INDEX.md) - What was consolidated where and when
   - [archive/phase1/](./archive/phase1/) - Phase 1 (single location, 2010-2025)
   - [archive/phase2/](./archive/phase2/) - Phase 2 (5 locations)
   - [archive/phase3/](./archive/phase3/) - Phase 3 superseded documents
-  - See [archive/README.md](./archive/README.md) for details
+  - [archive/legacy-reports/](./archive/legacy-reports/) - Historical status/completion reports
 
 ### Quick Reference
 

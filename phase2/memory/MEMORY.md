@@ -142,6 +142,7 @@
 
 ## Q2 2026 Roadmap (Deferred)
 
+- **Docs Phase B restructure (post-June gate):** Phase A complete (Apr 7 — empty files deleted, reports archived, pilots/ and validation/ folders created). Phase B deferred to post-shadow-run. Actions: (1) merge 3 pipeline status docs → `current/PIPELINE_CURRENT_STATUS.md`; (2) merge `CLAIMS_MANAGEMENT_DASHBOARD_SPEC.md` → `FRONTEND_DASHBOARDS_COMPLETE_REFERENCE.md`; (3) create `domains/` for parametric insurance + climate science materials; (4) create `devops/` for GOTCHA framework + deployment + monitoring; (5) reorganise `archive/phase3/` (79 flat files) by topic; (6) extract HewaSense PDF guides to markdown; (7) merge `BACKTESTING_SUMMARY.md` + `v2.md` into single file. See `docs/archive/_INDEX.md` for full Phase B plan.
 - **Soil moisture dual-index trigger:** DB column + ingestion ready (`SOIL_MOISTURE_FUTURE_ENHANCEMENT.md`). Needs: historical backfill (2020-2025) → retrain models → calibrate dual-index triggers → backtest → deploy. ~1-2 weeks effort.
 - **Kilombero Basin geographic sub-zones:** Need to ingest climate data at basin sub-coordinates (North/Central/South Kilombero) before adding Location records — without data, forecasts fail gracefully but produce nothing useful.
 - **5 training cities (Arusha, DSM, Dodoma, Mbeya, Mwanza) are training diversity tools, NOT production pilot targets.** Do not add them to the `locations` DB table as production forecasting locations.
