@@ -50,109 +50,79 @@ Phase 2 delivers a complete ML system that:
 
 ```
 phase2/
-├── modules/
-│   ├── ingestion/              # Data fetching from 5 sources
-│   │   ├── nasa_power_ingestion.py
-│   │   ├── era5_ingestion.py
-│   │   ├── chirps_ingestion.py
-│   │   ├── ndvi_ingestion.py
-│   │   └── ocean_indices_ingestion.py
-│   ├── processing/             # Domain-specific processing
-│   │   ├── process_nasa_power.py
-│   │   ├── process_era5.py
-│   │   ├── process_chirps.py    # Drought/flood triggers
-│   │   ├── process_ndvi.py
-│   │   ├── process_ocean_indices.py
-│   │   └── merge_processed.py   # Merge all sources
-│   └── reporting/
-│       └── output_reporting.py
+├── args/                       # GOTCHA Args layer — persona config, model config
+├── backend/                    # FastAPI application
+│   └── app/
+│       ├── api/                # REST API routes (28 endpoints)
+│       ├── core/               # Database, config, security
+│       ├── models/             # SQLAlchemy ORM models
+│       └── services/           # Business logic, pipeline orchestration
+│           └── pipeline/       # Scheduler, orchestrator, ingestion tracking
 │
-├── preprocessing/              # ML feature engineering
-│   └── preprocess.py          # Lag, rolling, interactions, normalization
+├── configs/                    # Trigger thresholds, pipeline config
+├── context/                    # GOTCHA Context layer — domain knowledge
+├── data/
+│   ├── external/               # Ground truth (MapSPAM, HarvestStat, FAOSTAT)
+│   └── processed/              # master_dataset.csv (1,878 rows, 6 locations, unscaled)
 │
-├── pipelines/                  # Pipeline orchestration
-│   ├── run_data_pipeline.py   # Data ingestion & processing
-│   ├── quick_model_pipeline.py # Fast prototyping (~2-5 min)
-│   ├── model_development_pipeline.py # Full ML pipeline (spec-compliant)
-│   └── README.md              # Pipeline documentation
+├── docs/                       # Documentation (see docs/README.md)
+│   ├── current/                # Active status documents, executive summary
+│   ├── guides/                 # How-to guides, deployment, monitoring
+│   ├── pilots/kilombero/       # Kilombero Basin pilot operations
+│   ├── references/             # Core reference documents (sources of truth)
+│   ├── validation/             # Backtesting reports, basis risk validation
+│   └── archive/                # Superseded documents (phase1/, phase2/, phase3/)
 │
-├── train_pipeline.py          # Enhanced ML training pipeline (RECOMMENDED)
-├── train_pipeline_old_deprecated.py # Old version (DO NOT USE)
+├── evaluation/                 # Model evaluation utilities
+├── frontend/                   # React 18 + TypeScript + Material-UI dashboard
+│   └── src/
+│       ├── components/         # Dashboard components (7 views)
+│       └── services/           # API client, data services
 │
-├── models/                     # Model implementations
+├── goals/                      # GOTCHA Goals layer
+├── hardprompts/                # GOTCHA Hard Prompts layer
+├── memory/                     # Project memory and session logs
+├── models/                     # ML model implementations
 │   ├── random_forest_model.py
 │   ├── xgboost_model.py
 │   ├── lstm_model.py
 │   ├── ensemble_model.py
-│   ├── train_models.py        # Training orchestration
-│   ├── evaluation.py          # Evaluation engine
-│   ├── experiment_tracking.py # Experiment logging
-│   └── model_config.py        # Hyperparameters
+│   └── train_models.py         # Training orchestration
 │
-├── evaluation/                 # Evaluation utilities
-│   └── evaluate.py
+├── modules/
+│   ├── ingestion/              # Data fetching from 5 sources
+│   │   ├── nasa_power_ingestion.py
+│   │   ├── era5_ingestion.py   # Uses ecmwf-datastores-client (not cdsapi)
+│   │   ├── chirps_ingestion.py
+│   │   ├── ndvi_ingestion.py
+│   │   └── ocean_indices_ingestion.py
+│   └── processing/             # Domain-specific processing & trigger logic
 │
-├── utils/                      # Shared utilities
-│   ├── config.py              # Configuration management
-│   ├── logger.py              # Logging utilities
-│   ├── validator.py           # Data validation
-│   ├── validation.py          # Additional validators
-│   ├── cache.py               # Caching utilities
-│   ├── versioning.py          # Data versioning
-│   └── performance.py         # Performance monitoring
+├── outputs/
+│   ├── models/                 # Trained models + active_model.json (source of truth)
+│   └── processed/              # ML features (z-score normalised — NOT for display)
 │
-├── tests/                      # 45+ comprehensive tests
-│   ├── test_pipeline.py
-│   ├── test_merge_processed.py
-│   ├── test_chirps_processing.py
-│   ├── test_earth_engine_setup.py
-│   ├── test_cache.py
-│   ├── test_versioning.py
-│   └── ...
+├── pipelines/                  # Pipeline orchestration scripts
+├── preprocessing/              # ML feature engineering (lag, rolling, interactions)
+├── reporting/                  # Business report generation
 │
-├── docs/                       # Documentation
-│   ├── README.md
-│   ├── DEV_DEPLOYMENT.md        #  🆕 Dev environment setup guide
-│   ├── MONITORING_GUIDE.md      # 🆕 Monitoring & alerting guide
-│   ├── TESTING_MONITORING_REFERENCE.md  # 🆕 Quick reference
-│   ├── MODEL_DEVELOPMENT_GUIDE.md
-│   ├── BUSINESS_REPORTS_GUIDE.md
-│   ├── pipeline_overview.md
-│   └── IMPLEMENTATION_STATUS.md
-
-├── tests/                      # Comprehensive testing
-│   ├── mocks/                  # 🆕 Mock APIs for integration testing
-│   │   ├── mock_base.py        # Base classes and data generators
-│   │   ├── mock_chirps.py      # CHIRPS rainfall mock
-│   │   ├── mock_nasa_power.py  # NASA POWER climate mock
-│   │   ├── mock_era5.py        # ERA5 reanalysis mock
-│   │   ├── mock_ndvi.py        # NDVI vegetation mock
-│   │   ├── mock_ocean_indices.py  # Ocean indices mock
-│   │   └── README.md           # Mock API usage guide
-│   ├── test_ingestion_with_mocks.py  # 🆕 Integration tests with mocks
-│   ├── test_pipeline.py
-│   ├── test_merge_processed.py
-│   ├── test_chirps_processing.py
-│   └── ...
 ├── scripts/                    # Utility scripts
-│   ├── monitor_pipeline_health.py  # 🆕 Pipeline health monitoring
-│   ├── validate_data_quality.py    # 🆕 Data quality validation
-│   ├── dev_dashboard_summary.py    # 🆕 Dev environment dashboard
-│   ├── analysis/              # EDA and visualization scripts
-│   ├── demos/                 # Demo scripts for testing
-│   ├── reporting/             # Business report generation
-│   │   └── generate_business_reports.py
-│   └── verification/          # Testing and verification utilities
+│   ├── audit.py                # GOTCHA audit — forbidden pattern scanner
+│   ├── run_evaluation.py       # Model evaluation runner
+│   ├── train_pipeline.py       # ML training pipeline (RECOMMENDED)
+│   └── verification/
+│       └── verify_data_leakage.py
 │
-├── utils/                      # Shared utilities
-│   ├── slack_notifier.py      # 🆕 Slack alerting integration
-│   ├── config.py              # Configuration management
-│   ├── logger.py              # Logging utilities
-│   ├── validator.py           # Data validation
-│   ├── validation.py          # Additional validators
-│   ├── cache.py               # Caching utilities
-│   ├── versioning.py          # Data versioning
-│   └── performance.py         # Performance monitoring
+├── tests/                      # 180+ tests (83 pass, 68 xfail)
+│   ├── mocks/                  # Mock APIs for integration testing (no network)
+│   └── ...
+│
+├── tools/                      # GOTCHA Tools layer — devops, memory tooling
+└── utils/                      # Shared utilities
+    ├── slack_notifier.py       # Slack alerting
+    ├── logger.py
+    ├── cache.py
+    └── ...
 ```
 
 ## Data Sources
@@ -211,36 +181,28 @@ cp .env.template .env
 
 ### 1. Data Pipeline
 
-**Dry-run mode (with mock data):**
-```bash
-python run_pipeline.py --debug
-```
-
-**Production mode (fetch real data):**
-```bash
-python run_pipeline.py
-```
-
-**Custom date range:**
+**Custom date range (offline reprocessing):**
 ```bash
 python pipelines/run_data_pipeline.py --start-year 2010 --end-year 2020
 ```
 
+> **Production ingestion** runs automatically via the backend scheduler (daily 6AM EAT). For local development use `docker compose -f docker-compose.dev.yml up -d` — the pipeline fires on schedule inside the container.
+
 ### 2. Model Training
 
-**Enhanced Training Pipeline (RECOMMENDED):**
+**Training Pipeline (RECOMMENDED):**
 ```bash
 # Full pipeline with feature selection, baselines, and validation
-python train_pipeline.py
+python scripts/train_pipeline.py
 
 # Skip feature selection (not recommended)
-python train_pipeline.py --skip-feature-selection
+python scripts/train_pipeline.py --skip-feature-selection
 
-# Custom feature count (default: 75, actual selected: 77 after source diversity)
-python train_pipeline.py --target-features 75
+# Custom feature count (default: 83 selected from 245 candidates)
+python scripts/train_pipeline.py --target-features 83
 
-# Skip preprocessing if features exist
-python train_pipeline.py --skip-preprocessing
+# Skip preprocessing if features already exist
+python scripts/train_pipeline.py --skip-preprocessing
 ```
 
 **Quick prototyping (fast, no preprocessing):**
@@ -248,25 +210,13 @@ python train_pipeline.py --skip-preprocessing
 python pipelines/quick_model_pipeline.py
 ```
 
-**Legacy ML pipeline (alternative):**
-```bash
-# Train all models
-python model_development_pipeline.py
-
-# Train specific models
-python model_development_pipeline.py --models rf,xgb
-
-# Named experiment
-python model_development_pipeline.py --experiment-name rainfall_v2
-```
-
-**Note**: `train_pipeline.py` includes scientifically sound improvements:
-- Feature selection (594 → 77 features, Feb 2026 retraining)
+**Note**: `scripts/train_pipeline.py` includes scientifically sound improvements:
+- Feature selection (279 candidates → 83 selected, 11 leaky rainfall-derived features removed)
 - Baseline model comparison
 - Enhanced regularization
-- Automated validation checks
+- Automated leakage validation
 
-See `docs/MODEL_IMPROVEMENT_IMPLEMENTATION_GUIDE.md` for details.
+See [docs/references/ML_MODEL_REFERENCE.md](docs/references/ML_MODEL_REFERENCE.md) for details.
 
 ### 3. Business Reports
 
@@ -288,7 +238,7 @@ python scripts/reporting/generate_business_reports.py --data path/to/data.csv
 - Risk assessment dashboard
 - Visualizations (charts and heatmaps)
 
-See `docs/BUSINESS_REPORTS_GUIDE.md` for detailed documentation.
+See [docs/guides/BUSINESS_REPORTS_GUIDE.md](docs/guides/BUSINESS_REPORTS_GUIDE.md) for detailed documentation.
 
 ### 4. Running Tests
 
@@ -355,7 +305,7 @@ python scripts/dev_dashboard_summary.py
 - ✅ Data quality warnings
 - ✅ Real-time monitoring
 
-See [docs/DEV_DEPLOYMENT.md](docs/DEV_DEPLOYMENT.md) and [docs/MONITORING_GUIDE.md](docs/MONITORING_GUIDE.md) for complete guides.
+See [docs/guides/DEV_DEPLOYMENT.md](docs/guides/DEV_DEPLOYMENT.md) and [docs/guides/MONITORING_GUIDE.md](docs/guides/MONITORING_GUIDE.md) for complete guides.
 
 **Perfect for Automated Forecasting Pipeline:**
 - Monitor scheduled pipeline runs automatically
@@ -373,8 +323,9 @@ Create a `.env` file based on `.env.template`:
 # NASA POWER API
 NASA_API_URL=https://power.larc.nasa.gov/api/temporal/monthly/point
 
-# ERA5 API
-ERA5_API_KEY=your_api_key_here
+# ERA5 (ecmwf-datastores-client — NOT the deprecated cdsapi)
+ECMWF_DATASTORES_URL=https://ewds.climate.copernicus.eu
+ECMWF_DATASTORES_KEY=your_key_here
 
 # CHIRPS Data
 CHIRPS_BASE_URL=https://data.chc.ucsb.edu/products/CHIRPS-2.0
@@ -398,11 +349,13 @@ DATA_STALENESS_THRESHOLD_DAYS=7
 MONITORING_METRICS_PORT=9090
 ```
 
-**New in March 2026:**
-- **Shadow Run ACTIVE**: Daily 6AM EAT pipeline generating 12 forecasts/day, accumulating Brier Scores
+**New in March–April 2026:**
+- **Shadow Run ACTIVE**: Daily 6AM EAT pipeline generating 12 forecasts/day (3 triggers × 4 horizons), accumulating Brier Scores
 - **Evidence Pack Dashboard**: Tracks forecast accuracy over time for underwriter engagement
-- **Historical Backtesting**: Phase-based parametric model (GDD-tracked, 4 growth phases) validated on 2015-2025 data — 3/8 documented events matched
+- **Phase-Based Dynamic Model**: GDD-tracked 4-phase model — 100% catch rate on both confirmed crop disasters (2017/18 and 2021/22), 20% basis risk
+- **Probabilistic triggers**: `norm.cdf()` using physical Kilombero thresholds — more defensible than static percentiles
 - **Automated Evaluation**: ForecastLog records auto-resolve when validity windows mature (~Jun 2026 first Brier Scores)
+- **Shadow run completion automation**: Stage 5 detects day-90 automatically, generates final Evidence Pack + Brier Score report
 
 **New in February 2026:**
 - **Actuarial Refinement (HewaSense V4)**: GDD integration, cumulative flood triggers, out-of-sample validation (2000-2014)
@@ -415,7 +368,7 @@ MONITORING_METRICS_PORT=9090
 - **Monitoring Scripts**: Health checks and quality validation
 - **Retry Configuration**: Best practices documented (3 for dev, 5-7 for production)
 
-See [docs/DEV_DEPLOYMENT.md](docs/DEV_DEPLOYMENT.md) for complete setup guide.
+See [docs/guides/DEV_DEPLOYMENT.md](docs/guides/DEV_DEPLOYMENT.md) for complete setup guide.
 
 ## Pipeline Workflows
 
@@ -538,21 +491,21 @@ The pipeline includes comprehensive validation:
 ### Complete Workflow (Data + ML)
 
 ```bash
-# 1. Run data pipeline to create master_dataset.csv
-python run_pipeline.py
+# 1. Start the full stack (pipeline runs automatically at 6AM EAT)
+docker compose -f docker-compose.dev.yml up -d
 
-# 2. Quick prototype to test baseline
+# 2. Quick prototype to test baseline (offline)
 python pipelines/quick_model_pipeline.py
 
-# 3. Full ML pipeline for production models
-python model_development_pipeline.py --experiment-name production_v1
+# 3. Full ML training pipeline
+python scripts/train_pipeline.py
 ```
 
 ### Development Workflow
 
 ```bash
-# 1. Data pipeline with debug mode
-python run_pipeline.py --debug
+# 1. Start containers
+docker compose -f docker-compose.dev.yml up -d
 
 # 2. Quick experiments for rapid iteration
 python pipelines/quick_model_pipeline.py
@@ -560,13 +513,13 @@ python pipelines/quick_model_pipeline.py
 # 3. Run tests
 pytest -v
 
-# 4. Full pipeline when ready
-python model_development_pipeline.py
+# 4. Run audit before merging
+python scripts/audit.py
 ```
 
 ## Testing
 
-The project includes 45+ comprehensive tests:
+The project includes 180+ comprehensive tests:
 
 ### Test Coverage
 - **Data Pipeline**: Integration tests, merge functionality
@@ -577,7 +530,7 @@ The project includes 45+ comprehensive tests:
 
 ### Running Tests
 ```bash
-# Run all tests (45+ tests)
+# Run all tests
 pytest -v
 
 # Run with coverage report
@@ -608,15 +561,21 @@ Logs are stored in `logs/` directory:
 
 ## Documentation
 
-- **[Pipeline Overview](docs/pipeline_overview.md)** - Data pipeline architecture
-- **[Model Development Guide](docs/MODEL_DEVELOPMENT_GUIDE.md)** - ML pipeline usage
-- **[Implementation Status](docs/IMPLEMENTATION_STATUS.md)** - Project progress
-- **[Pipeline README](pipelines/README.md)** - Pipeline comparison and usage
-- **🆕 [Dev Deployment Guide](docs/DEV_DEPLOYMENT.md)** - Development environment setup
-- **🆕 [Monitoring Guide](docs/MONITORING_GUIDE.md)** - Health checks and alerting
-- **🆕 [Testing & Monitoring Reference](docs/TESTING_MONITORING_REFERENCE.md)** - Quick reference
-- **🆕 [Mock API Usage](tests/mocks/README.md)** - Integration testing guide
-- **[Spec Documents](.kiro/specs/)** - Requirements and design specs
+**Start here:** [docs/README.md](docs/README.md) — full docs index with role-based navigation
+
+| Document | Description |
+|----------|-------------|
+| **[docs/current/EXECUTIVE_SUMMARY.md](docs/current/EXECUTIVE_SUMMARY.md)** | Latest project status, metrics, next steps |
+| **[docs/references/PROJECT_OVERVIEW_CONSOLIDATED.md](docs/references/PROJECT_OVERVIEW_CONSOLIDATED.md)** | Complete system overview |
+| **[docs/references/ML_MODEL_REFERENCE.md](docs/references/ML_MODEL_REFERENCE.md)** | ML models, inference chain, training |
+| **[docs/references/DATA_PIPELINE_REFERENCE.md](docs/references/DATA_PIPELINE_REFERENCE.md)** | Data pipeline architecture |
+| **[docs/references/PARAMETRIC_INSURANCE_FINAL.md](docs/references/PARAMETRIC_INSURANCE_FINAL.md)** | Insurance model, triggers, financials |
+| **[docs/pilots/kilombero/KILOMBERO_BASIN_PILOT_SPECIFICATION.md](docs/pilots/kilombero/KILOMBERO_BASIN_PILOT_SPECIFICATION.md)** | Active pilot specification |
+| **[docs/validation/PHASE_BASED_COMPARISON.md](docs/validation/PHASE_BASED_COMPARISON.md)** | Backtesting & basis risk validation |
+| **[docs/guides/AUTOMATED_PIPELINE_DEPLOYMENT.md](docs/guides/AUTOMATED_PIPELINE_DEPLOYMENT.md)** | Production deployment guide |
+| **[docs/guides/DEV_DEPLOYMENT.md](docs/guides/DEV_DEPLOYMENT.md)** | Development environment setup |
+| **[docs/guides/MONITORING_GUIDE.md](docs/guides/MONITORING_GUIDE.md)** | Health checks and alerting |
+| **[tests/mocks/README.md](tests/mocks/README.md)** | Mock API integration testing guide |
 
 ## Development
 
@@ -657,7 +616,7 @@ Logs are stored in `logs/` directory:
 ```bash
 # Ensure you're in the phase2 directory
 cd phase2
-python run_pipeline.py
+python scripts/train_pipeline.py
 ```
 
 **Missing dependencies:**
@@ -677,15 +636,15 @@ pip install -r requirements.txt
 **"Master dataset not found" error:**
 ```bash
 # Run data pipeline first
-python run_pipeline.py
+python pipelines/run_data_pipeline.py
 ```
 
 **Model training out of memory:**
 ```bash
-# Use quick pipeline or train fewer models
+# Use quick pipeline or skip preprocessing
 python pipelines/quick_model_pipeline.py
 # OR
-python model_development_pipeline.py --models rf,xgb
+python scripts/train_pipeline.py --skip-preprocessing
 ```
 
 **Pipeline too slow:**
@@ -693,7 +652,7 @@ python model_development_pipeline.py --models rf,xgb
 # Use quick pipeline for prototyping
 python pipelines/quick_model_pipeline.py
 # OR skip preprocessing
-python model_development_pipeline.py --skip-preprocessing
+python scripts/train_pipeline.py --skip-preprocessing
 ```
 
 **Import sorting errors in CI:**
