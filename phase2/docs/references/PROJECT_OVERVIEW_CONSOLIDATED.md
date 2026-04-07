@@ -134,10 +134,10 @@ The system has evolved through three distinct phases of geographic expansion, ea
 
 ### Future Expansion Plans
 
-**Near-Term** (Q1-Q2 2026):
-- Validate 6-location models in production
-- Monitor performance across all locations
-- Identify additional high-value locations
+**Near-Term** (Q2 2026 — in progress):
+- Forward validation active — shadow run accumulating Brier Scores (Mar–Jun 2026)
+- Monitor performance across all locations during shadow run
+- Post-shadow-run: underwriter engagement and pilot alignment
 
 **Medium-Term** (Q3-Q4 2026):
 - Expand to 8-10 locations (district-level coverage)
@@ -392,7 +392,7 @@ A web-based dashboard provides multiple specialized views:
 ### 6. Production Infrastructure & Monitoring
 
 **Automated Scheduling & Execution**
-- APScheduler with persistent job store
+- APScheduler with in-memory job store (not persistent — prevents phantom runs from stale next_run_times after container restarts)
 - Execution locking prevents concurrent runs
 - Configurable schedules and timezones
 
@@ -779,14 +779,14 @@ This project represents a foundation for climate intelligence in East Africa. We
 
 ## 📋 Current Status
 
-**Phase**: Pilot-Ready — Shadow Run ACTIVE (Mar 7 – Jun 12, 2026 revised)
+**Phase**: Pilot-Ready — Shadow Run ACTIVE (Mar 7 – Jun 2026 revised)
 **Completion**: Core features implemented and documented
 **Testing**: Comprehensive test suite validated (80%+ coverage)
 **Documentation**: Complete user and technical guides (80+ pages)
 **Deployment**: Live on `root@37.27.200.227`, Docker containers running, 6 AM EAT daily
 **Public Landing Page**: Live at `hewasense.majaribio.com` (route `/` renders `LandingPage` — March 16, 2026)
 
-**Next Step**: Monitor shadow run evidence chain; present Evidence Pack to underwriters ~Jun 2026
+**Next Step**: Monitor shadow run evidence chain; present Evidence Pack to underwriters mid-2026 (post Go/No-Go decision)
 
 ---
 
@@ -816,7 +816,7 @@ As climate variability increases, tools like this may become increasingly valuab
 - **[FRONTEND_DASHBOARDS_COMPLETE_REFERENCE.md](./FRONTEND_DASHBOARDS_COMPLETE_REFERENCE.md)** - Dashboard features
 - **[DATA_PIPELINE_REFERENCE.md](./DATA_PIPELINE_REFERENCE.md)** - Pipeline documentation
 - **[ML_MODEL_REFERENCE.md](./ML_MODEL_REFERENCE.md)** - ML model details
-- **[PARAMETRIC_INSURANCE_REFERENCE.md](./PARAMETRIC_INSURANCE_REFERENCE.md)** - Insurance implementation
+- **[PARAMETRIC_INSURANCE_FINAL.md](./PARAMETRIC_INSURANCE_FINAL.md)** - Insurance implementation
 - **[TESTING_REFERENCE.md](./TESTING_REFERENCE.md)** - Testing documentation
 - **[DEPLOYMENT_REFERENCE.md](./DEPLOYMENT_REFERENCE.md)** - Deployment guide
 - **[data_dictionary.md](./data_dictionary.md)** - Data schemas
@@ -825,5 +825,5 @@ As climate variability increases, tools like this may become increasingly valuab
 
 **Document Version**: 4.3
 **Last Updated**: March 16, 2026
-**Status**: Shadow Run ACTIVE (Mar 7 – Jun 12, 2026 revised) — Landing Page LIVE
+**Status**: Shadow Run ACTIVE (Mar 7 – Jun 2026 revised) — Landing Page LIVE
 **Consolidates**: PROJECT_OVERVIEW.md, PROJECT_SUMMARY.md, EXECUTIVE_SUMMARY.md, PHASE_2_KEY_ACHIEVEMENTS.md, IMPLEMENTATION_COMPLETE.md

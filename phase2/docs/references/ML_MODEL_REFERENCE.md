@@ -1,7 +1,7 @@
 # ML Model Reference
 
-**Last Updated**: March 8, 2026
-**Version**: 3.2
+**Last Updated**: March 21, 2026
+**Version**: 3.6
 **Status**: ✅ Production Ready
 
 ---

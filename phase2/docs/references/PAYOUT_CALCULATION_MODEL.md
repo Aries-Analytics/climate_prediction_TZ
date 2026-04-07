@@ -3,7 +3,7 @@
 **Date:** March 15, 2026
 **Version:** 2.0 (Production — all fixes implemented)
 **Context:** Morogoro Rice Pilot (1,000 farmers, Kilombero Basin)
-**Status:** ✅ Implemented & Deployed — Shadow Run ACTIVE (Mar 7 – Jun 12, 2026)
+**Status:** ✅ Implemented & Deployed — Shadow Run ACTIVE (Mar 7 – Jun 2026)
 
 ---
 
@@ -74,7 +74,7 @@ Confirmed Payout = 1,000 × $60 = $60,000 distributed to all enrolled farmers
 | Flood | $75 | $75,000 |
 | Crop Failure | $90 | $90,000 |
 
-**Source:** `KILOMBERO_BASIN_PILOT_SPECIFICATION.md`
+**Source:** `docs/pilots/kilombero/KILOMBERO_BASIN_PILOT_SPECIFICATION.md`
 
 ---
 
@@ -210,7 +210,7 @@ Using the correct formula (per-farmer model):
 ---
 
 **References:**
-- `docs/references/KILOMBERO_BASIN_PILOT_SPECIFICATION.md`
+- `docs/pilots/kilombero/KILOMBERO_BASIN_PILOT_SPECIFICATION.md`
 - `docs/references/PARAMETRIC_INSURANCE_FINAL.md`
 - `docs/current/PARAMETRIC_INSURANCE_LOGIC.md` — Section 4: Horizon Tiers & Payout Eligibility
 - `backend/app/config/rice_thresholds.py` — `HORIZON_TIERS`

@@ -57,9 +57,9 @@ Implemented true parametric insurance with market-competitive rates aligned with
 **Average Payout**: $68/event
 **Annual Payouts**: $1,590/year (avg 23.5 events/year)
 
-### Premium Structure (100-farmer pilot)
+### Premium Structure (1,000-farmer pilot)
 
-- **Annual Premium Total**: $1,988
+- **Annual Premium Total**: $20,000
 - **Per-Farmer Premium (full)**: $20/year
 - **Loss Ratio**: 75% (target: 60-80%) ✅
 
@@ -271,7 +271,7 @@ USE_TIERED_PAYOUTS = False  # True parametric (fixed rates, not tiered)
 - **Farmers**: 1,000 smallholder rice farmers (target; enrolment pending Phase 3 gate)
 - **Crop**: Rice (intensive cultivation area)
 - **Coverage**: ~500 hectares total (0.5 ha per farmer)
-- **Current Phase**: Shadow Run ACTIVE (Mar 7 – Jun 12, 2026 revised) — technical validation, no live payouts
+- **Current Phase**: Shadow Run ACTIVE (Mar 7 – Jun 2026) — technical validation, no live payouts
 - **Live Pilot Timeline**: Q3 2026+ contingent on June 2026 go-live gate (Brier Score < 0.25)
 - **Duration**: 12-month pilot once live
 
@@ -314,7 +314,7 @@ USE_TIERED_PAYOUTS = False  # True parametric (fixed rates, not tiered)
 - ✅ Objective triggers (no loss adjustment, no claims form)
 - ✅ Clear policy terms (parametric = automatic payout on threshold breach)
 - ✅ No claims process required
-- ⏳ Formal TIRA submission — scheduled for June 2026 with shadow run evidence pack
+- ⏳ Formal TIRA submission — mid-2026, contingent on Go/No-Go decision after shadow run evidence pack review
 
 ### Policy Documentation
 
@@ -396,7 +396,7 @@ USE_TIERED_PAYOUTS = False  # True parametric (fixed rates, not tiered)
    - **Mitigation**: Annual recalibration process
 3. **Farmer uptake lower than expected**: Fixed costs diluted
 
-   - **Mitigation**: Start with 100-farmer minimum
+   - **Mitigation**: Start with 1,000-farmer pilot minimum
 
 ### Upside Opportunities
 
@@ -417,7 +417,7 @@ USE_TIERED_PAYOUTS = False  # True parametric (fixed rates, not tiered)
 5. ✅ Payout calculation validated — per-farmer fixed rates, primary-tier only, deduplication enforced (Mar 15)
 6. ✅ JWT auth, health checks, Slack alerts operational
 
-### Phase 2 — Shadow Run 🔄 ACTIVE — Day 21 of 90 valid run-days (252/1,080 forecasts, 23.3%)
+### Phase 2 — Shadow Run 🔄 ACTIVE (Mar 7 – Jun 2026, 90 valid run-days)
 
 > **Purpose**: 90 valid-run-day forward validation (= 1,080 ForecastLog entries at 12/day). Pipeline runs daily at 06:00 EAT. No real payouts during this phase — forecasts are logged and evaluated against actual observations to build the evidence pack for reinsurers and TIRA.
 
@@ -427,13 +427,13 @@ USE_TIERED_PAYOUTS = False  # True parametric (fixed rates, not tiered)
 - **First correct run**: Mar 9, 2026 (Mar 7 started late; Mar 8 missed — scheduler timezone bug, fixed)
 - **Additional missed days**: 5 (pipeline failures post-Mar 9) — total missed: 7
 - **Nominal end**: Jun 5, 2026 — extended by 7 days to compensate
-- **Revised end date**: **Jun 12, 2026** (to achieve 90 valid run-days = 1,080 entries)
+- **Revised end date**: **Jun 2026** (extended to achieve 90 valid run-days = 1,080 entries)
 - **Brier Score auto-evaluation**: begins ~Jun 9 when first 3-month forecasts (issued ~Mar 9) mature
 
-**Current state (as of Mar 15, 2026):**
+**Current state** (live counts in Evidence Pack dashboard — `/v1/evidence-pack/execution-log`)**:**
 
 - ✅ Pipeline executing daily since Mar 9 (scheduler TZ bug fixed Mar 8)
-- ✅ 12 forecasts/run: drought × 4 horizons + flood × 4 horizons + heat_stress × 4 horizons
+- ✅ 12 forecasts/run: drought × 4 horizons + flood × 4 horizons + crop_failure × 4 horizons (heat_stress excluded — rainfall model ≠ temperature model)
 - ✅ `ForecastLog` evidence pack: `threshold_used` (0.65/0.60) + `forecast_distribution` (horizon_tier, insurance_eligible, confidence bounds) populated on every entry
 - ✅ `horizon_months <= 4` guard enforced in both backend endpoints — advisory tier never enters financial exposure
 - ⏳ ForecastLog entries status: all `pending` — validity windows are 3–6 months ahead; auto-evaluation begins ~Jun 9
@@ -497,15 +497,14 @@ USE_TIERED_PAYOUTS = False  # True parametric (fixed rates, not tiered)
 
 ## References
 
-- [Insurance Trigger Recalibration](./INSURANCE_TRIGGER_RECALIBRATION_SUMMARY.md)
-- [6-Location Expansion](./6_LOCATION_EXPANSION_SUMMARY.md)
+- [6-Location Expansion](../current/6_LOCATION_EXPANSION_SUMMARY.md)
 - [Pula Zambia Case Study](https://www.pula-advisors.com)
 - [KLIP Kenya Program](https://www.ilri.org/research/projects/kenya-livestock-insurance-programme-klip)
 
 ---
 
 **Document Owner**: Climate Prediction & Insurance Team
-**Last Updated**: April 6, 2026
+**Last Updated**: April 7, 2026
 **Next Review**: Mid-2026 — post shadow run debrief and Go/No-Go decision
 
 ---

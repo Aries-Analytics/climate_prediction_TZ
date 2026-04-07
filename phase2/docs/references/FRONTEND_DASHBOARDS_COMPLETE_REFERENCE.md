@@ -529,7 +529,7 @@ All KPI cards now feature **visible color-coded info blocks** instead of hidden 
 
 ### PayoutActionCard.tsx — Shadow run awareness
 - Added `shadowRunActive?: boolean` prop (default `true`).
-- When `true`: card title = "Parametric Reserve Requirement", amount label = "Probability-Weighted Reserve Required", button = "Payout Locked — Shadow Run Active" (disabled), alert = info explaining no disbursement until post Jun 12, 2026.
+- When `true`: card title = "Parametric Reserve Requirement", amount label = "Probability-Weighted Reserve Required", button = "Payout Locked — Shadow Run Active" (disabled), alert = info explaining no disbursement until post-Go/No-Go decision (mid-2026).
 - When `false` (post shadow run): original warning alert + enabled "Approve Payout Batch" button.
 
 ### Backend: `GET /climate-forecasts/alerts`
