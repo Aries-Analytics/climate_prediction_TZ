@@ -40,9 +40,10 @@
 | **[BUSINESS_REPORTS_GUIDE.md](./guides/BUSINESS_REPORTS_GUIDE.md)** | Business reporting features |
 | **[MODEL_PIPELINE_README.md](./guides/MODEL_PIPELINE_README.md)** | ML pipeline usage guide |
 | **[QUICK_START_PROCESSING.md](./guides/QUICK_START_PROCESSING.md)** | Data processing quick start |
-| **[AUTOMATED_PIPELINE_DEPLOYMENT.md](./AUTOMATED_PIPELINE_DEPLOYMENT.md)** | Production deployment guide |
-| **[SLACK_ALERT_STRATEGY.md](./SLACK_ALERT_STRATEGY.md)** | Comprehensive alert strategy |
-| **[MOROGORO_PILOT_CONFIGURATION.md](./MOROGORO_PILOT_CONFIGURATION.md)** | Pilot setup & configuration |
+| **[AUTOMATED_PIPELINE_DEPLOYMENT.md](./guides/AUTOMATED_PIPELINE_DEPLOYMENT.md)** | Production deployment guide |
+| **[DEV_DEPLOYMENT.md](./guides/DEV_DEPLOYMENT.md)** | Dev environment deployment |
+| **[MONITORING_GUIDE.md](./guides/MONITORING_GUIDE.md)** | Monitoring & observability |
+| **[TESTING_MONITORING_REFERENCE.md](./guides/TESTING_MONITORING_REFERENCE.md)** | Testing & monitoring quick reference |
 
 ### Current Status & Verification (All in [current/](./current/))
 
@@ -186,6 +187,7 @@
 - **[pilots/kilombero/](./pilots/kilombero/)** - Kilombero Basin pilot operations
   - [KILOMBERO_BASIN_PILOT_SPECIFICATION.md](./pilots/kilombero/KILOMBERO_BASIN_PILOT_SPECIFICATION.md) - Active pilot spec
   - [SHADOW_RUN_DEPLOYMENT_GUIDE.md](./pilots/kilombero/SHADOW_RUN_DEPLOYMENT_GUIDE.md) - Deployment guide
+  - [MOROGORO_PILOT_CONFIGURATION.md](./pilots/kilombero/MOROGORO_PILOT_CONFIGURATION.md) - Pilot configuration
   - [MODEL_METRICS_AND_SHADOW_RUN_IMPLICATIONS.md](./pilots/kilombero/MODEL_METRICS_AND_SHADOW_RUN_IMPLICATIONS.md) - Metrics
   - [MEDIUM_ARTICLE_PART_2_FINAL.md](./pilots/kilombero/MEDIUM_ARTICLE_PART_2_FINAL.md) - Public write-up
 
