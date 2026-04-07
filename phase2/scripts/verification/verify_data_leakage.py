@@ -14,8 +14,8 @@ import json
 import glob
 from pathlib import Path
 
-# Add parent directory to path for imports
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# Add project root to Python path (scripts/verification/ is two levels below phase2/)
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 from utils.data_leakage_prevention import detect_target_related_features
 

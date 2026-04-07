@@ -17,8 +17,8 @@ Requirements: 1.5, 4.5, 7.4, 10.5
 import sys
 from pathlib import Path
 
-# Add project root to Python path
-project_root = Path(__file__).resolve().parent
+# Add project root to Python path (scripts/ is one level below phase2/)
+project_root = Path(__file__).resolve().parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 

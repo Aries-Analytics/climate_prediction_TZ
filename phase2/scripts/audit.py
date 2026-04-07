@@ -22,7 +22,7 @@ from pathlib import Path
 
 def load_forbidden_patterns():
     """Load forbidden patterns from args/persona_config.yaml."""
-    config_path = Path(__file__).parent / "args" / "persona_config.yaml"
+    config_path = Path(__file__).resolve().parent.parent / "args" / "persona_config.yaml"
     
     # Default patterns if config not found
     default_patterns = [
@@ -101,7 +101,7 @@ def run_audit(verbose=False):
     
     all_issues = []
     files_scanned = 0
-    phase2_dir = Path(__file__).parent
+    phase2_dir = Path(__file__).resolve().parent.parent
     
     # File extensions to scan
     scan_extensions = {'.py', '.ts', '.tsx', '.js', '.jsx'}
