@@ -4,7 +4,7 @@ Fetches reanalysis climate data from Copernicus Climate Data Store (CDS)
 """
 
 import os
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, time, timedelta, timezone
 from typing import Optional, Tuple
 
 import pandas as pd
@@ -404,8 +404,11 @@ def ingest_era5(
     next_month = lag_month + 1 if lag_month < 12 else 1
     next_year = lag_year if lag_month < 12 else lag_year + 1
     era5_safe_end = datetime(next_year, next_month, 1, tzinfo=timezone.utc) - timedelta(days=1)
-    # Normalise end_date to UTC-aware for comparison
-    if hasattr(end_date, 'tzinfo') and end_date.tzinfo is None:
+    # Normalise end_date to UTC-aware datetime for comparison — incremental manager
+    # returns a plain date object; datetime.combine() promotes it cleanly.
+    if not isinstance(end_date, datetime):
+        end_date = datetime.combine(end_date, time.min).replace(tzinfo=timezone.utc)
+    elif end_date.tzinfo is None:
         end_date = end_date.replace(tzinfo=timezone.utc)
     if end_date > era5_safe_end:
         end_date = era5_safe_end
