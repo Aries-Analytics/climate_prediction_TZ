@@ -414,9 +414,18 @@ def ingest_era5(
         end_date = era5_safe_end
         log_info(f"ERA5 end_date capped to finalized ERA5 lag boundary: {end_date.date()} (ERA5T restricted)")
 
-    # Ensure dates are pandas-compatible timestamps for comparison
+    # Ensure dates are pandas-compatible timestamps for comparison.
+    # The monthly dataframe we build below is tz-naive and keyed to the first
+    # day of each month, so normalize the bounds to the same representation
+    # after the ERA5 lag cap to keep pandas comparisons valid.
     start_date = pd.to_datetime(start_date)
     end_date = pd.to_datetime(end_date)
+    if start_date.tzinfo is not None:
+        start_date = start_date.tz_localize(None)
+    if end_date.tzinfo is not None:
+        end_date = end_date.tz_localize(None)
+    start_date = start_date.to_period("M").to_timestamp()
+    end_date = end_date.to_period("M").to_timestamp()
 
     log_info(f"Ingesting ERA5 data from {start_date} to {end_date}")
 
