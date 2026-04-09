@@ -520,7 +520,89 @@ These should be answered before building Phase 1:
 
 ---
 
-## 18. Final Position
+## 18. HewaSense Initial Recommendation
+
+These are the recommended initial answers for HewaSense based on the current project phase, memory context, and documented risk profile. They should be treated as the default starting position, not as irreversible policy.
+
+### 18.1 First Search Family
+
+Recommended:
+- probability calibration parameters only
+
+Reasoning:
+- HewaSense is already positioned as a probabilistic trigger system rather than a raw regression product
+- the project roadmap already points toward Brier Score validation first, then calibration work
+- this is much safer than feature-schema experimentation or broad retraining loops
+- it allows experimentation without destabilizing serving contracts or triggering a large Law #8 documentation blast radius
+
+### 18.2 Primary Metric
+
+Recommended:
+- Brier Score
+
+Reasoning:
+- the current validation phase is explicitly waiting for forward-probability evidence
+- Brier Score matches the real product question: are predicted probabilities well calibrated against outcomes?
+- it is more aligned with HewaSense’s external claims than optimizing only rainfall prediction loss
+
+Recommended secondary metrics:
+- calibration error
+- false negative rate on known disaster cases
+- trigger precision/recall
+
+### 18.3 Mandatory Safety Checks
+
+Recommended blocking checks on every autoresearch run:
+- off-season exclusion
+- advisory-tier exclusion from payout logic
+- payout-threshold / contract integrity
+
+Reasoning:
+- these are already documented historical failure modes in project memory
+- any candidate that improves a metric while violating them would be unsafe to promote
+- they are product invariants, not optional validations
+
+### 18.4 First Promotion Standard
+
+Recommended:
+- screening pass on one run
+- promotion only after 3-seed repeat
+- holdout check required
+- no safety regressions
+- no degradation on known-disaster recall
+- explicit human review before promotion
+
+Reasoning:
+- HewaSense has insurance-facing semantics, so one-run wins are too weak
+- the project already emphasizes credibility, calibration, and forward-validation evidence
+- promotion should be conservative until the validation system matures
+
+### 18.5 Permanent Out-of-Scope Areas
+
+Recommended permanent exclusions:
+- payout logic
+- API contracts
+- deployment configuration
+- scheduler and orchestration behavior
+- broad production-code editing outside the bounded search surface
+
+Reasoning:
+- these areas carry business, operational, and contract risk well beyond model tuning
+- historical bugs show that orchestration and payout semantics are already fragile enough without autonomous mutation
+- GOTCHA works best when autoresearch is narrow and deterministic rather than repo-wide and improvisational
+
+### 18.6 Practical Starting Policy
+
+If HewaSense implements Phase 1, the safest initial policy is:
+- search only calibration parameters
+- score primarily with Brier Score
+- hard-fail any off-season, advisory-tier, or payout-integrity regression
+- require multi-seed plus holdout evidence before baseline promotion
+- keep insurance logic, deployment, and API behavior permanently human-controlled
+
+---
+
+## 19. Final Position
 
 The right HewaSense adaptation is not "build an autonomous scientist."
 
