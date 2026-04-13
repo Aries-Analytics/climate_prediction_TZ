@@ -196,7 +196,7 @@ export default function EvidencePackDashboard() {
                                     Forecast logs accumulated
                                 </Typography>
                                 <Typography variant="body2" fontWeight="bold">
-                                    {sr?.total_forecast_logs ?? '--'} / {sr?.target ?? 1080} ({sr?.pct_complete ?? 0}%)
+                                    {sr?.total_forecast_logs ?? '--'} / {sr?.target ?? 2160} ({sr?.pct_complete ?? 0}%)
                                 </Typography>
                             </Box>
                             <LinearProgress
@@ -205,15 +205,22 @@ export default function EvidencePackDashboard() {
                                 sx={{ height: 12, borderRadius: 6 }}
                             />
                             <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5, display: 'block' }}>
-                                {sr?.start_date} → {sr?.end_date} · 90 days × 12 forecasts/day
+                                {sr?.start_date ?? '2026-04-14'} → {sr?.end_date ?? '2026-07-13'} · 90 days × {sr?.forecasts_per_day ?? 24} forecasts/day
                             </Typography>
+                            <Box sx={{ mt: 1, p: 1.5, bgcolor: '#e3f2fd', borderRadius: 1, border: '1px solid #90caf9' }}>
+                                <Typography variant="caption" color="textSecondary">
+                                    <strong>Two-zone configuration:</strong> Ifakara TC (id=7, 400 farmers) + Mlimba DC (id=8, 600 farmers).
+                                    Each zone generates 12 forecasts/day (3 triggers × 4 horizons) = 24 total.
+                                    Target: 2,160 forecasts over 90 days.
+                                </Typography>
+                            </Box>
                         </Grid>
                         <Grid item xs={12} md={5}>
                             <Grid container spacing={2}>
                                 <Grid item xs={6}>
                                     <Box sx={{ textAlign: 'center', p: 1, bgcolor: '#f0f4ff', borderRadius: 2 }}>
                                         <Typography variant="h4" color="primary" fontWeight="bold">
-                                            {sr ? Math.round(sr.total_forecast_logs / 12) : '--'}
+                                            {sr ? Math.round(sr.total_forecast_logs / 24) : '--'}
                                         </Typography>
                                         <Typography variant="caption" color="textSecondary">Days Completed</Typography>
                                     </Box>

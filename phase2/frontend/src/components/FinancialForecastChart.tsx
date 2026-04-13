@@ -59,7 +59,7 @@ export default function FinancialForecastChart({
         crop_failure: 90
     };
 
-    const PILOT_FARMERS = 1000; // Morogoro pilot total
+    const PILOT_FARMERS = 1000; // Kilombero Basin pilot total (Ifakara TC 400 + Mlimba DC 600)
 
     const getTriggerLabel = (triggerType: string) => {
         const labels: Record<string, string> = {

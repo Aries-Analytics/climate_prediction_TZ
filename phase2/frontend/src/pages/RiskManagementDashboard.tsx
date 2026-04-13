@@ -228,7 +228,7 @@ export default function RiskManagementDashboard() {
               value={`$${(portfolio.totalPremiumIncome || 0).toLocaleString()}`}
               status="success"
               subtitle="Annual (1,000 farmers × $20)"
-              insight="Revenue from all active insurance policies in the Morogoro pilot."
+              insight="Revenue from all active insurance policies in the Kilombero Basin pilot (Ifakara TC + Mlimba DC)."
               insightSeverity="info"
             />
           </Grid>
@@ -283,7 +283,7 @@ export default function RiskManagementDashboard() {
               title="Number of Policies"
               value={portfolio.totalFarmers || portfolio.numberOfPolicies || 0}
               status="success"
-              subtitle="Morogoro Pilot"
+              subtitle="Kilombero Basin Pilot"
               insight="Active insurance policies covering 1000 smallholder rice farmers in Kilombero Basin."
               insightSeverity="info"
             />

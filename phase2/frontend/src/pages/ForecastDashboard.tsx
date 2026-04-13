@@ -395,7 +395,7 @@ export default function ForecastDashboard() {
   const totalFinancialExposure = financialProjections.reduce((sum, p) => sum + p.total, 0);
 
   // --- Derived Metrics ---
-  // For Morogoro pilot (single location), show high-risk forecast count instead of unique locations
+  // For Kilombero Basin pilot (two zones), show high-risk forecast count instead of unique locations
   // This gives more meaningful insight than "1 location at risk"
   const locationsAtRiskCount = highRiskForecasts.length; // Number of high-risk forecasts
   const activeAlertsCount = filteredForecasts.filter(f => f.probability >= 0.50).length; // Advisory threshold+

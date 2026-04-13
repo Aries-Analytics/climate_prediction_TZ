@@ -114,7 +114,7 @@ const PayoutActionCard: React.FC<PayoutActionCardProps> = ({
 
                 {shadowRunActive ? (
                     <Alert severity="info" sx={{ mb: 2 }}>
-                        <strong>Shadow Run Active:</strong> Forecast probability exceeds 75% threshold — reserve is being sized. No payout is disbursed until the shadow run completes (~Jun 12, 2026) and Brier Scores confirm model accuracy.
+                        <strong>Shadow Run Active (Two-Zone):</strong> Forecasts running for Ifakara TC + Mlimba DC. Reserve is being sized. No payout is disbursed until the shadow run completes (~Jul 13, 2026) and Brier Scores confirm model accuracy.
                     </Alert>
                 ) : (
                     <Alert severity="warning" sx={{ mb: 2 }}>
