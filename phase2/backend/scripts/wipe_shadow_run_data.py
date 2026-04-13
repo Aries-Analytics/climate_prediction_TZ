@@ -40,6 +40,7 @@ sys.path.insert(0, str(project_root))
 from sqlalchemy.orm import Session
 from app.core.database import SessionLocal, engine
 from app.models.forecast_log import ForecastLog
+from app.models.forecast import Forecast, ForecastRecommendation, ForecastValidation
 from app.models.pipeline_execution import PipelineExecution, DataQualityMetrics, SourceIngestionTracking
 from app.models.ndvi_observation import NdviObservation
 
@@ -49,6 +50,9 @@ WIPE_TARGETS = [
     ("data_quality_metrics", DataQualityMetrics),
     ("source_ingestion_tracking", SourceIngestionTracking),
     ("ndvi_observations", NdviObservation),
+    ("forecast_recommendations", ForecastRecommendation),
+    ("forecast_validations", ForecastValidation),
+    ("forecasts", Forecast),
     ("forecast_logs", ForecastLog),
     ("pipeline_executions", PipelineExecution),
 ]
@@ -57,8 +61,6 @@ WIPE_TARGETS = [
 PRESERVED_TABLES = [
     "climate_data",
     "locations",
-    "forecasts",
-    "forecast_recommendations",
     "forecast_validations",
     "trigger_events",
     "users",
