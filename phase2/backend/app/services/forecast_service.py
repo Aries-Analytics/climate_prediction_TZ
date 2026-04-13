@@ -35,13 +35,14 @@ from app.models.location import Location
 #    probability that actual rainfall crosses the Kilombero phase threshold?"
 #
 # Source for phase thresholds: rice_thresholds.RAINFALL_THRESHOLDS (TARI/FAO)
-# Source for Morogoro stats:   master_dataset.csv, 312 Morogoro records 2000-2025
-# Source for model RMSE:       outputs/models/latest_training_results.json
+# Source for training stats:    master_dataset.csv, 312 Morogoro records 2000-2025
+#   (Global training distribution — applies to all locations, not location-specific)
+# Source for model RMSE:        outputs/models/latest_training_results.json
 #   XGBoost test RMSE = 0.43 z-score units → 0.43 × 77.06 mm ≈ 33 mm
 # ---------------------------------------------------------------------------
-_MOROGORO_MEAN_MM: float = 79.15
-_MOROGORO_STD_MM:  float = 77.06
-_MODEL_RMSE_MM:    float = 33.1   # 0.43 z-score × 77.06 mm/z-score
+_TRAINING_MEAN_MM: float = 79.15   # Training distribution mean (was _TRAINING_MEAN_MM)
+_TRAINING_STD_MM:  float = 77.06   # Training distribution std  (was _TRAINING_STD_MM)
+_MODEL_RMSE_MM:    float = 33.1    # 0.43 z-score × 77.06 mm/z-score
 
 
 def _raw_to_probability(raw_prediction: float, trigger_type: str, target_date: date) -> float:
@@ -58,7 +59,7 @@ def _raw_to_probability(raw_prediction: float, trigger_type: str, target_date: d
         Probability in [0, 1]
     """
     # Denormalise model output to actual mm
-    predicted_mm = raw_prediction * _MOROGORO_STD_MM + _MOROGORO_MEAN_MM
+    predicted_mm = raw_prediction * _TRAINING_STD_MM + _TRAINING_MEAN_MM
 
     # Get Kilombero crop phase for the target month
     season = 'dry' if target_date.month in (7, 8, 9, 10, 11, 12) else 'wet'
@@ -326,7 +327,7 @@ class ForecastGenerator:
         confidence_lower, confidence_upper = self.calculate_confidence_intervals(probability, horizon_uncertainty)
 
         # Compute expected deficit (mirrors _raw_to_probability threshold logic)
-        predicted_mm = raw_prediction * _MOROGORO_STD_MM + _MOROGORO_MEAN_MM
+        predicted_mm = raw_prediction * _TRAINING_STD_MM + _TRAINING_MEAN_MM
         season_type = 'dry' if target_date.month in (7, 8, 9, 10, 11, 12) else 'wet'
         _phase = get_kilombero_stage(target_date, season_type)
         _thresholds = RAINFALL_THRESHOLDS.get(_phase, RAINFALL_THRESHOLDS.get('germination', {}))

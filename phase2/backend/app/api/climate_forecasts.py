@@ -117,12 +117,11 @@ def get_active_alerts(
         Forecast.horizon_months <= 4   # Primary tier only
     )
     
-    # PILOT RESTRICTION: Default to Morogoro if no location specified
-    # The user requested to only display data from the pilot location for the purpose of the pilot.
+    # PILOT RESTRICTION: Default to Kilombero Basin zones if no location specified
+    # Two-zone split (Apr 2026): Ifakara TC (id=7) + Mlimba DC (id=8)
+    PILOT_LOCATION_IDS = [7, 8]
     if not location_id:
-        morogoro = db.query(Location).filter(Location.name == "Morogoro").first()
-        if morogoro:
-            query = query.filter(Forecast.location_id == morogoro.id)
+        query = query.filter(Forecast.location_id.in_(PILOT_LOCATION_IDS))
     
     if location_id:
         query = query.filter(Forecast.location_id == location_id)

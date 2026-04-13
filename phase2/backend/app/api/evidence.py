@@ -58,12 +58,16 @@ def backfill_observations(
 @router.get("/execution-log")
 def get_execution_log(db: Session = Depends(get_db)):
     """
-    Returns shadow run progress (total forecast_logs vs 1080 target)
+    Returns shadow run progress (total forecast_logs vs 2160 target)
     and the last 30 pipeline execution records for the Evidence Pack dashboard.
+
+    Shadow run v2 — two-zone split (Ifakara TC + Mlimba DC).
+    24 forecasts/day = 3 triggers × 4 horizons × 2 locations.
+    DB wiped clean before restart — all logs belong to the current run.
     """
     try:
         total_logs = db.query(sqlfunc.count(ForecastLog.id)).scalar() or 0
-        target = 1080  # 90 days × 12 forecasts/day
+        target = 2160  # 90 days × 24 forecasts/day (3 triggers × 4 horizons × 2 zones)
 
         executions = (
             db.query(PipelineExecution)
@@ -77,8 +81,10 @@ def get_execution_log(db: Session = Depends(get_db)):
                 "total_forecast_logs": total_logs,
                 "target": target,
                 "pct_complete": round((total_logs / target) * 100, 1) if target > 0 else 0,
-                "start_date": "2026-03-07",
-                "end_date": "2026-06-12",
+                "start_date": "2026-04-14",
+                "end_date": "2026-07-13",
+                "zones": ["Ifakara TC (id=7)", "Mlimba DC (id=8)"],
+                "forecasts_per_day": 24,
             },
             "executions": [
                 {

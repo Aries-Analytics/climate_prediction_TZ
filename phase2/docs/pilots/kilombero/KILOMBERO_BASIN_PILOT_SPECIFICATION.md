@@ -21,24 +21,30 @@ The **Kilombero Basin Rice Pilot** (Morogoro Region) is a focused, single-locati
 
 ## Pilot Specifications
 
-### Geographic Scope
+### Geographic Scope — Two-Zone Configuration (Apr 2026)
 
-| Parameter | Value |
-|-----------|-------|
-| **Primary Location** | Morogoro, Tanzania |
-| **Location ID** | `6` (in database) |
-| **Coordinates** | -6.8211°S, 37.6595°E |
-| **Elevation** | 526 meters |
-| **Climate Zone** | Tropical transition |
-| **Region** | Eastern Tanzania |
-| **Sub-Region** | Kilombero Basin |
-| **Primary Crop** | Rice (paddy) |
+> **Note:** Prior to April 2026, the pilot used a single coordinate point (Morogoro city, -6.82°S, 37.66°E, location_id=6) which was 120+ km from the actual Kilombero Basin. This has been corrected to two sub-district zones with actual basin coordinates.
+
+| Parameter | Ifakara TC (Zone 1) | Mlimba DC (Zone 2) |
+|-----------|---------------------|---------------------|
+| **Location ID** | `7` | `8` |
+| **Coordinates** | -8.1333°S, 36.6833°E | -8.0167°S, 35.9500°E |
+| **Elevation** | ~260 meters | ~300 meters |
+| **Climate Zone** | Tropical floodplain | Tropical floodplain |
+| **Region** | Kilombero Basin (eastern) | Kilombero Basin (western/northern) |
+| **Primary Crop** | Rice (paddy) | Rice (paddy) |
+| **Risk Profile** | High volatility (CV 11.9%), flood-prone | Stable (CV 3.5%) |
+| **Yield Baseline** | 2.30 MT/ha (5yr avg) | 2.59 MT/ha (5yr avg) |
+| **Loss Trigger** | 1.38 MT/ha (40% below) | 1.55 MT/ha (40% below) |
+| **Yield Data Source** | Kilombero District Council 2020/21–2024/25 | Kilombero District Council 2020/21–2024/25 |
 
 ### Farmer Coverage
 
 | Metric | Value |
 |--------|-------|
 | **Total Farmers** | 1,000 smallholder rice farmers |
+| **Ifakara TC Zone** | 400 farmers (40%) — villages: Ifakara, Kibaoni |
+| **Mlimba DC Zone** | 600 farmers (60%) — villages: Mlimba, Kidatu, Malinyi, Mangula |
 | **Coverage Type** | Full-season parametric insurance |
 | **Farm Size** | ~0.5-2 hectares per farmer (average: 1 hectare) |
 | **Total Insured Area** | ~1,000 hectares |

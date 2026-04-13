@@ -147,7 +147,7 @@ export default function ExecutiveDashboard() {
             <Chip label="LIVE DATA" color="success" size="small" variant="outlined" />
           </Box>
           <Typography variant="body2" color="text.secondary">
-            Morogoro Rice Pilot · 1,000 Farmers · Shadow Run: {portfolio ? `${portfolio.shadowRunConfig.start} – ${portfolio.shadowRunConfig.end}` : 'Mar 7 – Jun 12, 2026'} · Brier Score evaluation: {portfolio?.shadowRunConfig.brierEvalDate ?? '~Jun 9, 2026'}
+            Kilombero Basin Rice Pilot · 1,000 Farmers · Shadow Run: {portfolio ? `${portfolio.shadowRunConfig.start} – ${portfolio.shadowRunConfig.end}` : 'Apr 14 – Jul 13, 2026'} · Brier Score evaluation: {portfolio?.shadowRunConfig.brierEvalDate ?? '~Jun 9, 2026'}
           </Typography>
         </Box>
       </Box>
@@ -156,7 +156,7 @@ export default function ExecutiveDashboard() {
       {alerts.length > 0 ? (
         <Alert severity="warning" variant="filled" sx={{ mb: 3 }}>
           <strong>{alerts.length} high-probability forecast alert{alerts.length > 1 ? 's' : ''} (≥75% primary tier):</strong>{' '}
-          {alerts.map(a => `${a.alert_type} @ ${a.location_name}`).join(' · ')} — reserve sizing active. Shadow run: no real payout until observed breach confirmed post Jun 12, 2026.
+          {alerts.map(a => `${a.alert_type} @ ${a.location_name}`).join(' · ')} — reserve sizing active. Shadow run: no real payout until observed breach confirmed post Jul 13, 2026.
         </Alert>
       ) : (
         <Alert severity="success" variant="filled" sx={{ mb: 3 }}>
@@ -174,7 +174,7 @@ export default function ExecutiveDashboard() {
               value={portfolio.numberOfPolicies.toLocaleString()}
               status="success"
               subtitle="Active policyholders"
-              insight="Morogoro pilot — 1 ha/farmer average"
+              insight="Kilombero Basin pilot — 1 ha/farmer average"
               insightSeverity="info"
             />
           </Grid>

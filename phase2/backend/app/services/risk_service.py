@@ -5,8 +5,9 @@ from typing import List, Dict
 from app.models.forecast import Forecast
 from app.models.location import Location
 
-# Morogoro Pilot Configuration Constants
-PILOT_LOCATION_ID = 6
+# Kilombero Basin Pilot Configuration Constants (Apr 2026 — two-zone split)
+# Replaces single Morogoro point (location_id=6) with actual basin coordinates.
+PILOT_LOCATION_IDS = [7, 8]  # 7 = Ifakara TC, 8 = Mlimba DC
 TOTAL_FARMERS = 1000
 CURRENT_RESERVES = 150000
 PAYOUT_RATES = {
@@ -21,12 +22,13 @@ PRIMARY_HORIZON_MAX = 4  # Months: primary tier (3-4) is insurance-trigger eligi
 
 def get_portfolio_metrics(db: Session) -> dict:
     """
-    Calculate portfolio-level risk metrics for Morogoro pilot.
+    Calculate portfolio-level risk metrics for Kilombero Basin pilot (two-zone).
 
     Uses PRIMARY TIER forecasts only (horizon_months <= 4).
     Advisory tier (5-6 months) is early warning only — never triggers a payout.
     Per trigger_type, uses the MAX probability forecast to avoid double-counting
     across horizons (a farmer is paid once per event, not once per forecast row).
+    Aggregates across both pilot zones (Ifakara TC + Mlimba DC).
     """
     today = date.today()
     horizon_end = today + timedelta(days=180)  # 6-month window
@@ -37,7 +39,7 @@ def get_portfolio_metrics(db: Session) -> dict:
         func.max(Forecast.probability).label('max_prob')
     ).filter(
         and_(
-            Forecast.location_id == PILOT_LOCATION_ID,
+            Forecast.location_id.in_(PILOT_LOCATION_IDS),
             Forecast.probability >= HIGH_RISK_THRESHOLD,
             Forecast.target_date >= today,
             Forecast.target_date <= horizon_end,
@@ -80,11 +82,15 @@ def get_portfolio_metrics(db: Session) -> dict:
             "crop_failure": round(trigger_breakdown["crop_failure"], 2)
         },
         "timeframe": "6-month forecast",
-        "pilotLocation": "Morogoro (Location ID 6)",
+        "pilotLocation": "Kilombero Basin (Ifakara TC + Mlimba DC)",
+        "pilotZones": {
+            "ifakara_tc": {"location_id": 7, "farmers": 400, "yield_baseline": 2.30},
+            "mlimba_dc": {"location_id": 8, "farmers": 600, "yield_baseline": 2.59}
+        },
         "shadowRunConfig": {
-            "start": "Mar 7, 2026",
-            "end": "Jun 12, 2026",
-            "brierEvalDate": "~Jun 9, 2026"
+            "start": "Apr 14, 2026",
+            "end": "Jul 13, 2026",
+            "brierEvalDate": "~Jul 10, 2026"
         }
     }
 

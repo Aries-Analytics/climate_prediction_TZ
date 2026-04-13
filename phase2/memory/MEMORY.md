@@ -8,7 +8,7 @@
 - **Project:** HewaSense — Climate intelligence for parametric crop insurance (Tanzania)
 - **Framework:** GOTCHA (6-layer) + Compound Engineering workflow (/ce:brainstorm → plan → work → review → compound) + 4-Persona model
 - **Current Phase:** Shadow-Run Forward Testing (Phase 4.0)
-- **Pilot:** Morogoro (Kilombero Basin), 1000 rice farmers
+- **Pilot:** Kilombero Basin (Ifakara TC + Mlimba DC), 1000 rice farmers (400 + 600 split)
 - **Production Model:** Phase-Based Dynamic Model (4-phase GDD tracker)
 
 ## Key Facts
@@ -18,11 +18,11 @@
 - **98.4%/98.3%:** Single-location/older dataset benchmarks — historical only, NOT the production number
 - **Basis Risk:** 20% (Phase-Based Dynamic Model) — production. 10% (April threshold) — baseline only.
 - **Phase-Based Model:** Catches 100% of confirmed crop disasters (2017/2018 and 2021/2022), zero false negatives
-- **Premium:** $20/farmer/year, Loss Ratio: 22.6% (retrospective; forward validation ACTIVE — shadow run Mar 7 – Jun 12, 2026 revised)
+- **Premium:** $20/farmer/year, Loss Ratio: 22.6% (retrospective; forward validation ACTIVE — shadow run Apr 14 – Jul 13, 2026, restarted for two-zone split)
 - **HewaSense Engine V4 (Feb 2026):** Dynamic GDD tracking, cumulative flood limits (120-160mm over 5 days)
 - **Out-of-Sample Validation:** 9.6% historic loss ratio (2000-2014)
 - **Spatial Validation:** CHIRPS 5km grid correlated at r=0.888 against local gauges
-- PILOT_LOCATION_ID = 6 (Morogoro)
+- PILOT_LOCATION_IDS = [7, 8] (7 = Ifakara TC @ -8.1333, 36.6833; 8 = Mlimba DC @ -8.0167, 35.9500). Old location_id=6 (Morogoro city) deprecated — coordinates were 120+ km from actual Kilombero Basin.
 - Payout threshold = 75%
 - Models expect **83 features** (retrained Mar 2026; 11 leaky rainfall-derived features removed from 279, leaving 245 candidates; 83 selected)
 - Feature schema: `feature_selection_results.json` (83 features, single source of truth)
@@ -30,7 +30,7 @@
 - **Production model file:** Determined by `outputs/models/active_model.json` (currently `xgboost_climate.pkl`, R²=0.8666, 83 features). NEVER hardcode model names
 - Model selection driven entirely by `active_model.json` — if missing or invalid, fail explicitly (GOTCHA Law #1)
 - **Pipeline schedule (shadow-run ACTIVE):** `0 6 * * *` Africa/Dar_es_Salaam (6 AM EAT daily). Deployed to `root@37.27.200.227`, `docker-compose.dev.yml`. Scheduler confirmed next run `2026-03-09 06:00:00+03:00`.
-- **Pipeline status (April 2026):** Shadow run ACTIVE Mar 7 – Jun 12, 2026 (revised — 7 missed days due to early runs). 12 forecasts/run (3 triggers × 4 horizons × Morogoro). Target: 1,080 forecasts over 90 run-days. Brier Score auto-evaluation starts ~Jun 9. Completion auto-detected at day 90 — final report + Slack alert fire automatically. **Live counts (forecasts accumulated, run-days, streak) are in the Evidence Pack dashboard — do NOT read from memory.**
+- **Pipeline status (April 2026):** Shadow run RESTARTED Apr 14 – Jul 13, 2026 (two-zone split: Ifakara TC + Mlimba DC). 24 forecasts/run (3 triggers × 4 horizons × 2 zones). Target: 2,160 forecasts over 90 run-days. Brier Score auto-evaluation starts ~Jul 10. Old shadow run (Mar 7 – Apr 13, location_id=6 Morogoro city) archived — coordinates were wrong (120+ km from basin). **Live counts (forecasts accumulated, run-days, streak) are in the Evidence Pack dashboard — do NOT read from memory.**
 - Lock contention alerts are suppressed in Slack (expected during brief overlaps)
 - **Advisory lock:** Uses a **dedicated NullPool engine + connection** (separate from ORM session). ORM `commit()` works normally without releasing the lock. Lock released by explicit `pg_advisory_unlock` + `engine.dispose()`. NullPool is mandatory — QueuePool keeps the Postgres session alive and leaks the lock.
 - **Scheduler job store:** In-memory (NOT persistent SQLAlchemyJobStore). Prevents phantom runs from stale `next_run_times` after container restarts.
@@ -45,7 +45,13 @@
 - **Never use "production-ready"** → use "pilot-ready" or "forward validation phase"
 - **Always qualify accuracy numbers** with dataset context (single-location vs 6-location)
 - **Include Known Limitations** in all externally-facing docs
-- **Yield ground truth (updated 2026-04-05, 3 sources):** Kilombero-calibrated baseline = **2.099 MT/Ha** (triangulated from 3 sources). Loss trigger threshold = **1.259 MT/Ha** (40% below baseline). Sources: MapSPAM 2020 rainfed (356 Kilombero cells, mean 3.197 MT/Ha), HarvestStat Africa Morogoro 1980–2022 (n=24, mean 1.562 MT/Ha), World Bank national cereal 1994–2023 (mean 1.538 MT/Ha). Current model national baseline 3.3 MT/Ha is too high — docs updated. Files: `data/external/ground_truth/`. ILRI NAFAKA (4th source) blocked — file restricted, author contact: Charles Joseph Chuwa, ARI-Dakawa (Morogoro). Docs updated: PHASE_BASED_COMPARISON.md, EXECUTIVE_SUMMARY.md, KILOMBERO_BACKTESTING_REPORT.md, KILOMBERO_BACKTESTING_REPORT_OUT_OF_SAMPLE.md.
+- **Yield ground truth (updated 2026-04-13, 4 sources — TWO-ZONE BASELINES):** Recalibrated from Kilombero District Council data (2020/21–2024/25, Mlimba DC + Ifakara TC). **Zone baselines:**
+  - **Ifakara TC:** 2.30 MT/Ha (5yr avg, CV 11.9%, volatile/flood-prone). Loss trigger: 1.38 MT/Ha (40% below).
+  - **Mlimba DC:** 2.59 MT/Ha (5yr avg, CV 3.5%, stable). Loss trigger: 1.55 MT/Ha (40% below).
+  - **Combined district:** 2.53 MT/Ha (supersedes old 2.099 triangulated baseline).
+  - Old triangulated sources (MapSPAM, HarvestStat, World Bank) kept as secondary references in `data/external/ground_truth/`.
+  - New primary source: `data/external/ground_truth/kilombero_district_rice_yield_2020_2025.csv` (from Kilombero District Council via Walter, Apr 13 2026).
+  - ILRI NAFAKA (restricted) — still blocked, author contact: Charles Joseph Chuwa, ARI-Dakawa.
 - **Data resolution:** CHIRPS (5km) vs NASA POWER (50km) mismatch documented, mitigation planned (rain gauges)
 - **Historical reports** in `docs/reports/` and `docs/archive/` are never modified
 

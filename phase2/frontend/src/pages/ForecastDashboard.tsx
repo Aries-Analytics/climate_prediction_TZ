@@ -76,7 +76,10 @@ export default function ForecastDashboard() {
   // Transform forecasts into location risk data for map (MUST be before conditional returns)
   const locationRisk = useMemo(() => {
     if (forecasts.length === 0) return [];
-    const morogoroLocation = { locationId: 6, locationName: 'Morogoro', latitude: -6.8211, longitude: 37.6595 };
+    const kilomberoLocations = [
+      { locationId: 7, locationName: 'Ifakara TC', latitude: -8.1333, longitude: 36.6833 },
+      { locationId: 8, locationName: 'Mlimba DC', latitude: -8.0167, longitude: 35.9500 },
+    ];
     const droughtProb = forecasts.filter(f => f.triggerType === 'drought').reduce((max, f) => Math.max(max, f.probability), 0);
     const floodProb = forecasts.filter(f => f.triggerType === 'flood').reduce((max, f) => Math.max(max, f.probability), 0);
     const cropFailureProb = forecasts.filter(f => f.triggerType === 'crop_failure').reduce((max, f) => Math.max(max, f.probability), 0);
@@ -85,7 +88,7 @@ export default function ForecastDashboard() {
     // Use backend-calculated expectedPayouts (primary tier ≥75%, MAX per trigger type)
     // to avoid double-counting across horizons — same logic as risk_service.py
     const estimatedPayout = portfolioRisk?.expectedPayouts ?? 0;
-    return [{ ...morogoroLocation, droughtProbability: droughtProb, floodProbability: floodProb, cropFailureProbability: cropFailureProb, overallRiskIndex: overallRisk, riskLevel, estimatedPayout }];
+    return kilomberoLocations.map(loc => ({ ...loc, droughtProbability: droughtProb, floodProbability: floodProb, cropFailureProbability: cropFailureProb, overallRiskIndex: overallRisk, riskLevel, estimatedPayout }));
   }, [forecasts, portfolioRisk]);
 
   useEffect(() => {

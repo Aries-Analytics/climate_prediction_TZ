@@ -291,25 +291,24 @@ def get_portfolio_risk(
     - buffer_percentage: Percentage of reserves remaining after expected payouts
     """
     try:
-        # ===== MOROGORO RICE PILOT CONFIGURATION =====
-        # Single-location pilot focused on Morogoro (Location ID 6)
-        # System continues to generate forecasts for all 6 locations,
-        # but pilot calculations filter for Morogoro only
-        
-        PILOT_LOCATION_ID = 6  # Morogoro, Tanzania
-        PILOT_LOCATION_NAME = "Morogoro"
-        
+        # ===== KILOMBERO BASIN PILOT CONFIGURATION (Apr 2026 — two-zone split) =====
+        # Two sub-district zones: Ifakara TC (id=7, 400 farmers) + Mlimba DC (id=8, 600 farmers)
+        # Replaces single Morogoro point (id=6) with actual Kilombero Basin coordinates.
+
+        PILOT_LOCATION_IDS = [7, 8]  # 7 = Ifakara TC, 8 = Mlimba DC
+        PILOT_LOCATION_NAME = "Kilombero Basin"
+
         # Parametric insurance payout rates (from PARAMETRIC_INSURANCE_FINAL.md)
         PAYOUT_RATES = {
             "drought": 60,
             "flood": 75,
             "crop_failure": 90
         }
-        
-        # Portfolio configuration (Morogoro Rice Pilot)
-        # Target: 1,000 smallholder rice farmers in Kilombero Basin, Morogoro
-        TOTAL_FARMERS = 1000  # Morogoro pilot only
-        FARMERS_PER_LOCATION = 1000  # All 1,000 farmers at single pilot location
+
+        # Portfolio configuration (Kilombero Basin Rice Pilot — two-zone)
+        # 1,000 smallholder rice farmers split across Ifakara TC (400) and Mlimba DC (600)
+        TOTAL_FARMERS = 1000
+        FARMERS_PER_ZONE = {7: 400, 8: 600}  # Ifakara TC: 40%, Mlimba DC: 60%
         CURRENT_RESERVES = 150000  # USD - Updated to meet 100% Capital Adequacy Ratio requirement
         
         # ===== 4-TIER EARLY WARNING THRESHOLD SYSTEM =====
@@ -329,18 +328,18 @@ def get_portfolio_risk(
         target_end = today + timedelta(days=days)
         
         # Get high-risk forecasts (probability > 0.75) within timeframe
-        # **PILOT FILTER**: Only Morogoro (location_id = 6)
+        # **PILOT FILTER**: Kilombero Basin zones (Ifakara TC + Mlimba DC)
         # Threshold raised to 0.75 (75%) to align with "severe event" triggers (1-in-4 year events or worse)
         high_risk_forecasts = db.query(Forecast).filter(
-            Forecast.location_id == PILOT_LOCATION_ID,  # ← MOROGORO PILOT FILTER
+            Forecast.location_id.in_(PILOT_LOCATION_IDS),  # ← KILOMBERO PILOT FILTER
             Forecast.probability >= 0.75,
             Forecast.target_date >= today,
             Forecast.target_date <= target_end,
             Forecast.horizon_months <= 4  # PRIMARY TIER ONLY — advisory (5-6mo) never triggers payout
         ).all()
-        
+
         # Group forecasts by location to calculate granular risk
-        # (For pilot, this will only have 1 location: Morogoro)
+        # (For pilot, this will have 2 zones: Ifakara TC + Mlimba DC)
         location_risks = {}
         
         for forecast in high_risk_forecasts:
@@ -411,18 +410,18 @@ def get_financial_impact(
     """
     Get projected financial impact based on Climate Forecast Alerts
     Aligned with get_portfolio_risk logic (Threshold > 0.75)
-    **PILOT FILTER**: Morogoro location only (ID 6)
+    **PILOT FILTER**: Kilombero Basin zones (Ifakara TC + Mlimba DC)
     """
     try:
-        PILOT_LOCATION_ID = 6  # Morogoro pilot
-        
+        PILOT_LOCATION_IDS = [7, 8]  # Ifakara TC + Mlimba DC
+
         PAYOUT_RATES = {
             "drought": 60,
             "flood": 75,
             "crop_failure": 90
         }
-        
-        FARMERS_PER_LOCATION = 1000  # Morogoro rice pilot
+
+        TOTAL_FARMERS = 1000  # Kilombero Basin rice pilot (400 + 600)
         
         today = date.today()
         monthly_projections = []
@@ -432,9 +431,9 @@ def get_financial_impact(
             month_end = month_start + relativedelta(months=1) - timedelta(days=1)
             
             # Query Forecasts directly with same high-risk threshold as portfolio_risk
-            # **PILOT FILTER**: Only Morogoro forecasts
+            # **PILOT FILTER**: Kilombero Basin zones
             forecasts = db.query(Forecast).filter(
-                Forecast.location_id == PILOT_LOCATION_ID,  # ← MOROGORO PILOT FILTER
+                Forecast.location_id.in_(PILOT_LOCATION_IDS),  # ← KILOMBERO PILOT FILTER
                 Forecast.target_date >= month_start,
                 Forecast.target_date <= month_end,
                 Forecast.probability >= 0.75
@@ -508,13 +507,13 @@ def get_location_risk_summary(
     """
     Get risk summary aggregated by location based on Climate Forecasts
     Aligned with Portfolio Risk logic (Threshold >= 0.75)
-    **PILOT FILTER**: Returns only Morogoro (Location ID 6) for single-location pilot
+    **PILOT FILTER**: Returns Kilombero Basin zones (Ifakara TC + Mlimba DC)
     """
     try:
-        PILOT_LOCATION_ID = 6  # Morogoro pilot
-        
-        # Get only pilot location
-        locations = db.query(Location).filter(Location.id == PILOT_LOCATION_ID).all()
+        PILOT_LOCATION_IDS = [7, 8]  # Ifakara TC + Mlimba DC
+
+        # Get pilot locations
+        locations = db.query(Location).filter(Location.id.in_(PILOT_LOCATION_IDS)).all()
         
         location_risks = []
         
@@ -522,9 +521,9 @@ def get_location_risk_summary(
         target_end = today + relativedelta(months=horizon_months)
         
         # Fetch forecasts directly with high-risk threshold
-        # **PILOT FILTER**: Only Morogoro forecasts
+        # **PILOT FILTER**: Kilombero Basin zones
         forecasts = db.query(Forecast).filter(
-            Forecast.location_id == PILOT_LOCATION_ID,  # ← MOROGORO PILOT FILTER
+            Forecast.location_id.in_(PILOT_LOCATION_IDS),  # ← KILOMBERO PILOT FILTER
             Forecast.target_date >= today,
             Forecast.target_date <= target_end,
             Forecast.probability >= 0.75

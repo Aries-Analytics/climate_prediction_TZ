@@ -52,6 +52,39 @@ locations:
     climate_zone: "tropical_transition"
     region: "eastern"
     description: "Eastern Tanzania, Uluguru Mountains foothills, transition climate zone"
+    pilot: false  # DEPRECATED as pilot location — coordinates are Morogoro city, not Kilombero Basin
+
+  # --- Kilombero Basin Pilot Zones (added Apr 2026) ---
+  # Split from single Morogoro point to two sub-district zones with actual basin coordinates.
+  # Yield baselines from Kilombero District Council data (2020/21–2024/25).
+
+  ifakara_tc:
+    name: "Ifakara TC"
+    latitude: -8.1333
+    longitude: 36.6833
+    elevation: 260
+    climate_zone: "tropical_floodplain"
+    region: "kilombero"
+    description: "Ifakara Town Council — eastern Kilombero Basin, flood-prone lowlands. 40% of pilot farmers (400). Yield baseline: 2.30 MT/ha (CV 11.9%)."
+    pilot: true
+    yield_baseline_mt_ha: 2.30
+    loss_trigger_mt_ha: 1.38  # 40% below baseline
+    farmer_count: 400
+    villages: ["Ifakara", "Kibaoni"]
+
+  mlimba_dc:
+    name: "Mlimba DC"
+    latitude: -8.0167
+    longitude: 35.9500
+    elevation: 300
+    climate_zone: "tropical_floodplain"
+    region: "kilombero"
+    description: "Mlimba District Council — western/northern Kilombero Basin, stable yields. 60% of pilot farmers (600). Yield baseline: 2.59 MT/ha (CV 3.5%)."
+    pilot: true
+    yield_baseline_mt_ha: 2.59
+    loss_trigger_mt_ha: 1.55  # 40% below baseline
+    farmer_count: 600
+    villages: ["Mlimba", "Kidatu", "Malinyi", "Mangula"]
 
 # Data collection period
 time_period:

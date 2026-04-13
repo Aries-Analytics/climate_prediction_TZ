@@ -27,14 +27,34 @@ from app.models.location import Location
 from app.models.climate_data import ClimateData
 
 
-# Kilombero Basin village distribution (based on geographic spread)
+# Kilombero Basin village distribution — two-zone split (Apr 2026)
+# Zone 1: Ifakara TC (40% of pilot = 400 farmers), yield baseline 2.30 MT/ha
+# Zone 2: Mlimba DC (60% of pilot = 600 farmers), yield baseline 2.59 MT/ha
 KILOMBERO_VILLAGES = {
-    "Ifakara": 0.30,      # 30% - Main town
-    "Mlimba": 0.20,       # 20% - Northern region
-    "Kidatu": 0.15,       # 15% - Dam area
-    "Malinyi": 0.15,      # 15% - Eastern region
-    "Mangula": 0.10,      # 10% - Central
-    "Kibaoni": 0.10       # 10% - Southern region
+    "Ifakara": 0.30,      # 30% - Main town (Ifakara TC zone)
+    "Mlimba": 0.20,       # 20% - Northern region (Mlimba DC zone)
+    "Kidatu": 0.15,       # 15% - Dam area (Mlimba DC zone)
+    "Malinyi": 0.15,      # 15% - Eastern region (Mlimba DC zone)
+    "Mangula": 0.10,      # 10% - Central (Mlimba DC zone)
+    "Kibaoni": 0.10       # 10% - Southern region (Ifakara TC zone)
+}
+
+# Per-zone village distributions (normalised within each zone)
+IFAKARA_TC_VILLAGES = {
+    "Ifakara": 0.75,      # 30/40 = 75% of Ifakara TC zone
+    "Kibaoni": 0.25       # 10/40 = 25% of Ifakara TC zone
+}
+MLIMBA_DC_VILLAGES = {
+    "Mlimba": 0.333,      # 20/60 = 33.3% of Mlimba DC zone
+    "Kidatu": 0.250,      # 15/60 = 25% of Mlimba DC zone
+    "Malinyi": 0.250,     # 15/60 = 25% of Mlimba DC zone
+    "Mangula": 0.167      # 10/60 = 16.7% of Mlimba DC zone
+}
+
+# Zone-level yield baselines (from Kilombero District Council 2020/21-2024/25)
+ZONE_YIELD_BASELINES = {
+    "ifakara_tc": {"baseline_mt_ha": 2.30, "loss_trigger_mt_ha": 1.38, "farmers": 400},
+    "mlimba_dc":  {"baseline_mt_ha": 2.59, "loss_trigger_mt_ha": 1.55, "farmers": 600},
 }
 
 # Farm size distribution (hectares)

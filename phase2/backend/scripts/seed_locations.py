@@ -63,6 +63,25 @@ LOCATIONS = [
         "region": "Eastern",
         "population": 315866,
         "climate_zone": "Tropical"
+    },
+    # --- Kilombero Basin Pilot Zones (added Apr 2026) ---
+    # These replace Morogoro (id=6) as the active pilot locations.
+    # Coordinates are actual Kilombero Basin sub-district centers.
+    {
+        "name": "Ifakara TC",
+        "latitude": -8.1333,
+        "longitude": 36.6833,
+        "region": "Kilombero",
+        "population": None,
+        "climate_zone": "Tropical"
+    },
+    {
+        "name": "Mlimba DC",
+        "latitude": -8.0167,
+        "longitude": 35.9500,
+        "region": "Kilombero",
+        "population": None,
+        "climate_zone": "Tropical"
     }
 ]
 

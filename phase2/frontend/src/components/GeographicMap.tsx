@@ -26,7 +26,9 @@ const CITY_COORDINATES: { [key: string]: { lat: number, lon: number, name: strin
     'dodoma': { lat: -6.1630, lon: 35.7516, name: 'Dodoma' },
     'mbeya': { lat: -8.9094, lon: 33.4606, name: 'Mbeya' },
     'mwanza': { lat: -2.5164, lon: 32.9175, name: 'Mwanza' },
-    'morogoro': { lat: -6.8211, lon: 37.6595, name: 'Morogoro' }
+    'morogoro': { lat: -6.8211, lon: 37.6595, name: 'Morogoro' },
+    'ifakara_tc': { lat: -8.1333, lon: 36.6833, name: 'Ifakara TC' },
+    'mlimba_dc': { lat: -8.0167, lon: 35.9500, name: 'Mlimba DC' }
 };
 
 const getCityName = (lat: number, lon: number): string => {

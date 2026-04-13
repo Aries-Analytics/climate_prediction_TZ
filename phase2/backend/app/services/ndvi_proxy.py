@@ -22,8 +22,9 @@ from sqlalchemy.orm import Session
 logger = logging.getLogger(__name__)
 
 # Kilombero Valley bounding box (tighter than Tanzania-wide)
+# Extended westward to 35.5 to cover Mlimba DC (35.95°E) — Apr 2026 two-zone split.
 KILOMBERO_BBOX = {
-    "lon_min": 36.0,
+    "lon_min": 35.5,
     "lat_min": -9.0,
     "lon_max": 37.5,
     "lat_max": -7.5,

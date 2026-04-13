@@ -13,8 +13,8 @@ interface PortfolioRiskData {
     reserves: number
     bufferPercentage: number
     timeframeDays: number
-    pilot_location_id?: number  // Morogoro pilot location ID
-    pilot_location_name?: string  // Morogoro pilot location name
+    pilot_location_id?: number  // Kilombero Basin pilot location ID
+    pilot_location_name?: string  // Kilombero Basin pilot location name
 }
 
 interface PortfolioRiskCardsProps {
@@ -76,7 +76,7 @@ export default function PortfolioRiskCards({ data, loading }: PortfolioRiskCards
                             of {data.totalFarmers.toLocaleString()} farmers ({data.riskPercentage}%)
                         </Typography>
                         <Typography variant="caption" color="primary" sx={{ fontWeight: 600, display: 'block', mb: 1 }}>
-                            📍 Morogoro Pilot (Location ID: 6)
+                            📍 Kilombero Basin Pilot (Ifakara TC + Mlimba DC)
                         </Typography>
                         <Box sx={{
                             mt: 2,

@@ -49,15 +49,18 @@ Implement a live "shadow-run" (forward-testing, no-payout) simulation for the Ki
 
 ### Pipeline Pre-Launch Testing Results (March 4, 2026)
 
-Pipeline fully tested and validated. **Shadow run ACTIVE as of 2026-03-07.**
-Deployed to `root@37.27.200.227` on `phase2/feature-expansion`. Schedule: `0 6 * * *` (Africa/Dar_es_Salaam = 6 AM EAT). ERA5 month-cap fix applied. Forecast auto-evaluation (Stage 3) active.
+Pipeline fully tested and validated. **Shadow run v1 ran 2026-03-07 to 2026-04-13 (archived — Morogoro city coordinates, 120+ km from basin).**
+
+**Shadow run v2 RESTARTED 2026-04-14 — two-zone Kilombero Basin split.**
+Deployed to `root@37.27.200.227` on `phase2/feature-expansion`. Schedule: `0 6 * * *` (Africa/Dar_es_Salaam = 6 AM EAT). Target end: 2026-07-13 (90 days).
 
 | Component | Status | Notes |
 |-----------|--------|-------|
-| **Scheduler** | ✅ Operational | APScheduler + SQLAlchemy job store, `max_instances=1` |
-| **Data Ingestion** | ✅ All 5 sources | CHIRPS, NASA POWER, ERA5, NDVI, Ocean Indices |
+| **Scheduler** | ✅ Operational | APScheduler + in-memory job store, `max_instances=1` |
+| **Data Ingestion** | ✅ All 5 sources | CHIRPS, NASA POWER, ERA5, NDVI, Ocean Indices — now for 2 zones |
 | **Model Loading** | ✅ `xgboost_climate.pkl` | 83 features, R²=0.8666 (data leakage fix), verified at load time |
-| **Forecast Generation** | ✅ 12 per run | 3 triggers × 4 horizons × Morogoro |
+| **Forecast Generation** | ✅ 24 per run | 3 triggers × 4 horizons × 2 zones (Ifakara TC + Mlimba DC) |
+| **Pilot Zones** | ✅ Two-zone | Ifakara TC (id=7, -8.13°S 36.68°E, 400 farmers) + Mlimba DC (id=8, -8.02°S 35.95°E, 600 farmers) |
 | **Slack Alerts** | ✅ Working | Lock contention alerts suppressed |
 | **ForecastLog** | ✅ Shadow-run logging | Evidence snapshots saved per run; auto-evaluated after validity window closes (Stage 3) |
 

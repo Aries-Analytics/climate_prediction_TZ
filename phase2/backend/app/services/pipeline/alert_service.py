@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 EAT_TZ = pytz.timezone('Africa/Dar_es_Salaam')
 
 # Pilot context constants (from persona_config.yaml)
-PILOT_REGION = "Morogoro (Kilombero Basin)"
+PILOT_REGION = "Kilombero Basin (Ifakara TC + Mlimba DC)"
 PILOT_CROP = "Rice"
 PILOT_FARMERS = 1_000
 
