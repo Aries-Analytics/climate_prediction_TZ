@@ -352,9 +352,8 @@ def get_portfolio_risk(
             # Forecast.probability is Numeric (Decimal), need to float for math
             location_risks[lid][forecast.trigger_type] = max(current, float(forecast.probability))
 
-        # Calculate farmers at risk
-        # For single-location pilot: either 0 (no risk) or 1,000 (risk detected)
-        farmers_at_risk = len(location_risks) * FARMERS_PER_LOCATION
+        # Calculate farmers at risk per zone
+        farmers_at_risk = sum(FARMERS_PER_ZONE.get(lid, 0) for lid in location_risks.keys())
         
         # Calculate expected payouts and breakdown
         total_expected_payout = 0
@@ -365,13 +364,14 @@ def get_portfolio_risk(
         }
 
         for lid, triggers in location_risks.items():
+            zone_farmers = FARMERS_PER_ZONE.get(lid, 0)
             for trigger_type, prob in triggers.items():
                 if trigger_type in by_trigger_data:
-                    # Add headcount: 1,000 farmers affected by this trigger
-                    by_trigger_data[trigger_type]["count"] += FARMERS_PER_LOCATION
-                    
-                    # Calculate granular payout derived from this location's specific probability
-                    payout = FARMERS_PER_LOCATION * PAYOUT_RATES.get(trigger_type, 0) * prob
+                    # Add headcount: zone-specific farmer count
+                    by_trigger_data[trigger_type]["count"] += zone_farmers
+
+                    # Calculate granular payout derived from this zone's specific probability
+                    payout = zone_farmers * PAYOUT_RATES.get(trigger_type, 0) * prob
                     
                     by_trigger_data[trigger_type]["payout"] += payout
                     total_expected_payout += payout
@@ -394,7 +394,7 @@ def get_portfolio_risk(
             "reserves": CURRENT_RESERVES,
             "buffer_percentage": round(buffer_percentage, 1),
             "timeframe_days": days,
-            "pilot_location_id": PILOT_LOCATION_ID,  # Added for transparency
+            "pilot_location_ids": PILOT_LOCATION_IDS,  # Added for transparency
             "pilot_location_name": PILOT_LOCATION_NAME  # Added for UI display
         }
     except Exception as e:
@@ -465,7 +465,8 @@ def get_financial_impact(
             crop_payout = 0
             
             for (lid, category), prob in location_risks.items():
-                expected_payout = FARMERS_PER_LOCATION * PAYOUT_RATES.get(category, 0) * prob
+                zone_farmers = FARMERS_PER_ZONE.get(lid, 0)
+                expected_payout = zone_farmers * PAYOUT_RATES.get(category, 0) * prob
                 
                 if category == "drought":
                     drought_payout += expected_payout
@@ -566,14 +567,15 @@ def get_location_risk_summary(
             
             # Calculate estimated payout (Expected Value)
             # Constants for payout simulation
-            FARMERS_PER_LOCATION = 1000  # Morogoro rice pilot (Kilombero Basin)
-            PAYOUT_RATES = {"drought": 60, "flood": 75, "crop_failure": 90}
-            
+            ZONE_FARMERS = {7: 400, 8: 600}  # Ifakara TC: 400, Mlimba DC: 600
+            PAYOUT_RATES_LOCAL = {"drought": 60, "flood": 75, "crop_failure": 90}
+            zone_farmer_count = ZONE_FARMERS.get(location.id, 0)
+
             est_payout = (
-                (metrics["drought"] * PAYOUT_RATES["drought"]) +
-                (metrics["flood"] * PAYOUT_RATES["flood"]) +
-                (metrics["crop_failure"] * PAYOUT_RATES["crop_failure"])
-            ) * FARMERS_PER_LOCATION
+                (metrics["drought"] * PAYOUT_RATES_LOCAL["drought"]) +
+                (metrics["flood"] * PAYOUT_RATES_LOCAL["flood"]) +
+                (metrics["crop_failure"] * PAYOUT_RATES_LOCAL["crop_failure"])
+            ) * zone_farmer_count
             
             location_risk = LocationRiskSummary(
                 location_id=location.id,
