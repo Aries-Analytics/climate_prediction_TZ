@@ -10,6 +10,12 @@ from app.models.pipeline_execution import PipelineExecution
 from app.models.forecast_log import ForecastLog
 from app.models.location import Location
 from app.services.evaluation_service import PILOT_ZONE_IDS
+from app.config.shadow_run import (
+    SHADOW_RUN_START,
+    SHADOW_RUN_END,
+    SHADOW_RUN_TARGET_DAYS,
+    SHADOW_RUN_TARGET_FORECASTS,
+)
 
 router = APIRouter(prefix="/v1/evidence-pack", tags=["Evidence Pack"])
 
@@ -72,7 +78,7 @@ def backfill_observations(
 @router.get("/execution-log")
 def get_execution_log(db: Session = Depends(get_db)):
     """
-    Returns shadow run progress (total forecast_logs vs 2160 target)
+    Returns shadow run progress (total forecast_logs vs target from shadow_run config)
     and the last 30 pipeline execution records for the Evidence Pack dashboard.
 
     Shadow run v2 — two-zone split (Ifakara TC + Mlimba DC).
@@ -81,7 +87,7 @@ def get_execution_log(db: Session = Depends(get_db)):
     """
     try:
         total_logs = db.query(sqlfunc.count(ForecastLog.id)).scalar() or 0
-        target = 2160  # 90 days × 24 forecasts/day (3 triggers × 4 horizons × 2 zones)
+        target = SHADOW_RUN_TARGET_FORECASTS
 
         executions = (
             db.query(PipelineExecution)
@@ -112,8 +118,8 @@ def get_execution_log(db: Session = Depends(get_db)):
                 "total_forecast_logs": total_logs,
                 "target": target,
                 "pct_complete": round((total_logs / target) * 100, 1) if target > 0 else 0,
-                "start_date": "2026-04-14",
-                "end_date": "2026-07-13",
+                "start_date": SHADOW_RUN_START.isoformat(),
+                "end_date": SHADOW_RUN_END.isoformat(),
                 "zones": zone_list,
                 "forecasts_per_day": forecasts_per_day,
             },

@@ -8,6 +8,7 @@ from typing import List, Optional
 from datetime import datetime
 
 from app.core.database import get_db
+from app.config.shadow_run import SHADOW_RUN_TARGET_FORECASTS
 from app.core.auth import get_current_user, require_role
 from app.models.user import User
 from app.models.audit_log import AuditLog
@@ -166,7 +167,7 @@ async def admin_health_check(
             "users": user_count,
             "audit_logs": audit_log_count,
             "forecast_logs": forecast_log_count,
-            "shadow_run_target": 2160
+            "shadow_run_target": SHADOW_RUN_TARGET_FORECASTS
         }
     except Exception as e:
         return {

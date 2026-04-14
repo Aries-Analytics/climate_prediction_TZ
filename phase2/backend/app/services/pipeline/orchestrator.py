@@ -297,15 +297,9 @@ class PipelineOrchestrator:
             # overwrites the same file idempotently.
             logger.info("Stage 5: Checking shadow run completion")
             try:
-                from datetime import date as _date
                 from sqlalchemy import func
                 from app.models.forecast_log import ForecastLog as FL
-
-                # Shadow run v2: two-zone Kilombero split, clean DB restart.
-                # Count only days from the v2 start date forward so manual
-                # backfills or stale data can never inflate the count.
-                SHADOW_RUN_START = _date(2026, 4, 14)
-                SHADOW_RUN_TARGET_DAYS = 90
+                from app.config.shadow_run import SHADOW_RUN_START, SHADOW_RUN_TARGET_DAYS
 
                 valid_run_days = self.db.query(
                     func.count(func.distinct(func.date(FL.issued_at)))

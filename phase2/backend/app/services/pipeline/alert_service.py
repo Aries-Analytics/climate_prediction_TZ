@@ -159,11 +159,10 @@ class AlertService:
                 # Total climate data records (reference data, not tracked for shadow run)
                 total_db_records = db.query(func.count(ClimateData.id)).scalar()
 
-                # ForecastLog count — the shadow run KPI (from v2 start date only)
-                from datetime import date as _date
-                _SR_START = _date(2026, 4, 14)
+                # ForecastLog count — the shadow run KPI (from start date only)
+                from app.config.shadow_run import SHADOW_RUN_START
                 forecast_log_count = db.query(func.count(ForecastLog.id)).filter(
-                    func.date(ForecastLog.created_at) >= _SR_START
+                    func.date(ForecastLog.created_at) >= SHADOW_RUN_START
                 ).scalar()
             except Exception as e:
                 logger.warning(f"Failed to query enrichment data for success alert: {e}")
@@ -200,10 +199,10 @@ class AlertService:
             quality_line = "Score: N/A"
         
         # ── Shadow run progress line ──
-        SHADOW_RUN_TARGET = 2160
+        from app.config.shadow_run import SHADOW_RUN_TARGET_FORECASTS
         if forecast_log_count is not None:
-            pct = forecast_log_count / SHADOW_RUN_TARGET * 100
-            db_line = f"Shadow Run: {forecast_log_count} / {SHADOW_RUN_TARGET} forecasts ({pct:.1f}%)"
+            pct = forecast_log_count / SHADOW_RUN_TARGET_FORECASTS * 100
+            db_line = f"Shadow Run: {forecast_log_count} / {SHADOW_RUN_TARGET_FORECASTS} forecasts ({pct:.1f}%)"
         else:
             db_line = "Shadow Run: N/A"
         
@@ -325,12 +324,14 @@ class AlertService:
             verdict_emoji = "⏳"
             color = "#FFA500"
 
+        from app.config.shadow_run import SHADOW_RUN_TARGET_DAYS as _TARGET_DAYS
+        from app.config.shadow_run import SHADOW_RUN_TARGET_FORECASTS as _TARGET_FC
         text_body = (
-            f"🏁 *HewaSense Shadow Run Complete — 90 Valid Run-Days*\n"
+            f"🏁 *HewaSense Shadow Run Complete — {_TARGET_DAYS} Valid Run-Days*\n"
             f"_{date_str}_\n\n"
             f"*Shadow Run Summary*\n"
-            f"Valid run-days: {valid_run_days} / 90 ✅\n"
-            f"Total forecasts logged: {total_forecasts} / 2,160\n\n"
+            f"Valid run-days: {valid_run_days} / {_TARGET_DAYS} ✅\n"
+            f"Total forecasts logged: {total_forecasts} / {_TARGET_FC:,}\n\n"
             f"*Go / No-Go Gates*\n"
             f"{brier_line}\n"
             f"{basis_line}\n\n"

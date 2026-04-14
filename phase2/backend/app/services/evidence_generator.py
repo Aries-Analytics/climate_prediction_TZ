@@ -11,6 +11,7 @@ from fastapi.responses import FileResponse
 
 from app.models.forecast_log import ForecastLog
 from app.services.evaluation_service import ForecastEvaluator
+from app.config import shadow_run as sr_cfg
 
 logger = logging.getLogger(__name__)
 
@@ -208,9 +209,9 @@ class EvidencePackGenerator:
             "generated_at": now_utc.isoformat(),
             "shadow_run": {
                 "valid_run_days": valid_run_days,
-                "target_run_days": 90,
+                "target_run_days": sr_cfg.SHADOW_RUN_TARGET_DAYS,
                 "total_forecasts": metrics.get("total_evaluated", 0),
-                "target_forecasts": 2160,
+                "target_forecasts": sr_cfg.SHADOW_RUN_TARGET_FORECASTS,
             },
             "go_live_gates": {
                 **overall_gates,

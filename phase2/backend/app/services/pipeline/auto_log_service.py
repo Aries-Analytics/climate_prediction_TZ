@@ -15,11 +15,11 @@ from typing import Optional
 
 logger = logging.getLogger(__name__)
 
-from datetime import date as _date
-
-SHADOW_RUN_START = _date(2026, 4, 14)
-SHADOW_RUN_TARGET_FORECASTS = 2160
-SHADOW_RUN_TARGET_DAYS = 90
+from app.config.shadow_run import (
+    SHADOW_RUN_START,
+    SHADOW_RUN_TARGET_FORECASTS,
+    SHADOW_RUN_TARGET_DAYS,
+)
 
 
 def run_auto_log(
