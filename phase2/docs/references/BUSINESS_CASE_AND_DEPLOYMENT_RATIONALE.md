@@ -400,7 +400,7 @@ We have built a product that is:
 - **Operationally deployable**: fully automated pipeline running daily since March 9, Slack monitoring, dashboard live, evidence pack accumulating
 - **Competitively differentiated**: most comprehensive multi-peril product for Tanzanian smallholders at the most farmer-friendly price point in the market
 
-The shadow run is not a formality. It is the honest acknowledgment that retrospective validation is not the same as forward validation, and that no farmer should receive a payout based on a model that has only been tested on data it helped create. By June 12, we will have 90 days of evidence that either confirms or challenges every assumption in this document.
+The shadow run is not a formality. It is the honest acknowledgment that retrospective validation is not the same as forward validation, and that no farmer should receive a payout based on a model that has only been tested on data it helped create. By July 13, we will have 90 days of evidence — per-zone for Ifakara TC and Mlimba DC — that either confirms or challenges every assumption in this document.
 
 If the Brier Score comes back below 0.25 and basis risk below 30%, the answer to the framing question is unambiguous: **yes, this is real, yes we can deploy, and yes, farmers will receive payouts when their crops fail**.
 

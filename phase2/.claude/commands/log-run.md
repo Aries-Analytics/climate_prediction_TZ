@@ -96,8 +96,7 @@ Find the "Forecasts accumulated" row in the shadow run table and update with new
 ## Step 7 — Update docs/current/EXECUTIVE_SUMMARY.md
 
 Two locations — both must be updated:
-1. **Line 5 header status**: `Shadow Run ACTIVE (Mar 7 – Jul 13, 2026 revised — Day X of 90 · XXX/2,160 forecasts · XX.X%)`
-2. **Next Steps section**: `Shadow run live Mar 7 – Jul 13, 2026 (revised). Day X of 90 (XXX/2,160 forecasts, XX.X%).`
+Update the **Next Steps section** forward validation line with current forecast count and progress percentage.
 
 ## Step 8 — Update docs/current/PIPELINE_STATUS_MARCH2026.md
 

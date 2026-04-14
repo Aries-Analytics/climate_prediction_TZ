@@ -1,7 +1,7 @@
 # Tanzania Climate Intelligence Platform - Documentation
 
-**Last Updated**: April 7, 2026
-**Status**: 🔵 Shadow Run ACTIVE (Mar 7 – Jun 2026)
+**Last Updated**: April 14, 2026
+**Status**: 🔵 Shadow Run v2 ACTIVE (Apr 14 – Jul 13, 2026 · Ifakara TC + Mlimba DC)
 **Version**: 3.5 (Phase A restructure — pilots/, validation/, legacy-reports/ archived)
 
 ---
@@ -307,16 +307,17 @@ Please create an issue or update the relevant core document.
 
 **Phase**: Forward Validation (Shadow Run)
 **Version**: 3.5
-**Last Updated**: April 7, 2026
-**Status**: 🔵 Shadow Run ACTIVE (Mar 7 – Jun 2026)
+**Last Updated**: April 14, 2026
+**Status**: 🔵 Shadow Run v2 ACTIVE (Apr 14 – Jul 13, 2026 · Ifakara TC + Mlimba DC)
 
 **Current state**:
 - ✅ All features implemented and documented
 - ✅ Comprehensive testing (180+ tests, 80%+ coverage)
 - ✅ Docker-ready deployment (live at hewasense.majaribio.com)
 - ✅ Documentation restructured (Phase A complete)
-- ✅ Yield ground truth calibrated — baseline 2.099 MT/Ha, loss trigger 1.259 MT/Ha
-- 🔵 Forward validation in progress — first Brier Scores ~Jun 9, 2026
+- ✅ Yield ground truth calibrated — two-zone: Ifakara TC 2.30 MT/Ha, Mlimba DC 2.59 MT/Ha
+- ✅ Zone-split evaluation layer — per-zone Brier/RMSE/ECE, basis risk, GO/NO-GO gates
+- 🔵 Forward validation in progress — first per-zone Brier Scores ~Jul 10, 2026
 - ⏳ Go/No-Go decision mid-2026 → underwriter engagement Q3 → pilot alignment Q4
 
 ---

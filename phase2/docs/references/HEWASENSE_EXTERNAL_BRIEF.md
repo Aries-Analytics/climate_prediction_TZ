@@ -47,7 +47,7 @@ Each trigger has a different historical frequency and a different payout rate, r
 
 ## Is It Working? — The Forward Validation Run
 
-The system has been running daily on live 2026 climate data since March 7. This is not a proof-of-concept exercise — the concept was proven during development. This is a **90-day forward validation**: every forecast the system generates is logged and will be evaluated against observed outcomes when forecast windows mature in June.
+The system has been running daily on live 2026 climate data since April 14, generating forecasts for two distinct zones in the Kilombero Basin (Ifakara TC and Mlimba DC). This is not a proof-of-concept exercise — the concept was proven during development. This is a **90-day forward validation**: every forecast the system generates is logged and will be evaluated against observed outcomes — per-zone and in aggregate — when forecast windows mature in July.
 
 Two gate metrics determine go-live eligibility:
 
@@ -59,7 +59,7 @@ The go/no-go decision is binary and criteria are fixed. A gate with room for neg
 
 ### The Evidence Pack
 
-At validation close (~June 12), the system automatically compiles an evidence pack: aggregate forecast accuracy metrics, a full forecast-actual log timestamped for every forecast, and a model compliance attestation. This documentation trail is what turns a validated pilot into an underwriteable product.
+At validation close (~July 13), the system automatically compiles an evidence pack: per-zone and aggregate forecast accuracy metrics, a full forecast-actual log timestamped for every forecast with zone identification, and a model compliance attestation. This documentation trail is what turns a validated pilot into an underwriteable product.
 
 ---
 
@@ -145,7 +145,7 @@ There are approximately **2.3 million smallholder farmers in Tanzania** exposed 
 | Farmer cost (co-funded target) | ~$12/year |
 | Historical loss ratio | 75% |
 | Retrospective basis risk | 20% |
-| Forward validation window | March 7 – June 12, 2026 |
+| Forward validation window | April 14 – July 13, 2026 (two-zone) |
 | Go-live gate — forecast calibration | Brier Score < 0.25 |
 | Go-live gate — basis risk | < 30% |
 | Payout-to-price ratio | 9× (vs 4–5× for comparable products) |

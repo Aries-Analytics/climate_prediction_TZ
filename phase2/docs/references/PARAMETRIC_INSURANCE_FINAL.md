@@ -1,7 +1,7 @@
 # True Parametric Insurance - Final Implementation
 
 **Date**: March 15, 2026
-**Status**: 🔄 SHADOW RUN ACTIVE (Mar 7 – Jun 2026 revised) — Live pilot pending mid-2026 Go/No-Go decision
+**Status**: 🔄 SHADOW RUN v2 ACTIVE (Apr 14 – Jul 13, 2026 · Ifakara TC + Mlimba DC) — Live pilot pending mid-2026 Go/No-Go decision
 **Version**: 4.0 (Phase-Based + Horizon Tiers)
 
 ---
@@ -271,8 +271,8 @@ USE_TIERED_PAYOUTS = False  # True parametric (fixed rates, not tiered)
 - **Farmers**: 1,000 smallholder rice farmers (target; enrolment pending Phase 3 gate)
 - **Crop**: Rice (intensive cultivation area)
 - **Coverage**: ~500 hectares total (0.5 ha per farmer)
-- **Current Phase**: Shadow Run ACTIVE (Mar 7 – Jun 2026) — technical validation, no live payouts
-- **Live Pilot Timeline**: Q3 2026+ contingent on June 2026 go-live gate (Brier Score < 0.25)
+- **Current Phase**: Shadow Run v2 ACTIVE (Apr 14 – Jul 13, 2026, two-zone: Ifakara TC + Mlimba DC) — technical validation, no live payouts
+- **Live Pilot Timeline**: Q3 2026+ contingent on July 2026 go-live gate (per-zone Brier Score < 0.25)
 - **Duration**: 12-month pilot once live
 
 **Rationale for Kilombero Basin**:
@@ -431,12 +431,12 @@ USE_TIERED_PAYOUTS = False  # True parametric (fixed rates, not tiered)
 **Current state** (live counts in Evidence Pack dashboard — `/v1/evidence-pack/execution-log`)**:**
 
 - ✅ Pipeline executing daily since Mar 9 (scheduler TZ bug fixed Mar 8)
-- ✅ 12 forecasts/run: drought × 4 horizons + flood × 4 horizons + crop_failure × 4 horizons (heat_stress excluded — rainfall model ≠ temperature model)
+- ✅ 24 forecasts/run: 3 triggers × 4 horizons × 2 zones (heat_stress excluded — rainfall model ≠ temperature model)
 - ✅ `ForecastLog` evidence pack: `threshold_used` (0.65/0.60) + `forecast_distribution` (horizon_tier, insurance_eligible, confidence bounds) populated on every entry
 - ✅ `horizon_months <= 4` guard enforced in both backend endpoints — advisory tier never enters financial exposure
-- ⏳ ForecastLog entries status: all `pending` — validity windows are 3–6 months ahead; auto-evaluation begins ~Jun 9
-- ✅ 90-day evidence pack compilation automated — orchestrator Stage 5 detects completion, generates `shadow_run_final_report.json` (Brier Score + NDVI proxy basis risk), sends Slack go/no-go alert. API: `GET /api/v1/evidence-pack/final-report`
-- ✅ NDVI proxy basis risk automated — `basis_risk_service.py` joins `forecast_logs` × `ndvi_observations` by month; primary-tier drought/crop_failure triggers corroborated by NDVI anomaly < -0.05. API: `GET /api/v1/evidence-pack/basis-risk`
+- ⏳ ForecastLog entries status: all `pending` — validity windows are 3–6 months ahead; auto-evaluation begins ~Jul 10
+- ✅ 90-day evidence pack compilation automated — orchestrator Stage 5 detects completion (filtered by `SHADOW_RUN_START` from `app/config/shadow_run.py`), generates `shadow_run_final_report.json` with per-zone GO/NO-GO gates, sends Slack alert. API: `GET /api/v1/evidence-pack/final-report`
+- ✅ NDVI proxy basis risk automated — per-zone and aggregate. `basis_risk_service.py` joins `forecast_logs` × `ndvi_observations` by month; primary-tier drought/crop_failure triggers corroborated by NDVI anomaly < -0.05. API: `GET /api/v1/evidence-pack/basis-risk?location_id=7`
 
 ### Phase 3 — Go-Live Decision (Mid-2026) ⏳ PENDING
 

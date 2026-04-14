@@ -1,6 +1,6 @@
 # Tanzania Climate Prediction - Phase 2
 
-> **Status**: 🔵 Shadow Run ACTIVE (Mar 7 – Jun 12, 2026 revised) · Live at [hewasense.majaribio.com](https://hewasense.majaribio.com)
+> **Status**: 🔵 Shadow Run v2 ACTIVE (Apr 14 – Jul 13, 2026 · two-zone Kilombero: Ifakara TC + Mlimba DC) · Live at [hewasense.majaribio.com](https://hewasense.majaribio.com)
 
 A comprehensive end-to-end machine learning system for climate prediction in Tanzania, featuring data ingestion, processing, feature engineering, model training pipelines, and an **interactive web dashboard** supporting parametric insurance for smallholder farmers.
 
@@ -350,11 +350,11 @@ MONITORING_METRICS_PORT=9090
 ```
 
 **New in March–April 2026:**
-- **Shadow Run ACTIVE**: Daily 6AM EAT pipeline generating 12 forecasts/day (3 triggers × 4 horizons), accumulating Brier Scores
-- **Evidence Pack Dashboard**: Tracks forecast accuracy over time for underwriter engagement
+- **Shadow Run v2 ACTIVE**: Daily 6AM EAT pipeline generating 24 forecasts/day (3 triggers × 4 horizons × 2 zones), accumulating per-zone Brier Scores
+- **Evidence Pack Dashboard**: Zone tabs, per-zone GO/NO-GO gates, basis risk display — all data-driven from API
 - **Phase-Based Dynamic Model**: GDD-tracked 4-phase model — 100% catch rate on both confirmed crop disasters (2017/18 and 2021/22), 20% basis risk
 - **Probabilistic triggers**: `norm.cdf()` using physical Kilombero thresholds — more defensible than static percentiles
-- **Automated Evaluation**: ForecastLog records auto-resolve when validity windows mature (~Jun 2026 first Brier Scores)
+- **Automated Evaluation**: ForecastLog records auto-resolve when validity windows mature (~Jul 2026 first Brier Scores). Per-zone GO/NO-GO gates trigger automatically at 90 days
 - **Shadow run completion automation**: Stage 5 detects day-90 automatically, generates final Evidence Pack + Brier Score report
 
 **New in February 2026:**

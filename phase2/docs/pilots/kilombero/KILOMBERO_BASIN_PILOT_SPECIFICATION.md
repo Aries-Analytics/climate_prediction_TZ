@@ -11,7 +11,7 @@
 
 ## Executive Summary
 
-The **Kilombero Basin Rice Pilot** (Morogoro Region) is a focused, single-location parametric insurance pilot program designed to validate the production-ready XGBoost climate prediction model in a real-world agricultural setting. The pilot covers **1,000 smallholder rice farmers** in the flood-prone Kilombero Valley. 
+The **Kilombero Basin Rice Pilot** (Morogoro Region) is a two-zone parametric insurance pilot program designed to validate the production-ready XGBoost climate prediction model in a real-world agricultural setting. The pilot covers **1,000 smallholder rice farmers** across two zones in the Kilombero Valley: **Ifakara TC** (400 farmers, id=7) and **Mlimba DC** (600 farmers, id=8). 
 
 **Model Selection**: The HewaSense V4 Phase-Based Coverage Service actively models rice phenology via Growing Degree Days (GDD) and mitigates basis risk via continuous 5-day cumulative flood triggers. The model achieved a bounded **9.6% commercial loss ratio** in out-of-sample testing (2000-2014) and a validated **20% basis risk** in retrospective validation (2015-2025), with **zero false negatives** — catching both the 2017/2018 and 2021/2022 crop failures. See `PHASE_BASED_COMPARISON.md` for full validation details.
 
@@ -97,7 +97,7 @@ High-risk forecasts (≥75% probability):
 Total Expected Payout: $133,557
 ```
 
-**Note**: Once pilot is properly configured to Morogoro only (Location ID 6), this calculation will reflect only Morogoro-specific forecasts. Current forecast data shows multi-location risks, which inflates the payout estimate. However, even with single-location focus, adequate reserves remain critical.
+**Note**: Pilot is configured for two-zone operation: Ifakara TC (location_id=7) and Mlimba DC (location_id=8). Payout calculations reflect per-zone forecasts. Reserve sizing uses joint exceedance probability for correlated events across zones.
 
 
 ## Model Performance Rationale
@@ -504,5 +504,5 @@ Reserves are adequate. See Financial Parameters table above for full breakdown.
 
 ---
 
-**Document Status:** Shadow Run ACTIVE (Mar 7 – Jun 2026 revised) — Retrospective Validation Complete
+**Document Status:** Shadow Run v2 ACTIVE (Apr 14 – Jul 13, 2026 · Ifakara TC + Mlimba DC) — Retrospective Validation Complete
 **Next Review:** Mid-2026 — post shadow run debrief and Go/No-Go decision

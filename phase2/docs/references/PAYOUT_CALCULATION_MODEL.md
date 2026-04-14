@@ -3,7 +3,7 @@
 **Date:** March 15, 2026
 **Version:** 2.0 (Production — all fixes implemented)
 **Context:** Morogoro Rice Pilot (1,000 farmers, Kilombero Basin)
-**Status:** ✅ Implemented & Deployed — Shadow Run ACTIVE (Mar 7 – Jun 2026)
+**Status:** ✅ Implemented & Deployed — Shadow Run v2 ACTIVE (Apr 14 – Jul 13, 2026 · Ifakara TC + Mlimba DC)
 
 ---
 
