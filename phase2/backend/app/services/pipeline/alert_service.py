@@ -159,8 +159,12 @@ class AlertService:
                 # Total climate data records (reference data, not tracked for shadow run)
                 total_db_records = db.query(func.count(ClimateData.id)).scalar()
 
-                # ForecastLog count — the shadow run KPI
-                forecast_log_count = db.query(func.count(ForecastLog.id)).scalar()
+                # ForecastLog count — the shadow run KPI (from v2 start date only)
+                from datetime import date as _date
+                _SR_START = _date(2026, 4, 14)
+                forecast_log_count = db.query(func.count(ForecastLog.id)).filter(
+                    func.date(ForecastLog.created_at) >= _SR_START
+                ).scalar()
             except Exception as e:
                 logger.warning(f"Failed to query enrichment data for success alert: {e}")
         

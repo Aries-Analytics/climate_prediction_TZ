@@ -15,6 +15,9 @@ from typing import Optional
 
 logger = logging.getLogger(__name__)
 
+from datetime import date as _date
+
+SHADOW_RUN_START = _date(2026, 4, 14)
 SHADOW_RUN_TARGET_FORECASTS = 2160
 SHADOW_RUN_TARGET_DAYS = 90
 
@@ -71,9 +74,13 @@ def _query_metrics(db) -> Optional[dict]:
         from sqlalchemy import func
         from app.models.forecast_log import ForecastLog
 
-        total = db.query(func.count(ForecastLog.id)).scalar() or 0
+        total = db.query(func.count(ForecastLog.id)).filter(
+            func.date(ForecastLog.issued_at) >= SHADOW_RUN_START
+        ).scalar() or 0
         valid_days = db.query(
             func.count(func.distinct(func.date(ForecastLog.issued_at)))
+        ).filter(
+            func.date(ForecastLog.issued_at) >= SHADOW_RUN_START
         ).scalar() or 0
 
         return {
