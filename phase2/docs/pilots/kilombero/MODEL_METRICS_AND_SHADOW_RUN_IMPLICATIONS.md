@@ -83,12 +83,12 @@ Every day at 6 AM EAT, the automated pipeline:
 | Are trigger thresholds appropriate? | Confusion matrix (TP/FP/TN/FN)             | False positive rate < 15% |
 | Is basis risk manageable?           | Predicted vs observed trigger alignment    | Basis risk < 30%          |
 
-### After 90 Days (~1,080 Forecasts)
+### After 90 Days (~2,160 Forecasts)
 
 The **Evidence Pack** bundles:
 
-- `metrics.json` — aggregate Brier score, RMSE, calibration error
-- `logs_export.csv` — all forecast-vs-actual pairs
+- `metrics.json` — per-zone and aggregate Brier score, RMSE, calibration error (Ifakara TC + Mlimba DC)
+- `logs_export.csv` — all forecast-vs-actual pairs with zone_name column
 - `model_compliance_statement.txt` — zero look-ahead bias attestation, model version
 
 This goes to reinsurers as proof of operational reliability.

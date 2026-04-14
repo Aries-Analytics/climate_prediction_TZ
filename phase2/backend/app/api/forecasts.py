@@ -29,7 +29,7 @@ def get_forecasts(
     horizon_months: Optional[int] = Query(None, ge=3, le=6),
     start_date: Optional[date] = Query(None),
     end_date: Optional[date] = Query(None),
-    location_id: Optional[int] = Query(None),  # Morogoro pilot filter
+    location_id: Optional[int] = Query(None),  # 7 = Ifakara TC, 8 = Mlimba DC
     days: Optional[int] = Query(None),  # Time period filter
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
@@ -42,7 +42,7 @@ def get_forecasts(
     - **horizon_months**: Filter by forecast horizon (3-6 months)
     - **start_date**: Filter by target date start
     - **end_date**: Filter by target date end
-    - **location_id**: Filter by location (6 = Morogoro pilot)
+    - **location_id**: Filter by zone (7 = Ifakara TC, 8 = Mlimba DC)
     - **days**: Filter forecasts within N days from today
     
     Returns list of forecasts matching the criteria.

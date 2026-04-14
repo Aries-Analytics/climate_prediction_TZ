@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 #
 # Coordinate tolerance for ClimateData lat/lon queries: ±0.01° (~1.1 km).
 # The locations table and climate_data rows use slightly different coordinate
-# precision; 0.001° was too tight (missed Morogoro by 0.0039°).
+# precision; 0.001° was too tight (missed some locations by 0.0039°).
 # ---------------------------------------------------------------------------
 _MONTHLY_DROUGHT_THRESHOLD_MM  = 80.0
 _MONTHLY_FLOOD_THRESHOLD_MM    = 400.0
@@ -84,10 +84,102 @@ def _horizon_months(log: ForecastLog) -> float:
     return max(1.0, (log.lead_time_days or 90) / 30.0)
 
 
+# Active pilot zones — the only location_ids that matter for the shadow run.
+PILOT_ZONE_IDS = [7, 8]  # Ifakara TC, Mlimba DC
+
+
+def _compute_metrics(evaluated_logs: list) -> Dict[str, Any]:
+    """
+    Pure computation of Brier Score, RMSE, ECE, and Confusion Matrix
+    over a pre-filtered list of ForecastLog rows.
+
+    Factored out so it can be called once per zone and once for the aggregate
+    without duplicating the math.
+    """
+    if not evaluated_logs:
+        return {
+            "brier_score": 0.0,
+            "rmse": 0.0,
+            "calibration_error": 0.0,
+            "total_evaluated": 0,
+            "confusion_matrix": {"tp": 0, "fp": 0, "tn": 0, "fn": 0},
+            "events": [],
+        }
+
+    brier_scores = []
+    predictions = []
+    outcomes = []
+    events = []
+    tp, fp, tn, fn = 0, 0, 0, 0
+
+    for log in evaluated_logs:
+        if log.brier_score is not None:
+            brier_scores.append(float(log.brier_score))
+
+        prob = float(log.forecast_value)
+        forecast_type = (log.forecast_type or "").lower()
+        actual_outcome, _ = _get_actual_outcome(log, forecast_type)
+
+        predicted_outcome = 1 if prob >= 0.5 else 0
+        if predicted_outcome == 1 and actual_outcome == 1:
+            tp += 1
+        elif predicted_outcome == 1 and actual_outcome == 0:
+            fp += 1
+        elif predicted_outcome == 0 and actual_outcome == 0:
+            tn += 1
+        elif predicted_outcome == 0 and actual_outcome == 1:
+            fn += 1
+
+        predictions.append(prob)
+        outcomes.append(actual_outcome)
+        events.append({
+            "id": log.id,
+            "issued_at": log.issued_at.isoformat() if log.issued_at else None,
+            "region_id": log.region_id,
+            "predicted_prob": prob,
+            "actual_outcome": actual_outcome,
+            "brier_score": float(log.brier_score) if log.brier_score else 0.0,
+        })
+
+    mean_brier = sum(brier_scores) / len(brier_scores) if brier_scores else 0.0
+    rmse = math.sqrt(mean_brier)
+
+    # Expected Calibration Error (ECE) — 10-bin quantile decomposition
+    bins = [i / 10.0 for i in range(11)]
+    ece = 0.0
+    total_preds = len(predictions)
+    if total_preds > 0:
+        for i in range(len(bins) - 1):
+            bin_start = bins[i]
+            bin_end = bins[i + 1]
+            if i == len(bins) - 2:
+                mask_indices = [idx for idx, p in enumerate(predictions) if bin_start <= p <= bin_end]
+            else:
+                mask_indices = [idx for idx, p in enumerate(predictions) if bin_start <= p < bin_end]
+            if mask_indices:
+                bin_pred_mean = sum(predictions[idx] for idx in mask_indices) / len(mask_indices)
+                bin_obs_mean = sum(outcomes[idx] for idx in mask_indices) / len(mask_indices)
+                bin_weight = len(mask_indices) / total_preds
+                ece += bin_weight * abs(bin_pred_mean - bin_obs_mean)
+
+    return {
+        "brier_score": round(mean_brier, 4),
+        "rmse": round(rmse, 4),
+        "calibration_error": round(ece, 4),
+        "total_evaluated": len(evaluated_logs),
+        "confusion_matrix": {"tp": tp, "fp": fp, "tn": tn, "fn": fn},
+        "events": events,
+    }
+
+
 class ForecastEvaluator:
     """
     Evaluates historical forecasts in the Shadow Run.
     Calculates Predicted vs Actual metrics: Brier Score, RMSE, and Calibration Error.
+
+    All metrics are computed per-zone (Ifakara TC / Mlimba DC) as well as
+    in aggregate.  The per-zone breakdown is always present — zone-blind
+    responses are no longer possible.
     """
 
     def __init__(self, db: Session):
@@ -150,7 +242,7 @@ class ForecastEvaluator:
                 forecast_type = (log.forecast_type or "").lower()
 
                 # Look up the Location to get lat/lon for the ClimateData query.
-                # region_id stores the integer location PK (e.g. 6 = Morogoro).
+                # region_id stores the integer location PK (7 = Ifakara TC, 8 = Mlimba DC).
                 location = self.db.query(Location).filter(
                     Location.id == int(log.region_id)
                 ).first()
@@ -222,90 +314,60 @@ class ForecastEvaluator:
             "remaining_pending": len(pending_logs) - evaluated_count - errors
         }
 
+    # ------------------------------------------------------------------
+    # Zone-aware metrics
+    # ------------------------------------------------------------------
+
+    def get_zone_metrics(self, location_id: int) -> Dict[str, Any]:
+        """
+        Metrics for a single zone.  Used by the API when ?location_id= is supplied.
+        """
+        logs = self.db.query(ForecastLog).filter(
+            ForecastLog.status == "evaluated",
+            ForecastLog.region_id == str(location_id),
+        ).all()
+
+        location = self.db.query(Location).filter(Location.id == location_id).first()
+        zone_name = location.name if location else f"location_{location_id}"
+
+        metrics = _compute_metrics(logs)
+        metrics["location_id"] = location_id
+        metrics["zone_name"] = zone_name
+        return metrics
+
     def get_aggregate_metrics(self) -> Dict[str, Any]:
         """
         Calculate Brier Score, RMSE, Calibration Error, and Confusion Matrix
-        across all evaluated ForecastLogs. Provides the dataset for the Evidence Pack.
+        across all evaluated ForecastLogs — with a mandatory per-zone breakdown.
+
+        Returns:
+            {
+                "brier_score": ..., "rmse": ..., "calibration_error": ...,
+                "total_evaluated": ..., "confusion_matrix": {...}, "events": [...],
+                "zones": {
+                    "7": {"zone_name": "Ifakara TC", "brier_score": ..., ...},
+                    "8": {"zone_name": "Mlimba DC",  "brier_score": ..., ...}
+                }
+            }
         """
-        evaluated_logs = self.db.query(ForecastLog).filter(
-            ForecastLog.status == 'evaluated'
+        all_evaluated = self.db.query(ForecastLog).filter(
+            ForecastLog.status == "evaluated"
         ).all()
 
-        empty_stats = {
-            "brier_score": 0.0,
-            "rmse": 0.0,
-            "calibration_error": 0.0,
-            "total_evaluated": 0,
-            "confusion_matrix": {"tp": 0, "fp": 0, "tn": 0, "fn": 0},
-            "events": []
-        }
+        # Overall aggregate
+        aggregate = _compute_metrics(all_evaluated)
 
-        if not evaluated_logs:
-            return empty_stats
+        # Per-zone breakdown — always computed, never optional
+        zones: Dict[str, Dict[str, Any]] = {}
+        for loc_id in PILOT_ZONE_IDS:
+            zone_logs = [l for l in all_evaluated if str(l.region_id) == str(loc_id)]
+            location = self.db.query(Location).filter(Location.id == loc_id).first()
+            zone_name = location.name if location else f"location_{loc_id}"
 
-        brier_scores = []
-        predictions = []
-        outcomes = []
-        events = []
+            zone_metrics = _compute_metrics(zone_logs)
+            zone_metrics["location_id"] = loc_id
+            zone_metrics["zone_name"] = zone_name
+            zones[str(loc_id)] = zone_metrics
 
-        tp, fp, tn, fn = 0, 0, 0, 0
-
-        for log in evaluated_logs:
-            if log.brier_score is not None:
-                brier_scores.append(float(log.brier_score))
-
-            prob = float(log.forecast_value)
-            forecast_type = (log.forecast_type or "").lower()
-            actual_outcome, _ = _get_actual_outcome(log, forecast_type)
-
-            # Confusion matrix (binary classification at 0.5 threshold)
-            predicted_outcome = 1 if prob >= 0.5 else 0
-            if predicted_outcome == 1 and actual_outcome == 1:
-                tp += 1
-            elif predicted_outcome == 1 and actual_outcome == 0:
-                fp += 1
-            elif predicted_outcome == 0 and actual_outcome == 0:
-                tn += 1
-            elif predicted_outcome == 0 and actual_outcome == 1:
-                fn += 1
-
-            predictions.append(prob)
-            outcomes.append(actual_outcome)
-            events.append({
-                "id": log.id,
-                "issued_at": log.issued_at.isoformat() if log.issued_at else None,
-                "predicted_prob": prob,
-                "actual_outcome": actual_outcome,
-                "brier_score": float(log.brier_score) if log.brier_score else 0.0
-            })
-
-        mean_brier = sum(brier_scores) / len(brier_scores) if brier_scores else 0.0
-        rmse = math.sqrt(mean_brier)
-
-        # Expected Calibration Error (ECE)
-        bins = [i / 10.0 for i in range(11)]
-        ece = 0.0
-        total_preds = len(predictions)
-
-        if total_preds > 0:
-            for i in range(len(bins) - 1):
-                bin_start = bins[i]
-                bin_end = bins[i + 1]
-                if i == len(bins) - 2:
-                    mask_indices = [idx for idx, p in enumerate(predictions) if bin_start <= p <= bin_end]
-                else:
-                    mask_indices = [idx for idx, p in enumerate(predictions) if bin_start <= p < bin_end]
-                if mask_indices:
-                    bin_pred_mean = sum(predictions[idx] for idx in mask_indices) / len(mask_indices)
-                    bin_obs_mean = sum(outcomes[idx] for idx in mask_indices) / len(mask_indices)
-                    bin_weight = len(mask_indices) / total_preds
-                    ece += bin_weight * abs(bin_pred_mean - bin_obs_mean)
-
-        return {
-            "brier_score": round(mean_brier, 4),
-            "rmse": round(rmse, 4),
-            "calibration_error": round(ece, 4),
-            "total_evaluated": len(evaluated_logs),
-            "confusion_matrix": {"tp": tp, "fp": fp, "tn": tn, "fn": fn},
-            "events": events
-        }
+        aggregate["zones"] = zones
+        return aggregate

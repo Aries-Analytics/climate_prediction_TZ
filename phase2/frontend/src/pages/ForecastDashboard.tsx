@@ -32,6 +32,7 @@ import PortfolioRiskCards from '../components/PortfolioRiskCards'
 
 interface Forecast {
   id: number
+  locationId: number
   forecastDate: string
   targetDate: string
   horizonMonths: number
@@ -61,9 +62,17 @@ interface ForecastWithRecommendations extends Forecast {
   recommendations?: Recommendation[]
 }
 
+interface PilotLocation {
+  locationId: number
+  locationName: string
+  latitude: number
+  longitude: number
+}
+
 export default function ForecastDashboard() {
   const [forecasts, setForecasts] = useState<Forecast[]>([])
   const [recommendations, setRecommendations] = useState<Recommendation[]>([])
+  const [pilotLocations, setPilotLocations] = useState<PilotLocation[]>([])
   const [selectedTriggerType] = useState<string>('all')
   const [selectedHorizon] = useState<string>('all')
   const [isLoading, setIsLoading] = useState(false)
@@ -73,13 +82,16 @@ export default function ForecastDashboard() {
 
   const [portfolioRisk, setPortfolioRisk] = useState<any>(null)
 
+  // Only show locations that appear in actual forecast data — data-driven, not hardcoded
+  const activePilotLocations = useMemo(() => {
+    if (forecasts.length === 0 || pilotLocations.length === 0) return [];
+    const forecastLocationIds = new Set(forecasts.map(f => f.locationId));
+    return pilotLocations.filter(loc => forecastLocationIds.has(loc.locationId));
+  }, [forecasts, pilotLocations]);
+
   // Transform forecasts into location risk data for map (MUST be before conditional returns)
   const locationRisk = useMemo(() => {
-    if (forecasts.length === 0) return [];
-    const kilomberoLocations = [
-      { locationId: 7, locationName: 'Ifakara TC', latitude: -8.1333, longitude: 36.6833 },
-      { locationId: 8, locationName: 'Mlimba DC', latitude: -8.0167, longitude: 35.9500 },
-    ];
+    if (forecasts.length === 0 || activePilotLocations.length === 0) return [];
     const droughtProb = forecasts.filter(f => f.triggerType === 'drought').reduce((max, f) => Math.max(max, f.probability), 0);
     const floodProb = forecasts.filter(f => f.triggerType === 'flood').reduce((max, f) => Math.max(max, f.probability), 0);
     const cropFailureProb = forecasts.filter(f => f.triggerType === 'crop_failure').reduce((max, f) => Math.max(max, f.probability), 0);
@@ -88,14 +100,37 @@ export default function ForecastDashboard() {
     // Use backend-calculated expectedPayouts (primary tier ≥75%, MAX per trigger type)
     // to avoid double-counting across horizons — same logic as risk_service.py
     const estimatedPayout = portfolioRisk?.expectedPayouts ?? 0;
-    return kilomberoLocations.map(loc => ({ ...loc, droughtProbability: droughtProb, floodProbability: floodProb, cropFailureProbability: cropFailureProb, overallRiskIndex: overallRisk, riskLevel, estimatedPayout }));
-  }, [forecasts, portfolioRisk]);
+    return activePilotLocations.map(loc => ({ ...loc, droughtProbability: droughtProb, floodProbability: floodProb, cropFailureProbability: cropFailureProb, overallRiskIndex: overallRisk, riskLevel, estimatedPayout }));
+  }, [forecasts, portfolioRisk, activePilotLocations]);
 
   useEffect(() => {
     fetchForecasts()
     fetchRecommendations()
     fetchPortfolioRisk()
+    fetchPilotLocations()
   }, [])
+
+  const fetchPilotLocations = async () => {
+    try {
+      const token = localStorage.getItem('token')
+      const response = await axios.get(`${API_BASE_URL}/locations`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      // Only include locations that have active forecasts (pilot zones).
+      // The backend locations table may include deprecated entries — filter to
+      // those actually used by the pipeline by cross-referencing with the
+      // execution-log zones or simply using all non-deprecated locations.
+      const locs: PilotLocation[] = response.data.map((loc: any) => ({
+        locationId: loc.id,
+        locationName: loc.name,
+        latitude: loc.latitude,
+        longitude: loc.longitude,
+      }))
+      setPilotLocations(locs)
+    } catch (err) {
+      console.error('Failed to fetch locations:', err)
+    }
+  }
 
   const fetchForecasts = async () => {
     try {

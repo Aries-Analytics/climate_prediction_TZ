@@ -36,10 +36,10 @@ docker compose -f /opt/hewasense/app/phase2/docker-compose.dev.yml exec -T db \
 ## Step 2 — Calculate shadow run metrics
 
 From the query results:
-- `total_forecasts` / 1,080 × 100 = progress %
+- `total_forecasts` / 2,160 × 100 = progress %
 - List all valid run-days and identify: current consecutive streak + any isolated earlier days
 - Valid run-days remaining = 90 − valid_run_days_so_far
-- Calendar days remaining = days until Jun 12, 2026
+- Calendar days remaining = days until Jul 13, 2026
 
 ## Step 3 — Apply GOTCHA ingestion rules
 
@@ -63,8 +63,8 @@ Create `memory/logs/YYYY-MM-DD.md` (use the run date, not today's date if differ
 ## Pipeline Run — [Month Day]
 
 **Status:** [SUCCESS/FAILURE] | Duration: [N]s | Trigger: Scheduled (06:00 EAT)
-**Forecasts:** 12 generated | Location: Morogoro | Data Quality: 100%
-**Shadow Run:** [total] / 1,080 ([pct]%) — [N] valid run-days
+**Forecasts:** 24 generated | Zones: Ifakara TC + Mlimba DC | Data Quality: 100%
+**Shadow Run:** [total] / 2,160 ([pct]%) — [N] valid run-days
 **Execution ID:** [execution_id]
 
 [Ingestion line ONLY if sources_failed is non-empty]
@@ -77,11 +77,11 @@ Create `memory/logs/YYYY-MM-DD.md` (use the run date, not today's date if differ
 |---|---|
 | `forecast_logs` | [total] |
 | Valid run-days | [N] ([list of dates]) |
-| Target | 1,080 |
+| Target | 2,160 |
 | Progress | [pct]% |
 | Next scheduled run | [tomorrow] 06:00 EAT |
 
-**Note:** [N] total valid run-days. Current streak: [streak description]. [remaining] valid run-days remaining; revised end date Jun 12 provides [calendar_days] calendar days — [on track / tight / at risk assessment].
+**Note:** [N] total valid run-days. Current streak: [streak description]. [remaining] valid run-days remaining; revised end date Jul 13 provides [calendar_days] calendar days — [on track / tight / at risk assessment].
 ```
 
 ## Step 5 — Update docs/references/PARAMETRIC_INSURANCE_FINAL.md
@@ -96,8 +96,8 @@ Find the "Forecasts accumulated" row in the shadow run table and update with new
 ## Step 7 — Update docs/current/EXECUTIVE_SUMMARY.md
 
 Two locations — both must be updated:
-1. **Line 5 header status**: `Shadow Run ACTIVE (Mar 7 – Jun 12, 2026 revised — Day X of 90 · XXX/1,080 forecasts · XX.X%)`
-2. **Next Steps section**: `Shadow run live Mar 7 – Jun 12, 2026 (revised). Day X of 90 (XXX/1,080 forecasts, XX.X%).`
+1. **Line 5 header status**: `Shadow Run ACTIVE (Mar 7 – Jul 13, 2026 revised — Day X of 90 · XXX/2,160 forecasts · XX.X%)`
+2. **Next Steps section**: `Shadow run live Mar 7 – Jul 13, 2026 (revised). Day X of 90 (XXX/2,160 forecasts, XX.X%).`
 
 ## Step 8 — Update docs/current/PIPELINE_STATUS_MARCH2026.md
 
@@ -110,12 +110,12 @@ Also update the `Last Updated` date in the file header (line 6).
 ## Step 9 — Update docs/references/BUSINESS_CASE_AND_DEPLOYMENT_RATIONALE.md
 
 Update the header status line (line 7):
-`**Status**: Shadow Run ACTIVE — Day X of 90 valid run-days (XXX/1,080 forecasts, XX.X%)`
+`**Status**: Shadow Run ACTIVE — Day X of 90 valid run-days (XXX/2,160 forecasts, XX.X%)`
 
 ## Step 10 — Update memory/MEMORY.md
 
 Three locations:
-1. **Pipeline status line** (near top, "Pipeline status (March 2026)"): update forecast count, percentage, valid run-days list, current streak
+1. **Pipeline status line** (near top, "Pipeline status (April 2026)"): update forecast count, percentage, valid run-days list, current streak
 2. **Session log table** (near bottom): add new row for this date
 3. **Last updated** date at the bottom of the file
 
@@ -123,7 +123,7 @@ Three locations:
 
 Stage all changed files and commit:
 ```
-docs(log): pipeline run YYYY-MM-DD — [total]/1,080 forecasts ([pct]%), Day [N]
+docs(log): pipeline run YYYY-MM-DD — [total]/2,160 forecasts ([pct]%), Day [N]
 ```
 
 Then push to remote immediately.

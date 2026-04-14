@@ -499,14 +499,14 @@ trigger = CronTrigger.from_crontab(self.schedule, timezone=self.timezone)
 
 ### Mar 8–10 — Shadow Run Active (Mar 7 – Jun 12, 2026 revised)
 
-The system is now in **shadow run** mode — generating forward forecasts for Morogoro that will be evaluated against observed conditions once 3-month windows mature (~Jun 2026).
+The system is now in **shadow run** mode — generating forward forecasts for the Kilombero Basin (Ifakara TC + Mlimba DC) that will be evaluated against observed conditions once 3-month windows mature (~Jul 2026).
 
 | Field | Value |
 |---|---|
-| Location | Morogoro (PILOT_LOCATION_ID=6) |
-| Forecasts per run | 12 (3 trigger types × 4 horizons: 3/4/5/6 months) |
+| Zones | Ifakara TC (id=7) + Mlimba DC (id=8) |
+| Forecasts per run | 24 (3 trigger types × 4 horizons × 2 zones) |
 | Schedule | Daily 06:00 EAT (`0 6 * * *`) |
-| Auto-evaluation starts | ~Jun 9, 2026 (Brier Scores) |
+| Auto-evaluation starts | ~Jul 10, 2026 (Brier Scores, per-zone + aggregate) |
 
 ### Mar 10 — Stale Advisory Lock Recovery
 

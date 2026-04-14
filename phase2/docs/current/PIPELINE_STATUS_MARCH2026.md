@@ -13,14 +13,16 @@
 
 | Field | Value |
 |---|---|
-| **Period** | March 7, 2026 → **June 12, 2026** (revised — 7 missed days compensated) |
-| **Target** | 90 valid run-days = **1,080 ForecastLog entries** (12/day) |
+| **Period** | **April 14, 2026 → July 13, 2026** (restarted — two-zone Kilombero split) |
+| **Target** | 90 valid run-days = **2,160 ForecastLog entries** (24/day — 3 triggers × 4 horizons × 2 zones) |
 | **Purpose** | Forward validation of 3–6 month forecasts against observed outcomes |
 | **Schedule** | Daily 06:00 EAT (`0 6 * * *`, Africa/Dar_es_Salaam) |
-| **Forecasts/run** | 12 (3 trigger types × 4 horizons) |
+| **Zones** | Ifakara TC (id=7, 400 farmers) + Mlimba DC (id=8, 600 farmers) |
+| **Forecasts/run** | 24 (3 trigger types × 4 horizons × 2 zones) |
 | **Trigger types** | drought, flood, crop_failure *(heat_stress excluded — pending dedicated temperature model)* |
 | **Horizons** | 3–4 months = **primary** (payout-eligible, ≥75%) / 5–6 months = **advisory** (early warning, ≥50%) |
-| **Auto-evaluation** | ~June 9, 2026 (Brier Score computation as first 3-month windows from Mar 9 mature) |
+| **Auto-evaluation** | ~July 10, 2026 (Brier Score computation as first 3-month windows from Apr 14 mature) |
+| **Evaluation** | Per-zone Brier/RMSE/ECE + per-zone GO/NO-GO gates nested under overall verdict |
 
 ---
 
@@ -113,19 +115,20 @@ docker exec climate_backend_dev python scripts/seed_models_and_forecasts.py
 | Mar 11, 2026 | First valid run — 12 ForecastLog entries generated |
 | Mar 12–14, 2026 | Stale advisory lock blocked 3 runs |
 | Mar 15, 2026 | NullPool advisory lock fix; payout double-counting fixed (advisory tier excluded, dedup enforced); shadow run end extended to Jun 12 |
-| ~Jun 9, 2026 | First Brier Score auto-evaluation (3-month windows from Mar 9 mature) |
-| Jun 12, 2026 | Shadow run target completion (90 valid run-days = 1,080 entries) |
+| Apr 14, 2026 | Shadow run v2 restart — two-zone Kilombero split (Ifakara TC + Mlimba DC), clean DB |
+| ~Jul 10, 2026 | First Brier Score auto-evaluation (3-month windows from Apr 14 mature) |
+| Jul 13, 2026 | Shadow run target completion (90 valid run-days = 2,160 entries) |
 
 ---
 
 ## 📈 Next Milestone
 
-**~June 9, 2026**: The 3-month forecast windows from the first valid run (Mar 9) mature. The evaluator will:
-1. Fetch observed climate data for Morogoro (Mar–Jun 2026)
-2. Compare against forecast_logs predictions
-3. Compute Brier Scores and write to `forecast_evaluations`
+**~July 10, 2026**: The 3-month forecast windows from the first valid run (Apr 14) mature. The evaluator will:
+1. Fetch observed climate data for Ifakara TC + Mlimba DC (Apr–Jul 2026)
+2. Compare against forecast_logs predictions per zone
+3. Compute per-zone and aggregate Brier Scores
 4. Update `forecast_logs.status` from `pending` → `evaluated`
 
-**June 12, 2026**: Shadow run target completion — 90 valid run-days, 1,080 ForecastLog entries.
+**July 13, 2026**: Shadow run target completion — 90 valid run-days, 2,160 ForecastLog entries.
 
-**Mid-2026**: Go/No-Go Decision — evidence pack (metrics.json + logs_export.csv + compliance statement) compiled and reviewed against Brier Score < 0.25 AND Basis Risk < 30% gate criteria. This provides the first real forward-validation evidence for underwriter engagement. If No-Go: threshold recalibration, model retraining, or trigger redesign — timeline TBD.
+**Mid-2026**: Go/No-Go Decision — evidence pack (metrics.json + logs_export.csv + compliance statement) compiled with per-zone GO/NO-GO gates nested under overall verdict. Brier Score < 0.25 AND Basis Risk < 30% per zone. If No-Go: threshold recalibration, model retraining, or trigger redesign — timeline TBD.

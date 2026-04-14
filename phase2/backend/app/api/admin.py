@@ -166,7 +166,7 @@ async def admin_health_check(
             "users": user_count,
             "audit_logs": audit_log_count,
             "forecast_logs": forecast_log_count,
-            "shadow_run_target": 1080
+            "shadow_run_target": 2160
         }
     except Exception as e:
         return {

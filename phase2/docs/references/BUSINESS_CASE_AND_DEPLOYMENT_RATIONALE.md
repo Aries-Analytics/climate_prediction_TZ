@@ -112,19 +112,20 @@ This is not a soft guideline. It is enforced at the code level in three location
 
 The shadow run is not a proof of concept. The concept was proven during development. The shadow run is a **forward validation** — running the full production pipeline on real 2026 data and comparing every forecast against what actually happens.
 
-### What 90 Days and 1,080 Forecasts Measures
+### What 90 Days and 2,160 Forecasts Measures
 
-Every day at 06:00 EAT, the pipeline generates 12 forecasts per location:
+Every day at 06:00 EAT, the pipeline generates 24 forecasts across two zones (Ifakara TC + Mlimba DC):
 
 - 3 trigger types (drought, flood, crop failure)
 - 4 forecast horizons (3, 4, 5, 6 months ahead)
+- 2 zones (Ifakara TC, Mlimba DC)
 
-After 90 valid run-days, we accumulate **1,080 ForecastLog entries**. When the first 3-month forecasts mature (~June 9), the system evaluates each one:
+After 90 valid run-days, we accumulate **2,160 ForecastLog entries**. When the first 3-month forecasts mature (~July 10), the system evaluates each one — per-zone and in aggregate:
 
 ```
-Forecast: "Drought probability 78% for Morogoro, April 2026"
-Outcome (June): Did a drought event actually occur?
-Result: TP / FP / TN / FN → feeds Brier Score calculation
+Forecast: "Drought probability 78% for Ifakara TC, May 2026"
+Outcome (July): Did a drought event actually occur at Ifakara TC?
+Result: TP / FP / TN / FN → feeds per-zone Brier Score calculation
 ```
 
 ### The Two Gate Metrics and What They Mean in Plain Language
@@ -145,7 +146,7 @@ A 30% basis risk threshold means: in at least 70% of cases where the trigger fir
 
 No reinsurer will underwrite a parametric product based on backtesting alone. They have seen too many models that performed well in-sample and failed in deployment. The evidence pack is our answer to that objection:
 
-- **`metrics.json`**: Aggregate Brier Score, RMSE, calibration error across all 1,080 evaluated forecasts
+- **`metrics.json`**: Per-zone and aggregate Brier Score, RMSE, calibration error across all 2,160 evaluated forecasts
 - **`logs_export.csv`**: Every forecast-actual pair with timestamps, model version, and horizon tier
 - **`model_compliance_statement.txt`**: Signed attestation of zero data leakage, zero look-ahead bias, XGBoost V4.0 only, no synthetic fallbacks
 
@@ -411,8 +412,8 @@ That is what the shadow run is for.
 
 | Parameter                   | Value                                     | Source                                           |
 | --------------------------- | ----------------------------------------- | ------------------------------------------------ |
-| Shadow run window           | Mar 7 – Jun 2026 (90 valid run-days) | `PARAMETRIC_INSURANCE_FINAL.md`                |
-| ForecastLog target          | 1,080 entries                             | System health KPI                                |
+| Shadow run window           | Apr 14 – Jul 13, 2026 (90 valid run-days, two-zone) | `PARAMETRIC_INSURANCE_FINAL.md`                |
+| ForecastLog target          | 2,160 entries (24/day x 2 zones)          | System health KPI                                |
 | Current entries             | Live count — see Evidence Pack dashboard  | `/v1/evidence-pack/execution-log`              |
 | Go-live gate: Brier Score   | < 0.25                                    | `MODEL_METRICS_AND_SHADOW_RUN_IMPLICATIONS.md` |
 | Go-live gate: Basis Risk    | < 30%                                     | Retrospective: 20% (pre-shadow)                  |

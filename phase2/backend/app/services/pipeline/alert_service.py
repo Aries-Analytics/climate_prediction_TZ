@@ -196,7 +196,7 @@ class AlertService:
             quality_line = "Score: N/A"
         
         # ── Shadow run progress line ──
-        SHADOW_RUN_TARGET = 1080
+        SHADOW_RUN_TARGET = 2160
         if forecast_log_count is not None:
             pct = forecast_log_count / SHADOW_RUN_TARGET * 100
             db_line = f"Shadow Run: {forecast_log_count} / {SHADOW_RUN_TARGET} forecasts ({pct:.1f}%)"
@@ -326,7 +326,7 @@ class AlertService:
             f"_{date_str}_\n\n"
             f"*Shadow Run Summary*\n"
             f"Valid run-days: {valid_run_days} / 90 ✅\n"
-            f"Total forecasts logged: {total_forecasts} / 1,080\n\n"
+            f"Total forecasts logged: {total_forecasts} / 2,160\n\n"
             f"*Go / No-Go Gates*\n"
             f"{brier_line}\n"
             f"{basis_line}\n\n"

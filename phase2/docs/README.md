@@ -285,7 +285,7 @@ Please create an issue or update the relevant core document.
 
 ### March 2026 - Shadow Run Launch & Platform Hardening
 
-- ✅ **Shadow run active** — daily pipeline at 6 AM EAT, Mar 7 – Jun 12, 2026 (90 run-days, 1,080 forecast target)
+- ✅ **Shadow run active** — daily pipeline at 6 AM EAT, Apr 14 – Jul 13, 2026 (90 run-days, 2,160 forecast target — two-zone Kilombero split: Ifakara TC + Mlimba DC)
 - ✅ **Public landing page live** — `hewasense.majaribio.com`
 - ✅ **Evidence Pack dashboard** — live run-day counter, forecast accumulation, execution history
 - ✅ **Phase-Based Dynamic Model deployed** — 4-phase GDD tracker, 20% basis risk, 100% catch rate on confirmed disasters

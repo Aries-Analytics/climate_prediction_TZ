@@ -1,13 +1,15 @@
-from fastapi import APIRouter, Depends, HTTPException, Body
-from typing import List, Dict, Any
+from fastapi import APIRouter, Depends, HTTPException, Body, Query
+from typing import List, Dict, Any, Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import func as sqlfunc
 from app.core.database import get_db
 from app.services.evaluation_service import ForecastEvaluator
 from app.services.evidence_generator import EvidencePackGenerator
-from app.services.basis_risk_service import compute_ndvi_proxy_basis_risk
+from app.services.basis_risk_service import compute_ndvi_proxy_basis_risk, compute_zone_basis_risk
 from app.models.pipeline_execution import PipelineExecution
 from app.models.forecast_log import ForecastLog
+from app.models.location import Location
+from app.services.evaluation_service import PILOT_ZONE_IDS
 
 router = APIRouter(prefix="/v1/evidence-pack", tags=["Evidence Pack"])
 
@@ -24,14 +26,26 @@ def trigger_evaluation(db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/metrics")
-def get_evidence_metrics(db: Session = Depends(get_db)):
+def get_evidence_metrics(
+    location_id: Optional[int] = Query(
+        None,
+        description="Filter by zone: 7 = Ifakara TC, 8 = Mlimba DC. "
+                    "Omit for aggregate + per-zone breakdown.",
+    ),
+    db: Session = Depends(get_db),
+):
     """
-    Retrieves the aggregate Brier Score, RMSE, and Calibration Error for the Shadow Run.
+    Retrieves Brier Score, RMSE, and Calibration Error for the Shadow Run.
+
+    - **No location_id**: returns aggregate metrics with a ``zones`` dict
+      containing per-zone breakdowns (Ifakara TC + Mlimba DC).
+    - **location_id=7** or **location_id=8**: returns metrics for that zone only.
     """
     try:
         evaluator = ForecastEvaluator(db)
-        metrics = evaluator.get_aggregate_metrics()
-        return metrics
+        if location_id is not None:
+            return evaluator.get_zone_metrics(location_id)
+        return evaluator.get_aggregate_metrics()
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -76,6 +90,23 @@ def get_execution_log(db: Session = Depends(get_db)):
             .all()
         )
 
+        # Build zone list from DB — no hardcoding
+        zone_list = []
+        for loc_id in PILOT_ZONE_IDS:
+            loc = db.query(Location).filter(Location.id == loc_id).first()
+            if loc:
+                zone_list.append({
+                    "location_id": loc.id,
+                    "name": loc.name,
+                    "latitude": float(loc.latitude),
+                    "longitude": float(loc.longitude),
+                })
+
+        num_zones = len(zone_list) or 1
+        triggers_per_zone = 3  # drought, flood, crop_failure
+        horizons = 4           # 3, 4, 5, 6 months
+        forecasts_per_day = triggers_per_zone * horizons * num_zones
+
         return {
             "shadow_run": {
                 "total_forecast_logs": total_logs,
@@ -83,8 +114,8 @@ def get_execution_log(db: Session = Depends(get_db)):
                 "pct_complete": round((total_logs / target) * 100, 1) if target > 0 else 0,
                 "start_date": "2026-04-14",
                 "end_date": "2026-07-13",
-                "zones": ["Ifakara TC (id=7)", "Mlimba DC (id=8)"],
-                "forecasts_per_day": 24,
+                "zones": zone_list,
+                "forecasts_per_day": forecasts_per_day,
             },
             "executions": [
                 {
@@ -106,9 +137,20 @@ def get_execution_log(db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/basis-risk")
-def get_basis_risk(db: Session = Depends(get_db)):
+def get_basis_risk(
+    location_id: Optional[int] = Query(
+        None,
+        description="Filter by zone: 7 = Ifakara TC, 8 = Mlimba DC. "
+                    "Omit for aggregate + per-zone breakdown.",
+    ),
+    db: Session = Depends(get_db),
+):
     """
     Returns the live NDVI proxy basis risk computation.
+
+    - **No location_id**: returns basin-wide aggregate with a ``zones`` dict
+      containing per-zone breakdowns (Ifakara TC + Mlimba DC).
+    - **location_id=7** or **location_id=8**: returns basis risk for that zone only.
 
     Available incrementally — does not wait for shadow run completion.
     Returns the current state based on however many evaluated primary-tier
@@ -120,6 +162,8 @@ def get_basis_risk(db: Session = Depends(get_db)):
     Flood triggers are excluded (NDVI is not a reliable flood signal).
     """
     try:
+        if location_id is not None:
+            return compute_zone_basis_risk(db, location_id)
         return compute_ndvi_proxy_basis_risk(db)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

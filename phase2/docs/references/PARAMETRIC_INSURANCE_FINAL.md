@@ -417,18 +417,16 @@ USE_TIERED_PAYOUTS = False  # True parametric (fixed rates, not tiered)
 5. ✅ Payout calculation validated — per-farmer fixed rates, primary-tier only, deduplication enforced (Mar 15)
 6. ✅ JWT auth, health checks, Slack alerts operational
 
-### Phase 2 — Shadow Run 🔄 ACTIVE (Mar 7 – Jun 2026, 90 valid run-days)
+### Phase 2 — Shadow Run 🔄 ACTIVE (Apr 14 – Jul 13, 2026, 90 valid run-days)
 
-> **Purpose**: 90 valid-run-day forward validation (= 1,080 ForecastLog entries at 12/day). Pipeline runs daily at 06:00 EAT. No real payouts during this phase — forecasts are logged and evaluated against actual observations to build the evidence pack for reinsurers and TIRA.
+> **Purpose**: 90 valid-run-day forward validation (= 2,160 ForecastLog entries at 24/day — 3 triggers × 4 horizons × 2 zones: Ifakara TC + Mlimba DC). Pipeline runs daily at 06:00 EAT. No real payouts during this phase — forecasts are logged and evaluated against actual observations to build the evidence pack for reinsurers and TIRA. Per-zone GO/NO-GO gates.
 
 **Run schedule:**
 
-- **Nominal start**: Mar 7, 2026
-- **First correct run**: Mar 9, 2026 (Mar 7 started late; Mar 8 missed — scheduler timezone bug, fixed)
-- **Additional missed days**: 5 (pipeline failures post-Mar 9) — total missed: 7
-- **Nominal end**: Jun 5, 2026 — extended by 7 days to compensate
-- **Revised end date**: **Jun 2026** (extended to achieve 90 valid run-days = 1,080 entries)
-- **Brier Score auto-evaluation**: begins ~Jun 9 when first 3-month forecasts (issued ~Mar 9) mature
+- **Original start**: Mar 7, 2026 (single-zone, Morogoro city — coordinates were 120+ km from Kilombero Basin)
+- **Shadow run v2 restart**: Apr 14, 2026 (two-zone Kilombero split, clean DB wipe)
+- **Target end date**: **Jul 13, 2026** (90 valid run-days = 2,160 entries)
+- **Brier Score auto-evaluation**: begins ~Jul 10 when first 3-month forecasts (issued ~Apr 14) mature
 
 **Current state** (live counts in Evidence Pack dashboard — `/v1/evidence-pack/execution-log`)**:**
 

@@ -208,7 +208,7 @@ class ForecastGenerator:
         if location:
             # ±0.01° tolerance (~1.1 km). The locations table and climate_data
             # rows use slightly different coordinate precision; 0.001° was too
-            # tight for Morogoro (actual diff: 0.0039° in longitude).
+            # tight for some locations (actual diff: 0.0039° in longitude).
             query = query.filter(
                 and_(
                     ClimateData.location_lat >= float(location.latitude)  - 0.01,
@@ -367,7 +367,7 @@ def generate_forecasts_all_locations(
     generator.load_model()
     
     # Generate for all locations that have climate data
-    # Frontend will filter to show only location_id=6 (Morogoro)
+    # Shadow run v2: forecasts for Ifakara TC (7) + Mlimba DC (8)
     locations = db.query(Location).all()
     
     if not locations:
@@ -449,7 +449,7 @@ def get_forecasts(
         horizon_months: Filter by horizon
         start_date: Filter by target date start
         end_date: Filter by target date end
-        location_id: Filter by location ID (6 = Morogoro)
+        location_id: Filter by location ID (7 = Ifakara TC, 8 = Mlimba DC)
         days: Filter forecasts within N days from today
         
     Returns:

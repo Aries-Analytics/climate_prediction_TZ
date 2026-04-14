@@ -119,7 +119,7 @@ Each day the system generates 12 forecasts per location:
 - 3 trigger types (drought, flood, crop failure)
 - 4 forecast horizons (3, 4, 5, and 6 months ahead)
 
-After 90 valid run-days, we accumulate 1,080 forecast records. When the first 3-month forecasts mature in early June, the system evaluates each one against observed outcomes. This produces two go-live gate metrics.
+After 90 valid run-days, we accumulate 2,160 forecast records (24/day across two zones: Ifakara TC + Mlimba DC). When the first 3-month forecasts mature in July, the system evaluates each one against observed outcomes — per-zone and in aggregate. This produces two go-live gate metrics, assessed for each zone independently.
 
 ### The Two Gate Metrics
 
@@ -139,7 +139,7 @@ A 30% basis risk threshold means: in at least 70% of cases where the trigger fir
 
 No reinsurer will underwrite a parametric product based on backtesting alone. They have seen too many models that performed well historically and failed in deployment. The evidence pack is our answer to that objection:
 
-- **Aggregate forecast accuracy metrics**: Brier Score, Root Mean Squared Error, calibration error across all 1,080 evaluated forecasts
+- **Per-zone and aggregate forecast accuracy metrics**: Brier Score, Root Mean Squared Error, calibration error across all 2,160 evaluated forecasts (with per-zone breakdowns)
 - **Full forecast-actual log**: Every forecast paired with its observed outcome, timestamped, with model version and horizon tier
 - **Model compliance attestation**: Signed documentation of zero data leakage, zero look-ahead bias, primary model version only, no synthetic fallbacks
 
@@ -234,7 +234,7 @@ If the forward validation returns **Brier Score < 0.25 AND Basis Risk < 30%**, t
 | Milestone                            | Target            | Description                                                     |
 | ------------------------------------ | ----------------- | --------------------------------------------------------------- |
 | First 3-month forecasts mature       | ~June 2026        | Brier Score calculation begins                                  |
-| Validation run completes             | June 2026         | 90 valid run-days reached, 1,080 forecast records in hand       |
+| Validation run completes             | July 2026         | 90 valid run-days reached, 2,160 forecast records in hand       |
 | Evidence pack compiled               | June 2026         | Forecast accuracy metrics + full forecast-actual log finalised  |
 | Internal debrief                     | Mid-2026          | Predicted vs actual trigger alignment reviewed                  |
 | **Go/No-Go decision**                | **Mid-2026**      | Binary gate — criteria are fixed                                |
@@ -318,8 +318,8 @@ That is what the validation run is for.
 
 | Parameter                   | Value                                  | Basis                                              |
 | --------------------------- | -------------------------------------- | -------------------------------------------------- |
-| Validation run window       | March 7 – June 12, 2026 (90 run-days) | Parametric insurance design specification          |
-| Forecast target             | 1,080 forecast records                 | System design KPI                                  |
+| Validation run window       | April 14 – July 13, 2026 (90 run-days, two-zone) | Parametric insurance design specification          |
+| Forecast target             | 2,160 forecast records (24/day x 2 zones)          | System design KPI                                  |
 | Forecasts accumulated       | Live — see Evidence Pack dashboard (`/v1/evidence-pack/execution-log`) | Updated daily at 06:00 EAT |
 | Go-live gate: Brier Score   | < 0.25                                 | Climate forecast industry standard                 |
 | Go-live gate: Basis Risk    | < 30%                                  | Retrospective result: 20% (pre-forward validation) |

@@ -15,7 +15,7 @@ from typing import Optional
 
 logger = logging.getLogger(__name__)
 
-SHADOW_RUN_TARGET_FORECASTS = 1080
+SHADOW_RUN_TARGET_FORECASTS = 2160
 SHADOW_RUN_TARGET_DAYS = 90
 
 
