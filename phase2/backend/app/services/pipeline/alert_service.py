@@ -162,7 +162,7 @@ class AlertService:
                 # ForecastLog count — the shadow run KPI (from start date only)
                 from app.config.shadow_run import SHADOW_RUN_START
                 forecast_log_count = db.query(func.count(ForecastLog.id)).filter(
-                    func.date(ForecastLog.created_at) >= SHADOW_RUN_START
+                    func.date(ForecastLog.issued_at) >= SHADOW_RUN_START
                 ).scalar()
             except Exception as e:
                 logger.warning(f"Failed to query enrichment data for success alert: {e}")

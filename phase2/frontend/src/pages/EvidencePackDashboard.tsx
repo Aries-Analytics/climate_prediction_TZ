@@ -107,6 +107,8 @@ interface ShadowRunProgress {
     total_forecast_logs: number;
     target: number;
     pct_complete: number;
+    valid_run_days: number;
+    target_days: number;
     start_date: string;
     end_date: string;
     zones: ZoneInfo[];
@@ -547,9 +549,9 @@ export default function EvidencePackDashboard() {
                                 <Grid item xs={6}>
                                     <Box sx={{ textAlign: 'center', p: 1, bgcolor: '#f0f4ff', borderRadius: 2 }}>
                                         <Typography variant="h4" color="primary" fontWeight="bold">
-                                            {sr ? Math.round(sr.total_forecast_logs / sr.forecasts_per_day) : '--'}
+                                            {sr ? sr.valid_run_days : '--'}
                                         </Typography>
-                                        <Typography variant="caption" color="textSecondary">Days Completed</Typography>
+                                        <Typography variant="caption" color="textSecondary">Days Completed ({sr ? sr.target_days : '--'} target)</Typography>
                                     </Box>
                                 </Grid>
                                 <Grid item xs={6}>

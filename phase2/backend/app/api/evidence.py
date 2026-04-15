@@ -86,7 +86,14 @@ def get_execution_log(db: Session = Depends(get_db)):
     DB wiped clean before restart — all logs belong to the current run.
     """
     try:
-        total_logs = db.query(sqlfunc.count(ForecastLog.id)).scalar() or 0
+        total_logs = db.query(sqlfunc.count(ForecastLog.id)).filter(
+            sqlfunc.date(ForecastLog.issued_at) >= SHADOW_RUN_START
+        ).scalar() or 0
+        valid_run_days = db.query(
+            sqlfunc.count(sqlfunc.distinct(sqlfunc.date(ForecastLog.issued_at)))
+        ).filter(
+            sqlfunc.date(ForecastLog.issued_at) >= SHADOW_RUN_START
+        ).scalar() or 0
         target = SHADOW_RUN_TARGET_FORECASTS
 
         executions = (
@@ -118,6 +125,8 @@ def get_execution_log(db: Session = Depends(get_db)):
                 "total_forecast_logs": total_logs,
                 "target": target,
                 "pct_complete": round((total_logs / target) * 100, 1) if target > 0 else 0,
+                "valid_run_days": valid_run_days,
+                "target_days": SHADOW_RUN_TARGET_DAYS,
                 "start_date": SHADOW_RUN_START.isoformat(),
                 "end_date": SHADOW_RUN_END.isoformat(),
                 "zones": zone_list,
