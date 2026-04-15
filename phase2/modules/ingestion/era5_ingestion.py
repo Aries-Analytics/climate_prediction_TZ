@@ -444,21 +444,25 @@ def ingest_era5(
         df["date"] = pd.to_datetime(df[["year", "month"]].assign(day=1))
         df = df[(df["date"] >= start_date) & (df["date"] <= end_date)]
 
-        # Store to database (ERA5 provides regional averages, use Tanzania center point)
+        # Kilombero Basin pilot zones (Apr 2026 two-zone split)
+        PILOT_LOCATIONS = [
+            {"name": "Ifakara TC", "lat": -8.1333, "lon": 36.6833},
+            {"name": "Mlimba DC",  "lat": -8.0167, "lon": 35.9500},
+        ]
+
         records_stored = 0
-        tanzania_lat = -6.8211
-        tanzania_lon = 37.6595
 
         for _, row in df.iterrows():
             try:
+              for loc in PILOT_LOCATIONS:
                 # Check if record already exists
                 existing = (
                     db.query(ClimateData)
                     .filter(
                         and_(
                             ClimateData.date == row["date"].date(),
-                            ClimateData.location_lat == tanzania_lat,
-                            ClimateData.location_lon == tanzania_lon,
+                            ClimateData.location_lat == loc["lat"],
+                            ClimateData.location_lon == loc["lon"],
                         )
                     )
                     .first()
@@ -498,8 +502,8 @@ def ingest_era5(
                         wd = (math.degrees(math.atan2(-u, -v)) + 360) % 360
                     climate_record = ClimateData(
                         date=row["date"].date(),
-                        location_lat=tanzania_lat,
-                        location_lon=tanzania_lon,
+                        location_lat=loc["lat"],
+                        location_lon=loc["lon"],
                         temperature_avg=float(row["temp_2m"]) - 273.15 if "temp_2m" in row else None,
                         soil_moisture=float(row["soil_moisture"]) if "soil_moisture" in row else None,
                         dewpoint_2m=float(row["dewpoint_2m"]) - 273.15 if "dewpoint_2m" in row and row["dewpoint_2m"] is not None else None,
@@ -513,7 +517,7 @@ def ingest_era5(
                     records_stored += 1
 
             except Exception as e:
-                log_error(f"Failed to store ERA5 record for {row['date']}: {e}")
+                log_error(f"Failed to store ERA5 record for {row['date']} @ {loc['name']}: {e}")
                 continue
 
         # Commit all changes

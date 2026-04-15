@@ -568,22 +568,26 @@ def ingest_ndvi(
         df["date"] = pd.to_datetime(df[["year", "month"]].assign(day=1))
         df = df[(df["date"] >= start_date) & (df["date"] <= end_date)]
 
-        # Store to database — Kilombero Pilot location: Morogoro, Tanzania
-        # Source: locations table (id=6), seed_locations.py
+        # Kilombero Basin pilot zones (Apr 2026 two-zone split)
+        # Replaces single Morogoro city point with actual basin coordinates.
+        PILOT_LOCATIONS = [
+            {"name": "Ifakara TC", "lat": -8.1333, "lon": 36.6833},
+            {"name": "Mlimba DC",  "lat": -8.0167, "lon": 35.9500},
+        ]
+
         records_stored = 0
-        tanzania_lat = -6.8211
-        tanzania_lon = 37.6595
 
         for _, row in df.iterrows():
             try:
+              for loc in PILOT_LOCATIONS:
                 # Check if record already exists
                 existing = (
                     db.query(ClimateData)
                     .filter(
                         and_(
                             ClimateData.date == row["date"].date(),
-                            ClimateData.location_lat == tanzania_lat,
-                            ClimateData.location_lon == tanzania_lon,
+                            ClimateData.location_lat == loc["lat"],
+                            ClimateData.location_lon == loc["lon"],
                         )
                     )
                     .first()
@@ -597,15 +601,15 @@ def ingest_ndvi(
                     # Create new record
                     climate_record = ClimateData(
                         date=row["date"].date(),
-                        location_lat=tanzania_lat,
-                        location_lon=tanzania_lon,
+                        location_lat=loc["lat"],
+                        location_lon=loc["lon"],
                         ndvi=float(row["ndvi"]),
                     )
                     db.add(climate_record)
                     records_stored += 1
 
             except Exception as e:
-                log_error(f"Failed to store NDVI record for {row['date']}: {e}")
+                log_error(f"Failed to store NDVI record for {row['date']} @ {loc['name']}: {e}")
                 continue
 
         # Commit all changes

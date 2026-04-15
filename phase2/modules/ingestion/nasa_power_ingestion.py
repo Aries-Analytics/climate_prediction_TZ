@@ -16,9 +16,16 @@ from utils.config import get_data_path
 from utils.logger import log_error, log_info
 from utils.validator import validate_dataframe
 
-# Tanzania bounding box (approximate)
-TANZANIA_LAT = -6.8211   # Morogoro latitude
-TANZANIA_LON = 37.6595   # Morogoro longitude
+# Kilombero Basin pilot zones (Apr 2026 two-zone split)
+# Replaces single Morogoro city point with actual basin coordinates.
+PILOT_LOCATIONS = [
+    {"name": "Ifakara TC", "lat": -8.1333, "lon": 36.6833},
+    {"name": "Mlimba DC",  "lat": -8.0167, "lon": 35.9500},
+]
+
+# Default coordinate kept for fetch_nasa_power_data() backward compat
+TANZANIA_LAT = PILOT_LOCATIONS[0]["lat"]
+TANZANIA_LON = PILOT_LOCATIONS[0]["lon"]
 
 # NASA POWER API endpoint (using daily data, will aggregate to monthly)
 NASA_POWER_BASE_URL = "https://power.larc.nasa.gov/api/temporal/daily/point"
@@ -321,71 +328,80 @@ def ingest_nasa_power(
     log_info(f"Ingesting NASA POWER data from {start_date} to {end_date}")
 
     try:
-        # Fetch data using existing function
-        df = fetch_nasa_power_data(start_year=start_date.year, end_year=end_date.year, dry_run=False)
+        total_fetched = 0
+        total_stored = 0
 
-        if df.empty:
-            log_info("No NASA POWER data fetched")
-            return (0, 0)
+        for loc in PILOT_LOCATIONS:
+            log_info(f"Fetching NASA POWER data for {loc['name']} ({loc['lat']}, {loc['lon']})")
 
-        records_fetched = len(df)
-        log_info(f"Fetched {records_fetched} NASA POWER records")
+            # Fetch data for this pilot location
+            df = fetch_nasa_power_data(
+                start_year=start_date.year, end_year=end_date.year,
+                latitude=loc["lat"], longitude=loc["lon"], dry_run=False,
+            )
 
-        # Filter to exact date range (month-level granularity)
-        df["date"] = pd.to_datetime(df[["year", "month"]].assign(day=1))
-        df = df[(df["date"] >= start_date) & (df["date"] <= end_date)]
-
-        # Store to database
-        records_stored = 0
-        for _, row in df.iterrows():
-            try:
-                # Check if record already exists
-                existing = (
-                    db.query(ClimateData)
-                    .filter(
-                        and_(
-                            ClimateData.date == row["date"].date(),
-                            ClimateData.location_lat == float(row.get("latitude", TANZANIA_LAT)),
-                            ClimateData.location_lon == float(row.get("longitude", TANZANIA_LON)),
-                        )
-                    )
-                    .first()
-                )
-
-                if existing:
-                    # Update existing record with NASA POWER data
-                    if "t2m" in row:
-                        existing.temperature_avg = float(row["t2m"])
-                    if "gwetprof" in row:
-                        existing.soil_moisture = float(row["gwetprof"])
-                    if "rh2m" in row and row["rh2m"] is not None:
-                        existing.rel_humidity_pct = float(row["rh2m"])
-                    if "allsky_sfc_sw_dwn" in row and row["allsky_sfc_sw_dwn"] is not None:
-                        existing.solar_rad_wm2 = float(row["allsky_sfc_sw_dwn"])
-                    records_stored += 1
-                else:
-                    # Create new record
-                    climate_record = ClimateData(
-                        date=row["date"].date(),
-                        location_lat=float(row.get("latitude", TANZANIA_LAT)),
-                        location_lon=float(row.get("longitude", TANZANIA_LON)),
-                        temperature_avg=float(row["t2m"]) if "t2m" in row else None,
-                        soil_moisture=float(row["gwetprof"]) if "gwetprof" in row else None,
-                        rel_humidity_pct=float(row["rh2m"]) if "rh2m" in row and row["rh2m"] is not None else None,
-                        solar_rad_wm2=float(row["allsky_sfc_sw_dwn"]) if "allsky_sfc_sw_dwn" in row and row["allsky_sfc_sw_dwn"] is not None else None,
-                    )
-                    db.add(climate_record)
-                    records_stored += 1
-
-            except Exception as e:
-                log_error(f"Failed to store NASA POWER record for {row['date']}: {e}")
+            if df.empty:
+                log_info(f"No NASA POWER data fetched for {loc['name']}")
                 continue
+
+            records_fetched = len(df)
+            total_fetched += records_fetched
+            log_info(f"Fetched {records_fetched} NASA POWER records for {loc['name']}")
+
+            # Filter to exact date range (month-level granularity)
+            df["date"] = pd.to_datetime(df[["year", "month"]].assign(day=1))
+            df = df[(df["date"] >= start_date) & (df["date"] <= end_date)]
+
+            # Store to database
+            for _, row in df.iterrows():
+                try:
+                    # Check if record already exists
+                    existing = (
+                        db.query(ClimateData)
+                        .filter(
+                            and_(
+                                ClimateData.date == row["date"].date(),
+                                ClimateData.location_lat == loc["lat"],
+                                ClimateData.location_lon == loc["lon"],
+                            )
+                        )
+                        .first()
+                    )
+
+                    if existing:
+                        # Update existing record with NASA POWER data
+                        if "t2m" in row:
+                            existing.temperature_avg = float(row["t2m"])
+                        if "gwetprof" in row:
+                            existing.soil_moisture = float(row["gwetprof"])
+                        if "rh2m" in row and row["rh2m"] is not None:
+                            existing.rel_humidity_pct = float(row["rh2m"])
+                        if "allsky_sfc_sw_dwn" in row and row["allsky_sfc_sw_dwn"] is not None:
+                            existing.solar_rad_wm2 = float(row["allsky_sfc_sw_dwn"])
+                        total_stored += 1
+                    else:
+                        # Create new record
+                        climate_record = ClimateData(
+                            date=row["date"].date(),
+                            location_lat=loc["lat"],
+                            location_lon=loc["lon"],
+                            temperature_avg=float(row["t2m"]) if "t2m" in row else None,
+                            soil_moisture=float(row["gwetprof"]) if "gwetprof" in row else None,
+                            rel_humidity_pct=float(row["rh2m"]) if "rh2m" in row and row["rh2m"] is not None else None,
+                            solar_rad_wm2=float(row["allsky_sfc_sw_dwn"]) if "allsky_sfc_sw_dwn" in row and row["allsky_sfc_sw_dwn"] is not None else None,
+                        )
+                        db.add(climate_record)
+                        total_stored += 1
+
+                except Exception as e:
+                    log_error(f"Failed to store NASA POWER record for {row['date']} @ {loc['name']}: {e}")
+                    continue
 
         # Commit all changes
         db.commit()
-        log_info(f"Successfully stored {records_stored} NASA POWER records to database")
+        log_info(f"Successfully stored {total_stored} NASA POWER records to database")
 
-        return (records_fetched, records_stored)
+        return (total_fetched, total_stored)
 
     except Exception as e:
         log_error(f"NASA POWER ingestion failed: {e}")
