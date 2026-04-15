@@ -4,7 +4,7 @@ Provides comprehensive data quality assessment for climate data pipeline.
 """
 
 import json
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 
 from utils.config import get_data_path
@@ -42,7 +42,7 @@ class DataQualityMetrics:
         """
         metrics = {
             "source": source_name,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now().isoformat(),
             "row_count": len(df),
             "column_count": len(df.columns),
             "columns": list(df.columns),
@@ -224,7 +224,7 @@ class DataQualityMetrics:
             metrics: Metrics dictionary
             source_name: Name of the data source
         """
-        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         filename = f"{source_name}_metrics_{timestamp}.json"
         filepath = self.metrics_dir / filename
 

@@ -343,8 +343,8 @@ def ingest_ocean_indices(
         records_stored = 0
 
         for _, row in df.iterrows():
-          for loc in PILOT_LOCATIONS:
             try:
+              for loc in PILOT_LOCATIONS:
                 # Check if record already exists
                 existing = (
                     db.query(ClimateData)

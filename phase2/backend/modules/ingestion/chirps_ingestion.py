@@ -302,7 +302,7 @@ def fetch_chirps_data(
 
         if use_gee and not GEE_AVAILABLE:
              raise ImportError("Google Earth Engine not available. Install 'earthengine-api' and authenticate.")
-        
+
         log_warning(f"No CHIRPS data found for {start_year}-{end_year}. (Data might not be available yet)")
         # Return empty DataFrame with expected columns
         return pd.DataFrame(columns=["year", "month", "rainfall_mm", "lat_min", "lat_max", "lon_min", "lon_max", "data_source"])
@@ -437,8 +437,8 @@ def ingest_chirps(
     # sum that is 70-90% too low — a real number, not NaN, so it passes
     # validation silently and corrupts the primary ML feature (rainfall_mm).
     # ERA5 and NASA POWER apply the same guard.
-    now_utc = datetime.now(timezone.utc)
-    last_complete_month_end = pd.to_datetime(now_utc.replace(day=1) - timedelta(days=1))
+    _today = date.today()
+    last_complete_month_end = pd.to_datetime(date(_today.year, _today.month, 1) - timedelta(days=1))
     if end_date > last_complete_month_end:
         end_date = last_complete_month_end
         log_info(f"CHIRPS end_date capped to last complete month: {end_date.date()}")
@@ -470,8 +470,8 @@ def ingest_chirps(
         records_stored = 0
 
         for _, row in df.iterrows():
-          for loc in PILOT_LOCATIONS:
             try:
+              for loc in PILOT_LOCATIONS:
                 # Check if record already exists
                 existing = (
                     db.query(ClimateData)

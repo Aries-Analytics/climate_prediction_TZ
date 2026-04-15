@@ -5,7 +5,7 @@ Provides caching mechanism for API data to reduce redundant calls and improve pe
 
 import hashlib
 import json
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import pandas as pd
@@ -84,7 +84,7 @@ class DataCache:
             # Check if cache is still fresh
             cached_time = datetime.fromisoformat(metadata["timestamp"])
             ttl = timedelta(hours=ttl_hours) if ttl_hours else self.default_ttl
-            age = datetime.now(timezone.utc) - cached_time
+            age = datetime.now() - cached_time
 
             if age > ttl:
                 log_info(f"Cache expired for {source} (age: {age}, ttl: {ttl})")
@@ -119,7 +119,7 @@ class DataCache:
             metadata = {
                 "source": source,
                 "params": params,
-                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "timestamp": datetime.now().isoformat(),
                 "rows": len(data),
                 "columns": list(data.columns),
             }
@@ -172,7 +172,7 @@ class DataCache:
                 with open(meta_file, "r") as f:
                     metadata = json.load(f)
                     cached_time = datetime.fromisoformat(metadata["timestamp"])
-                    age = datetime.now(timezone.utc) - cached_time
+                    age = datetime.now() - cached_time
                     metadata["age_hours"] = age.total_seconds() / 3600
                     info.append(metadata)
             except Exception:

@@ -5,7 +5,7 @@ Fetches climate data from NASA POWER API for Tanzania region
 
 import os
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from typing import Optional, Tuple
 
 import pandas as pd
@@ -52,9 +52,9 @@ def fetch_nasa_power_data(
     dry_run : bool, optional
         If True, return placeholder data without making API call. Default is False.
     latitude : float, optional
-        Latitude coordinate for data retrieval. Default is Ifakara TC (-8.1333).
+        Latitude coordinate for data retrieval. Default is Morogoro (-6.8211).
     longitude : float, optional
-        Longitude coordinate for data retrieval. Default is Ifakara TC (36.6833).
+        Longitude coordinate for data retrieval. Default is Morogoro (37.6595).
     start_year : int, optional
         Start year for data retrieval (inclusive). Default is 2010.
     end_year : int, optional
@@ -139,6 +139,7 @@ def fetch_nasa_power_data(
             "PRECTOTCORR",  # Precipitation Corrected
             "RH2M",  # Relative Humidity at 2 Meters
             "ALLSKY_SFC_SW_DWN",  # All Sky Surface Shortwave Downward Irradiance
+            "GWETPROF",  # Profile Soil Moisture (0-1 fraction)
         ]
 
     # Build API request
@@ -318,8 +319,8 @@ def ingest_nasa_power(
     # for all variables that corrupt the ML feature set. ERA5 applies the
     # same guard. The full month becomes available on the 1st of the next
     # month and will be picked up by the next daily pipeline run.
-    now_utc = datetime.now(timezone.utc)
-    last_complete_month_end = pd.to_datetime(now_utc.replace(day=1) - timedelta(days=1))
+    _today = date.today()
+    last_complete_month_end = pd.to_datetime(date(_today.year, _today.month, 1) - timedelta(days=1))
     if end_date > last_complete_month_end:
         end_date = last_complete_month_end
         log_info(f"NASA POWER end_date capped to last complete month: {end_date.date()}")
@@ -371,6 +372,8 @@ def ingest_nasa_power(
                         # Update existing record with NASA POWER data
                         if "t2m" in row:
                             existing.temperature_avg = float(row["t2m"])
+                        if "gwetprof" in row:
+                            existing.soil_moisture = float(row["gwetprof"])
                         if "rh2m" in row and row["rh2m"] is not None:
                             existing.rel_humidity_pct = float(row["rh2m"])
                         if "allsky_sfc_sw_dwn" in row and row["allsky_sfc_sw_dwn"] is not None:
@@ -383,6 +386,7 @@ def ingest_nasa_power(
                             location_lat=loc["lat"],
                             location_lon=loc["lon"],
                             temperature_avg=float(row["t2m"]) if "t2m" in row else None,
+                            soil_moisture=float(row["gwetprof"]) if "gwetprof" in row else None,
                             rel_humidity_pct=float(row["rh2m"]) if "rh2m" in row and row["rh2m"] is not None else None,
                             solar_rad_wm2=float(row["allsky_sfc_sw_dwn"]) if "allsky_sfc_sw_dwn" in row and row["allsky_sfc_sw_dwn"] is not None else None,
                         )

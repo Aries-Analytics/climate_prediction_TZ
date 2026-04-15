@@ -78,8 +78,8 @@ services:
     volumes:
       - ./backend:/app
       - ./outputs:/outputs
-      - ./modules:/app/modules:ro
-      - ./utils:/app/utils:ro
+      # modules/ and utils/ now live inside backend/ only (consolidated Apr 15 2026).
+      # ./backend:/app mount already exposes them at /app/modules and /app/utils.
       - ~/.config/earthengine/credentials:/root/.config/earthengine/credentials:ro
       - ~/.cdsapirc:/root/.cdsapirc:ro
       - ./secrets:/app/secrets:ro

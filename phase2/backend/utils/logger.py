@@ -14,7 +14,7 @@ uses a RotatingFileHandler, and cleans up old logs older than retention_days.
 import logging
 import os
 import sys
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from logging.handlers import RotatingFileHandler
 
 LOG_DIR = "logs"
@@ -79,7 +79,7 @@ def setup_logging(level=logging.INFO, retention_days: int = 7):
     os.makedirs(LOG_DIR, exist_ok=True)
 
     # --- cleanup old logs ---
-    cutoff = datetime.now(timezone.utc) - timedelta(days=retention_days)
+    cutoff = datetime.now() - timedelta(days=retention_days)
     for fname in os.listdir(LOG_DIR):
         if fname.startswith("pipeline_") and fname.endswith(".log"):
             try:
@@ -95,7 +95,7 @@ def setup_logging(level=logging.INFO, retention_days: int = 7):
                 continue
 
     # --- timestamped log filename for today ---
-    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    timestamp = datetime.now().strftime("%Y-%m-%d")
     log_file = os.path.join(LOG_DIR, f"pipeline_{timestamp}.log")
 
     # Create handlers

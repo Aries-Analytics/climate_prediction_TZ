@@ -11,6 +11,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional
 
+import pandas as pd
 import yaml
 
 # Add parent directory to path
@@ -90,9 +91,32 @@ def process_location_source(location_name: str, loc_data: dict, source: str, sta
         return result, None
 
 
+def detect_latest_data_date(source: str) -> Optional[int]:
+    """
+    Detect latest year in existing combined data file.
+    Returns None if file doesn't exist or is empty.
+    """
+    from utils.config import get_data_path
+    
+    filename = f"{source.lower()}_combined.csv"
+    path = get_data_path("raw", filename)
+    
+    if not Path(path).exists():
+        return None
+    
+    try:
+        df = pd.read_csv(path)
+        if len(df) == 0 or 'year' not in df.columns:
+            return None
+        return int(df['year'].max())
+    except Exception as e:
+        log_warning(f"Failed to read {filename}: {e}")
+        return None
+
+
 def run_orchestrator(sources: Optional[List[str]] = None, parallel: bool = False):
     """
-    Main orchestration loop.
+    Main orchestration loop with incremental update support.
 
     Args:
         sources: List of sources to ingest. If None, runs all.
@@ -104,8 +128,34 @@ def run_orchestrator(sources: Optional[List[str]] = None, parallel: bool = False
     locations = config["locations"]
 
     # Time period from config
-    start_year = config.get("time_period", {}).get("start_year", 2000)
-    end_year = config.get("time_period", {}).get("end_year", 2025)
+    config_start_year = config.get("time_period", {}).get("start_year", 2000)
+    config_end_year = config.get("time_period", {}).get("end_year")  # May be None
+    update_mode = config.get("time_period", {}).get("update_mode", "full")
+    
+    # Dynamic end year: use current year if null
+    current_year = datetime.now().year
+    end_year = config_end_year if config_end_year is not None else current_year
+    
+    # Determine start year based on update mode
+    if update_mode == "incremental":
+        # Check existing data to find latest year
+        latest_years = {}
+        for src in ["NASA_POWER", "CHIRPS", "ERA5", "NDVI"]:
+            latest = detect_latest_data_date(src)
+            if latest:
+                latest_years[src] = latest
+        
+        if latest_years:
+            # Use the minimum latest year across sources (most conservative)
+            min_latest = min(latest_years.values())
+            start_year = min_latest  # Start from last complete year
+            log_info(f"Incremental mode: Latest data years: {latest_years}")
+            log_info(f"Incremental mode: Fetching from {start_year} to {end_year}")
+        else:
+            log_info("Incremental mode: No existing data found, performing full fetch")
+            start_year = config_start_year
+    else:
+        start_year = config_start_year
 
     if sources is None:
         sources = ["NASA_POWER", "CHIRPS", "ERA5", "NDVI", "OCEAN_INDICES"]
@@ -164,19 +214,41 @@ def run_orchestrator(sources: Optional[List[str]] = None, parallel: bool = False
                     collected_data[source].append(df)
 
     # ---------------------------------------------------------
-    # Save Combined Data
+    # Save Combined Data (with append support for incremental mode)
     # ---------------------------------------------------------
     log_info("Saving combined datasets...")
-    import pandas as pd
-
     from utils.config import get_data_path
 
     for source, dfs in collected_data.items():
         if dfs:
             try:
-                combined_df = pd.concat(dfs, ignore_index=True)
+                new_data_df = pd.concat(dfs, ignore_index=True)
                 filename = f"{source.lower()}_combined.csv"
                 out_path = get_data_path("raw", filename)
+                
+                # Incremental mode: append to existing data
+                if update_mode == "incremental" and Path(out_path).exists():
+                    try:
+                        existing_df = pd.read_csv(out_path)
+                        # Combine and remove duplicates based on year/month/location
+                        combined_df = pd.concat([existing_df, new_data_df], ignore_index=True)
+                        
+                        # Deduplicate based on common columns
+                        if 'year' in combined_df.columns and 'month' in combined_df.columns:
+                            dedupe_cols = ['year', 'month']
+                            if 'location' in combined_df.columns:
+                                dedupe_cols.append('location')
+                            combined_df = combined_df.drop_duplicates(subset=dedupe_cols, keep='last')
+                        
+                        combined_df = combined_df.sort_values(['year', 'month'] if 'month' in combined_df.columns else ['year'])
+                        log_info(f"Incremental update: {len(existing_df)} existing + {len(new_data_df)} new = {len(combined_df)} total records")
+                    except Exception as e:
+                        log_warning(f"Failed to append to existing {source} data: {e}. Overwriting instead.")
+                        combined_df = new_data_df
+                else:
+                    # Full mode: overwrite
+                    combined_df = new_data_df
+                
                 combined_df.to_csv(out_path, index=False)
                 log_info(f"Saved combined {source} data to {out_path} ({len(combined_df)} records)")
             except Exception as e:

@@ -8,8 +8,10 @@ To restart a shadow run with new parameters, change ONLY this file.
 """
 from datetime import date, timedelta
 
-# ── Shadow Run v2: Two-Zone Kilombero Split ──
-SHADOW_RUN_START = date(2026, 4, 14)
+# ── Shadow Run v3: Two-Zone Kilombero Split (clean restart Apr 16) ──
+# v2 (Apr 14-15) invalidated — ingestion modules were stale, climate data
+# stored at wrong coordinates. Wiped and restarting from Apr 16.
+SHADOW_RUN_START = date(2026, 4, 16)
 SHADOW_RUN_TARGET_DAYS = 90
 SHADOW_RUN_END = SHADOW_RUN_START + timedelta(days=SHADOW_RUN_TARGET_DAYS - 1)
 

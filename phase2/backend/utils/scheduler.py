@@ -6,7 +6,7 @@ Provides automated scheduling for periodic data refreshes.
 import json
 import threading
 import time
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 
 import schedule
@@ -95,7 +95,7 @@ class DataRefreshScheduler:
                 "func": func.__name__,
                 "schedule_type": schedule_type,
                 "schedule_time": schedule_time,
-                "created_at": datetime.now(timezone.utc).isoformat(),
+                "created_at": datetime.now().isoformat(),
             }
 
             log_info(f"Scheduled job '{job_name}': {schedule_type} at {schedule_time}")
@@ -204,12 +204,12 @@ def create_data_refresh_job(source_name, fetch_function, **fetch_kwargs):
     def job():
         try:
             log_info(f"Starting scheduled refresh for {source_name}")
-            start_time = datetime.now(timezone.utc)
+            start_time = datetime.now()
 
             # Execute the fetch function
             result = fetch_function(**fetch_kwargs)
 
-            duration = (datetime.now(timezone.utc) - start_time).total_seconds()
+            duration = (datetime.now() - start_time).total_seconds()
             log_info(f"Completed refresh for {source_name} in {duration:.2f} seconds")
 
             return result

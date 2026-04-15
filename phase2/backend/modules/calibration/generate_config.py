@@ -15,7 +15,7 @@ Workflow:
 Requirements: 1.5, 7.1, 7.4
 """
 
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 from typing import Dict
 
@@ -175,7 +175,7 @@ def generate_calibrated_config(
     data_period_end = str(df_chirps["year"].max()) if "year" in df_chirps.columns else "unknown"
     data_period = f"{data_period_start}-01-01 to {data_period_end}-12-31"
 
-    calibration_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    calibration_date = datetime.now().strftime("%Y-%m-%d")
 
     config = {
         "version": "1.0.0",

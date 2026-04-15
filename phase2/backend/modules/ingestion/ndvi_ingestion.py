@@ -7,7 +7,7 @@ climatological data for testing purposes.
 """
 
 import os
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from typing import Optional, Tuple
 
 import pandas as pd
@@ -54,9 +54,11 @@ def _initialize_gee():
     try:
         project_id = os.getenv("GOOGLE_CLOUD_PROJECT", "climate-prediction-using-ml")
         ee.Initialize(project=project_id)
+        log_info(f"Google Earth Engine initialized with project: {project_id}")
         return True
     except Exception as e:
         log_warning(f"Failed to initialize Google Earth Engine: {e}")
+        log_info("To authenticate, run: earthengine authenticate")
         return False
 
 
@@ -486,7 +488,7 @@ def fetch_ndvi_data(
             raise ImportError("Google Earth Engine not available. Install 'earthengine-api' and authenticate.")
 
         raise RuntimeError("Failed to fetch NDVI data from Google Earth Engine and no cached data available.")
-
+        
     except Exception:
         raise
 
@@ -543,8 +545,8 @@ def ingest_ndvi(
     # monthly aggregate built from only the first composite (early-month)
     # misrepresents vegetation state for the full month. ERA5, NASA POWER,
     # and CHIRPS apply the same guard.
-    now_utc = datetime.now(timezone.utc)
-    last_complete_month_end = pd.to_datetime(now_utc.replace(day=1) - timedelta(days=1))
+    _today = date.today()
+    last_complete_month_end = pd.to_datetime(date(_today.year, _today.month, 1) - timedelta(days=1))
     if end_date > last_complete_month_end:
         end_date = last_complete_month_end
         log_info(f"NDVI end_date capped to last complete month: {end_date.date()}")
@@ -576,8 +578,8 @@ def ingest_ndvi(
         records_stored = 0
 
         for _, row in df.iterrows():
-          for loc in PILOT_LOCATIONS:
             try:
+              for loc in PILOT_LOCATIONS:
                 # Check if record already exists
                 existing = (
                     db.query(ClimateData)

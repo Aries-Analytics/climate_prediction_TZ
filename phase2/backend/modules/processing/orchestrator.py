@@ -15,7 +15,7 @@ project_root = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 import logging
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Dict, List, Optional
 
 import pandas as pd
@@ -65,48 +65,54 @@ def process_source(source_name: str, locations: List[str]) -> Dict:
     result = {"source": source_name, "status": "pending", "locations_processed": [], "errors": []}
 
     try:
-        # Load the combined raw data
-        raw_data_path = Path(f"data/raw/{source_name}_combined.csv")
-
-        if not raw_data_path.exists():
-            raise FileNotFoundError(f"Raw data not found: {raw_data_path}")
-
-        logger.info(f"Loading raw data from {raw_data_path}...")
-        data = pd.read_csv(raw_data_path)
-        logger.info(f"Loaded {len(data)} records")
-
-        # Process based on source type
-        if source_name == "chirps":
-            processed_data = process_chirps(data)
-            result["status"] = "success"
-            result["locations_processed"] = locations
-
-        elif source_name == "nasa_power":
-            processed_data = process_nasa_power(data)
-            result["status"] = "success"
-            result["locations_processed"] = locations
-
-        elif source_name == "era5":
-            processed_data = process_era5(data)
-            result["status"] = "success"
-            result["locations_processed"] = locations
-
-        elif source_name == "ndvi":
-            processed_data = process_ndvi(data)
-            result["status"] = "success"
-            result["locations_processed"] = locations
-
-        elif source_name == "ocean_indices":
-            # Ocean indices uses different file path
+        # Handle ocean_indices special case FIRST (different file path)
+        if source_name == "ocean_indices":
             raw_data_path = Path("data/raw/ocean_indices_raw.csv")
+            
+            if not raw_data_path.exists():
+                raise FileNotFoundError(f"Raw data not found: {raw_data_path}")
+            
+            logger.info(f"Loading raw data from {raw_data_path}...")
             data = pd.read_csv(raw_data_path)
             logger.info(f"Loaded {len(data)} ocean indices records")
             processed_data = process_ocean_indices(data)
             result["status"] = "success"
             result["locations_processed"] = ["global"]
-
+        
         else:
-            raise ValueError(f"Unknown source: {source_name}")
+            # Load the combined raw data for other sources
+            raw_data_path = Path(f"data/raw/{source_name}_combined.csv")
+
+            if not raw_data_path.exists():
+                raise FileNotFoundError(f"Raw data not found: {raw_data_path}")
+
+            logger.info(f"Loading raw data from {raw_data_path}...")
+            data = pd.read_csv(raw_data_path)
+            logger.info(f"Loaded {len(data)} records")
+
+            # Process based on source type
+            if source_name == "chirps":
+                processed_data = process_chirps(data)
+                result["status"] = "success"
+                result["locations_processed"] = locations
+
+            elif source_name == "nasa_power":
+                processed_data = process_nasa_power(data)
+                result["status"] = "success"
+                result["locations_processed"] = locations
+
+            elif source_name == "era5":
+                processed_data = process_era5(data)
+                result["status"] = "success"
+                result["locations_processed"] = locations
+
+            elif source_name == "ndvi":
+                processed_data = process_ndvi(data)
+                result["status"] = "success"
+                result["locations_processed"] = locations
+
+            else:
+                raise ValueError(f"Unknown source: {source_name}")
 
         logger.info(f"✓ {source_name.upper()}: Processing complete - {len(processed_data)} records")
 
@@ -157,7 +163,7 @@ def run_processing_pipeline(sources: Optional[List[str]] = None, skip_merge: boo
 
     # Process each source
     results = []
-    start_time = datetime.now(timezone.utc)
+    start_time = datetime.now()
 
     for source in sources_to_process:
         source_result = process_source(source, locations)
@@ -182,7 +188,7 @@ def run_processing_pipeline(sources: Optional[List[str]] = None, skip_merge: boo
         merge_status = "skipped"
 
     # Summary
-    end_time = datetime.now(timezone.utc)
+    end_time = datetime.now()
     duration = (end_time - start_time).total_seconds()
 
     logger.info("")

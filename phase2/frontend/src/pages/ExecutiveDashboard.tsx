@@ -147,7 +147,7 @@ export default function ExecutiveDashboard() {
             <Chip label="LIVE DATA" color="success" size="small" variant="outlined" />
           </Box>
           <Typography variant="body2" color="text.secondary">
-            Kilombero Basin Rice Pilot · 1,000 Farmers · Shadow Run: {portfolio ? `${portfolio.shadowRunConfig.start} – ${portfolio.shadowRunConfig.end}` : 'Apr 14 – Jul 13, 2026'} · Brier Score evaluation: {portfolio?.shadowRunConfig.brierEvalDate ?? '~Jul 10, 2026'}
+            Kilombero Basin Rice Pilot · 1,000 Farmers · Shadow Run: {portfolio ? `${portfolio.shadowRunConfig.start} – ${portfolio.shadowRunConfig.end}` : 'Apr 16 – Jul 14, 2026'} · Brier Score evaluation: {portfolio?.shadowRunConfig.brierEvalDate ?? '~Jul 12, 2026'}
           </Typography>
         </Box>
       </Box>

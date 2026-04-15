@@ -4,7 +4,7 @@ Fetches reanalysis climate data from Copernicus Climate Data Store (CDS)
 """
 
 import os
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, time, timedelta, timezone
 from typing import Optional, Tuple
 
 import pandas as pd
@@ -169,7 +169,7 @@ def fetch_era5_data(
         # Or from config file: ~/.ecmwfdatastoresrc
         api_url = os.getenv("ECMWF_DATASTORES_URL", "https://cds.climate.copernicus.eu/api")
         api_key = os.getenv("ECMWF_DATASTORES_KEY") or os.getenv("ERA5_API_KEY")
-
+        
         if api_key:
             c = ECMWFClient(url=api_url, key=api_key)
         else:
@@ -180,32 +180,29 @@ def fetch_era5_data(
         nc_file = get_data_path("raw", "era5_raw.nc")
         os.makedirs(os.path.dirname(nc_file), exist_ok=True)
 
-        # Cap end_year and months to stay within finalized ERA5 data.
-        # Two guards applied in order:
-        #   1. Never request the current (incomplete) month (ECMWF 400).
-        #   2. Respect end_month if provided — caller already applied the
-        #      ERA5_LAG_MONTHS cap so this prevents overshooting into ERA5T.
-        now = datetime.now(timezone.utc)
-        if end_year >= now.year:
-            last_complete_month = now.month - 1
-            if last_complete_month < 1:
-                # January edge case: last complete month is December of previous year
-                end_year = now.year - 1
-                months = [f"{m:02d}" for m in range(1, 13)]
-            else:
-                # Apply caller's end_month cap if stricter than last_complete_month
-                if end_month is not None:
-                    last_complete_month = min(last_complete_month, end_month)
-                months = [f"{m:02d}" for m in range(1, last_complete_month + 1)]
-            log_info(f"ERA5 months capped to: {end_year}-{months[-1]} (end_month override={end_month})")
-        else:
-            months = [f"{m:02d}" for m in range(1, 13)]
-
         log_info(f"Requesting ERA5 data for years {start_year}-{end_year}")
         log_info(f"Variables: {', '.join(variables)}")
 
         # Build year list
         years = [str(year) for year in range(start_year, end_year + 1)]
+
+        # Cap months for the end year to avoid requesting ERA5T (restricted).
+        # If end_year is the current year, cap to last complete month.
+        # If end_month is provided (ERA5_LAG_MONTHS boundary), apply as stricter cap.
+        now = datetime.now(timezone.utc)
+        if end_year >= now.year:
+            last_complete_month = now.month - 1
+            if last_complete_month < 1:
+                end_year = now.year - 1
+                years = [str(year) for year in range(start_year, end_year + 1)]
+                months = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"]
+            else:
+                if end_month is not None:
+                    last_complete_month = min(last_complete_month, end_month)
+                months = [f"{m:02d}" for m in range(1, last_complete_month + 1)]
+            log_info(f"ERA5 months capped to: {end_year}-{months[-1]} (end_month override={end_month})")
+        else:
+            months = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"]
 
         # Request data from CDS using new client
         # New API requires list values for most parameters
@@ -324,6 +321,7 @@ def fetch_era5_data(
                 "sp": "surface_pressure",
                 "u10": "wind_u_10m",
                 "v10": "wind_v_10m",
+                "swvl1": "soil_moisture",  # Volumetric soil water layer 1
             }
             df = df.rename(columns=column_mapping)
 
@@ -396,8 +394,6 @@ def ingest_era5(
     # ERA5 proper (finalized) lags the present by ~3 months.
     # ERA5T (near real-time, < 3 months old) requires a separate restricted
     # dataset subscription — requesting it returns MARS AccessError -2.
-    # We cap to the last day of (current_month - ERA5_LAG_MONTHS) to stay
-    # entirely within finalized ERA5 data.
     ERA5_LAG_MONTHS = 3
     now = datetime.now(timezone.utc)
     lag_month = now.month - ERA5_LAG_MONTHS
@@ -405,23 +401,36 @@ def ingest_era5(
     if lag_month <= 0:
         lag_month += 12
         lag_year -= 1
-    # Last day of the lag month = first day of next month - 1 day
     next_month = lag_month + 1 if lag_month < 12 else 1
     next_year = lag_year if lag_month < 12 else lag_year + 1
     era5_safe_end = datetime(next_year, next_month, 1, tzinfo=timezone.utc) - timedelta(days=1)
+    # Normalise end_date to UTC-aware datetime for comparison — incremental manager
+    # returns a plain date object; datetime.combine() promotes it cleanly.
+    if not isinstance(end_date, datetime):
+        end_date = datetime.combine(end_date, time.min).replace(tzinfo=timezone.utc)
+    elif end_date.tzinfo is None:
+        end_date = end_date.replace(tzinfo=timezone.utc)
     if end_date > era5_safe_end:
         end_date = era5_safe_end
         log_info(f"ERA5 end_date capped to finalized ERA5 lag boundary: {end_date.date()} (ERA5T restricted)")
 
-    # Ensure dates are pandas-compatible timestamps for comparison
+    # Ensure dates are pandas-compatible timestamps for comparison.
+    # The monthly dataframe we build below is tz-naive and keyed to the first
+    # day of each month, so normalize the bounds to the same representation
+    # after the ERA5 lag cap to keep pandas comparisons valid.
     start_date = pd.to_datetime(start_date)
     end_date = pd.to_datetime(end_date)
+    if start_date.tzinfo is not None:
+        start_date = start_date.tz_localize(None)
+    if end_date.tzinfo is not None:
+        end_date = end_date.tz_localize(None)
+    start_date = start_date.to_period("M").to_timestamp()
+    end_date = end_date.to_period("M").to_timestamp()
 
     log_info(f"Ingesting ERA5 data from {start_date} to {end_date}")
 
     try:
-        # Fetch data using existing function.
-        # Pass end_month so fetch_era5_data does not overshoot into ERA5T territory.
+        # Fetch data — pass end_month so fetch_era5_data never overshoots into ERA5T.
         df = fetch_era5_data(start_year=start_date.year, end_year=end_date.year, end_month=end_date.month, dry_run=False)
 
         if df.empty:
@@ -436,7 +445,6 @@ def ingest_era5(
         df = df[(df["date"] >= start_date) & (df["date"] <= end_date)]
 
         # Kilombero Basin pilot zones (Apr 2026 two-zone split)
-        # Replaces single Morogoro city point with actual basin coordinates.
         PILOT_LOCATIONS = [
             {"name": "Ifakara TC", "lat": -8.1333, "lon": 36.6833},
             {"name": "Mlimba DC",  "lat": -8.0167, "lon": 35.9500},
@@ -445,8 +453,8 @@ def ingest_era5(
         records_stored = 0
 
         for _, row in df.iterrows():
-          for loc in PILOT_LOCATIONS:
             try:
+              for loc in PILOT_LOCATIONS:
                 # Check if record already exists
                 existing = (
                     db.query(ClimateData)
@@ -465,6 +473,8 @@ def ingest_era5(
                     if "temp_2m" in row:
                         # Convert Kelvin to Celsius
                         existing.temperature_avg = float(row["temp_2m"]) - 273.15
+                    if "soil_moisture" in row:
+                        existing.soil_moisture = float(row["soil_moisture"])
                     if "dewpoint_2m" in row and row["dewpoint_2m"] is not None:
                         existing.dewpoint_2m = float(row["dewpoint_2m"]) - 273.15
                     if "surface_pressure" in row and row["surface_pressure"] is not None:
@@ -495,6 +505,7 @@ def ingest_era5(
                         location_lat=loc["lat"],
                         location_lon=loc["lon"],
                         temperature_avg=float(row["temp_2m"]) - 273.15 if "temp_2m" in row else None,
+                        soil_moisture=float(row["soil_moisture"]) if "soil_moisture" in row else None,
                         dewpoint_2m=float(row["dewpoint_2m"]) - 273.15 if "dewpoint_2m" in row and row["dewpoint_2m"] is not None else None,
                         surface_pressure=float(row["surface_pressure"]) if "surface_pressure" in row and row["surface_pressure"] is not None else None,
                         wind_u_10m=float(row["wind_u_10m"]) if "wind_u_10m" in row and row["wind_u_10m"] is not None else None,

@@ -2,7 +2,7 @@
 
 **Project Phase**: 3.2 (Forward Validation & Pilot Preparation)
 **Date**: March 15, 2026
-**Status**: Retrospective Validation Complete · Shadow Run ACTIVE (Apr 14 – Jul 13, 2026, two-zone Kilombero split: Ifakara TC + Mlimba DC · 24 forecasts/day · target 2,160). Evaluation layer zone-aware: per-zone Brier/RMSE/ECE, basis risk, GO/NO-GO gates.
+**Status**: Retrospective Validation Complete · Shadow Run v3 ACTIVE (Apr 16 – Jul 14, 2026, two-zone Kilombero split: Ifakara TC + Mlimba DC · 24 forecasts/day · target 2,160). Evaluation layer zone-aware: per-zone Brier/RMSE/ECE, basis risk, GO/NO-GO gates.
 
 ---
 
@@ -411,13 +411,13 @@ A comprehensive climate intelligence platform for Tanzania that integrates multi
 ✅ **Phase-based parametric model** validated (20% basis risk, zero false negatives)  
 
 ### What Still Needs Validation
-- **Forward prediction accuracy** — Shadow run ACTIVE (Apr 14 – Jul 13, 2026, two-zone Kilombero split: Ifakara TC + Mlimba DC). Brier Score auto-evaluation begins ~Jul 10 as 3-month forecast windows mature. Target: 2,160 ForecastLog entries (90 valid run-days × 24/day × 2 zones). Per-zone GO/NO-GO gates.
+- **Forward prediction accuracy** — Shadow run ACTIVE (Apr 16 – Jul 14, 2026, two-zone Kilombero split: Ifakara TC + Mlimba DC). Brier Score auto-evaluation begins ~Jul 12 as 3-month forecast windows mature. Target: 2,160 ForecastLog entries (90 valid run-days × 24/day × 2 zones). Per-zone GO/NO-GO gates.
 - **Kilombero-specific yield correlation** — Retrospective validation used national yield averages. Kilombero-calibrated ground truth now available (baseline 2.099 MT/Ha, loss trigger 1.259 MT/Ha). Forward trigger events will be validated against this threshold.
 - **Data resolution alignment** — CHIRPS (5km) and NASA POWER (50km) satellite grids may not perfectly reflect micro-farm conditions. Correlation (r=0.888) is strong but not definitive.
 - **Farmer adoption and trust** — Untested in real field conditions.
 
 ### Next Steps
-1. **Forward Validation** *(IN PROGRESS)*: Shadow run live Apr 14 – Jul 13, 2026 (two-zone: Ifakara TC + Mlimba DC, 24 forecasts/day). First Brier Score evaluation ~Jul 10, 2026. Per-zone GO/NO-GO gates. If No-Go: threshold recalibration, model retraining, or trigger redesign.
+1. **Forward Validation** *(IN PROGRESS)*: Shadow run live Apr 16 – Jul 14, 2026 (two-zone: Ifakara TC + Mlimba DC, 24 forecasts/day). First Brier Score evaluation ~Jul 12, 2026. Per-zone GO/NO-GO gates. If No-Go: threshold recalibration, model retraining, or trigger redesign.
 2. **Underwriter Engagement**: Present validated prototype to insurance underwriters
 3. **Ground-Truth Data** *(DONE Apr 2026)*: Kilombero yield baseline calibrated — 2.099 MT/Ha, loss trigger 1.259 MT/Ha. See `data/external/ground_truth/`.
 4. **Rain Gauge Calibration**: Deploy 2-3 ground-truthing stations to calibrate satellite resolution

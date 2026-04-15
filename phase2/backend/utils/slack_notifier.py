@@ -6,7 +6,7 @@ Sends formatted notifications to Slack for pipeline monitoring and alerts.
 
 import json
 import os
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Dict, List, Optional
 from enum import Enum
 
@@ -63,7 +63,7 @@ def send_slack_notification(
         "color": color,
         "text": message,
         "footer": footer or "Climate Prediction Pipeline",
-        "ts": int(datetime.now(timezone.utc).timestamp())
+        "ts": int(datetime.now().timestamp())
     }
     
     if title:
@@ -345,7 +345,7 @@ def send_test_notification(webhook_url: Optional[str] = None) -> bool:
         severity=AlertSeverity.SUCCESS,
         title="Test Notification",
         fields=[
-            {"title": "Timestamp", "value": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S"), "short": True},
+            {"title": "Timestamp", "value": datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "short": True},
             {"title": "Environment", "value": "Development", "short": True}
         ]
     )
