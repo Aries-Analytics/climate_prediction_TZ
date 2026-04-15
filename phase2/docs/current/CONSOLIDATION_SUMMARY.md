@@ -44,7 +44,7 @@ Successfully consolidated 80+ documentation files into 6 comprehensive reference
 Updated all documents with correct numbers from **6_LOCATION_EXPANSION_SUMMARY.md**:
 
 **Data & Locations**:
-- **6 locations** (Arusha, Dar es Salaam, Dodoma, Mbeya, Mwanza, **Morogoro**)
+- **6 training locations** (Arusha, Dar es Salaam, Dodoma, Mbeya, Mwanza, Morogoro) + **2 pilot zones** (Ifakara TC, Mlimba DC)
 - **5 data sources** (NASA POWER, ERA5, CHIRPS, NDVI, Ocean Indices)
 - **1,872 total samples** (6 locations × 312 months)
 - **26 years** (2000-2025)

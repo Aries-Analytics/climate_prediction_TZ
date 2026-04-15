@@ -8,9 +8,9 @@
 
 ## Current State
 
-**Hardcoded Constants in `risk_service.py`:**
+**Hardcoded Constants in `risk_service.py` (updated Apr 2026 — now two-zone):**
 ```python
-PILOT_LOCATION_ID = 6
+PILOT_LOCATION_IDS = [7, 8]  # Ifakara TC + Mlimba DC
 TOTAL_FARMERS = 1000
 CURRENT_RESERVES = 150000
 PAYOUT_RATES = {

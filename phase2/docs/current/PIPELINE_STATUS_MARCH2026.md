@@ -1,7 +1,7 @@
 # Automated Pipeline Status — March 2026
 
 **Status**: ✅ **SHADOW RUN ACTIVE**
-**Pilot**: Morogoro (Kilombero Basin)
+**Pilot**: Kilombero Basin (Ifakara TC + Mlimba DC)
 **Version**: 4.0
 **Last Updated**: April 6, 2026
 

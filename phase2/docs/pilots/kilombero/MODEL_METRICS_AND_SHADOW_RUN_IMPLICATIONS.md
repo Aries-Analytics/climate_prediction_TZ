@@ -70,7 +70,7 @@ Every day at 6 AM EAT, the automated pipeline:
 
 1. **Ingests** fresh data from 5 sources (CHIRPS, NASA POWER, ERA5, NDVI, Ocean Indices)
 2. **Loads** `active_model.json` → XGBoost (83 features, R²=0.8666)
-3. **Generates** 12 forecasts per location (3 trigger types × 4 horizons: 3-6 months)
+3. **Generates** 24 forecasts total — 12 per zone (3 trigger types × 4 horizons: 3-6 months × 2 zones: Ifakara TC + Mlimba DC)
 4. **Logs** each forecast as a `ForecastLog` entry with `status="pending"`
 5. **Sends** Slack alert with execution summary
 

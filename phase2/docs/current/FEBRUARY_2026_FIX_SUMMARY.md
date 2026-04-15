@@ -82,4 +82,4 @@ The "Climate Insights" dashboard attempted to show forecast traces on top of his
 
 ## Next Steps
 *   Monitor forecast accuracy against incoming monthly updates.
-*   Proceed with Morogoro pilot roll-out.
+*   Proceed with Kilombero Basin pilot roll-out (Ifakara TC + Mlimba DC).

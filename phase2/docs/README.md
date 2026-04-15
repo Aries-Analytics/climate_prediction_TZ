@@ -63,7 +63,7 @@
 
 | Metric | Value |
 |--------|-------|
-| **Production Pilot** | 1 (Morogoro — Kilombero Basin, 1,000 rice farmers) |
+| **Production Pilot** | Kilombero Basin — 2 zones (Ifakara TC + Mlimba DC), 1,000 rice farmers |
 | **Training Locations** | 6 (Arusha, Dar es Salaam, Dodoma, Mbeya, Mwanza, Morogoro) |
 | **Data Sources** | 5 (NASA POWER, ERA5, CHIRPS, NDVI, Ocean Indices) |
 | **Total Samples** | 1,872 (6 locations × 312 months) |
@@ -85,7 +85,7 @@
 ### Key Features
 
 - ✅ **86.7% prediction accuracy** (XGBoost R²=0.8666, 6-location training, data leakage fix)
-- ✅ **Morogoro production pilot** — Kilombero Basin, 1,000 rice farmers
+- ✅ **Kilombero Basin production pilot** — two-zone (Ifakara TC + Mlimba DC), 1,000 rice farmers
 - ✅ **5 authoritative data sources** integrated
 - ✅ **5 interactive dashboards**
 - ✅ **Automated pipeline** with scheduling

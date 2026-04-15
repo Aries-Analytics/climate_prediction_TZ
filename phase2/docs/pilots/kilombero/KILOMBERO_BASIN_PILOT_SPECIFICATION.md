@@ -168,26 +168,23 @@ Based on calibrated thresholds for Morogoro's tropical transition climate:
 
 ### Multi-Location System Capability
 
-The underlying system is designed for **6 locations**:
-1. Arusha (ID: 1)
-2. Dar es Salaam (ID: 2)
-3. Dodoma (ID: 3)
-4. Mbeya (ID: 4)
-5. Mwanza (ID: 5)
-6. **Morogoro (ID: 6)** ← **Pilot Focus**
+The underlying system was trained on **6 locations** and the pilot operates on **2 zones**:
 
-**Critical Note:** The system will continue to:
-- Collect climate data for all 6 locations
-- Generate forecasts for all 6 locations
-- Store historical data for all 6 locations
+**Training Locations (historical data):**
+1. Arusha (ID: 1), 2. Dar es Salaam (ID: 2), 3. Dodoma (ID: 3), 4. Mbeya (ID: 4), 5. Mwanza (ID: 5), 6. Morogoro (ID: 6, deprecated for pilot — 120+ km from basin)
 
-**However, the pilot program**:
-- Calculates portfolio risk **only for Morogoro (Location ID 6)**
-- Issues farmer alerts **only for Morogoro**
-- Tracks financial exposure **only for Morogoro**
-- Displays dashboard metrics **only for Morogoro**
+**Pilot Zones (active, Apr 2026):**
+7. **Ifakara TC (ID: 7)** — -8.1333°S, 36.6833°E — 400 farmers (40%)
+8. **Mlimba DC (ID: 8)** — -8.0167°S, 35.9500°E — 600 farmers (60%)
 
-This design allows for **future expansion** to other locations without system changes—only configuration updates.
+**The pilot program**:
+- Ingests climate data for **both pilot zones** (5 sources × 2 coordinates)
+- Generates forecasts **per zone** (24/day = 3 triggers × 4 horizons × 2 zones)
+- Evaluates metrics **per zone and aggregate** (Brier, RMSE, ECE, basis risk, GO/NO-GO)
+- Calculates portfolio risk and financial exposure per zone
+- Dashboard displays zone tabs with data-driven zone names from API
+
+`PILOT_ZONE_IDS = [7, 8]` defined in `evaluation_service.py`, imported by all consumers.
 
 ---
 
@@ -213,7 +210,7 @@ The HewaSense model uses 5 integrated data sources for Kilombero Basin:
 > - **Details**: See [`SOIL_MOISTURE_FUTURE_ENHANCEMENT.md`](../SOIL_MOISTURE_FUTURE_ENHANCEMENT.md)
 
 **Total Features:** 83 selected features (from 245 candidates, after removing 11 leaky rainfall-derived features via `utils/data_leakage_prevention.py`)  
-**Data Quality:** 99.8% completeness for Morogoro location  
+**Data Quality:** 99.8% completeness for pilot zone locations  
 
 > [!WARNING]
 > **Data Resolution Trade-Off**
@@ -264,72 +261,46 @@ The system generates forecasts at **4 time horizons**:
 
 ## Configuration Implementation
 
-### Environment Variables (.env)
+### Shadow Run Configuration (Single Source of Truth)
 
-**Pilot-specific configuration:**
+**File:** `backend/app/config/shadow_run.py`
 
-```bash
-# PILOT LOCATION CONFIGURATION (Kilombero Basin, Morogoro)
-PILOT_MODE=true
-PILOT_LOCATION=Morogoro
-PILOT_BASIN=Kilombero
-PILOT_COORDINATES=-6.8211,37.6595
-PILOT_LOCATION_ID=6
-
-# Forecast configuration
-FORECAST_HORIZON_DAYS=31
-PILOT_CROP=Rice
-PILOT_FARMERS=1000
-
-# Reserves and financial
-CURRENT_RESERVES=150000  # USD
+```python
+# Shadow Run v2: Two-Zone Kilombero Split (restarted Apr 16)
+SHADOW_RUN_START = date(2026, 4, 16)
+SHADOW_RUN_TARGET_DAYS = 90
+SHADOW_RUN_END = SHADOW_RUN_START + timedelta(days=SHADOW_RUN_TARGET_DAYS - 1)
+FORECASTS_PER_DAY = 24  # 3 triggers × 4 horizons × 2 zones
+SHADOW_RUN_TARGET_FORECASTS = SHADOW_RUN_TARGET_DAYS * FORECASTS_PER_DAY  # 2,160
 ```
+
+To restart a shadow run with new parameters, change ONLY this file. All 6 consumers import from it.
 
 ### Slack Alert Configuration
 
-**Daily Summary Format:**
+**Daily Summary Format (actual):**
 ```
-✅ Pipeline Success
-Location: Morogoro (Kilombero Basin)
-Forecasts: 31 for rice farmers
-Quality: 95%
-Farmers: 1,000 covered
-🌾 Pilot: 1,000 rice farmers in Kilombero Basin
-```
+Tanzania Climate Pipeline — Daily Summary
+Wednesday, April 16, 2026 — 06:00 EAT
 
-**Forecast Generation Alert:**
+Execution Status: ✅ SUCCESS
+Data Ingestion — 5 sources updated
+Forecast Generation: Total: 24 forecasts
+Location: Kilombero Basin (Ifakara TC + Mlimba DC) — Pilot
+Crop: Rice | Farmers: 1,000
+Shadow Run: 24 / 2160 forecasts (1.1%)
 ```
-📈 Total: 31 forecasts
-📍 Location: Morogoro (Kilombero Basin - Pilot)
-🌾 Crop: Rice
-👥 Farmers: 1,000
-```
-
-**Failure Alert:**
-```
-⚠️ Pipeline Failure
-Impact: No new forecasts for Morogoro pilot (1,000 farmers affected)
-```
-
-**Recommended Slack Channels:**
-- `#kilombero-pilot-daily` - Daily summaries (1 message/day)
-- `#kilombero-pilot-alerts` - Issues & warnings (0-3/day)
-- `#kilombero-pilot-status` - Execution status (2/day: start, complete)
 
 ### Backend Configuration Constants
 
-**File:** `backend/app/api/forecasts.py`
+**File:** `backend/app/services/risk_service.py`
 
 ```python
-# ===== MOROGORO RICE PILOT CONFIGURATION =====
-# Single-location pilot (Location ID 6 = Morogoro)
-# System maintains 6-location capability for future expansion
-
-PILOT_LOCATION_ID = 6  # Morogoro, Tanzania
-PILOT_LOCATION_NAME = "Morogoro"
-TOTAL_FARMERS = 1000  # Total farmers in Morogoro pilot
-FARMERS_PER_LOCATION = 1000  # All farmers at single pilot location
-CURRENT_RESERVES = 150000  # USD - Updated to meet 100% CAR regulatory requirement
+# ===== KILOMBERO BASIN TWO-ZONE PILOT CONFIGURATION =====
+# Two-zone pilot (Location IDs 7 + 8)
+PILOT_LOCATION_IDS = [7, 8]  # Ifakara TC + Mlimba DC
+TOTAL_FARMERS = 1000  # 400 Ifakara + 600 Mlimba
+CURRENT_RESERVES = 150000  # USD
 
 # Payout rates (USD per farmer)
 PAYOUT_RATES = {
@@ -373,67 +344,71 @@ ALERT_THRESHOLD = ADVISORY_THRESHOLD  # Backwards compatibility
 
 ### Database Filtering
 
-All pilot-specific endpoints filter by `location_id = 6`:
+All pilot-specific endpoints filter by `PILOT_ZONE_IDS`:
 
 ```python
-# Portfolio risk: Morogoro only
+# Portfolio risk: Kilombero Basin zones only
+from app.services.evaluation_service import PILOT_ZONE_IDS  # [7, 8]
+
 high_risk_forecasts = db.query(Forecast).filter(
-    Forecast.location_id == PILOT_LOCATION_ID,  # Morogoro only
+    Forecast.location_id.in_(PILOT_ZONE_IDS),  # Ifakara TC + Mlimba DC
     Forecast.probability >= HIGH_RISK_THRESHOLD,
     Forecast.target_date >= today,
     Forecast.target_date <= target_end
 ).all()
 ```
 
-**Note:** Forecasts for all 6 locations continue to be generated and stored, but pilot calculations use only Morogoro data.
+**Note:** Forecasts are generated for both pilot zones. Per-zone and aggregate evaluation is supported via `?location_id=7` or `?location_id=8` query parameters on Evidence Pack API endpoints.
 
 ---
 
 ## Dashboard Display
 
-### Portfolio Risk Overview
+### Evidence Pack Dashboard (zone-aware, Apr 2026)
 
-**Display Format:**
-- **Farmers at Risk:** "X of 1,000 farmers (Y%)" 
-- **Location Context:** "Morogoro Pilot (Location ID: 6)"
-- **Geographic Map:** Highlights Morogoro with pilot indicator
+**Features:**
+- **Zone tabs:** "All Zones (Aggregate)" | "Ifakara TC" | "Mlimba DC" — zone list from API, not hardcoded
+- **KPI cards:** Brier Score, RMSE, ECE, Total Evaluated — switch per selected zone tab
+- **Basis risk:** Per-zone NDVI corroboration stats + gate status
+- **GO/NO-GO gates:** Overall verdict + per-zone verdicts with pass/fail chips
+- **Shadow run progress:** Forecast count, days completed, zone config info — all data-driven
 
 ### Labels and Messaging
 
-- "Kilombero Basin Rice Pilot (1,000 Farmers)"
-- "Single-Location Pilot - Morogoro Region, Tanzania"
+- "Kilombero Basin Rice Pilot (1,000 Farmers — Ifakara TC + Mlimba DC)"
+- "Two-Zone Pilot — Kilombero Valley, Tanzania"
 - "Flood-Prone Valley - Dual-Index Triggers Planned (Q2 2026)"
-- "6-Month Forecast Horizon"
+- "3-6 Month Forecast Horizon"
 
 ---
 
 ## Expansion Roadmap
 
-### Phase 1: Kilombero Basin Pilot (Current)
-**Location:** Kilombero Basin, Morogoro  
-**Duration:** 12 months  
-**Scope:** 1 location, 1,000 farmers  
-**Objective:** Validate model, dual-index triggers, and operations in flood-prone rice valley
+### Phase 1: Kilombero Basin Pilot (Current — Apr 2026)
+**Location:** Kilombero Basin — Ifakara TC + Mlimba DC  
+**Duration:** 90-day shadow run (Apr 16 – Jul 14, 2026)  
+**Scope:** 2 zones, 1,000 farmers (400 + 600)  
+**Objective:** Validate model with zone-aware evaluation, Brier Score evidence, per-zone GO/NO-GO gates
 
 ### Phase 2: Regional Expansion (Future)
 **Locations:** Add Mbeya (also has R² = 0.855)  
-**Scope:** 2 locations, 2,000 farmers  
-**Objective:** Test multi-location operations
+**Scope:** 3+ zones, 2,000+ farmers  
+**Objective:** Test multi-region operations
 
 ### Phase 3: National Rollout (Future)
-**Locations:** All 6 locations  
-**Scope:** 6 locations, up to 6,000 farmers  
+**Locations:** Multiple regions  
+**Scope:** Up to 6,000+ farmers  
 **Objective:** Scale to national coverage
 
 **Configuration Changes for Expansion:**
 ```python
-# Phase 2: Multi-location
-PILOT_LOCATION_IDS = [6, 4]  # Morogoro, Mbeya
-TOTAL_FARMERS = 2000
+# Current: Kilombero two-zone
+PILOT_LOCATION_IDS = [7, 8]  # Ifakara TC, Mlimba DC
+TOTAL_FARMERS = 1000
 
-# Phase 3: Full rollout
-PILOT_LOCATION_IDS = [1, 2, 3, 4, 5, 6]  # All locations
-TOTAL_FARMERS = 6000
+# Phase 2: Add Mbeya
+PILOT_LOCATION_IDS = [7, 8, 4]  # + Mbeya
+TOTAL_FARMERS = 2000
 ```
 
 ---
@@ -445,8 +420,8 @@ TOTAL_FARMERS = 6000
 | Risk | Mitigation |
 |------|------------|
 | **Reserves** | $150,000 secured (112.3% CAR) — meets TIRA requirement; monitor during multi-event seasons |
-| **Model Overfits to Morogoro** | Monitor performance monthly; compare against other locations |
-| **Single Location Bias** | Document lessons learned for multi-location expansion |
+| **Model Overfits to Kilombero** | Monitor per-zone performance monthly; compare Ifakara (volatile) vs Mlimba (stable) |
+| **Zone Divergence** | Per-zone GO/NO-GO gates catch if one zone is calibrated but the other isn't |
 | **Farmer Adoption Low** | Conduct education workshops; simplify insurance language |
 
 ### Financial Solvency
@@ -476,7 +451,7 @@ Reserves are adequate. See Financial Parameters table above for full breakdown.
 
 **Program Lead:** [To be assigned]  
 **Technical Lead:** [To be assigned]  
-**Location:** Morogoro Regional Office, Kilombero Basin  
+**Location:** Kilombero Basin (Ifakara TC + Mlimba DC)  
 **Monitoring:** Monthly performance reviews  
 **Reporting:** Quarterly stakeholder updates
 

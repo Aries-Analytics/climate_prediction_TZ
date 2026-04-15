@@ -2,7 +2,7 @@
 
 **Status**: ✅ Infrastructure Ready (Feb 2026)  
 **Implementation**: Database + Ingestion Complete  
-**Planned Use**: Kilombero Pilot (Morogoro) - Near-Term Activation 🎯  
+**Planned Use**: Kilombero Pilot (Ifakara TC + Mlimba DC) - Near-Term Activation 🎯  
 **Activation**: Pending (Requires Historical Backfill + Model Retraining)
 
 ---
@@ -56,9 +56,9 @@ Soil moisture has been added to the climate data infrastructure as a future enha
 
 ## Kilombero Pilot Use Case 🎯
 
-**Location**: Kilombero Basin, Morogoro Region, Tanzania  
+**Location**: Kilombero Basin, Tanzania (Ifakara TC + Mlimba DC)  
 **Crop**: Rice (Oryza sativa)  
-**Farmers**: 1,000 smallholder farmers  
+**Farmers**: 1,000 smallholder farmers (400 Ifakara TC + 600 Mlimba DC)  
 **Area**: Flood-prone valley with variable soil moisture
 
 ### Why Soil Moisture Matters for Kilombero
@@ -80,7 +80,7 @@ Soil moisture has been added to the climate data infrastructure as a future enha
 
 **Q1 2026 (Current)**: Infrastructure ready ✅  
 **Q2 2026**: Activate for Kilombero pilot
-- Backfill 2020-2025 soil moisture data (Morogoro location)
+- Backfill 2020-2025 soil moisture data (Ifakara TC + Mlimba DC coordinates)
 - Calibrate dual-index triggers for rice phases
 - Backtest on Kilombero-specific historical events (2015 floods, 2019 drought)
 

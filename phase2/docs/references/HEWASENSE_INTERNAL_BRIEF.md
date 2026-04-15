@@ -247,16 +247,16 @@ The go/no-go is binary and the criteria are fixed. A gate with room for negotiat
 
 ### What a First Live Payout Looks Like
 
-Scenario: October 2026. The system flags a drought trigger for Morogoro with 82% probability on a 3-month forecast horizon (primary tier).
+Scenario: October 2026. The system flags a drought trigger for the Ifakara TC zone (Kilombero Basin) with 82% probability on a 3-month forecast horizon (primary tier).
 
 1. System evaluates: horizon ≤ 4 months ✓, probability ≥ 75% ✓, crop phase = Flowering ✓
-2. Reserve earmarked: 1,000 farmers × 82% probability × \$60 = **\$49,200 held in reserve** (expected financial exposure at this probability)
+2. Reserve earmarked: 400 farmers (Ifakara TC zone) × 82% probability × \$60 = **\$19,680 held in reserve** (expected financial exposure at this probability)
 3. Reserve check: \$150,000 available — fully covered ✓
 4. Operations team receives automated alert
 5. October observed rainfall confirms the trigger — rainfall falls below 120mm during flowering
-6. **Trigger fires → all 1,000 enrolled Morogoro farmers receive \$60 each → \$60,000 distributed within 5–7 days**
+6. **Trigger fires → all 400 enrolled Ifakara TC farmers receive \$60 each → \$24,000 distributed within 5–7 days**
 
-No adjuster. No claim form. No dispute. Every enrolled farmer in the zone receives the same \$60 — not because their individual field was assessed, but because the objective climate index for the zone crossed the pre-disclosed threshold. The 82% probability determined how much reserve was held; the confirmed observation determines whether the payout fires at all.
+No adjuster. No claim form. No dispute. Every enrolled farmer in the triggered zone receives the same \$60 — not because their individual field was assessed, but because the objective climate index for the zone crossed the pre-disclosed threshold. The 82% probability determined how much reserve was held; the confirmed observation determines whether the payout fires at all. Note: per-zone triggers mean Mlimba DC (600 farmers) only pays out if its own zone threshold is independently breached — correlated events may trigger both zones simultaneously.
 
 ---
 
@@ -288,7 +288,7 @@ Even in a bad outcome, the validation run has value. If the model misses the Bri
 
 The Kilombero pilot is a deliberate choice of difficulty. Kilombero is dual-peril, has high climatic variability, is data-sparse by Western standards, and has a smallholder farmer base with low financial inclusion. If the product works here, it is replicable across Tanzania's remaining agricultural regions and across East Africa.
 
-The model already covers 6 locations (Arusha, Dar es Salaam, Dodoma, Mbeya, Mwanza, Morogoro). Extending to national scale means enrolling cooperatives in existing model locations — not retraining or rebuilding the platform. The marginal cost of adding 1,000 farmers in a second location is close to zero once the Kilombero pilot has proven the operations model.
+The model was trained on 6 locations (Arusha, Dar es Salaam, Dodoma, Mbeya, Mwanza, Morogoro) and the pilot now operates across two zones in the Kilombero Basin (Ifakara TC + Mlimba DC). Extending to national scale means enrolling cooperatives in additional locations — not retraining or rebuilding the platform. The marginal cost of adding 1,000 farmers in a second region is close to zero once the Kilombero pilot has proven the operations model.
 
 There are **approximately 2.3 million smallholder farmers in Tanzania** exposed to the three perils this system monitors. At \$10/year per farmer, that is a potential \$23 million annual premium pool — a meaningful climate risk transfer program at national scale.
 
