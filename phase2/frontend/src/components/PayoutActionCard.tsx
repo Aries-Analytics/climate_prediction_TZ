@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, Typography, Box, Button, Divider, Alert, Dialog, DialogTitle, DialogContent, DialogActions, CircularProgress, Snackbar } from '@mui/material';
 import PaidIcon from '@mui/icons-material/Paid';
 import WarningIcon from '@mui/icons-material/Warning';
@@ -9,6 +9,7 @@ interface PayoutActionCardProps {
     activeTriggers: any[];
     totalFarmers?: number;
     shadowRunActive?: boolean;
+    shadowRunEnd?: string;
 }
 
 
@@ -16,7 +17,23 @@ const PayoutActionCard: React.FC<PayoutActionCardProps> = ({
     activeTriggers = [],
     totalFarmers = 1000,
     shadowRunActive = true,
+    shadowRunEnd: shadowRunEndProp,
 }) => {
+    const [shadowRunEnd, setShadowRunEnd] = useState<string | undefined>(shadowRunEndProp);
+
+    useEffect(() => {
+        if (!shadowRunEndProp && shadowRunActive) {
+            fetch('/api/v1/evidence-pack/execution-log')
+                .then(r => r.json())
+                .then(data => {
+                    if (data.shadow_run?.end_date) {
+                        const d = new Date(data.shadow_run.end_date);
+                        setShadowRunEnd(d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }));
+                    }
+                })
+                .catch(() => {});
+        }
+    }, [shadowRunEndProp, shadowRunActive]);
     const [dialogOpen, setDialogOpen] = useState(false);
     const [isApproving, setIsApproving] = useState(false);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -114,7 +131,7 @@ const PayoutActionCard: React.FC<PayoutActionCardProps> = ({
 
                 {shadowRunActive ? (
                     <Alert severity="info" sx={{ mb: 2 }}>
-                        <strong>Shadow Run Active (Two-Zone):</strong> Forecasts running for Ifakara TC + Mlimba DC. Reserve is being sized. No payout is disbursed until the shadow run completes (~Jul 13, 2026) and Brier Scores confirm model accuracy.
+                        <strong>Shadow Run Active (Two-Zone):</strong> Forecasts running for Ifakara TC + Mlimba DC. Reserve is being sized. No payout is disbursed until the shadow run completes ({shadowRunEnd ?? 'end date loading'}) and Brier Scores confirm model accuracy.
                     </Alert>
                 ) : (
                     <Alert severity="warning" sx={{ mb: 2 }}>

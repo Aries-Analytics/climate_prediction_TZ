@@ -4,6 +4,11 @@ from datetime import date, timedelta
 from typing import List, Dict
 from app.models.forecast import Forecast
 from app.models.location import Location
+from app.config.shadow_run import (
+    SHADOW_RUN_START,
+    SHADOW_RUN_END,
+    SHADOW_RUN_TARGET_DAYS,
+)
 
 # Kilombero Basin Pilot Configuration Constants (Apr 2026 — two-zone split)
 # Replaces single Morogoro point (location_id=6) with actual basin coordinates.
@@ -88,9 +93,12 @@ def get_portfolio_metrics(db: Session) -> dict:
             "mlimba_dc": {"location_id": 8, "farmers": 600, "yield_baseline": 2.59}
         },
         "shadowRunConfig": {
-            "start": "Apr 14, 2026",
-            "end": "Jul 13, 2026",
-            "brierEvalDate": "~Jul 10, 2026"
+            "start": SHADOW_RUN_START.strftime("%b %d, %Y"),
+            "end": SHADOW_RUN_END.strftime("%b %d, %Y"),
+            "brierEvalDate": f"~{(SHADOW_RUN_END - timedelta(days=3)).strftime('%b %d, %Y')}",
+            "start_iso": SHADOW_RUN_START.isoformat(),
+            "end_iso": SHADOW_RUN_END.isoformat(),
+            "target_days": SHADOW_RUN_TARGET_DAYS,
         }
     }
 

@@ -147,7 +147,7 @@ export default function ExecutiveDashboard() {
             <Chip label="LIVE DATA" color="success" size="small" variant="outlined" />
           </Box>
           <Typography variant="body2" color="text.secondary">
-            Kilombero Basin Rice Pilot · 1,000 Farmers · Shadow Run: {portfolio ? `${portfolio.shadowRunConfig.start} – ${portfolio.shadowRunConfig.end}` : 'Apr 16 – Jul 14, 2026'} · Brier Score evaluation: {portfolio?.shadowRunConfig.brierEvalDate ?? '~Jul 12, 2026'}
+            Kilombero Basin Rice Pilot · 1,000 Farmers · Shadow Run: {portfolio ? `${portfolio.shadowRunConfig.start} – ${portfolio.shadowRunConfig.end}` : 'Loading...'} · Brier Score evaluation: {portfolio?.shadowRunConfig.brierEvalDate ?? 'Loading...'}
           </Typography>
         </Box>
       </Box>
@@ -156,7 +156,7 @@ export default function ExecutiveDashboard() {
       {alerts.length > 0 ? (
         <Alert severity="warning" variant="filled" sx={{ mb: 3 }}>
           <strong>{alerts.length} high-probability forecast alert{alerts.length > 1 ? 's' : ''} (≥75% primary tier):</strong>{' '}
-          {alerts.map(a => `${a.alert_type} @ ${a.location_name}`).join(' · ')} — reserve sizing active. Shadow run (Ifakara TC + Mlimba DC): no real payout until observed breach confirmed post Jul 13, 2026.
+          {alerts.map(a => `${a.alert_type} @ ${a.location_name}`).join(' · ')} — reserve sizing active. Shadow run (Ifakara TC + Mlimba DC): no real payout until observed breach confirmed post {portfolio?.shadowRunConfig.end ?? 'shadow run end'}.
         </Alert>
       ) : (
         <Alert severity="success" variant="filled" sx={{ mb: 3 }}>
@@ -361,7 +361,7 @@ export default function ExecutiveDashboard() {
             <Divider sx={{ my: 2 }} />
             <Typography variant="caption" color="text.secondary" display="block">
               <strong>Shadow run context:</strong> Advisory signals at this horizon are consistent with XGBoost's
-              capability range. Accuracy is evaluated when 3-month windows mature ({portfolio?.shadowRunConfig.brierEvalDate ?? '~Jul 10, 2026'}).
+              capability range. Accuracy is evaluated when 3-month windows mature ({portfolio?.shadowRunConfig.brierEvalDate ?? 'Loading...'}).
               These warnings support farmer preparation, not insurance payouts.
             </Typography>
           </Paper>
