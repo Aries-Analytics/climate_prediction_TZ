@@ -18,7 +18,7 @@
 - **98.4%/98.3%:** Single-location/older dataset benchmarks — historical only, NOT the production number
 - **Basis Risk:** 20% (Phase-Based Dynamic Model) — production. 10% (April threshold) — baseline only.
 - **Phase-Based Model:** Catches 100% of confirmed crop disasters (2017/2018 and 2021/2022), zero false negatives
-- **Premium:** $20/farmer/year, Loss Ratio: 22.6% (retrospective; forward validation ACTIVE — shadow run Apr 14 – Jul 13, 2026, restarted for two-zone split)
+- **Premium:** $20/farmer/year, Loss Ratio: 22.6% (retrospective; forward validation ACTIVE — shadow run v2 Apr 16 – Jul 14, 2026, two-zone Kilombero split)
 - **HewaSense Engine V4 (Feb 2026):** Dynamic GDD tracking, cumulative flood limits (120-160mm over 5 days)
 - **Out-of-Sample Validation:** 9.6% historic loss ratio (2000-2014)
 - **Spatial Validation:** CHIRPS 5km grid correlated at r=0.888 against local gauges
