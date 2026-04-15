@@ -1,6 +1,6 @@
 # Tanzania Climate Prediction - Phase 2
 
-> **Status**: 🔵 Shadow Run v3 ACTIVE (Apr 16 – Jul 14, 2026 · two-zone Kilombero: Ifakara TC + Mlimba DC) · Live at [hewasense.majaribio.com](https://hewasense.majaribio.com)
+> **Status**: 🔵 Shadow Run v2 ACTIVE (Apr 16 – Jul 14, 2026 · two-zone Kilombero: Ifakara TC + Mlimba DC) · Live at [hewasense.majaribio.com](https://hewasense.majaribio.com)
 
 A comprehensive end-to-end machine learning system for climate prediction in Tanzania, featuring data ingestion, processing, feature engineering, model training pipelines, and an **interactive web dashboard** supporting parametric insurance for smallholder farmers.
 

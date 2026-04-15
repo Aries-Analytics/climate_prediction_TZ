@@ -13,7 +13,7 @@
 
 | Field | Value |
 |---|---|
-| **Period** | **April 16, 2026 → July 14, 2026** (restarted v3 — two-zone Kilombero split, clean restart) |
+| **Period** | **April 16, 2026 → July 14, 2026** (restarted v2 — two-zone Kilombero split, clean restart Apr 16) |
 | **Target** | 90 valid run-days = **2,160 ForecastLog entries** (24/day — 3 triggers × 4 horizons × 2 zones) |
 | **Purpose** | Forward validation of 3–6 month forecasts against observed outcomes |
 | **Schedule** | Daily 06:00 EAT (`0 6 * * *`, Africa/Dar_es_Salaam) |

@@ -1,7 +1,7 @@
 # Tanzania Climate Intelligence Platform - Documentation
 
 **Last Updated**: April 14, 2026
-**Status**: 🔵 Shadow Run v3 ACTIVE (Apr 16 – Jul 14, 2026 · Ifakara TC + Mlimba DC)
+**Status**: 🔵 Shadow Run v2 ACTIVE (Apr 16 – Jul 14, 2026 · Ifakara TC + Mlimba DC)
 **Version**: 3.5 (Phase A restructure — pilots/, validation/, legacy-reports/ archived)
 
 ---
@@ -308,7 +308,7 @@ Please create an issue or update the relevant core document.
 **Phase**: Forward Validation (Shadow Run)
 **Version**: 3.5
 **Last Updated**: April 14, 2026
-**Status**: 🔵 Shadow Run v3 ACTIVE (Apr 16 – Jul 14, 2026 · Ifakara TC + Mlimba DC)
+**Status**: 🔵 Shadow Run v2 ACTIVE (Apr 16 – Jul 14, 2026 · Ifakara TC + Mlimba DC)
 
 **Current state**:
 - ✅ All features implemented and documented

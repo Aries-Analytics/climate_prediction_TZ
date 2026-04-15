@@ -504,5 +504,5 @@ Reserves are adequate. See Financial Parameters table above for full breakdown.
 
 ---
 
-**Document Status:** Shadow Run v3 ACTIVE (Apr 16 – Jul 14, 2026 · Ifakara TC + Mlimba DC) — Retrospective Validation Complete
+**Document Status:** Shadow Run v2 ACTIVE (Apr 16 – Jul 14, 2026 · Ifakara TC + Mlimba DC) — Retrospective Validation Complete
 **Next Review:** Mid-2026 — post shadow run debrief and Go/No-Go decision

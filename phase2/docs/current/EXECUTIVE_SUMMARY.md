@@ -2,7 +2,7 @@
 
 **Project Phase**: 3.2 (Forward Validation & Pilot Preparation)
 **Date**: March 15, 2026
-**Status**: Retrospective Validation Complete · Shadow Run v3 ACTIVE (Apr 16 – Jul 14, 2026, two-zone Kilombero split: Ifakara TC + Mlimba DC · 24 forecasts/day · target 2,160). Evaluation layer zone-aware: per-zone Brier/RMSE/ECE, basis risk, GO/NO-GO gates.
+**Status**: Retrospective Validation Complete · Shadow Run v2 ACTIVE (Apr 16 – Jul 14, 2026, two-zone Kilombero split: Ifakara TC + Mlimba DC · 24 forecasts/day · target 2,160). Evaluation layer zone-aware: per-zone Brier/RMSE/ECE, basis risk, GO/NO-GO gates.
 
 ---
 
