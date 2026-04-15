@@ -122,7 +122,7 @@ Current reserves cover the worst-case single-event exposure (100% simultaneous c
 
 ### What a First Payout Looks Like
 
-The system flags a drought trigger for Morogoro with elevated probability on a primary-tier forecast. A financial reserve is automatically earmarked based on that probability. When observed rainfall confirms the threshold was breached, **all 1,000 enrolled Kilombero farmers receive a fixed payout within 5–7 days** — no claims form, no adjuster, no dispute. Every farmer in the zone receives the same amount because every farmer faces the same zone-level climate risk.
+The system flags a drought trigger for one of the Kilombero Basin pilot zones with elevated probability on a primary-tier forecast. A financial reserve is automatically earmarked based on that probability. When observed rainfall confirms the threshold was breached, **all enrolled farmers in the affected zone receive a fixed payout within 5–7 days** — no claims form, no adjuster, no dispute. Each zone is evaluated independently: a trigger in one zone does not automatically trigger the other. Every farmer in the affected zone receives the same amount because every farmer faces the same zone-level climate risk.
 
 ---
 
