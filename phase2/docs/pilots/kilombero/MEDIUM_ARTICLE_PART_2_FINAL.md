@@ -144,7 +144,7 @@ The Shadow Run marks the first time the forecasting system will operate continuo
 Each day at **6:00 AM East Africa Time**, the pipeline automatically:
 
 1. Fetches the latest available climate data from the five source APIs
-2. Generates 24 forecasts for the Kilombero Basin — covering drought, flood, and crop stress across two pilot zones (Ifakara TC + Mlimba DC), looking 3 to 6 months ahead (four separate forecast horizons per zone)
+2. Generates 12 forecasts for the Kilombero Basin — covering drought, flood, and crop stress looking 3 to 6 months ahead (four separate forecast horizons)
 3. Logs each forecast with a timestamp so it can later be compared against observed conditions
 4. As forecast windows mature, automatically resolves each prediction against real-world climate data and calculates an accuracy score
 
