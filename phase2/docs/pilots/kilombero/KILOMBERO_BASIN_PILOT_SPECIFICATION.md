@@ -11,7 +11,7 @@
 
 ## Executive Summary
 
-The **Kilombero Basin Rice Pilot** (Morogoro Region) is a two-zone parametric insurance pilot program designed to validate the production-ready XGBoost climate prediction model in a real-world agricultural setting. The pilot covers **1,000 smallholder rice farmers** across two zones in the Kilombero Valley: **Ifakara TC** (400 farmers, id=7) and **Mlimba DC** (600 farmers, id=8). 
+The **Kilombero Basin Rice Pilot** is a two-zone parametric insurance pilot program designed to validate the production-ready XGBoost climate prediction model in a real-world agricultural setting. The pilot covers **1,000 smallholder rice farmers** across two zones in the Kilombero Valley: **Ifakara TC** (400 farmers, id=7) and **Mlimba DC** (600 farmers, id=8). 
 
 **Model Selection**: The HewaSense V4 Phase-Based Coverage Service actively models rice phenology via Growing Degree Days (GDD) and mitigates basis risk via continuous 5-day cumulative flood triggers. The model achieved a bounded **9.6% commercial loss ratio** in out-of-sample testing (2000-2014) and a validated **20% basis risk** in retrospective validation (2015-2025), with **zero false negatives** — catching both the 2017/2018 and 2021/2022 crop failures. See `PHASE_BASED_COMPARISON.md` for full validation details.
 

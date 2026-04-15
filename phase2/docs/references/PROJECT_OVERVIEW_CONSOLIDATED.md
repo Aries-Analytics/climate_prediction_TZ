@@ -779,7 +779,7 @@ This project represents a foundation for climate intelligence in East Africa. We
 
 ## 📋 Current Status
 
-**Phase**: Pilot-Ready — Shadow Run v2 ACTIVE (Apr 14 – Jul 13, 2026 · Ifakara TC + Mlimba DC)
+**Phase**: Pilot-Ready — Shadow Run v2 ACTIVE (Apr 16 – Jul 14, 2026 · Ifakara TC + Mlimba DC)
 **Completion**: Core features implemented and documented
 **Testing**: Comprehensive test suite validated (80%+ coverage)
 **Documentation**: Complete user and technical guides (80+ pages)
@@ -825,5 +825,5 @@ As climate variability increases, tools like this may become increasingly valuab
 
 **Document Version**: 4.3
 **Last Updated**: March 16, 2026
-**Status**: Shadow Run v2 ACTIVE (Apr 14 – Jul 13, 2026 · Ifakara TC + Mlimba DC) — Landing Page LIVE
+**Status**: Shadow Run v2 ACTIVE (Apr 16 – Jul 14, 2026 · Ifakara TC + Mlimba DC) — Landing Page LIVE
 **Consolidates**: PROJECT_OVERVIEW.md, PROJECT_SUMMARY.md, EXECUTIVE_SUMMARY.md, PHASE_2_KEY_ACHIEVEMENTS.md, IMPLEMENTATION_COMPLETE.md

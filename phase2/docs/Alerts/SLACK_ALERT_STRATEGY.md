@@ -65,7 +65,7 @@ Expected duration: ~45 minutes
 
 Duration: 42 minutes
 Sources: 5/5 successful
-Forecasts: 31 generated (Morogoro pilot)
+Forecasts: 24 generated (Kilombero Basin — Ifakara TC + Mlimba DC)
 Quality: 95%
 ```
 
@@ -111,7 +111,7 @@ Issues Detected:
   • ERA5: 3 out-of-range values detected
   • Data gap: Jan 18-20 (3 days)
 
-Forecasts Generated: 31 (Morogoro pilot, with reduced confidence)
+Forecasts Generated: 24 (Kilombero Basin pilot, with reduced confidence)
 
 Action: Review data sources, consider manual data fill
 ```
@@ -133,7 +133,7 @@ Critical Issues:
   ❌ NASA POWER: 45% missing values
   ⚠️ NDVI: Only partial coverage
 
-Forecasts: NOT GENERATED for Morogoro pilot (insufficient data)
+Forecasts: NOT GENERATED for Kilombero Basin pilot (insufficient data)
 
 URGENT ACTION: Investigate data source failures immediately
 ```
@@ -303,11 +303,11 @@ Trigger: Scheduled (daily)
 ✓ Ocean Indices: 31 records (100% coverage)
 
 *Forecast Generation*
-Total: 31 forecasts
-Location: Morogoro (Kilombero Basin - Pilot)
+Total: 24 forecasts
+Location: Kilombero Basin (Ifakara TC + Mlimba DC) — Pilot
 Crop: Rice
-Farmers: 1,000
-Horizon: 31 days
+Farmers: 1,000 (400 + 600)
+Horizon: 3-6 months (4 horizons × 3 triggers × 2 zones)
 Confidence: High
 
 *Data Quality*
