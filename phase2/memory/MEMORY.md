@@ -319,15 +319,64 @@ The HewaSense payout design is **zone-level, binary trigger** (Option A). Two st
 
 ## Logs Index
 
-| Date | Summary |
-|------|---------|
-| 2026-04-05 | Rice yield ground truth pipeline built (MapSPAM, HarvestStat, FAOSTAT/WB); Mar 15–Apr 3 session content recovered into MEMORY.md; yield calibration applied to docs — baseline 2.099 MT/Ha, loss trigger 1.259 MT/Ha |
-| 2026-04-06 | Pipeline failure fixed (tz-naive/tz-aware); Farmer Value table rendering fix; timeline tone standardised across 9 docs (mid-2026 gate, No-Go branch added, TIRA/reinsurer milestones removed); TARI + IITA dataset research; Chuwa email updated to cover both Harvard Dataverse datasets |
-| 2026-04-07 | ERA5 date vs datetime TypeError fixed (`c77be7a`) — hasattr guard replaced with isinstance check; chirps/nasa_power/ndvi confirmed clean; all 4 sources expected clean Apr 8; docs Phase A restructure complete (pilots/, validation/, archive/ folders); phase2/ root cleared; script path fixes after moves (`73721e2`); /log-session drift guardrail added; docs/README.md + phase2/README.md comprehensively updated (stale structure, script paths, feature count, ERA5 env var, test count); comprehensive `docs/references/` audit — stale data fixed in 7 files (hardcoded run counts removed, Jun 12→Jun 2026, heat_stress→crop_failure, 100-farmer→1,000-farmer, in-memory job store clarified, stale KILOMBERO path fixed) |
+> Each entry summarises a session day. Full details in `memory/logs/YYYY-MM-DD.md`.
 
-| 2026-04-09 | Investigated Apr 8 ERA5 partial failure end-to-end; confirmed Apr 7 fix deployed but exposed a downstream tz-naive/tz-aware pandas filter bug and month-boundary exclusion; patched `modules/ingestion/era5_ingestion.py`, committed `4948306`, pushed, pulled on server, restarted `pipeline-scheduler`, and verified healthy startup plus correct runtime filter behavior; created `docs/future/AUTORESEARCH_BLUEPRINT.md` with implementation roadmap, registry schema, `program.md` template, and GOTCHA-safe adoption plan |
-| 2026-04-14 | Two-zone Kilombero split (Ifakara TC id=7 + Mlimba DC id=8, replacing Morogoro id=6); yield baselines recalibrated from district council data; zone-split evaluation layer (per-zone Brier/RMSE/ECE/basis risk/GO-NO-GO); EvidencePackDashboard rewritten with zone tabs; ForecastDashboard dynamic location fetch; shadow run config centralised in `app/config/shadow_run.py`; shadow run v2 restarted Apr 14–Jul 13; DB wiped; 22 files changed |
-| 2026-04-15 | Fixed Slack "Shadow Run: N/A" (alert_service queried nonexistent `created_at` column); fixed Evidence Pack "Days Completed: 1" (frontend derived days via division instead of using DB count); found critical bug — 12 forecasts/day instead of 24 caused by stale duplicate `phase2/modules/` with hardcoded Morogoro coords (scheduler mounted this, not `backend/modules/`); consolidated duplicates (deleted `phase2/modules/` + `phase2/utils/`, 41 files); updated docker-compose; shadow run v2 restarted Apr 16–Jul 14; deployed to server + DB wiped; made frontend shadow run dates data-driven (risk_service imports from config, no hardcoded dates); comprehensive doc sweep (10+ docs updated for two-zone split); Linear MIT-26 + HewaSense project description updated |
+---
+
+### 2026-04-05
+- Rice yield ground truth pipeline built (MapSPAM, HarvestStat, FAOSTAT/WB)
+- Mar 15–Apr 3 session content recovered into MEMORY.md
+- Yield calibration applied to docs — baseline 2.099 MT/Ha, loss trigger 1.259 MT/Ha
+
+---
+
+### 2026-04-06
+- Pipeline failure fixed (tz-naive/tz-aware comparison)
+- Farmer Value table rendering fix
+- Timeline tone standardised across 9 docs (mid-2026 gate, No-Go branch added, TIRA/reinsurer milestones removed)
+- TARI + IITA dataset research; Chuwa email updated to cover both Harvard Dataverse datasets
+
+---
+
+### 2026-04-07
+- ERA5 date vs datetime TypeError fixed (`c77be7a`) — `hasattr` guard replaced with `isinstance` check
+- chirps/nasa_power/ndvi confirmed clean; all 4 sources expected clean Apr 8
+- Docs Phase A restructure complete (pilots/, validation/, archive/ folders); phase2/ root cleared
+- Script path fixes after moves (`73721e2`); `/log-session` drift guardrail added
+- docs/README.md + phase2/README.md comprehensively updated
+- Comprehensive `docs/references/` audit — stale data fixed in 7 files
+
+---
+
+### 2026-04-09
+- Investigated Apr 8 ERA5 partial failure end-to-end
+- Confirmed Apr 7 fix deployed but exposed downstream tz-naive/tz-aware pandas filter bug + month-boundary exclusion
+- Patched `modules/ingestion/era5_ingestion.py`, committed `4948306`, deployed to server
+- Created `docs/future/AUTORESEARCH_BLUEPRINT.md` with implementation roadmap and GOTCHA-safe adoption plan
+
+---
+
+### 2026-04-14
+- Two-zone Kilombero split: Ifakara TC (id=7) + Mlimba DC (id=8), replacing Morogoro (id=6)
+- Yield baselines recalibrated from Kilombero District Council data (2020/21–2024/25)
+- Zone-split evaluation layer built (per-zone Brier/RMSE/ECE/basis risk/GO-NO-GO)
+- EvidencePackDashboard rewritten with zone tabs; ForecastDashboard dynamic location fetch
+- Shadow run config centralised in `app/config/shadow_run.py`
+- Shadow run v2 restarted Apr 14–Jul 13; DB wiped; 22 files changed
+
+---
+
+### 2026-04-15
+- **Bugs fixed (5):**
+  - Slack "Shadow Run: N/A" — `alert_service` queried nonexistent `created_at` column
+  - Evidence Pack "Days Completed: 1" — frontend derived days via division instead of DB count
+  - 12 forecasts/day instead of 24 — stale duplicate `phase2/modules/` with hardcoded Morogoro coords
+  - Unfiltered forecast log count — missing `SHADOW_RUN_START` filter
+  - Hardcoded shadow run dates in frontend + backend — now fully data-driven from config
+- **Architecture:** Consolidated duplicate `phase2/modules/` + `phase2/utils/` (deleted 41 files, ~12,500 lines); updated docker-compose
+- **Shadow run v2 restarted** Apr 16–Jul 14; deployed to server + DB wiped
+- **Doc sweep:** 13 docs updated for two-zone split + correct dates
+- **Linear:** MIT-26 issue + HewaSense project description updated
 
 *Last updated: 2026-04-15*
 *This file is the source of truth for persistent facts. Edit directly to update.*
