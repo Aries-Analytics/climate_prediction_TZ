@@ -45,6 +45,8 @@
 - **Ingestion tz contract (Apr 16, 2026 — PERMANENT):** All 5 ingestion modules follow a strict tz-naive `date` contract documented in `backend/utils/dates.py`. Date parameters are tz-naive `datetime.date`, defaults are `date.today()` / `date(2010, 1, 1)` (NEVER `datetime.now(timezone.utc)`), internal math uses pure date arithmetic, pandas bounds convert to `pd.Timestamp` only at the DataFrame filtering boundary. Helpers: `as_date()`, `last_complete_month()`, `subtract_months()`. This contract eliminated the class of tz bugs that produced 4 separate patches (Apr 6, 7, 9, 16). Any future ingestion module MUST follow this contract — see module docstring of `utils/dates.py`.
 - **Post-reset backfill runbook (Apr 16):** When a DB wipe changes pilot zone coordinates, a manual backfill MUST be run before the first scheduled pipeline run — otherwise the first day produces partial forecasts (e.g. 12 instead of 24) because new locations have zero historical climate_data. Runbook in `memory/logs/2026-04-16.md`. Auto-backfill was explicitly rejected as wrong design (pipeline should do one thing: incremental ingestion).
 - **Shadow run gap policy (Apr 16):** No gaps allowed in daily forecast generation EXCEPT when caused by server/infrastructure downtime (documented outage, container crash, DB unavailability, external API downtime preventing ingestion). Any missed day must be logged with cause, duration, and remediation in the session log. Code/config bugs are NOT acceptable gap causes — they must be fixed and the day backfilled via the manual runbook. This applies to all 90 days (Apr 16 – Jul 14, 2026).
+- **Shadow run tracks valid_run_days, NOT calendar days (Apr 16):** Completion fires when `valid_run_days >= SHADOW_RUN_TARGET_DAYS` (90), not when calendar hits `SHADOW_RUN_END`. Gaps push actual completion later — sample size (2,160 forecasts) is always preserved. Orchestrator, auto_log_service, alert_service, evidence_generator all use `valid_run_days` as the completion trigger.
+- **Data-driven projected end date (Apr 16, commit `3be8296`):** `shadow_run.py` has two helpers: `projected_end_date(valid_run_days)` and `projected_brier_eval_date(valid_run_days)`. Formula: `projected_end = SHADOW_RUN_END + max(0, calendar_days_elapsed - valid_run_days)`. Zero gaps → projected == target; any downtime shifts projected later. `/execution-log` API returns `projected_end_date`, `projected_brier_eval_date`, `gap_days` alongside target `end_date`. `risk_service.shadowRunConfig` computes these live from DB every request. Frontend (Executive + Evidence Pack dashboards) displays projected end as primary, shows target + gap count when they differ. `SHADOW_RUN_END` in config stays as TARGET constant; projected is derived from DB state — no code change needed when gaps occur.
 
 ## Documentation Tone (Expert Feedback — March 2026)
 
@@ -374,7 +376,10 @@ The HewaSense payout design is **zone-level, binary trigger** (Option A). Two st
 - Manual backfill done, revealed 2 latent tz bugs in NASA POWER + Ocean Indices (`end_date=None` defaulted to `datetime.now(timezone.utc)`)
 - **Permanent tz fix** (not patch): new `backend/utils/dates.py` establishes tz-naive `date` contract for all 5 ingestion modules. Eliminates the class of bug that produced 4 separate patches (Apr 6, 7, 9, 16). Verified on server: Ocean Indices + NASA POWER both work with default `end_date=None`
 - Runbook documented for post-reset backfill (manual step before first scheduled run)
-- Commits: `aeebfc9` (contract), `99db863` (pd.Timestamp boundary fix)
+- **Day 1 marked complete** in Linear MIT-26 + Apr 15 deployment checklist (with honest note about 12→24 backfill)
+- **Shadow run gap policy established** (Walter): no gaps allowed except server/infrastructure downtime; code/config bugs must be fixed and backfilled. Added to MIT-26, MEMORY.md
+- **Data-driven projected end date** (commit `3be8296`): new helpers `projected_end_date()` + `projected_brier_eval_date()` in `shadow_run.py`; API + frontend now display live completion date that adapts to gaps (e.g. +2 days if 2 gap days accumulate). Target date shown alongside when they differ.
+- Commits: `aeebfc9` (tz contract), `99db863` (pd.Timestamp boundary), `5294641` (session log + MEMORY), `51fac02` (Day 1 complete), `647cd92` (gap policy), `3be8296` (projected end date)
 
 ---
 
@@ -390,6 +395,6 @@ The HewaSense payout design is **zone-level, binary trigger** (Option A). Two st
 - **Doc sweep:** 13 docs updated for two-zone split + correct dates
 - **Linear:** MIT-26 issue + HewaSense project description updated
 
-*Last updated: 2026-04-16*
+*Last updated: 2026-04-16 (end-of-day: permanent tz contract, gap policy, data-driven projected end date)*
 *This file is the source of truth for persistent facts. Edit directly to update.*
 *Pipeline run history (daily status, forecasts, duration, sources) is in the Evidence Pack dashboard — /v1/evidence-pack/execution-log.*
