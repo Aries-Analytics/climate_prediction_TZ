@@ -549,6 +549,10 @@ def ingest_ndvi(
 
     log_info(f"Ingesting NDVI data from {start_date} to {end_date}")
 
+    # Convert to tz-naive pd.Timestamp at the pandas boundary.
+    start_ts = pd.Timestamp(start_date)
+    end_ts = pd.Timestamp(end_date)
+
     try:
         # Fetch data using existing function
         df = fetch_ndvi_data(start_year=start_date.year, end_year=end_date.year, dry_run=False)
@@ -562,7 +566,7 @@ def ingest_ndvi(
 
         # Filter to exact date range (month-level granularity)
         df["date"] = pd.to_datetime(df[["year", "month"]].assign(day=1))
-        df = df[(df["date"] >= start_date) & (df["date"] <= end_date)]
+        df = df[(df["date"] >= start_ts) & (df["date"] <= end_ts)]
 
         # Kilombero Basin pilot zones (Apr 2026 two-zone split)
         # Replaces single Morogoro city point with actual basin coordinates.

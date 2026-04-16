@@ -324,6 +324,12 @@ def ingest_nasa_power(
 
     log_info(f"Ingesting NASA POWER data from {start_date} to {end_date}")
 
+    # Convert to tz-naive pd.Timestamp for pandas DataFrame comparison below.
+    # The date math above was done in pure `date`; this is the boundary where
+    # we hand off to pandas, which uses datetime64[ns].
+    start_ts = pd.Timestamp(start_date)
+    end_ts = pd.Timestamp(end_date)
+
     try:
         total_fetched = 0
         total_stored = 0
@@ -347,7 +353,7 @@ def ingest_nasa_power(
 
             # Filter to exact date range (month-level granularity)
             df["date"] = pd.to_datetime(df[["year", "month"]].assign(day=1))
-            df = df[(df["date"] >= start_date) & (df["date"] <= end_date)]
+            df = df[(df["date"] >= start_ts) & (df["date"] <= end_ts)]
 
             # Store to database
             for _, row in df.iterrows():
