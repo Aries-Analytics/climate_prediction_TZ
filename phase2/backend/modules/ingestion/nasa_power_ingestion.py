@@ -10,7 +10,7 @@ or `tz_localize` calls anywhere below the public API boundary.
 
 import os
 import time
-from datetime import date, datetime, timedelta
+from datetime import date
 from typing import Optional, Tuple
 
 import pandas as pd
@@ -26,7 +26,7 @@ from utils.validator import validate_dataframe
 # Replaces single Morogoro city point with actual basin coordinates.
 PILOT_LOCATIONS = [
     {"name": "Ifakara TC", "lat": -8.1333, "lon": 36.6833},
-    {"name": "Mlimba DC",  "lat": -8.0167, "lon": 35.9500},
+    {"name": "Mlimba DC", "lat": -8.0167, "lon": 35.9500},
 ]
 
 # Default coordinate kept for fetch_nasa_power_data() backward compat
@@ -339,8 +339,11 @@ def ingest_nasa_power(
 
             # Fetch data for this pilot location
             df = fetch_nasa_power_data(
-                start_year=start_date.year, end_year=end_date.year,
-                latitude=loc["lat"], longitude=loc["lon"], dry_run=False,
+                start_year=start_date.year,
+                end_year=end_date.year,
+                latitude=loc["lat"],
+                longitude=loc["lon"],
+                dry_run=False,
             )
 
             if df.empty:
@@ -391,7 +394,11 @@ def ingest_nasa_power(
                             temperature_avg=float(row["t2m"]) if "t2m" in row else None,
                             soil_moisture=float(row["gwetprof"]) if "gwetprof" in row else None,
                             rel_humidity_pct=float(row["rh2m"]) if "rh2m" in row and row["rh2m"] is not None else None,
-                            solar_rad_wm2=float(row["allsky_sfc_sw_dwn"]) if "allsky_sfc_sw_dwn" in row and row["allsky_sfc_sw_dwn"] is not None else None,
+                            solar_rad_wm2=(
+                                float(row["allsky_sfc_sw_dwn"])
+                                if "allsky_sfc_sw_dwn" in row and row["allsky_sfc_sw_dwn"] is not None
+                                else None
+                            ),
                         )
                         db.add(climate_record)
                         total_stored += 1

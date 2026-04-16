@@ -20,8 +20,9 @@ Supports two auth paths — both Docker-friendly:
 
 No interactive browser session is required with Option 1.
 """
-import os
+
 import logging
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +45,7 @@ def initialize_gee(project_id: str = "climate-prediction-using-ml") -> bool:
 
     try:
         from dotenv import load_dotenv
+
         load_dotenv()
 
         project_id = os.getenv("GOOGLE_CLOUD_PROJECT", project_id)

@@ -6,53 +6,82 @@
 
 ## Contract Source of Truth
 
-**Canonical source:** `state.json → shared_contract`
+**Canonical sources (code is the truth, not duplicated documentation):**
 
-Frontend must consume these values exactly. Never override or hardcode alternatives.
+- Pilot zone IDs + coordinates → `backend/app/services/risk_service.py` (`PILOT_LOCATION_IDS`), `backend/app/services/evaluation_service.py` (`PILOT_ZONE_IDS`)
+- Shadow run dates + target days → `backend/app/config/shadow_run.py`
+- Payout threshold → `backend/app/services/pipeline/orchestrator.py` (`_PROB_THRESHOLDS`)
+- Active model → `outputs/models/active_model.json`
+
+Frontend must consume live API responses, not hardcoded duplicates of these values.
 
 ---
 
-## Shared Contract Values
+## Current Pilot Values (reference snapshot — 2026-04-16)
 
 ```json
 {
-  "PILOT_LOCATION_ID": 6,
+  "PILOT_LOCATION_IDS": [7, 8],
+  "pilot_zones": {
+    "7": {"name": "Ifakara TC", "lat": -8.1333, "lon": 36.6833, "farmers": 400},
+    "8": {"name": "Mlimba DC",  "lat": -8.0167, "lon": 35.95,   "farmers": 600}
+  },
   "payout_threshold": 0.75,
-  "pilot_region": "Morogoro (Kilombero Basin)",
+  "pilot_region": "Kilombero Basin (Ifakara TC + Mlimba DC)",
   "pilot_crop": "Rice",
   "pilot_farmers": 1000,
-  "timezone": "UTC"
+  "timezone": "Africa/Dar_es_Salaam (pipeline schedule); UTC (timestamps)"
 }
 ```
 
-### Location IDs
-- `6` = Morogoro / Kilombero Basin (active pilot)
-- Do NOT use `locationId: 1` — this was a historical error
+> These values are a snapshot for quick reference. The running backend is the
+> source of truth — if this snapshot drifts from the code, the code wins.
+
+### Location IDs — active
+- `7` = Ifakara TC (-8.1333°S, 36.6833°E, 400 farmers)
+- `8` = Mlimba DC (-8.0167°S, 35.95°E, 600 farmers)
+
+### Location IDs — deprecated / do not use for pilot
+- `6` = Morogoro city — deprecated 2026-04-14 (120+ km from actual Kilombero Basin; replaced by the two-zone split)
+- `1`–`5` = Arusha / Dar es Salaam / Dodoma / Mbeya / Mwanza — **training** locations, not pilot targets
+- Do NOT hardcode `locationId: 1` on the frontend — this was a historical regression
 
 ### Payout Threshold
-- Backend canonical: `0.75` (75%)
-- Frontend must match this exactly
+- Backend canonical: `0.75` (75%) — defined in `orchestrator.py:_PROB_THRESHOLDS`
+- Frontend must not override this — display whatever the API returns
 - Do NOT use `0.50` (50%) — this was a historical error
 
 ---
 
-## API Endpoints
+## Zone-aware API Endpoints (2026-04-14+)
+
+### Evidence Pack (zone-split evaluation)
+- `GET /api/v1/evidence-pack/metrics` — aggregate + per-zone Brier/RMSE/ECE
+- `GET /api/v1/evidence-pack/metrics?location_id=7` — Ifakara TC only
+- `GET /api/v1/evidence-pack/metrics?location_id=8` — Mlimba DC only
+- `GET /api/v1/evidence-pack/basis-risk` — aggregate + per-zone NDVI proxy basis risk
+- `GET /api/v1/evidence-pack/basis-risk?location_id=7|8` — zone-specific
+- `GET /api/v1/evidence-pack/final-report` — GO/NO-GO gates (overall + per-zone)
+- `GET /api/v1/evidence-pack/execution-log` — pipeline history + shadow run progress (live `valid_run_days`, `projected_end_date`, `gap_days`)
 
 ### Climate Data
-- `GET /api/climate-data?location_id=6` — historical observations
-- `GET /api/climate-data/latest?location_id=6` — most recent data point
+- `GET /api/climate-data?location_id=<id>` — historical observations
+- `GET /api/climate-data/latest?location_id=<id>` — most recent data point
 
 ### Forecasts
-- `GET /api/forecasts?location_id=6` — ML-generated forecasts
-- `GET /api/climate-forecasts?location_id=6` — seasonal forecasts
+- `GET /api/forecasts?location_id=<id>` — ML-generated forecasts
+- `GET /api/climate-forecasts?location_id=<id>` — seasonal forecasts
 - `POST /api/forecasts/generate` — trigger forecast generation
 
 ### Trigger Events
-- `GET /api/trigger-events?location_id=6` — insurance trigger history
+- `GET /api/trigger-events?location_id=<id>` — insurance trigger history
 - `GET /api/trigger-events/active` — currently active triggers
 
 ### Model Performance
-- `GET /api/model-performance?location_id=6` — model accuracy metrics
+- `GET /api/model-performance?location_id=<id>` — model accuracy metrics
+
+### Risk / Portfolio
+- `GET /api/portfolio-risk` — portfolio metrics + `shadowRunConfig` with live projected dates
 
 ---
 
@@ -72,4 +101,4 @@ When Backend returns errors, Frontend must handle gracefully:
 
 ---
 
-*Last updated: 2026-03-08*
+*Last updated: 2026-04-16 — updated for two-zone Kilombero split; removed stale `state.json` reference (never wired)*

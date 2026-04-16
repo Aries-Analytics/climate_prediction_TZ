@@ -35,11 +35,11 @@ Helpers
 Law #1 (explicit failure): as_date() raises TypeError on unrecognised
 input — never silently returns a sentinel.
 """
+
 from datetime import date, datetime, timedelta
 from typing import Optional, Union
 
 import pandas as pd
-
 
 DateInput = Union[date, datetime, pd.Timestamp, str, None]
 

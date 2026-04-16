@@ -1,4 +1,4 @@
-﻿name: CI Pipeline
+name: CI Pipeline
 
 on:
   push:
@@ -9,24 +9,24 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    
+
     strategy:
       matrix:
         python-version: ['3.9', '3.10', '3.11']
-    
+
     defaults:
       run:
         working-directory: phase2
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-    
+
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
-    
+
     - name: Cache pip dependencies
       uses: actions/cache@v3
       with:
@@ -34,21 +34,21 @@ jobs:
         key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
         restore-keys: |
           ${{ runner.os }}-pip-
-    
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-    
+
     - name: Create necessary directories
       run: |
         mkdir -p outputs/processed
         mkdir -p logs
-    
+
     - name: Run tests with coverage
       run: |
-        pytest tests/ -v --cov=modules --cov=utils --cov-report=xml --cov-report=term
-    
+        pytest tests/ -v --cov=backend/modules --cov=backend/utils --cov-report=xml --cov-report=term
+
     - name: Upload coverage reports
       uses: codecov/codecov-action@v3
       with:
@@ -59,36 +59,33 @@ jobs:
 
   lint:
     runs-on: ubuntu-latest
-    
+
     defaults:
       run:
         working-directory: phase2
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-    
+
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.10'
-    
+
     - name: Install linting tools
       run: |
         python -m pip install --upgrade pip
         pip install flake8 black isort
-    
+
     - name: Run flake8
       run: |
-        flake8 modules/ utils/ tests/ --max-line-length=120 --extend-ignore=E203,W503
-      continue-on-error: true
-    
+        flake8 backend/modules/ backend/utils/ tests/
+
     - name: Check code formatting with black
       run: |
-        black --check modules/ utils/ tests/ --line-length=120
-      continue-on-error: true
-    
+        black --check backend/modules/ backend/utils/ tests/ --line-length=120
+
     - name: Check import sorting with isort
       run: |
-        isort --check-only modules/ utils/ tests/ --profile black
-      continue-on-error: true
+        isort --check-only backend/modules/ backend/utils/ tests/ --profile black

@@ -8,7 +8,7 @@ See `utils/dates.py` for the full contract.
 """
 
 import os
-from datetime import date, datetime, timedelta
+from datetime import date
 from typing import Optional, Tuple
 
 import pandas as pd
@@ -43,6 +43,7 @@ def _initialize_gee():
         return False
     try:
         from utils.earth_engine_auth import initialize_gee
+
         return initialize_gee()
     except ImportError:
         pass
@@ -305,11 +306,13 @@ def fetch_chirps_data(
                 log_warning(f"Failed to load cached data: {e}")
 
         if use_gee and not GEE_AVAILABLE:
-             raise ImportError("Google Earth Engine not available. Install 'earthengine-api' and authenticate.")
+            raise ImportError("Google Earth Engine not available. Install 'earthengine-api' and authenticate.")
 
         log_warning(f"No CHIRPS data found for {start_year}-{end_year}. (Data might not be available yet)")
         # Return empty DataFrame with expected columns
-        return pd.DataFrame(columns=["year", "month", "rainfall_mm", "lat_min", "lat_max", "lon_min", "lon_max", "data_source"])
+        return pd.DataFrame(
+            columns=["year", "month", "rainfall_mm", "lat_min", "lat_max", "lon_min", "lon_max", "data_source"]
+        )
 
     except Exception:
         raise
@@ -464,41 +467,41 @@ def ingest_chirps(
         # Replaces single Morogoro city point with actual basin coordinates.
         PILOT_LOCATIONS = [
             {"name": "Ifakara TC", "lat": -8.1333, "lon": 36.6833},
-            {"name": "Mlimba DC",  "lat": -8.0167, "lon": 35.9500},
+            {"name": "Mlimba DC", "lat": -8.0167, "lon": 35.9500},
         ]
 
         records_stored = 0
 
         for _, row in df.iterrows():
             try:
-              for loc in PILOT_LOCATIONS:
-                # Check if record already exists
-                existing = (
-                    db.query(ClimateData)
-                    .filter(
-                        and_(
-                            ClimateData.date == row["date"].date(),
-                            ClimateData.location_lat == loc["lat"],
-                            ClimateData.location_lon == loc["lon"],
+                for loc in PILOT_LOCATIONS:
+                    # Check if record already exists
+                    existing = (
+                        db.query(ClimateData)
+                        .filter(
+                            and_(
+                                ClimateData.date == row["date"].date(),
+                                ClimateData.location_lat == loc["lat"],
+                                ClimateData.location_lon == loc["lon"],
+                            )
                         )
+                        .first()
                     )
-                    .first()
-                )
 
-                if existing:
-                    # Update existing record
-                    existing.rainfall_mm = float(row["rainfall_mm"])
-                    records_stored += 1
-                else:
-                    # Create new record
-                    climate_record = ClimateData(
-                        date=row["date"].date(),
-                        location_lat=loc["lat"],
-                        location_lon=loc["lon"],
-                        rainfall_mm=float(row["rainfall_mm"]),
-                    )
-                    db.add(climate_record)
-                    records_stored += 1
+                    if existing:
+                        # Update existing record
+                        existing.rainfall_mm = float(row["rainfall_mm"])
+                        records_stored += 1
+                    else:
+                        # Create new record
+                        climate_record = ClimateData(
+                            date=row["date"].date(),
+                            location_lat=loc["lat"],
+                            location_lon=loc["lon"],
+                            rainfall_mm=float(row["rainfall_mm"]),
+                        )
+                        db.add(climate_record)
+                        records_stored += 1
 
             except Exception as e:
                 log_error(f"Failed to store CHIRPS record for {row['date']} @ {loc['name']}: {e}")

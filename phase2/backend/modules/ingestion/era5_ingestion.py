@@ -10,7 +10,7 @@ done using pure `date` arithmetic (no UTC-anchored datetime required
 """
 
 import os
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 from typing import Optional, Tuple
 
 import pandas as pd
@@ -176,7 +176,7 @@ def fetch_era5_data(
         # Or from config file: ~/.ecmwfdatastoresrc
         api_url = os.getenv("ECMWF_DATASTORES_URL", "https://cds.climate.copernicus.eu/api")
         api_key = os.getenv("ECMWF_DATASTORES_KEY") or os.getenv("ERA5_API_KEY")
-        
+
         if api_key:
             c = ECMWFClient(url=api_url, key=api_key)
         else:
@@ -404,8 +404,7 @@ def ingest_era5(
     ERA5_LAG_MONTHS = 3
     lag_month_ref = subtract_months(date.today(), ERA5_LAG_MONTHS)
     # era5_safe_end = last day of lag_month_ref's month (tz-naive date)
-    next_first = (date(lag_month_ref.year + (lag_month_ref.month == 12),
-                       (lag_month_ref.month % 12) + 1, 1))
+    next_first = date(lag_month_ref.year + (lag_month_ref.month == 12), (lag_month_ref.month % 12) + 1, 1)
     era5_safe_end = next_first - timedelta(days=1)
     if end_date > era5_safe_end:
         end_date = era5_safe_end
@@ -420,7 +419,9 @@ def ingest_era5(
 
     try:
         # Fetch data — pass end_month so fetch_era5_data never overshoots into ERA5T.
-        df = fetch_era5_data(start_year=start_date.year, end_year=end_date.year, end_month=end_date.month, dry_run=False)
+        df = fetch_era5_data(
+            start_year=start_date.year, end_year=end_date.year, end_month=end_date.month, dry_run=False
+        )
 
         if df.empty:
             log_info("No ERA5 data fetched")
@@ -436,74 +437,102 @@ def ingest_era5(
         # Kilombero Basin pilot zones (Apr 2026 two-zone split)
         PILOT_LOCATIONS = [
             {"name": "Ifakara TC", "lat": -8.1333, "lon": 36.6833},
-            {"name": "Mlimba DC",  "lat": -8.0167, "lon": 35.9500},
+            {"name": "Mlimba DC", "lat": -8.0167, "lon": 35.9500},
         ]
 
         records_stored = 0
 
         for _, row in df.iterrows():
             try:
-              for loc in PILOT_LOCATIONS:
-                # Check if record already exists
-                existing = (
-                    db.query(ClimateData)
-                    .filter(
-                        and_(
-                            ClimateData.date == row["date"].date(),
-                            ClimateData.location_lat == loc["lat"],
-                            ClimateData.location_lon == loc["lon"],
+                for loc in PILOT_LOCATIONS:
+                    # Check if record already exists
+                    existing = (
+                        db.query(ClimateData)
+                        .filter(
+                            and_(
+                                ClimateData.date == row["date"].date(),
+                                ClimateData.location_lat == loc["lat"],
+                                ClimateData.location_lon == loc["lon"],
+                            )
                         )
+                        .first()
                     )
-                    .first()
-                )
 
-                if existing:
-                    # Update existing record with ERA5 data
-                    if "temp_2m" in row:
-                        # Convert Kelvin to Celsius
-                        existing.temperature_avg = float(row["temp_2m"]) - 273.15
-                    if "soil_moisture" in row:
-                        existing.soil_moisture = float(row["soil_moisture"])
-                    if "dewpoint_2m" in row and row["dewpoint_2m"] is not None:
-                        existing.dewpoint_2m = float(row["dewpoint_2m"]) - 273.15
-                    if "surface_pressure" in row and row["surface_pressure"] is not None:
-                        existing.surface_pressure = float(row["surface_pressure"])
-                    if "wind_u_10m" in row and row["wind_u_10m"] is not None:
-                        existing.wind_u_10m = float(row["wind_u_10m"])
-                    if "wind_v_10m" in row and row["wind_v_10m"] is not None:
-                        existing.wind_v_10m = float(row["wind_v_10m"])
-                    # Derive wind speed and direction from u/v components
-                    if "wind_u_10m" in row and "wind_v_10m" in row and row["wind_u_10m"] is not None and row["wind_v_10m"] is not None:
-                        import math
-                        u, v = float(row["wind_u_10m"]), float(row["wind_v_10m"])
-                        existing.wind_speed_ms = math.sqrt(u**2 + v**2)
-                        existing.wind_direction_deg = (math.degrees(math.atan2(-u, -v)) + 360) % 360
-                    records_stored += 1
-                else:
-                    # Create new record
-                    # Derive wind speed and direction from u/v components
-                    ws = None
-                    wd = None
-                    if "wind_u_10m" in row and "wind_v_10m" in row and row["wind_u_10m"] is not None and row["wind_v_10m"] is not None:
-                        import math
-                        u, v = float(row["wind_u_10m"]), float(row["wind_v_10m"])
-                        ws = math.sqrt(u**2 + v**2)
-                        wd = (math.degrees(math.atan2(-u, -v)) + 360) % 360
-                    climate_record = ClimateData(
-                        date=row["date"].date(),
-                        location_lat=loc["lat"],
-                        location_lon=loc["lon"],
-                        temperature_avg=float(row["temp_2m"]) - 273.15 if "temp_2m" in row else None,
-                        soil_moisture=float(row["soil_moisture"]) if "soil_moisture" in row else None,
-                        dewpoint_2m=float(row["dewpoint_2m"]) - 273.15 if "dewpoint_2m" in row and row["dewpoint_2m"] is not None else None,
-                        surface_pressure=float(row["surface_pressure"]) if "surface_pressure" in row and row["surface_pressure"] is not None else None,
-                        wind_u_10m=float(row["wind_u_10m"]) if "wind_u_10m" in row and row["wind_u_10m"] is not None else None,
-                        wind_v_10m=float(row["wind_v_10m"]) if "wind_v_10m" in row and row["wind_v_10m"] is not None else None,
-                        wind_speed_ms=ws,
-                        wind_direction_deg=wd,
-                    )
-                    db.add(climate_record)
-                    records_stored += 1
+                    if existing:
+                        # Update existing record with ERA5 data
+                        if "temp_2m" in row:
+                            # Convert Kelvin to Celsius
+                            existing.temperature_avg = float(row["temp_2m"]) - 273.15
+                        if "soil_moisture" in row:
+                            existing.soil_moisture = float(row["soil_moisture"])
+                        if "dewpoint_2m" in row and row["dewpoint_2m"] is not None:
+                            existing.dewpoint_2m = float(row["dewpoint_2m"]) - 273.15
+                        if "surface_pressure" in row and row["surface_pressure"] is not None:
+                            existing.surface_pressure = float(row["surface_pressure"])
+                        if "wind_u_10m" in row and row["wind_u_10m"] is not None:
+                            existing.wind_u_10m = float(row["wind_u_10m"])
+                        if "wind_v_10m" in row and row["wind_v_10m"] is not None:
+                            existing.wind_v_10m = float(row["wind_v_10m"])
+                        # Derive wind speed and direction from u/v components
+                        if (
+                            "wind_u_10m" in row
+                            and "wind_v_10m" in row
+                            and row["wind_u_10m"] is not None
+                            and row["wind_v_10m"] is not None
+                        ):
+                            import math
+
+                            u, v = float(row["wind_u_10m"]), float(row["wind_v_10m"])
+                            existing.wind_speed_ms = math.sqrt(u**2 + v**2)
+                            existing.wind_direction_deg = (math.degrees(math.atan2(-u, -v)) + 360) % 360
+                        records_stored += 1
+                    else:
+                        # Create new record
+                        # Derive wind speed and direction from u/v components
+                        ws = None
+                        wd = None
+                        if (
+                            "wind_u_10m" in row
+                            and "wind_v_10m" in row
+                            and row["wind_u_10m"] is not None
+                            and row["wind_v_10m"] is not None
+                        ):
+                            import math
+
+                            u, v = float(row["wind_u_10m"]), float(row["wind_v_10m"])
+                            ws = math.sqrt(u**2 + v**2)
+                            wd = (math.degrees(math.atan2(-u, -v)) + 360) % 360
+                        climate_record = ClimateData(
+                            date=row["date"].date(),
+                            location_lat=loc["lat"],
+                            location_lon=loc["lon"],
+                            temperature_avg=float(row["temp_2m"]) - 273.15 if "temp_2m" in row else None,
+                            soil_moisture=float(row["soil_moisture"]) if "soil_moisture" in row else None,
+                            dewpoint_2m=(
+                                float(row["dewpoint_2m"]) - 273.15
+                                if "dewpoint_2m" in row and row["dewpoint_2m"] is not None
+                                else None
+                            ),
+                            surface_pressure=(
+                                float(row["surface_pressure"])
+                                if "surface_pressure" in row and row["surface_pressure"] is not None
+                                else None
+                            ),
+                            wind_u_10m=(
+                                float(row["wind_u_10m"])
+                                if "wind_u_10m" in row and row["wind_u_10m"] is not None
+                                else None
+                            ),
+                            wind_v_10m=(
+                                float(row["wind_v_10m"])
+                                if "wind_v_10m" in row and row["wind_v_10m"] is not None
+                                else None
+                            ),
+                            wind_speed_ms=ws,
+                            wind_direction_deg=wd,
+                        )
+                        db.add(climate_record)
+                        records_stored += 1
 
             except Exception as e:
                 log_error(f"Failed to store ERA5 record for {row['date']} @ {loc['name']}: {e}")

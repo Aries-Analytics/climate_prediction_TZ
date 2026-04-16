@@ -6,7 +6,6 @@ Usage:
     python modules/processing/orchestrator.py
 """
 
-import os
 import sys
 from pathlib import Path
 
@@ -14,7 +13,6 @@ from pathlib import Path
 project_root = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-import logging
 from datetime import datetime
 from typing import Dict, List, Optional
 
@@ -68,17 +66,17 @@ def process_source(source_name: str, locations: List[str]) -> Dict:
         # Handle ocean_indices special case FIRST (different file path)
         if source_name == "ocean_indices":
             raw_data_path = Path("data/raw/ocean_indices_raw.csv")
-            
+
             if not raw_data_path.exists():
                 raise FileNotFoundError(f"Raw data not found: {raw_data_path}")
-            
+
             logger.info(f"Loading raw data from {raw_data_path}...")
             data = pd.read_csv(raw_data_path)
             logger.info(f"Loaded {len(data)} ocean indices records")
             processed_data = process_ocean_indices(data)
             result["status"] = "success"
             result["locations_processed"] = ["global"]
-        
+
         else:
             # Load the combined raw data for other sources
             raw_data_path = Path(f"data/raw/{source_name}_combined.csv")

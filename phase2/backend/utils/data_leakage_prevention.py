@@ -7,8 +7,7 @@ data leakage by being derived from or highly correlated with the target variable
 Requirements: Prevent data leakage in ML pipelines
 """
 
-import re
-from typing import List, Set, Tuple
+from typing import List, Tuple
 
 import numpy as np
 import pandas as pd
@@ -79,8 +78,8 @@ def detect_target_related_features(
         # Rainfall-derived features not caught by target name matching
         "is_dry_day",
         "consecutive_dry_days",
-        "cumulative_excess",       # cumulative_excess_7day, etc.
-        "heavy_rain_days",         # heavy_rain_days_7day, heavy_rain_days_30day
+        "cumulative_excess",  # cumulative_excess_7day, etc.
+        "heavy_rain_days",  # heavy_rain_days_7day, heavy_rain_days_30day
         "is_drought_month",
         "drought_duration",
     ]
@@ -187,7 +186,7 @@ def detect_high_correlation_leakage(X: pd.DataFrame, y: pd.Series, threshold: fl
             if corr > threshold:
                 high_corr_features.append(col)
                 logger.warning(f"Feature '{col}' has very high correlation with target: {corr:.4f}")
-        except:
+        except Exception:
             continue
 
     return high_corr_features

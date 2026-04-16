@@ -8,7 +8,7 @@ Saves:
 
 ## Deduplication Strategy
 
-This module implements a **validation-based** approach to duplicates rather than 
+This module implements a **validation-based** approach to duplicates rather than
 automatic deduplication:
 
 ### Multi-Location Data (Current System)
@@ -47,7 +47,7 @@ The merge operation uses pandas outer joins which naturally handle:
 
 import pandas as pd
 
-from utils.config import get_data_path, get_output_path
+from utils.config import get_data_path
 from utils.logger import log_error, log_info
 from utils.validator import validate_dataframe
 
@@ -124,7 +124,8 @@ def _validate_no_true_duplicates(df: pd.DataFrame) -> None:
             n_locations = df["location"].nunique()
             n_year_months = df[["year", "month"]].drop_duplicates().shape[0]
             log_info(
-                f"Multi-location dataset validated: {n_locations} locations × {n_year_months} time periods = {len(df)} records"
+                f"Multi-location dataset validated: {n_locations} locations × "
+                f"{n_year_months} time periods = {len(df)} records"
             )
     else:
         # Single-location data: check (year, month) uniqueness

@@ -89,10 +89,41 @@ now = datetime.now(timezone.utc)
 
 ## Rule 6: Contract Compliance
 
-**Law:** `PILOT_LOCATION_ID = 6` everywhere. Payout threshold = 0.75. Both defined in `state.json → shared_contract`.
+**Law:** `PILOT_LOCATION_IDS = [7, 8]` (Ifakara TC = 7, Mlimba DC = 8) everywhere. Payout threshold = 0.75. Canonical sources are the code, not documentation:
 
-**Why:** Frontend used `locationId: 1` while Backend used `PILOT_LOCATION_ID = 6`. This silent mismatch means queries return wrong data without error.
+- `PILOT_LOCATION_IDS` → `backend/app/services/risk_service.py`
+- `PILOT_ZONE_IDS` → `backend/app/services/evaluation_service.py` (imported by `basis_risk_service`)
+- Payout threshold → `backend/app/services/pipeline/orchestrator.py` (`_PROB_THRESHOLDS`)
+
+**Why:** Frontend previously hardcoded `locationId: 1` while Backend used `PILOT_LOCATION_ID = 6`. Silent mismatches return wrong data without error. The single-coordinate pilot was replaced by a two-zone split on 2026-04-14 after ground-truth yield data revealed the original Morogoro city coordinates were 120+ km from the actual Kilombero Basin.
+
+**Deprecated:**
+- `PILOT_LOCATION_ID = 6` (single Morogoro city) — replaced 2026-04-14
+- Any reference to `state.json → shared_contract` — `state.json` was never wired to runtime
 
 ---
 
-*Last updated: 2026-03-05*
+## Rule 7: Ingestion TZ Contract (2026-04-16)
+
+**Law:** Ingestion modules use tz-naive `datetime.date` everywhere. See `backend/utils/dates.py` for the full contract.
+
+**Why:** Mixing tz-aware and tz-naive values at comparison sites produced four production bugs (Apr 6/7/9/16 of 2026). Each previous fix was a local patch; the unified contract eliminates the class of bug.
+
+**Pattern:**
+```python
+# FORBIDDEN in ingestion modules
+end_date = datetime.now(timezone.utc)    # tz-aware default
+end_date.tz_localize(None)               # ad-hoc reconciliation
+end_date.replace(tzinfo=timezone.utc)    # same
+
+# REQUIRED
+from utils.dates import as_date, last_complete_month
+end_date = as_date(end_date, default=date.today())
+cap = last_complete_month()
+```
+
+**Note:** Application-layer code (APIs, DB writes) still uses UTC-aware `datetime` — Law #4 applies there. The tz-naive `date` contract is specifically for the ingestion layer's monthly-granularity logic.
+
+---
+
+*Last updated: 2026-04-16*

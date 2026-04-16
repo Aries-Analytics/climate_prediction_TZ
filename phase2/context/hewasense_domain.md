@@ -1,20 +1,30 @@
 # HewaSense Domain Context
 
-> Reference material for Backend Architect and Frontend Engineer personas.
-> This file provides domain knowledge — not process (goals/) or behavior (args/).
+> Domain knowledge reference. Read when doing backend or frontend work that
+> touches climate, pilot configuration, or ML serving.
 
 ---
 
 ## Project Overview
 
-**HewaSense** is a climate intelligence system for parametric crop insurance in Tanzania. It serves agricultural decisions in the Kilombero Basin, Morogoro region.
+**HewaSense** is a climate intelligence system for parametric crop insurance in Tanzania. It serves agricultural decisions in the Kilombero Basin (two-zone pilot: Ifakara TC + Mlimba DC).
 
-### Pilot Configuration
-- **Region:** Morogoro (Kilombero Basin)
-- **Location ID:** 6 (canonical — all components must use this)
+### Pilot Configuration (Shadow Run v2 — Apr 16, 2026)
+
+| Zone | Location ID | Coordinates | Farmers | Yield Baseline (MT/ha) | CV |
+|------|-------------|-------------|---------|------------------------|-----|
+| Ifakara TC | 7 | -8.1333°S, 36.6833°E | 400 (40%) | 2.30 | 11.9% (volatile, flood-prone) |
+| Mlimba DC | 8 | -8.0167°S, 35.9500°E | 600 (60%) | 2.59 | 3.5% (stable) |
+
+- **Combined district baseline:** 2.53 MT/ha (Kilombero District Council data 2020/21–2024/25)
+- **Loss trigger:** 40% below zone baseline (Ifakara: 1.38 MT/ha, Mlimba: 1.55 MT/ha)
 - **Crop:** Rice
-- **Farmers:** 1,000 pilot participants
+- **Total farmers:** 1,000
 - **Insurance type:** Parametric (triggers based on climate data, not loss assessment)
+- **Canonical source:** `backend/app/services/risk_service.py` (`PILOT_LOCATION_IDS`, farmer counts) and `backend/app/services/evaluation_service.py` (`PILOT_ZONE_IDS`)
+
+### Deprecated
+- **Location ID 6** (Morogoro city, -6.8211°S, 37.6595°E) — deprecated 2026-04-14. Was 120+ km from the actual Kilombero Basin. Replaced by the two-zone split above.
 
 ---
 
@@ -61,10 +71,11 @@
 ## Parametric Insurance Logic
 
 1. Climate data ingested → quality validated
-2. Trigger conditions evaluated against thresholds
-3. If trigger met → payout calculated automatically
-4. Payout threshold: **75%** (canonical, in `state.json → shared_contract`)
-5. No loss assessment needed — purely data-driven
+2. Trigger conditions evaluated against thresholds (per-zone; zones are independent)
+3. If trigger met → payout calculated automatically for affected zone only
+4. Payout threshold: **75%** (canonical: `backend/app/services/pipeline/orchestrator.py` → `_PROB_THRESHOLDS`)
+5. Only horizons 3–4 months are payout-eligible; horizons 5–6 are advisory only
+6. No loss assessment needed — purely data-driven
 
 ---
 
@@ -81,4 +92,4 @@
 
 ---
 
-*Last updated: 2026-03-05*
+*Last updated: 2026-04-16 — updated for two-zone Kilombero split; removed stale `state.json` reference*

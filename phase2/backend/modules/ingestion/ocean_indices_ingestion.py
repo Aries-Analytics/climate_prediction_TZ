@@ -9,7 +9,7 @@ coerced to tz-naive `date` objects at entry.
 """
 
 import os
-from datetime import date, datetime
+from datetime import date
 from typing import Optional, Tuple
 
 import pandas as pd
@@ -147,7 +147,9 @@ def fetch_ocean_indices_data(
         elif iod_df is not None:
             df = iod_df
         else:
-            log_warning(f"No ocean indices data found for years {start_year}-{end_year}. (Data might not be available yet)")
+            log_warning(
+                f"No ocean indices data found for years {start_year}-{end_year}. (Data might not be available yet)"
+            )
             # Return empty DataFrame with expected columns
             return pd.DataFrame(columns=["year", "month", "oni", "enso_phase", "iod"])
 
@@ -340,45 +342,45 @@ def ingest_ocean_indices(
         # Replaces single Morogoro city point with actual basin coordinates.
         PILOT_LOCATIONS = [
             {"name": "Ifakara TC", "lat": -8.1333, "lon": 36.6833},
-            {"name": "Mlimba DC",  "lat": -8.0167, "lon": 35.9500},
+            {"name": "Mlimba DC", "lat": -8.0167, "lon": 35.9500},
         ]
 
         records_stored = 0
 
         for _, row in df.iterrows():
             try:
-              for loc in PILOT_LOCATIONS:
-                # Check if record already exists
-                existing = (
-                    db.query(ClimateData)
-                    .filter(
-                        and_(
-                            ClimateData.date == row["date"].date(),
-                            ClimateData.location_lat == loc["lat"],
-                            ClimateData.location_lon == loc["lon"],
+                for loc in PILOT_LOCATIONS:
+                    # Check if record already exists
+                    existing = (
+                        db.query(ClimateData)
+                        .filter(
+                            and_(
+                                ClimateData.date == row["date"].date(),
+                                ClimateData.location_lat == loc["lat"],
+                                ClimateData.location_lon == loc["lon"],
+                            )
                         )
+                        .first()
                     )
-                    .first()
-                )
 
-                if existing:
-                    # Update existing record with ocean indices data
-                    if "oni" in row and pd.notna(row["oni"]):
-                        existing.enso_index = float(row["oni"])
-                    if "iod" in row and pd.notna(row["iod"]):
-                        existing.iod_index = float(row["iod"])
-                    records_stored += 1
-                else:
-                    # Create new record
-                    climate_record = ClimateData(
-                        date=row["date"].date(),
-                        location_lat=loc["lat"],
-                        location_lon=loc["lon"],
-                        enso_index=float(row["oni"]) if "oni" in row and pd.notna(row["oni"]) else None,
-                        iod_index=float(row["iod"]) if "iod" in row and pd.notna(row["iod"]) else None,
-                    )
-                    db.add(climate_record)
-                    records_stored += 1
+                    if existing:
+                        # Update existing record with ocean indices data
+                        if "oni" in row and pd.notna(row["oni"]):
+                            existing.enso_index = float(row["oni"])
+                        if "iod" in row and pd.notna(row["iod"]):
+                            existing.iod_index = float(row["iod"])
+                        records_stored += 1
+                    else:
+                        # Create new record
+                        climate_record = ClimateData(
+                            date=row["date"].date(),
+                            location_lat=loc["lat"],
+                            location_lon=loc["lon"],
+                            enso_index=float(row["oni"]) if "oni" in row and pd.notna(row["oni"]) else None,
+                            iod_index=float(row["iod"]) if "iod" in row and pd.notna(row["iod"]) else None,
+                        )
+                        db.add(climate_record)
+                        records_stored += 1
 
             except Exception as e:
                 log_error(f"Failed to store ocean indices record for {row['date']} @ {loc['name']}: {e}")
