@@ -1,16 +1,23 @@
 ﻿"""
 ERA5 Ingestion - Phase 2
 Fetches reanalysis climate data from Copernicus Climate Data Store (CDS)
+
+TZ CONTRACT: This module follows the ingestion tz-naive `date` contract.
+See `utils/dates.py` for the full contract. All date parameters are
+coerced to tz-naive `date` objects at entry; ERA5 lag-month math is
+done using pure `date` arithmetic (no UTC-anchored datetime required
+— month boundaries are calendar concepts, not instants).
 """
 
 import os
-from datetime import datetime, time, timedelta, timezone
+from datetime import date, datetime, timedelta
 from typing import Optional, Tuple
 
 import pandas as pd
 from sqlalchemy.orm import Session
 
 from utils.config import get_data_path
+from utils.dates import as_date, subtract_months
 from utils.logger import log_error, log_info
 from utils.validator import validate_dataframe
 
@@ -189,7 +196,8 @@ def fetch_era5_data(
         # Cap months for the end year to avoid requesting ERA5T (restricted).
         # If end_year is the current year, cap to last complete month.
         # If end_month is provided (ERA5_LAG_MONTHS boundary), apply as stricter cap.
-        now = datetime.now(timezone.utc)
+        # Tz-naive date per module tz contract.
+        now = date.today()
         if end_year >= now.year:
             last_complete_month = now.month - 1
             if last_complete_month < 1:
@@ -352,7 +360,7 @@ def fetch_data(*args, **kwargs):
 
 
 def ingest_era5(
-    db: Session, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None, incremental: bool = True
+    db: Session, start_date: Optional[date] = None, end_date: Optional[date] = None, incremental: bool = True
 ) -> Tuple[int, int]:
     """
     Ingest ERA5 data and store to database (orchestrator-compatible interface).
@@ -384,48 +392,29 @@ def ingest_era5(
         from backend.app.models.climate_data import ClimateData
     from sqlalchemy import and_
 
-    # Set default date range
-    if start_date is None:
-        start_date = datetime(2010, 1, 1)
-    if end_date is None:
-        end_date = datetime.now(timezone.utc)
+    # Normalize inputs to tz-naive dates (see utils/dates.py tz contract).
+    start_date = as_date(start_date, default=date(2010, 1, 1))
+    end_date = as_date(end_date, default=date.today())
 
     # Cap end_date to the ERA5 finalized reanalysis lag boundary (~3 months).
     # ERA5 proper (finalized) lags the present by ~3 months.
     # ERA5T (near real-time, < 3 months old) requires a separate restricted
     # dataset subscription — requesting it returns MARS AccessError -2.
+    # Calendar-month math is done in pure tz-naive `date` arithmetic.
     ERA5_LAG_MONTHS = 3
-    now = datetime.now(timezone.utc)
-    lag_month = now.month - ERA5_LAG_MONTHS
-    lag_year = now.year
-    if lag_month <= 0:
-        lag_month += 12
-        lag_year -= 1
-    next_month = lag_month + 1 if lag_month < 12 else 1
-    next_year = lag_year if lag_month < 12 else lag_year + 1
-    era5_safe_end = datetime(next_year, next_month, 1, tzinfo=timezone.utc) - timedelta(days=1)
-    # Normalise end_date to UTC-aware datetime for comparison — incremental manager
-    # returns a plain date object; datetime.combine() promotes it cleanly.
-    if not isinstance(end_date, datetime):
-        end_date = datetime.combine(end_date, time.min).replace(tzinfo=timezone.utc)
-    elif end_date.tzinfo is None:
-        end_date = end_date.replace(tzinfo=timezone.utc)
+    lag_month_ref = subtract_months(date.today(), ERA5_LAG_MONTHS)
+    # era5_safe_end = last day of lag_month_ref's month (tz-naive date)
+    next_first = (date(lag_month_ref.year + (lag_month_ref.month == 12),
+                       (lag_month_ref.month % 12) + 1, 1))
+    era5_safe_end = next_first - timedelta(days=1)
     if end_date > era5_safe_end:
         end_date = era5_safe_end
-        log_info(f"ERA5 end_date capped to finalized ERA5 lag boundary: {end_date.date()} (ERA5T restricted)")
+        log_info(f"ERA5 end_date capped to finalized ERA5 lag boundary: {end_date} (ERA5T restricted)")
 
-    # Ensure dates are pandas-compatible timestamps for comparison.
-    # The monthly dataframe we build below is tz-naive and keyed to the first
-    # day of each month, so normalize the bounds to the same representation
-    # after the ERA5 lag cap to keep pandas comparisons valid.
-    start_date = pd.to_datetime(start_date)
-    end_date = pd.to_datetime(end_date)
-    if start_date.tzinfo is not None:
-        start_date = start_date.tz_localize(None)
-    if end_date.tzinfo is not None:
-        end_date = end_date.tz_localize(None)
-    start_date = start_date.to_period("M").to_timestamp()
-    end_date = end_date.to_period("M").to_timestamp()
+    # Snap bounds to month-start — ERA5 monthly dataframe is keyed to month-1st.
+    # Both are tz-naive pandas Timestamps for consistent comparison with df["date"].
+    start_date = pd.Timestamp(date(start_date.year, start_date.month, 1))
+    end_date = pd.Timestamp(date(end_date.year, end_date.month, 1))
 
     log_info(f"Ingesting ERA5 data from {start_date} to {end_date}")
 

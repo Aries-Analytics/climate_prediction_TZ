@@ -2,10 +2,14 @@
 Ocean Indices Ingestion - Phase 2
 Fetches ocean climate indices (ENSO, IOD) that influence East African climate.
 Data sources: NOAA Climate Prediction Center
+
+TZ CONTRACT: This module follows the ingestion tz-naive `date` contract.
+See `utils/dates.py` for the full contract. All date parameters are
+coerced to tz-naive `date` objects at entry.
 """
 
 import os
-from datetime import datetime, timezone
+from datetime import date, datetime
 from typing import Optional, Tuple
 
 import pandas as pd
@@ -13,6 +17,7 @@ import requests
 from sqlalchemy.orm import Session
 
 from utils.config import get_data_path
+from utils.dates import as_date
 from utils.logger import log_error, log_info, log_warning
 from utils.validator import validate_dataframe
 
@@ -274,7 +279,7 @@ def fetch_data(*args, **kwargs):
 
 
 def ingest_ocean_indices(
-    db: Session, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None, incremental: bool = True
+    db: Session, start_date: Optional[date] = None, end_date: Optional[date] = None, incremental: bool = True
 ) -> Tuple[int, int]:
     """
     Ingest ocean indices data and store to database (orchestrator-compatible interface).
@@ -306,15 +311,9 @@ def ingest_ocean_indices(
         from backend.app.models.climate_data import ClimateData
     from sqlalchemy import and_
 
-    # Set default date range
-    if start_date is None:
-        start_date = datetime(2010, 1, 1)
-    if end_date is None:
-        end_date = datetime.now(timezone.utc)
-
-    # Ensure dates are pandas-compatible timestamps for comparison
-    start_date = pd.to_datetime(start_date)
-    end_date = pd.to_datetime(end_date)
+    # Normalize inputs to tz-naive dates (see utils/dates.py tz contract).
+    start_date = as_date(start_date, default=date(2010, 1, 1))
+    end_date = as_date(end_date, default=date.today())
 
     log_info(f"Ingesting ocean indices data from {start_date} to {end_date}")
 

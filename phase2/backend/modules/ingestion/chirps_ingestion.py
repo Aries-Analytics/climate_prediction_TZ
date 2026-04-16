@@ -2,16 +2,20 @@
 CHIRPS Ingestion - Phase 2
 Fetches rainfall data from Climate Hazards Group InfraRed Precipitation with Station data.
 Data source: Google Earth Engine (UCSB-CHG/CHIRPS/DAILY)
+
+TZ CONTRACT: This module follows the ingestion tz-naive `date` contract.
+See `utils/dates.py` for the full contract.
 """
 
 import os
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, datetime, timedelta
 from typing import Optional, Tuple
 
 import pandas as pd
 from sqlalchemy.orm import Session
 
 from utils.config import get_data_path
+from utils.dates import as_date, last_complete_month
 from utils.logger import log_error, log_info, log_warning
 from utils.validator import validate_dataframe
 
@@ -375,7 +379,7 @@ def fetch_data(*args, **kwargs):
 
 
 def ingest_chirps(
-    db: Session, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None, incremental: bool = True
+    db: Session, start_date: Optional[date] = None, end_date: Optional[date] = None, incremental: bool = True
 ) -> Tuple[int, int]:
     """
     Ingest CHIRPS data and store to database (orchestrator-compatible interface).
@@ -421,27 +425,19 @@ def ingest_chirps(
         from backend.app.models.climate_data import ClimateData
     from sqlalchemy import and_
 
-    # Set default date range
-    if start_date is None:
-        start_date = datetime(2010, 1, 1)
-    if end_date is None:
-        end_date = datetime.now(timezone.utc)
-
-    # Ensure dates are timezone-naive pandas Timestamps for DataFrame comparison
-    start_date = pd.to_datetime(start_date).tz_localize(None) if pd.to_datetime(start_date).tzinfo else pd.to_datetime(start_date)
-    end_date = pd.to_datetime(end_date).tz_localize(None) if pd.to_datetime(end_date).tzinfo else pd.to_datetime(end_date)
+    # Normalize inputs to tz-naive dates (see utils/dates.py tz contract).
+    start_date = as_date(start_date, default=date(2010, 1, 1))
+    end_date = as_date(end_date, default=date.today())
 
     # Cap end_date to the last complete month — never ingest the current
     # (incomplete) month. CHIRPS aggregates daily→monthly totals via GEE
     # .sum(); a partial month (e.g. 10 days into April) yields a rainfall
     # sum that is 70-90% too low — a real number, not NaN, so it passes
     # validation silently and corrupts the primary ML feature (rainfall_mm).
-    # ERA5 and NASA POWER apply the same guard.
-    _today = date.today()
-    last_complete_month_end = pd.to_datetime(date(_today.year, _today.month, 1) - timedelta(days=1))
-    if end_date > last_complete_month_end:
-        end_date = last_complete_month_end
-        log_info(f"CHIRPS end_date capped to last complete month: {end_date.date()}")
+    cap = last_complete_month()
+    if end_date > cap:
+        end_date = cap
+        log_info(f"CHIRPS end_date capped to last complete month: {end_date}")
 
     log_info(f"Ingesting CHIRPS data from {start_date} to {end_date}")
 
