@@ -19,7 +19,14 @@ interface PortfolioMetrics {
   triggerBreakdown: { drought: number; flood: number; crop_failure: number }
   timeframe: string
   pilotLocation: string
-  shadowRunConfig: { start: string; end: string; brierEvalDate: string }
+  shadowRunConfig: {
+    start: string
+    end: string                // projected (live, adapts to gaps)
+    brierEvalDate: string      // projected
+    target_end?: string        // calendar-math target (zero-gap)
+    valid_run_days?: number
+    gap_days?: number
+  }
 }
 
 interface ForecastRow {
@@ -147,7 +154,11 @@ export default function ExecutiveDashboard() {
             <Chip label="LIVE DATA" color="success" size="small" variant="outlined" />
           </Box>
           <Typography variant="body2" color="text.secondary">
-            Kilombero Basin Rice Pilot · 1,000 Farmers · Shadow Run: {portfolio ? `${portfolio.shadowRunConfig.start} – ${portfolio.shadowRunConfig.end}` : 'Loading...'} · Brier Score evaluation: {portfolio?.shadowRunConfig.brierEvalDate ?? 'Loading...'}
+            Kilombero Basin Rice Pilot · 1,000 Farmers · Shadow Run: {portfolio ? `${portfolio.shadowRunConfig.start} – ${portfolio.shadowRunConfig.end}` : 'Loading...'}
+            {portfolio && (portfolio.shadowRunConfig.gap_days ?? 0) > 0 && (
+              <> (target {portfolio.shadowRunConfig.target_end}, +{portfolio.shadowRunConfig.gap_days}d from downtime)</>
+            )}
+            {' · Brier Score evaluation: '}{portfolio?.shadowRunConfig.brierEvalDate ?? 'Loading...'}
           </Typography>
         </Box>
       </Box>

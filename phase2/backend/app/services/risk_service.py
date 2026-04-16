@@ -3,11 +3,14 @@ from sqlalchemy import func, and_
 from datetime import date, timedelta
 from typing import List, Dict
 from app.models.forecast import Forecast
+from app.models.forecast_log import ForecastLog
 from app.models.location import Location
 from app.config.shadow_run import (
     SHADOW_RUN_START,
     SHADOW_RUN_END,
     SHADOW_RUN_TARGET_DAYS,
+    projected_end_date,
+    projected_brier_eval_date,
 )
 
 # Kilombero Basin Pilot Configuration Constants (Apr 2026 — two-zone split)
@@ -92,14 +95,44 @@ def get_portfolio_metrics(db: Session) -> dict:
             "ifakara_tc": {"location_id": 7, "farmers": 400, "yield_baseline": 2.30},
             "mlimba_dc": {"location_id": 8, "farmers": 600, "yield_baseline": 2.59}
         },
-        "shadowRunConfig": {
-            "start": SHADOW_RUN_START.strftime("%b %d, %Y"),
-            "end": SHADOW_RUN_END.strftime("%b %d, %Y"),
-            "brierEvalDate": f"~{(SHADOW_RUN_END - timedelta(days=3)).strftime('%b %d, %Y')}",
-            "start_iso": SHADOW_RUN_START.isoformat(),
-            "end_iso": SHADOW_RUN_END.isoformat(),
-            "target_days": SHADOW_RUN_TARGET_DAYS,
-        }
+        "shadowRunConfig": _build_shadow_run_config(db),
+    }
+
+
+def _build_shadow_run_config(db: Session) -> dict:
+    """
+    Build the shadowRunConfig block consumed by the Executive Dashboard.
+
+    Dates are live-projected based on current valid_run_days — if the
+    shadow run has missed days (server downtime), the projected end date
+    shifts later automatically. Target dates (calendar math) are included
+    for context so the frontend can show both.
+    """
+    valid_run_days = db.query(
+        func.count(func.distinct(func.date(ForecastLog.issued_at)))
+    ).filter(
+        func.date(ForecastLog.issued_at) >= SHADOW_RUN_START
+    ).scalar() or 0
+
+    proj_end = projected_end_date(valid_run_days)
+    proj_brier = projected_brier_eval_date(valid_run_days)
+    gap_days = max(0, (proj_end - SHADOW_RUN_END).days)
+
+    return {
+        # Live-projected dates (adapt to gaps) — frontend primary display
+        "start": SHADOW_RUN_START.strftime("%b %d, %Y"),
+        "end": proj_end.strftime("%b %d, %Y"),
+        "brierEvalDate": f"~{proj_brier.strftime('%b %d, %Y')}",
+        "start_iso": SHADOW_RUN_START.isoformat(),
+        "end_iso": proj_end.isoformat(),
+        "brier_eval_iso": proj_brier.isoformat(),
+        # Target dates (zero-gap calendar math) — frontend context/footnote
+        "target_end": SHADOW_RUN_END.strftime("%b %d, %Y"),
+        "target_end_iso": SHADOW_RUN_END.isoformat(),
+        # Progress state
+        "target_days": SHADOW_RUN_TARGET_DAYS,
+        "valid_run_days": valid_run_days,
+        "gap_days": gap_days,
     }
 
 

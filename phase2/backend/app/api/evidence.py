@@ -15,6 +15,8 @@ from app.config.shadow_run import (
     SHADOW_RUN_END,
     SHADOW_RUN_TARGET_DAYS,
     SHADOW_RUN_TARGET_FORECASTS,
+    projected_end_date,
+    projected_brier_eval_date,
 )
 
 router = APIRouter(prefix="/v1/evidence-pack", tags=["Evidence Pack"])
@@ -120,6 +122,8 @@ def get_execution_log(db: Session = Depends(get_db)):
         horizons = 4           # 3, 4, 5, 6 months
         forecasts_per_day = triggers_per_zone * horizons * num_zones
 
+        proj_end = projected_end_date(valid_run_days)
+        proj_brier = projected_brier_eval_date(valid_run_days)
         return {
             "shadow_run": {
                 "total_forecast_logs": total_logs,
@@ -128,7 +132,10 @@ def get_execution_log(db: Session = Depends(get_db)):
                 "valid_run_days": valid_run_days,
                 "target_days": SHADOW_RUN_TARGET_DAYS,
                 "start_date": SHADOW_RUN_START.isoformat(),
-                "end_date": SHADOW_RUN_END.isoformat(),
+                "end_date": SHADOW_RUN_END.isoformat(),          # TARGET (zero-gap)
+                "projected_end_date": proj_end.isoformat(),       # LIVE (adapts to gaps)
+                "projected_brier_eval_date": proj_brier.isoformat(),
+                "gap_days": max(0, (proj_end - SHADOW_RUN_END).days),
                 "zones": zone_list,
                 "forecasts_per_day": forecasts_per_day,
             },

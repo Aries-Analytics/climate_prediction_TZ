@@ -110,7 +110,10 @@ interface ShadowRunProgress {
     valid_run_days: number;
     target_days: number;
     start_date: string;
-    end_date: string;
+    end_date: string;                     // TARGET (zero-gap calendar math)
+    projected_end_date?: string;          // LIVE (adapts to gaps)
+    projected_brier_eval_date?: string;
+    gap_days?: number;
     zones: ZoneInfo[];
     forecasts_per_day: number;
 }
@@ -531,7 +534,13 @@ export default function EvidencePackDashboard() {
                             </Box>
                             <LinearProgress variant="determinate" value={sr?.pct_complete ?? 0} sx={{ height: 12, borderRadius: 6 }} />
                             <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5, display: 'block' }}>
-                                {sr?.start_date ?? '--'} → {sr?.end_date ?? '--'} · {sr?.forecasts_per_day ?? '--'} forecasts/day
+                                {sr?.start_date ?? '--'} → {sr?.projected_end_date ?? sr?.end_date ?? '--'}
+                                {sr && (sr.gap_days ?? 0) > 0 && (
+                                    <span style={{ color: '#d32f2f', fontWeight: 500 }}>
+                                        {' '}(target {sr.end_date}, +{sr.gap_days}d from downtime)
+                                    </span>
+                                )}
+                                {' · '}{sr?.forecasts_per_day ?? '--'} forecasts/day
                             </Typography>
                             {zoneList.length > 0 && (
                                 <Box sx={{ mt: 1, p: 1.5, bgcolor: '#e3f2fd', borderRadius: 1, border: '1px solid #90caf9' }}>
