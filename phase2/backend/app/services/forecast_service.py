@@ -359,25 +359,27 @@ def generate_forecasts_all_locations(
     start_date: Optional[date] = None,
     horizons: List[int] = [3, 4, 5, 6]
 ) -> List[ForecastResponse]:
-    """Generate forecasts for all locations"""
+    """Generate forecasts for pilot locations only (shadow run v2: Ifakara TC + Mlimba DC)"""
     if start_date is None:
         start_date = date.today()
-    
+
     generator = ForecastGenerator()
     generator.load_model()
-    
-    # Generate for all locations that have climate data
-    # Shadow run v2: forecasts for Ifakara TC (7) + Mlimba DC (8)
-    locations = db.query(Location).all()
-    
+
+    # Shadow run v2: forecasts for Ifakara TC (7) + Mlimba DC (8) only.
+    # Training cities (Arusha, DSM, Dodoma, Mbeya, Mwanza, Morogoro) are kept
+    # in the locations table for historical data, but do NOT generate forecasts.
+    from app.services.risk_service import PILOT_LOCATION_IDS
+    locations = db.query(Location).filter(Location.id.in_(PILOT_LOCATION_IDS)).all()
+
     if not locations:
-        print(f"ERROR: No locations found in database!")
+        print(f"ERROR: No pilot locations found in database! Expected IDs: {PILOT_LOCATION_IDS}")
         return []
-    
+
     trigger_types = ["drought", "flood", "crop_failure"]
     forecasts = []
-    
-    print(f"Generating forecasts for {len(locations)} locations: {[l.name for l in locations]}")
+
+    print(f"Generating forecasts for {len(locations)} pilot zones: {[l.name for l in locations]}")
     
     for location in locations:
         for trigger_type in trigger_types:
