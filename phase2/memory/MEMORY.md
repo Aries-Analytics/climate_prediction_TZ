@@ -42,6 +42,8 @@
 - **ML normalization constants (production):** Training distribution mean = 79.15mm, std = 77.06mm. Inverse transform: `predicted_mm = (z_score × 77.06) + 79.15`. XGBoost RMSE = 33.1mm (used as σ in CDF probability conversion).
 - **ERA5 client:** `ecmwf-datastores-client` (v0.4.2) — migrated from deprecated `cdsapi` which had connection/DNS failures. New client uses `ECMWF_DATASTORES_URL`/`ECMWF_DATASTORES_KEY` env vars.
 - **No synthetic data fallbacks** (GOTCHA Law #1): if critical data sources fail, forecasts are skipped — never filled with zeros
+- **Ingestion tz contract (Apr 16, 2026 — PERMANENT):** All 5 ingestion modules follow a strict tz-naive `date` contract documented in `backend/utils/dates.py`. Date parameters are tz-naive `datetime.date`, defaults are `date.today()` / `date(2010, 1, 1)` (NEVER `datetime.now(timezone.utc)`), internal math uses pure date arithmetic, pandas bounds convert to `pd.Timestamp` only at the DataFrame filtering boundary. Helpers: `as_date()`, `last_complete_month()`, `subtract_months()`. This contract eliminated the class of tz bugs that produced 4 separate patches (Apr 6, 7, 9, 16). Any future ingestion module MUST follow this contract — see module docstring of `utils/dates.py`.
+- **Post-reset backfill runbook (Apr 16):** When a DB wipe changes pilot zone coordinates, a manual backfill MUST be run before the first scheduled pipeline run — otherwise the first day produces partial forecasts (e.g. 12 instead of 24) because new locations have zero historical climate_data. Runbook in `memory/logs/2026-04-16.md`. Auto-backfill was explicitly rejected as wrong design (pipeline should do one thing: incremental ingestion).
 
 ## Documentation Tone (Expert Feedback — March 2026)
 
@@ -366,6 +368,15 @@ The HewaSense payout design is **zone-level, binary trigger** (Option A). Two st
 
 ---
 
+### 2026-04-16
+- **Day 1 of Shadow Run v2** — 06:00 EAT run produced only 12 forecasts (new pilot zones had zero historical climate_data)
+- Manual backfill done, revealed 2 latent tz bugs in NASA POWER + Ocean Indices (`end_date=None` defaulted to `datetime.now(timezone.utc)`)
+- **Permanent tz fix** (not patch): new `backend/utils/dates.py` establishes tz-naive `date` contract for all 5 ingestion modules. Eliminates the class of bug that produced 4 separate patches (Apr 6, 7, 9, 16). Verified on server: Ocean Indices + NASA POWER both work with default `end_date=None`
+- Runbook documented for post-reset backfill (manual step before first scheduled run)
+- Commits: `aeebfc9` (contract), `99db863` (pd.Timestamp boundary fix)
+
+---
+
 ### 2026-04-15
 - **Bugs fixed (5):**
   - Slack "Shadow Run: N/A" — `alert_service` queried nonexistent `created_at` column
@@ -378,6 +389,6 @@ The HewaSense payout design is **zone-level, binary trigger** (Option A). Two st
 - **Doc sweep:** 13 docs updated for two-zone split + correct dates
 - **Linear:** MIT-26 issue + HewaSense project description updated
 
-*Last updated: 2026-04-15*
+*Last updated: 2026-04-16*
 *This file is the source of truth for persistent facts. Edit directly to update.*
 *Pipeline run history (daily status, forecasts, duration, sources) is in the Evidence Pack dashboard — /v1/evidence-pack/execution-log.*
