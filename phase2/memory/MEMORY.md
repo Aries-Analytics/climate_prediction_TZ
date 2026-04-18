@@ -29,7 +29,9 @@
 - Law #8 (AUTONOMOUS DOCUMENTATION) mandates doc updates after any model/config change
 - **Production model file:** Determined by `outputs/models/active_model.json` (currently `xgboost_climate.pkl`, R²=0.8666, 83 features). NEVER hardcode model names
 - Model selection driven entirely by `active_model.json` — if missing or invalid, fail explicitly (GOTCHA Law #1)
-- **Pipeline schedule (shadow-run ACTIVE):** `0 6 * * *` Africa/Dar_es_Salaam (6 AM EAT daily). Deployed to `root@37.27.200.227`, `docker-compose.dev.yml`. Scheduler confirmed next run `2026-03-09 06:00:00+03:00`.
+- **Pipeline schedule (shadow-run ACTIVE):** `0 6 * * *` Africa/Dar_es_Salaam (6 AM EAT daily). Deployed to `root@37.27.200.227`, `docker-compose.dev.yml`.
+- **Git branching (Apr 18, 2026):** Single branch: `main`. `phase2/feature-expansion` merged into main (373 commits) and deleted. Server at `/opt/hewasense/app` now tracks `main`. All 3 deploy profiles (`dev.env`, `shadow-run.env`, `live-pilot.env`) point to `BRANCH="main"`. Feature branches off main, merge back via PR. No long-lived development branches.
+- **Repo root cleanup (Apr 18, 2026):** Legacy capstone files removed (EDA/, app/, models/, data/csv, root requirements.txt, root .gitignore). Root now contains only `README.md`, `.github/`, and `phase2/`. All history preserved in git.
 - **Pipeline status (April 2026):** Shadow run v2 RESTARTED Apr 16 – Jul 14, 2026 (two-zone split: Ifakara TC + Mlimba DC). 24 forecasts/run (3 triggers × 4 horizons × 2 zones). Target: 2,160 forecasts over 90 run-days. Brier Score auto-evaluation starts ~Jul 11. v2 (Apr 14-15) invalidated — stale ingestion modules stored climate data at Morogoro coordinates instead of pilot zones, producing only 12 forecasts/day from wrong location. DB wiped, config restarted. **Live counts (forecasts accumulated, run-days, streak) are in the Evidence Pack dashboard — do NOT read from memory.**
 - **Zone-split evaluation layer (Apr 14, 2026):** All metrics, basis risk, GO/NO-GO gates, and evidence pack are now per-zone (Ifakara TC + Mlimba DC) + aggregate. API endpoints `/metrics` and `/basis-risk` accept `?location_id=7` or `?location_id=8` for zone-specific views. Final report has per-zone gate verdicts nested under overall. Evidence pack `metrics.json` includes `zones` dict; `logs_export.csv` has `zone_name` column. PILOT_ZONE_IDS = [7, 8] defined in `evaluation_service.py`, imported by `basis_risk_service.py`. Execution-log endpoint returns structured zone objects from DB (not hardcoded strings).
 - **Frontend zone-aware dashboard (Apr 14, 2026):** EvidencePackDashboard fully rewritten with zone tabs, basis risk display, GO/NO-GO gate rendering, and per-zone metrics. All zone names/coordinates/counts are data-driven from API responses. ForecastDashboard `kilomberoLocations` hardcoded array replaced with dynamic fetch from `/api/locations`, filtered to locations that appear in actual forecast data.
@@ -197,7 +199,7 @@
 
 ## SSH & Deployment
 
-- **Server:** `root@37.27.200.227`, domain `hewasense.majaribio.com`, deploy dir `/opt/hewasense/app/phase2`
+- **Server:** `root@37.27.200.227`, domain `hewasense.majaribio.com`, deploy dir `/opt/hewasense/app/phase2`, branch `main` (switched from `phase2/feature-expansion` on Apr 18)
 - **Compose file:** `docker-compose.dev.yml` (shadow-run profile). Compose is **v2 plugin** (`docker compose`, NOT `docker-compose`).
 - **SSH automation key:** `~/.ssh/id_hewasense_auto` (passphraseless). Config: `Host hewasense` → `IdentityFile ~/.ssh/id_hewasense_auto`.
 - **What does NOT work on Windows:** bashrc SSH agent, Windows OpenSSH named pipe (`//./pipe/openssh-ssh-agent`), ControlMaster (Unix sockets unsupported in Git Bash).
@@ -401,6 +403,16 @@ The HewaSense payout design is **zone-level, binary trigger** (Option A). Two st
 - **Doc sweep:** 13 docs updated for two-zone split + correct dates
 - **Linear:** MIT-26 issue + HewaSense project description updated
 
-*Last updated: 2026-04-16 (late-afternoon: harness cleanup, Path B CI lint enforcement, 521 → 0 violations)*
+---
+
+### 2026-04-18
+- Merged `phase2/feature-expansion` → `main` (373 commits); deleted branch
+- Updated deploy profiles + switched server to track `main`
+- Root README rewritten as HewaSense landing page
+- Removed legacy capstone files (EDA/, app/, models/, old requirements.txt) — 62K lines, zero references
+
+---
+
+*Last updated: 2026-04-18 (branch consolidation, repo cleanup, deploy profiles updated)*
 *This file is the source of truth for persistent facts. Edit directly to update.*
 *Pipeline run history (daily status, forecasts, duration, sources) is in the Evidence Pack dashboard — /v1/evidence-pack/execution-log.*
