@@ -1,66 +1,100 @@
-﻿# Tanzania Climate Prediction
+# HewaSense
 
-A comprehensive end-to-end machine learning system for climate prediction in Tanzania.
+Climate intelligence for parametric crop insurance in Tanzania.
 
-## 📂 Project Structure
+HewaSense is an end-to-end ML system that generates probabilistic climate forecasts to power index-based insurance for smallholder farmers. It ingests data from 5 climate sources, runs daily forecasts through a phase-aware trigger model, and serves results via a React dashboard and REST API.
 
-This repository contains the Tanzania Climate Prediction project:
+**Live dashboard**: [hewasense.majaribio.com](https://hewasense.majaribio.com)
 
-- **[Phase 2](phase2/)** - Complete ML system with data pipeline, feature engineering, and model training ✅ **ACTIVE**
+## Current Status
 
-## 🚀 Quick Start
+**Shadow Run v2** (Apr 16 -- Jul 14, 2026) -- 90-day forward validation generating 24 forecasts/day across two Kilombero Basin zones (Ifakara TC + Mlimba DC). Accumulating Brier Scores for reinsurer evidence pack.
 
-```bash
-# Navigate to phase2
-cd phase2
+- **Pilot**: 1,000 rice farmers, Kilombero Basin, Morogoro, Tanzania
+- **Production model**: XGBoost, R² = 0.8666 (83 features, post-leakage fix)
+- **Basis risk**: 20% (Phase-Based Dynamic Model)
+- **Premium**: $20/farmer/year, Loss ratio: 22.6% (retrospective)
+- **Payout SLA**: 5--7 business days from trigger confirmation
 
-# Run data pipeline
-python run_pipeline.py
-
-# Train models
-python model_development_pipeline.py
-```
-
-## 📖 Full Documentation
-
-**See [Phase 2 README](phase2/README.md) for complete documentation**
-
-### Key Features
-
-✅ **Data Pipeline** - 5 sources integrated (NASA POWER, ERA5, CHIRPS, NDVI, Ocean Indices)  
-✅ **ML Models** - Random Forest, XGBoost, LSTM, Ensemble  
-✅ **Performance** - R² > 0.85 target with uncertainty quantification  
-✅ **Production Ready** - 45+ tests, experiment tracking, clean architecture  
-
-### Documentation Links
-
-- **[Phase 2 README](phase2/README.md)** - Complete documentation
-- **[Model Development Guide](phase2/docs/MODEL_DEVELOPMENT_GUIDE.md)** - ML pipeline usage
-- **[Pipeline Overview](phase2/docs/pipeline_overview.md)** - Architecture details
-- **[Implementation Status](phase2/docs/IMPLEMENTATION_STATUS.md)** - Project progress
-
-### Architecture
+## Architecture
 
 ```
 phase2/
- modules/           # Data ingestion & domain processing
- preprocessing/     # ML feature engineering
- pipelines/         # Pipeline orchestration (3 pipelines)
- models/            # Model implementations (4 models)
- evaluation/        # Evaluation utilities
- tests/             # 45+ comprehensive tests
- docs/              # Documentation
+  backend/          FastAPI app + pipeline scheduler + services
+  frontend/         React 18 + TypeScript + Material-UI (7 dashboard views)
+  configs/          Trigger thresholds, pipeline config
+  models/           ML model implementations (XGBoost, RF, LSTM, Ensemble)
+  data/             Climate data + ground truth
+  docs/             Full documentation
+  tests/            180+ tests
+  scripts/          Deployment, training, evaluation
 ```
 
-### Models
+**Data sources**: NASA POWER, ERA5, CHIRPS, NDVI, NOAA Ocean Indices
 
-| Model | Description |
-|-------|-------------|
-| Random Forest | 200 trees, feature importance |
-| XGBoost | Gradient boosting, early stopping |
-| LSTM | 2-layer neural network, time series |
-| Ensemble | Weighted average of all models |
+**Pipeline**: Runs daily at 6 AM EAT via Docker on a Hetzner server. Ingests latest climate data, generates forecasts for 3 trigger types (drought, flood, crop failure) across 4 horizons and 2 zones, logs results to PostgreSQL, and sends Slack alerts.
 
----
+## Quick Start
 
-**For complete documentation, installation, usage, and troubleshooting, see [Phase 2 README](phase2/README.md)**
+```bash
+# Clone and start the full stack
+git clone https://github.com/Aries-Analytics/climate_prediction_TZ.git
+cd climate_prediction_TZ/phase2
+
+# Configure environment
+cp .env.template .env
+# Edit .env with your API keys (ERA5, NASA POWER, Slack webhook)
+
+# Start all services (backend, frontend, scheduler, DB)
+docker compose -f docker-compose.dev.yml up -d
+
+# Dashboard at http://localhost:3000
+# API docs at http://localhost:8000/docs
+```
+
+## ML Training
+
+```bash
+cd phase2
+
+# Full training pipeline (feature selection + training + evaluation)
+python scripts/train_pipeline.py
+
+# Quick prototype
+python pipelines/quick_model_pipeline.py
+
+# Run tests
+pytest -v
+```
+
+## Deployment
+
+```bash
+# Deploy to server (auto-detects init vs update)
+./phase2/scripts/deploy.sh shadow-run
+```
+
+See [phase2/docs/guides/AUTOMATED_PIPELINE_DEPLOYMENT.md](phase2/docs/guides/AUTOMATED_PIPELINE_DEPLOYMENT.md) for full deployment docs.
+
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [Executive Summary](phase2/docs/current/EXECUTIVE_SUMMARY.md) | Latest status, metrics, next steps |
+| [ML Model Reference](phase2/docs/references/ML_MODEL_REFERENCE.md) | Inference chain, training, CDF conversion |
+| [Parametric Insurance](phase2/docs/references/PARAMETRIC_INSURANCE_FINAL.md) | Trigger model, financials, actuarial analysis |
+| [Kilombero Pilot Spec](phase2/docs/pilots/kilombero/KILOMBERO_BASIN_PILOT_SPECIFICATION.md) | Pilot design and operations |
+| [Getting Started](phase2/docs/guides/GETTING_STARTED.md) | 5-minute local setup with Docker |
+| [Monitoring Guide](phase2/docs/guides/MONITORING_GUIDE.md) | Health checks and alerting |
+| [Full docs index](phase2/docs/README.md) | Complete documentation directory |
+
+## Key Technical Details
+
+- **Probabilistic triggers**: Uses `norm.cdf()` with physical Kilombero thresholds -- more defensible than static percentile triggers used in traditional weather index insurance
+- **Phase-Based Dynamic Model**: 4-phase GDD tracker catches 100% of confirmed crop disasters (2017/18 and 2021/22) with zero false negatives
+- **Zone-aware evaluation**: All metrics, basis risk, and GO/NO-GO gates are computed per-zone (Ifakara TC + Mlimba DC) and aggregate
+- **Spatial validation**: CHIRPS 5km grid correlates at r=0.888 against local gauges
+
+## License
+
+This project is part of the HewaSense climate intelligence initiative by [Aries Analytics](https://github.com/Aries-Analytics).
