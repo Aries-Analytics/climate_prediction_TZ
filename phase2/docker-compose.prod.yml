@@ -35,8 +35,6 @@ services:
     ports:
       - "8000:8000"
     restart: unless-stopped
-    deploy:
-      replicas: 2
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8000/health" ]
       interval: 30s
@@ -80,6 +78,8 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: climate_frontend_prod
+    ports:
+      - "3000:80"
     depends_on:
       - backend
     restart: unless-stopped
