@@ -26,8 +26,8 @@ const PayoutActionCard: React.FC<PayoutActionCardProps> = ({
             fetch('/api/v1/evidence-pack/execution-log')
                 .then(r => r.json())
                 .then(data => {
-                    if (data.shadow_run?.end_date) {
-                        const d = new Date(data.shadow_run.end_date);
+                    if (data.shadow_run?.projected_end_date || data.shadow_run?.end_date) {
+                        const d = new Date(data.shadow_run.projected_end_date ?? data.shadow_run.end_date);
                         setShadowRunEnd(d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }));
                     }
                 })
