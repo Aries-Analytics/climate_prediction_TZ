@@ -7,7 +7,14 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      // Polyfill Node built-ins required by Plotly's ndarray/typedarray-pool
+      'buffer/': 'buffer/',
+      buffer: 'buffer/',
     },
+  },
+  define: {
+    // Ensure global Buffer is available for dependencies that expect it
+    'globalThis.Buffer': ['buffer', 'Buffer'],
   },
   server: {
     port: 3000,
