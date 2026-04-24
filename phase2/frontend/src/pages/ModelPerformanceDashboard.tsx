@@ -57,8 +57,21 @@ export default function ModelPerformanceDashboard() {
   const [driftAlert, setDriftAlert] = useState<string | null>(null)
 
   useEffect(() => {
-    fetchModels()
-    fetchValidationMetrics()
+    // Fetch models and validation metrics in parallel
+    const loadDashboard = async () => {
+      setIsLoading(true)
+      try {
+        await Promise.all([
+          fetchModels(),
+          fetchValidationMetrics(),
+        ])
+      } catch (err: any) {
+        setError(err.message || 'Failed to load model data')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    loadDashboard()
   }, [])
 
   // Models that support feature importance (tree-based models)
@@ -77,7 +90,6 @@ export default function ModelPerformanceDashboard() {
 
   const fetchModels = async () => {
     try {
-      setIsLoading(true)
       const token = localStorage.getItem('token')
       const response = await axios.get(`${API_BASE_URL}/models`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -96,8 +108,6 @@ export default function ModelPerformanceDashboard() {
       setError(null)
     } catch (err) {
       setError('Failed to load model metrics')
-    } finally {
-      setIsLoading(false)
     }
   }
 

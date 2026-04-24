@@ -77,13 +77,25 @@ export default function RiskManagementDashboard() {
   }
 
   useEffect(() => {
-    fetchPortfolioData()
-    fetchRecommendations()
+    // Fetch portfolio data and recommendations in parallel
+    const loadDashboard = async () => {
+      setIsLoading(true)
+      try {
+        await Promise.all([
+          fetchPortfolioData(),
+          fetchRecommendations(),
+        ])
+      } catch (err: any) {
+        setError(err.message || 'Failed to load risk data')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    loadDashboard()
   }, [])
 
   const fetchPortfolioData = async () => {
     try {
-      setIsLoading(true)
       const token = localStorage.getItem('token')
       const response = await axios.get(`${API_BASE_URL}/risk/portfolio`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -92,8 +104,6 @@ export default function RiskManagementDashboard() {
       setError(null)
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Failed to fetch portfolio data')
-    } finally {
-      setIsLoading(false)
     }
   }
 

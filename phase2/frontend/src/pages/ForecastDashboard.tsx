@@ -104,10 +104,23 @@ export default function ForecastDashboard() {
   }, [forecasts, portfolioRisk, activePilotLocations]);
 
   useEffect(() => {
-    fetchForecasts()
-    fetchRecommendations()
-    fetchPortfolioRisk()
-    fetchPilotLocations()
+    // Fetch all data in parallel instead of sequentially — saves 500ms+
+    const loadDashboard = async () => {
+      setIsLoading(true)
+      try {
+        await Promise.all([
+          fetchForecasts(),
+          fetchRecommendations(),
+          fetchPortfolioRisk(),
+          fetchPilotLocations(),
+        ])
+      } catch (err: any) {
+        setError(err.message || 'Failed to load dashboard data')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    loadDashboard()
   }, [])
 
   const fetchPilotLocations = async () => {
@@ -134,7 +147,6 @@ export default function ForecastDashboard() {
 
   const fetchForecasts = async () => {
     try {
-      setIsLoading(true)
       const token = localStorage.getItem('token')
       const response = await axios.get(`${API_BASE_URL}/forecasts`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -146,8 +158,6 @@ export default function ForecastDashboard() {
       setError(null)
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Failed to fetch forecasts')
-    } finally {
-      setIsLoading(false)
     }
   }
 

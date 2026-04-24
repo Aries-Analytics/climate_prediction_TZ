@@ -9,9 +9,9 @@ declare module 'axios' {
   }
 }
 
-// Simple in-memory GET cache (2-minute TTL) — prevents duplicate requests across dashboard navigation
+// Simple in-memory GET cache (5-minute TTL) — prevents duplicate requests across dashboard navigation
 const _responseCache = new Map<string, { data: unknown; ts: number }>()
-const _CACHE_TTL_MS = 2 * 60 * 1000
+const _CACHE_TTL_MS = 5 * 60 * 1000
 const _NO_CACHE = ['/auth/', '/admin/']
 
 function _cacheKey(config: { method?: string; url?: string; params?: unknown }): string | null {
