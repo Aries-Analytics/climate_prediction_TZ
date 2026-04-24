@@ -29,10 +29,10 @@
 - Law #8 (AUTONOMOUS DOCUMENTATION) mandates doc updates after any model/config change
 - **Production model file:** Determined by `outputs/models/active_model.json` (currently `xgboost_climate.pkl`, R²=0.8666, 83 features). NEVER hardcode model names
 - Model selection driven entirely by `active_model.json` — if missing or invalid, fail explicitly (GOTCHA Law #1)
-- **Pipeline schedule (shadow-run ACTIVE):** `0 6 * * *` Africa/Dar_es_Salaam (6 AM EAT daily). Deployed to `root@37.27.200.227`, `docker-compose.dev.yml`.
+- **Pipeline schedule (shadow-run ACTIVE):** `0 6 * * *` Africa/Dar_es_Salaam (6 AM EAT daily). Deployed to `root@37.27.200.227`. **Post Apr 24 incident: running via `docker-compose.prod.yml` (not dev). Automated daily DB backup at 5AM EAT to `/opt/hewasense/backups/` (30-day retention). See `DATA_PROTECTION_POLICY.md`.**
 - **Git branching (Apr 18, 2026):** Single branch: `main`. `phase2/feature-expansion` merged into main (373 commits) and deleted. Server at `/opt/hewasense/app` now tracks `main`. All 3 deploy profiles (`dev.env`, `shadow-run.env`, `live-pilot.env`) point to `BRANCH="main"`. Feature branches off main, merge back via PR. No long-lived development branches.
 - **Repo root cleanup (Apr 18, 2026):** Legacy capstone files removed (EDA/, app/, models/, data/csv, root requirements.txt, root .gitignore). Root now contains only `README.md`, `.github/`, and `phase2/`. All history preserved in git.
-- **Pipeline status (April 2026):** Shadow run v2 RESTARTED Apr 16 – Jul 14, 2026 (two-zone split: Ifakara TC + Mlimba DC). 24 forecasts/run (3 triggers × 4 horizons × 2 zones). Target: 2,160 forecasts over 90 run-days. Brier Score auto-evaluation starts ~Jul 11. v2 (Apr 14-15) invalidated — stale ingestion modules stored climate data at Morogoro coordinates instead of pilot zones, producing only 12 forecasts/day from wrong location. DB wiped, config restarted. **Live counts (forecasts accumulated, run-days, streak) are in the Evidence Pack dashboard — do NOT read from memory.**
+- **Pipeline status (April 2026):** Shadow run v2 RESTARTED Apr 16 – Jul 14, 2026 (two-zone split: Ifakara TC + Mlimba DC). 24 forecasts/run (3 triggers × 4 horizons × 2 zones). Target: 2,160 forecasts over 90 run-days. Brier Score auto-evaluation starts ~Jul 11. v2 (Apr 14-15) invalidated — stale ingestion modules stored climate data at Morogoro coordinates instead of pilot zones, producing only 12 forecasts/day from wrong location. DB wiped, config restarted. **INCIDENT (Apr 24): 9 days of shadow run data (Days 1-9) destroyed by `docker compose down --remove-orphans` during a frontend deployment. Shadow run reset to Day 0. Projected completion extended by ~9 days. Gap handling is automatic (code counts actual DB records). Next Day 1 = Apr 25 6AM EAT.** **Live counts (forecasts accumulated, run-days, streak) are in the Evidence Pack dashboard — do NOT read from memory.**
 - **Zone-split evaluation layer (Apr 14, 2026):** All metrics, basis risk, GO/NO-GO gates, and evidence pack are now per-zone (Ifakara TC + Mlimba DC) + aggregate. API endpoints `/metrics` and `/basis-risk` accept `?location_id=7` or `?location_id=8` for zone-specific views. Final report has per-zone gate verdicts nested under overall. Evidence pack `metrics.json` includes `zones` dict; `logs_export.csv` has `zone_name` column. PILOT_ZONE_IDS = [7, 8] defined in `evaluation_service.py`, imported by `basis_risk_service.py`. Execution-log endpoint returns structured zone objects from DB (not hardcoded strings).
 - **Frontend zone-aware dashboard (Apr 14, 2026):** EvidencePackDashboard fully rewritten with zone tabs, basis risk display, GO/NO-GO gate rendering, and per-zone metrics. All zone names/coordinates/counts are data-driven from API responses. ForecastDashboard `kilomberoLocations` hardcoded array replaced with dynamic fetch from `/api/locations`, filtered to locations that appear in actual forecast data.
 - **Shadow run config — single source of truth (Apr 14, 2026; updated Apr 16):** All shadow run parameters (start date, target days, target forecasts, end date) live in `app/config/shadow_run.py`. Imported by orchestrator, auto_log_service, alert_service, evidence_generator, evidence.py, admin.py, risk_service.py. To restart a shadow run with new dates, change ONLY that file. All forecast_log queries filter by `>= SHADOW_RUN_START` to prevent stale data from inflating counts. Post-shadow-run evaluation (Stage 4 → Stage 5 → generate_final_report) is fully zone-aware and automatic. **Frontend dates are fully data-driven (Apr 15 fix):** `risk_service.py` `shadowRunConfig` computes dates from config; `ExecutiveDashboard` and `PayoutActionCard` read from API — zero hardcoded date strings remain.
@@ -200,7 +200,7 @@
 ## SSH & Deployment
 
 - **Server:** `root@37.27.200.227`, domain `hewasense.majaribio.com`, deploy dir `/opt/hewasense/app/phase2`, branch `main` (switched from `phase2/feature-expansion` on Apr 18)
-- **Compose file:** `docker-compose.dev.yml` (shadow-run profile). Compose is **v2 plugin** (`docker compose`, NOT `docker-compose`).
+- **Compose file:** `docker-compose.prod.yml` (switched from dev on Apr 24 after incident). Compose is **v2 plugin** (`docker compose`, NOT `docker-compose`). **Caddy** handles reverse proxy on port 80 (NOT the nginx service in docker-compose). Frontend exposed on port 3000, backend on port 8000.
 - **SSH automation key:** `~/.ssh/id_hewasense_auto` (passphraseless). Config: `Host hewasense` → `IdentityFile ~/.ssh/id_hewasense_auto`.
 - **What does NOT work on Windows:** bashrc SSH agent, Windows OpenSSH named pipe (`//./pipe/openssh-ssh-agent`), ControlMaster (Unix sockets unsupported in Git Bash).
 - **Server startup script (created Mar 19):** `/opt/hewasense/start.sh` — pulls latest from git, runs `docker compose -f docker-compose.dev.yml up -d`. Must always reference `docker-compose.dev.yml` (NOT prod compose). Hardcoded to dev profile.
@@ -304,7 +304,7 @@ The HewaSense payout design is **zone-level, binary trigger** (Option A). Two st
 - **Two config trap: CLI vs VS Code extension MCP.** Project-scoped MCP servers in `.claude.json` must match the EXACT working directory path the extension uses — parent dir ≠ subdirectory. Added 2026-03-10.
 - **Pipeline Completion Timestamp Trap:** `ForecastLog.issued_at` is the write time at pipeline *completion*, not the scheduled start time. A 41-minute run starting at 03:00 UTC writes entries at 03:41 UTC — correct behavior. Never assess legitimacy from `issued_at` alone; cross-check `pipeline_executions.started_at`. Added 2026-03-19.
 - **Alembic stamp required on first migration to production DB:** Production DB was created via `init_db.py` (no `alembic_version` table). Running `alembic upgrade head` fails with `DuplicateTable`. Fix: `alembic stamp <last_revision>` to register current state, then `alembic upgrade head` to apply only new migrations. Added 2026-03-30.
-- **Prod-vs-Dev Compose Drift Trap:** Active stack is always `docker-compose.dev.yml`. If prod containers appear (`climate_db_prod`, `climate_frontend_prod`, `phase2-backend-N`), that is wrong — stop them and restore dev compose. Startup script `/opt/hewasense/start.sh` must always reference dev compose. Added 2026-03-19.
+- **Compose file — current state (Apr 24):** Server now runs `docker-compose.prod.yml` (switched after Apr 24 incident). Container names: `climate_db_prod`, `climate_frontend_prod`, `phase2-backend-1`, `climate_pipeline_scheduler_prod`. Startup script `/opt/hewasense/start.sh` may need updating to reference prod compose. Caddy (system-level, port 80) handles reverse proxy — the nginx service in docker-compose.prod.yml cannot bind port 80.
 - **Destructive Action Gate (ALL sensitive work):** Never execute a destructive or irreversible action on user instruction alone. Required: (1) verify independently, (2) show evidence, (3) push back explicitly if data is correct. Applies to shadow run DB, server, git, model artifacts, configs. Reference case: March 19 forecast deletion — 12 valid entries deleted without verifying `issued_at` vs start time. Added 2026-03-19.
 
 - **Scheduler 30-minute drift (Mar 15):** Scheduler was firing 30 minutes late vs scheduled time. Root cause: `misfire_grace_time` interaction with timezone offset. Fixed by explicit `timezone=self.timezone` in `CronTrigger.from_crontab()` (same root as earlier UTC/EAT fix, different symptom). Health check: `next_run_time` in scheduler status must show `:00` not `:30`.
@@ -413,6 +413,18 @@ The HewaSense payout design is **zone-level, binary trigger** (Option A). Two st
 
 ---
 
-*Last updated: 2026-04-18 (branch consolidation, repo cleanup, deploy profiles updated)*
+### 2026-04-24
+- **INCIDENT: Database destroyed during frontend deployment** — `docker compose down --remove-orphans` removed dev DB container + volume; 9 days of shadow run data lost (Days 1-9)
+- Shadow run reset to Day 0; projected completion extended ~9 days (automatic gap handling)
+- Restored from files: climate_data (1,872 rows from CSV), model_metrics (4 models from JSON), locations (8), users (3)
+- Performance fixes deployed: Promise.all() on 3 dashboards, nginx gzip/caching, buffer polyfill, Dockerfile memory fix
+- Pipeline schedule fixed: defaults standardised to `0 6 * * *` Africa/Dar_es_Salaam
+- Automated daily DB backup implemented (5AM EAT cron, pg_dump, 30-day retention)
+- `DATA_PROTECTION_POLICY.md` created; GOTCHA guardrail "Database Destruction Prevention" added
+- Server now runs `docker-compose.prod.yml`; Caddy reverse proxy (port 80) -> frontend (port 3000)
+
+---
+
+*Last updated: 2026-04-24 (DB incident, data protection policy, performance fixes, schedule fix)*
 *This file is the source of truth for persistent facts. Edit directly to update.*
 *Pipeline run history (daily status, forecasts, duration, sources) is in the Evidence Pack dashboard — /v1/evidence-pack/execution-log.*
