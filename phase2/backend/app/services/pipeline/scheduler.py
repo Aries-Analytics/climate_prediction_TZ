@@ -56,7 +56,7 @@ def execute_pipeline_standalone(alert_service_config: Optional[dict] = None) -> 
             try:
                 import os
                 import pytz
-                schedule = os.environ.get('PIPELINE_SCHEDULE', '0 3 * * *')
+                schedule = os.environ.get('PIPELINE_SCHEDULE', '0 6 * * *')
                 tz_name = os.environ.get('PIPELINE_TIMEZONE', 'Africa/Dar_es_Salaam')
                 tz = pytz.timezone(tz_name)
                 from apscheduler.triggers.cron import CronTrigger
@@ -147,7 +147,7 @@ class PipelineScheduler:
     def __init__(
         self,
         db_url: str,
-        schedule: str = "0 3 * * *",  # Daily at 03:00 UTC = 06:00 EAT
+        schedule: str = "0 6 * * *",  # Daily at 06:00 EAT
         timezone: str = "UTC",
         alert_service: Optional[AlertService] = None
     ):

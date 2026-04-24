@@ -37,8 +37,8 @@ def main():
         logger.error("DATABASE_URL environment variable not set")
         sys.exit(1)
     
-    schedule = os.getenv('PIPELINE_SCHEDULE', '0 3 * * *')  # Default: 3 AM UTC = 6 AM EAT
-    timezone = os.getenv('PIPELINE_TIMEZONE', 'UTC')
+    schedule = os.getenv('PIPELINE_SCHEDULE', '0 6 * * *')  # Default: 6 AM EAT
+    timezone = os.getenv('PIPELINE_TIMEZONE', 'Africa/Dar_es_Salaam')
     
     # Alert configuration
     alert_email_enabled = os.getenv('ALERT_EMAIL_ENABLED', 'false').lower() == 'true'
