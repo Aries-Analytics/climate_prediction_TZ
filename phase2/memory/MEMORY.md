@@ -422,6 +422,8 @@ The HewaSense payout design is **zone-level, binary trigger** (Option A). Two st
 - Automated daily DB backup implemented (5AM EAT cron, pg_dump, 30-day retention)
 - `DATA_PROTECTION_POLICY.md` created; GOTCHA guardrail "Database Destruction Prevention" added
 - Server now runs `docker-compose.prod.yml`; Caddy reverse proxy (port 80) -> frontend (port 3000)
+- Linear MIT-26 updated: incident comment added, due date extended to Jul 24
+- PayoutActionCard fix: was showing target end_date (Jul 14) instead of projected_end_date (gap-aware)
 
 ---
 
