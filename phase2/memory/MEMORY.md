@@ -422,11 +422,15 @@ The HewaSense payout design is **zone-level, binary trigger** (Option A). Two st
 - Automated daily DB backup implemented (5AM EAT cron, pg_dump, 30-day retention)
 - `DATA_PROTECTION_POLICY.md` created; GOTCHA guardrail "Database Destruction Prevention" added
 - Server now runs `docker-compose.prod.yml`; Caddy reverse proxy (port 80) -> frontend (port 3000)
+---
+
+### 2026-04-25
 - Linear MIT-26 updated: incident comment added, due date extended to Jul 24
-- PayoutActionCard fix: was showing target end_date (Jul 14) instead of projected_end_date (gap-aware)
+- PayoutActionCard fix: was showing target `end_date` (Jul 14) instead of `projected_end_date` (gap-aware)
+- Awaiting first pipeline run post-incident (6AM EAT = Day 1 again)
 
 ---
 
-*Last updated: 2026-04-24 (DB incident, data protection policy, performance fixes, schedule fix)*
+*Last updated: 2026-04-25 (Linear sync, PayoutActionCard fix, session log split)*
 *This file is the source of truth for persistent facts. Edit directly to update.*
 *Pipeline run history (daily status, forecasts, duration, sources) is in the Evidence Pack dashboard — /v1/evidence-pack/execution-log.*
