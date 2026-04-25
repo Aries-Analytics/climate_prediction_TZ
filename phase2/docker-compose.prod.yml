@@ -50,7 +50,7 @@ services:
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
       PIPELINE_SCHEDULE: ${PIPELINE_SCHEDULE:-0 6 * * *}
-      PIPELINE_TIMEZONE: ${PIPELINE_TIMEZONE:-UTC}
+      PIPELINE_TIMEZONE: ${PIPELINE_TIMEZONE:-Africa/Dar_es_Salaam}
       ENABLE_SCHEDULER: ${ENABLE_SCHEDULER}
       ALERT_EMAIL_ENABLED: ${ALERT_EMAIL_ENABLED:-false}
       ALERT_EMAIL_SMTP_HOST: ${ALERT_EMAIL_SMTP_HOST}
@@ -59,10 +59,14 @@ services:
       ALERT_EMAIL_RECIPIENTS: ${ALERT_EMAIL_RECIPIENTS}
       ALERT_SLACK_ENABLED: ${ALERT_SLACK_ENABLED:-false}
       ALERT_SLACK_WEBHOOK_URL: ${ALERT_SLACK_WEBHOOK_URL}
+      GOOGLE_APPLICATION_CREDENTIALS: /root/.config/earthengine/credentials
+      GEE_SERVICE_ACCOUNT: ${GEE_SERVICE_ACCOUNT:-}
+      GEE_PRIVATE_KEY_FILE: /app/secrets/gee-service-account.json
     env_file:
       - .env
     volumes:
       - ./outputs:/outputs
+      - ~/.config/earthengine/credentials:/root/.config/earthengine/credentials:ro
     depends_on:
       db:
         condition: service_healthy
