@@ -355,6 +355,7 @@ Six operating laws that govern how the Orchestration layer behaves. These sit ab
 ### **WO-1 — Plan Before Executing**
 
 * Enter plan mode for ANY non-trivial task (3+ steps or architectural decisions)
+* **ANY task touching the production server requires plan mode** — no exceptions. Read `memory/MEMORY.md`, `DATA_PROTECTION_POLICY.md`, and latest session log BEFORE the first server command. This is a hard gate (Law #9 in SKILL.md).
 * If something goes sideways mid-task: **STOP and re-plan immediately** — do not keep pushing
 * Use plan mode for *verification steps*, not just building
 * Write detailed specs upfront to reduce ambiguity

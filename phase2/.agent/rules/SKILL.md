@@ -32,6 +32,27 @@
    - `README.md` (project README)
    - **Never consider a code change "done" until docs are synchronized.**
 8. **SESSION LOGGING** — Every work session ends with an entry in `memory/logs/YYYY-MM-DD.md` and a row in `memory/MEMORY.md` Logs Index. Skipping is a protocol violation (hit this on 2026-04-14 — Apr 14 session log was written but MEMORY.md Logs Index + "Last updated" were not, caught by Walter on 2026-04-15).
+9. **SERVER OPERATION GATE (MANDATORY)** — Before ANY command that touches the production server (SSH, docker, deploy script, database), you MUST complete this checklist. No exceptions. Failure to follow this gate caused the Apr 24 incident (9 days of live shadow run data destroyed).
+
+   **PRE-FLIGHT (before first server command of the session):**
+   - [ ] Read `memory/MEMORY.md` — check current server state, compose file, known traps
+   - [ ] Read `DATA_PROTECTION_POLICY.md` — review forbidden commands
+   - [ ] Read the latest `memory/logs/` entry — check for runbooks, open issues, required steps
+
+   **PER-COMMAND (before each server-side command):**
+   - [ ] State what the command does and what it will affect
+   - [ ] Confirm it is NOT on the forbidden list (`docker compose down`, `docker volume prune`, `docker system prune`, `--remove-orphans`)
+   - [ ] If touching database/containers: take backup first (`/opt/hewasense/backup_db.sh`)
+   - [ ] If restarting a container: confirm ONLY the target service is affected, not the full stack
+
+   **POST-DEPLOY (after any container restart/recreate):**
+   - [ ] Verify all containers are running: `docker ps`
+   - [ ] Verify database has data: check key table counts
+   - [ ] Verify API responds: curl health endpoint
+   - [ ] If pipeline-related: check GEE credentials, ingestion tracking, climate_data at pilot zone coords
+   - [ ] If DB was reset: follow backfill runbook from `memory/logs/2026-04-16.md`
+
+   **ESCALATION:** If unsure whether a command is safe, ASK the user before running it. Do not guess. Do not assume.
 
 ---
 
