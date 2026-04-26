@@ -426,11 +426,18 @@ The HewaSense payout design is **zone-level, binary trigger** (Option A). Two st
 
 ### 2026-04-25
 - Linear MIT-26 updated: incident comment added, due date extended to Jul 24
-- PayoutActionCard fix: was showing target `end_date` (Jul 14) instead of `projected_end_date` (gap-aware)
-- Awaiting first pipeline run post-incident (6AM EAT = Day 1 again)
+- PayoutActionCard fix: `end_date` → `projected_end_date` (gap-aware)
+- GEE credentials added to prod scheduler container (NDVI was failing)
+- Historical backfill re-run for pilot zones (195 records/zone, 2010-2026)
+- Correct climate CSV loaded (`data/processed/master_dataset.csv` — real coords, NOT `outputs/processed/` which is z-score normalized)
+- All 6 training locations restored: 313 records each, 2000-2026 (fixes Climate Insights dashboard)
+- NDVI tracking restored (all 5 sources in `source_ingestion_tracking`)
+- Backup cron moved from 5AM to 8AM EAT (after pipeline, not before)
+- Law #9 (Server Operation Gate) added to SKILL.md + CLAUDE.md
+- **Apr 26 Day 1 SUCCESS**: 24 forecasts, 41s duration, 2 sources updated + 3 current, 100% quality
 
 ---
 
-*Last updated: 2026-04-25 (Linear sync, PayoutActionCard fix, session log split)*
+*Last updated: 2026-04-26 (Day 1 confirmed, pipeline recovery complete)*
 *This file is the source of truth for persistent facts. Edit directly to update.*
 *Pipeline run history (daily status, forecasts, duration, sources) is in the Evidence Pack dashboard — /v1/evidence-pack/execution-log.*
