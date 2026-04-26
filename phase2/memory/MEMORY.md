@@ -434,6 +434,7 @@ The HewaSense payout design is **zone-level, binary trigger** (Option A). Two st
 - NDVI tracking restored (all 5 sources in `source_ingestion_tracking`)
 - Backup cron moved from 5AM to 8AM EAT (after pipeline, not before)
 - Law #9 (Server Operation Gate) added to SKILL.md + CLAUDE.md
+- Pilot zone backfill extended to 2000 (was only 2010) — both zones now have 315 records, 2000-01 to 2026-03, all 5 variables
 - **Apr 26 Day 1 SUCCESS**: 24 forecasts, 41s duration, 2 sources updated + 3 current, 100% quality
 
 ---
